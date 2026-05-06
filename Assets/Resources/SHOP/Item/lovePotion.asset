@@ -1,0 +1,43 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a36b6958f0536184ba903955e001e91d, type: 3}
+  m_Name: lovePotion
+  m_EditorClassIdentifier: 
+  DisplayName: "\u5A9A\u85E5"
+  Description: "\u4F7F\u5973\u4E3B\u89D2\u9032\u5165\u5A9A\u85E5\u72C0\u614B"
+  DisplayNameKey: Store.LovePotion.Name
+  DescriptionKey: Store.LovePotion.Describe
+  Price: 1500
+  Icon: {fileID: 0}
+  MaxPurchaseLimit: 1
+  ResetFrequency: 1
+  TargetingRule:
+    Category: 2
+    AllowedHeroineIDs: []
+  UseConditions: []
+  SelfEffects:
+  - rid: 8306280457156952167
+  DefaultGiftEffects:
+  - rid: 8306280457156952168
+  HeroineOverrides: []
+  references:
+    version: 2
+    RefIds:
+    - rid: 8306280457156952167
+      type: {class: AddStaminaEffect, ns: , asm: Assembly-CSharp}
+      data:
+        Amount: 10
+        AllowOverflow: 0
+    - rid: 8306280457156952168
+      type: {class: AddAffinityExpEffect, ns: , asm: Assembly-CSharp}
+      data:
+        Amount: 20

@@ -1,0 +1,110 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &3239302967576660747
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1519952412271522993}
+  - component: {fileID: 678761561607411836}
+  - component: {fileID: 8542211448033037060}
+  - component: {fileID: 455084031490728004}
+  - component: {fileID: 7652441732791427274}
+  m_Layer: 0
+  m_Name: HitBox_Base_Logic
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1519952412271522993
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3239302967576660747}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &678761561607411836
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3239302967576660747}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 896787da0d154884da6fcf29f8a0ec78, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DevNote
+  note: "\u624B\u52D5\uFF1A\nonPress\u7D44\u4EF6\u7684\u5404\u5F0F\u8A2D\u5B9A"
+  references: []
+--- !u!114 &8542211448033037060
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3239302967576660747}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 892f76e728317524da1db93bac7fe025, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::FsmContext
+  sharedFSM: {fileID: 0}
+  defaultEvent: CSHARP_TRIGGERED_TOUCH
+--- !u!114 &455084031490728004
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3239302967576660747}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f093265cc8f809649aa526817db2acaa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SpineTogglePlayOnPress
+  _autoHoverSetting: 0
+  _pressLoopInterval: 0.35
+  spineController: {fileID: 0}
+  targetSkeleton: {fileID: 0}
+  animationAName: Ani_TouchHead1
+  animationBName: Ani_TouchHead2
+  track: 3
+  resetTrack: 2
+  resetAnimationName: Ani_TouchHead_Reset
+  watchOutAnimationName: Ani_TouchHead_WatchOut
+--- !u!114 &7652441732791427274
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3239302967576660747}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: abb05af8fb5383f458a0f59dd5bc7ba0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PicToggleOnPress
+  _autoHoverSetting: 0
+  _pressLoopInterval: 0.35
+  targetRenderer: {fileID: 0}
+  spriteA: {fileID: 21300000, guid: d744376ada3e75e40b38039698d3f9ee, type: 3}
+  spriteB: {fileID: 21300000, guid: 2746df8d731eea144914d05ccdaea1de, type: 3}
+  resetSprite: {fileID: 21300000, guid: 0481ce2834e050848b661bb3acd24394, type: 3}
+  watchOutSprite: {fileID: 21300000, guid: 0481ce2834e050848b661bb3acd24394, type: 3}
+  hideDelay: 1
+  onTimeoutAction: 1
+  spriteDefault: {fileID: 21300000, guid: 0481ce2834e050848b661bb3acd24394, type: 3}
+  resetFsmEvent: STOPHOVER

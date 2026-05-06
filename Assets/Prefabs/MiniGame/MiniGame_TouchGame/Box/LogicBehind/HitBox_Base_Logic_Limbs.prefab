@@ -1,0 +1,87 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &7810185039055531451
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1882509628960197559}
+  - component: {fileID: 7977675126514489690}
+  - component: {fileID: 847745171596281857}
+  - component: {fileID: 1333975118592407260}
+  m_Layer: 0
+  m_Name: HitBox_Base_Logic_Limbs
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1882509628960197559
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7810185039055531451}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7977675126514489690
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7810185039055531451}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 896787da0d154884da6fcf29f8a0ec78, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DevNote
+  note: "\u624B\u52D5\uFF1A\n\u5B58\u52D5\u756B\u7D66FSM\u64A5\u653E"
+  references: []
+--- !u!114 &847745171596281857
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7810185039055531451}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 892f76e728317524da1db93bac7fe025, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::FsmContext
+  sharedFSM: {fileID: 0}
+  defaultEvent: CSHARP_TRIGGERED_TOUCH
+--- !u!114 &1333975118592407260
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7810185039055531451}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e4193a39f8ebe034f8c57b265dec6130, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CallFSMPlaySpineOnPress
+  pressLoopInterval: 1
+  fsmGameObject: {fileID: 0}
+  fsmName: HitBox_Base_FSM_Limbs
+  fsmTriggerEvent: TRIGGER
+  spineController: {fileID: 0}
+  targetSkeleton: {fileID: 0}
+  track: 7
+  animation0: Limbs_Left_Move1
+  animation1: 
+  animation2: 
+  animation3: 

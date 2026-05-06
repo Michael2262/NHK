@@ -1,0 +1,149 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 19db70f99f9110b4eaf2ffcd7f6a66b6, type: 3}
+  m_Name: sister Heroine Schedule
+  m_EditorClassIdentifier: Assembly-CSharp::HeroineScheduleConfig
+  heroineID: sister
+  dailyChains:
+  - chainName: NewChain_2
+    dayType: 1
+    requiredFlag: {fileID: 0}
+    forbiddenFlag: {fileID: 0}
+    probabilityWeight: 50
+    blocks:
+    - timeName: P0S1
+      phaseIndex: 0
+      slotIndex: 1
+      possibleScenarios:
+      - locationID: Corridor
+        activityState: Sister_GoOut
+        probabilityWeight: 100
+        requiredFlag: {fileID: 0}
+    - timeName: P1S3
+      phaseIndex: 1
+      slotIndex: 3
+      possibleScenarios:
+      - locationID: Corridor
+        activityState: Sister_Standing
+        probabilityWeight: 100
+        requiredFlag: {fileID: 0}
+    - timeName: P3S1
+      phaseIndex: 3
+      slotIndex: 1
+      possibleScenarios:
+      - locationID: HeroineRoom
+        activityState: Sister_Sleeping
+        probabilityWeight: 100
+        requiredFlag: {fileID: 0}
+    - timeName: P2S1
+      phaseIndex: 2
+      slotIndex: 1
+      possibleScenarios:
+      - locationID: LivingRoom
+        activityState: Sister_Sitting
+        probabilityWeight: 100
+        requiredFlag: {fileID: 0}
+  schedule:
+  - timeName: "\u5E73\u65E5_\u4E0A\u53481"
+    phaseIndex: 0
+    slotIndex: 1
+    dayType: 1
+    possibleScenarios: []
+  - timeName: "\u5E73\u65E5_\u4E0A\u53482"
+    phaseIndex: 0
+    slotIndex: 2
+    dayType: 1
+    possibleScenarios: []
+  - timeName: "\u5E73\u65E5_\u4E0B\u53481"
+    phaseIndex: 1
+    slotIndex: 1
+    dayType: 1
+    possibleScenarios: []
+  - timeName: "\u5E73\u65E5_\u4E0B\u53482"
+    phaseIndex: 1
+    slotIndex: 2
+    dayType: 1
+    possibleScenarios: []
+  - timeName: "\u5E73\u65E5_\u4E0B\u53483"
+    phaseIndex: 1
+    slotIndex: 3
+    dayType: 1
+    possibleScenarios: []
+  - timeName: "\u5E73\u65E5_\u665A\u4E0A1"
+    phaseIndex: 2
+    slotIndex: 1
+    dayType: 1
+    possibleScenarios:
+    - locationID: LivingRoom
+      activityState: Sister_Sitting
+      probabilityWeight: 100
+      requiredFlag: {fileID: 0}
+  - timeName: "\u5E73\u65E5_\u665A\u4E0A3"
+    phaseIndex: 2
+    slotIndex: 3
+    dayType: 1
+    possibleScenarios:
+    - locationID: HeroineRoom
+      activityState: Sister_HomeWork
+      probabilityWeight: 50
+      requiredFlag: {fileID: 0}
+    - locationID: HeroineRoom
+      activityState: Sister_CellPhone
+      probabilityWeight: 50
+      requiredFlag: {fileID: 11400000, guid: a4ee667dff88dff45a1d5bd9f2d46784, type: 2}
+    - locationID: HeroineRoom
+      activityState: Sister_Prone
+      probabilityWeight: 50
+      requiredFlag: {fileID: 11400000, guid: c84a171f588d9fb408c260bbafeb3ce5, type: 2}
+  - timeName: P2S2
+    phaseIndex: 2
+    slotIndex: 2
+    dayType: 1
+    possibleScenarios:
+    - locationID: HeroineRoom
+      activityState: Sister_HomeWork
+      probabilityWeight: 50
+      requiredFlag: {fileID: 0}
+    - locationID: LivingRoom
+      activityState: Sister_Sitting
+      probabilityWeight: 50
+      requiredFlag: {fileID: 0}
+    - locationID: HeroineRoom
+      activityState: Sister_Prone
+      probabilityWeight: 50
+      requiredFlag: {fileID: 11400000, guid: c84a171f588d9fb408c260bbafeb3ce5, type: 2}
+  - timeName: P3S1
+    phaseIndex: 3
+    slotIndex: 1
+    dayType: 1
+    possibleScenarios:
+    - locationID: HeroineRoom
+      activityState: Sister_HomeWork
+      probabilityWeight: 50
+      requiredFlag: {fileID: 0}
+    - locationID: HeroineRoom
+      activityState: Sister_CellPhone
+      probabilityWeight: 50
+      requiredFlag: {fileID: 11400000, guid: a4ee667dff88dff45a1d5bd9f2d46784, type: 2}
+    - locationID: HeroineRoom
+      activityState: Sister_Prone
+      probabilityWeight: 50
+      requiredFlag: {fileID: 11400000, guid: c84a171f588d9fb408c260bbafeb3ce5, type: 2}
+  - timeName: P3S2
+    phaseIndex: 3
+    slotIndex: 2
+    dayType: 1
+    possibleScenarios:
+    - locationID: HeroineRoom
+      activityState: Sister_Sleeping
+      probabilityWeight: 100
+      requiredFlag: {fileID: 0}

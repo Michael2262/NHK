@@ -1,0 +1,48 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a36b6958f0536184ba903955e001e91d, type: 3}
+  m_Name: energizer
+  m_EditorClassIdentifier: 
+  DisplayName: "\u7CBE\u529B\u5291"
+  Description: "\u7D66\u81EA\u5DF1\u52A0\u9AD4\u529B\uFF0C\u5C04\u7CBE\u6B21\u6578\u6700\u5927\u503C"
+  DisplayNameKey: Store.Energizer.Name
+  DescriptionKey: Store.Energizer.Describe
+  Price: 1000
+  Icon: {fileID: 7084784825825613666, guid: dc9125bdcd0f46446af4b26eba5ee8d5, type: 3}
+  MaxPurchaseLimit: 1
+  ResetFrequency: 1
+  TargetingRule:
+    Category: 0
+    AllowedHeroineIDs: []
+  UseConditions: []
+  SelfEffects:
+  - rid: 8306280457156952167
+  - rid: 8306280974442299540
+  DefaultGiftEffects:
+  - rid: 8306280457156952168
+  HeroineOverrides: []
+  references:
+    version: 2
+    RefIds:
+    - rid: 8306280457156952167
+      type: {class: AddStaminaEffect, ns: , asm: Assembly-CSharp}
+      data:
+        Amount: 10
+        AllowOverflow: 0
+    - rid: 8306280457156952168
+      type: {class: AddAffinityExpEffect, ns: , asm: Assembly-CSharp}
+      data:
+        Amount: 20
+    - rid: 8306280974442299540
+      type: {class: AddShootTimesEffect, ns: , asm: Assembly-CSharp}
+      data:
+        Amount: 2

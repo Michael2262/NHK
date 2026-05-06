@@ -1,0 +1,222 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &3096159487053259391
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3050127915827796585}
+  - component: {fileID: 7121844009377054007}
+  m_Layer: 0
+  m_Name: DemoTimeLimit
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!4 &3050127915827796585
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3096159487053259391}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7298670687876378204}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7121844009377054007
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3096159487053259391}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ff85006674c90d046b11adcb906308e4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DemoTimeLimit
+  endDayIndex: 2
+  endPhaseIndex: 0
+  endSlotInPhase: 2
+  endAction: 0
+  endSceneName: DemoEndScene
+--- !u!1 &8658884883466889431
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7298670687876378204}
+  - component: {fileID: 4550008041127164567}
+  - component: {fileID: 7909270176747799352}
+  - component: {fileID: 979995781747080542}
+  - component: {fileID: 3572347744024881451}
+  - component: {fileID: 3185349154855516075}
+  - component: {fileID: 3678330288682224598}
+  - component: {fileID: 7256248257919297805}
+  m_Layer: 0
+  m_Name: CoreManager
+  m_TagString: CoreSystem
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7298670687876378204
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8658884883466889431}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -5.063586, y: 2.376274, z: 126.14944}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 3050127915827796585}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4550008041127164567
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8658884883466889431}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 53e93525b345af64ba762da409444fee, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  globalUISceneName: GlobalStatusUI
+--- !u!114 &7909270176747799352
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8658884883466889431}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 10d268d48069c184cb692f1f9933e925, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  heroineConfig: {fileID: 11400000, guid: 413404b3a503ff9419ec02136a2888e0, type: 2}
+  timeConfig: {fileID: 11400000, guid: 698105c1f5d377f4891e19a0766d04ac, type: 2}
+  skillConfig: {fileID: 11400000, guid: 3b447a7801915b948bcb2afce641ee5a, type: 2}
+  itemDatabase: {fileID: 11400000, guid: a9864f04542947f47836c76075677001, type: 2}
+  StatusEffectDatabase: {fileID: 11400000, guid: 0ec8d96409c6dfd45927af811c216ed1, type: 2}
+  riskDatabase: {fileID: 11400000, guid: 67acb9c341df79f4ab73e9a949ba03f2, type: 2}
+  locationDatabase: {fileID: 11400000, guid: 3e7deec3c1f9b9748b9a0d3535e81e30, type: 2}
+  dailyScheduleConfig: {fileID: 11400000, guid: 8f2fc5d5e5f84ff4ab212521d749faf6, type: 2}
+  dayTriggerConfig: {fileID: 11400000, guid: 1ca2741aca3fd1548981225d377e5b09, type: 2}
+  saveNotification: {fileID: 0}
+  heroineTriggerContainers:
+  - {fileID: 11400000, guid: 7ba9269875f09fd4f906318e317e5549, type: 2}
+  valueTriggerContainers:
+  - {fileID: 11400000, guid: 10be3f854ff5a334c8c2ad4c6d2e3ae8, type: 2}
+  heroineUnlockConfigs:
+  - {fileID: 11400000, guid: d31e9c30c04028f4990262e64ca3175e, type: 2}
+  suspicionGateConfig: {fileID: 11400000, guid: fc2228a57af29d549b9f60afab26610c, type: 2}
+--- !u!114 &979995781747080542
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8658884883466889431}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8f3f52eecf610a74b984dbcf8c6fa3c3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SaveSystemListener
+  gameStatusService: {fileID: 7909270176747799352}
+--- !u!114 &3572347744024881451
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8658884883466889431}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9552481c54392242a08a40f7b04150b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MinigameManager
+--- !u!114 &3185349154855516075
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8658884883466889431}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 57ba53cdc8042864fad0b25b45adf4fb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ScenarioManager
+  priorityScripts:
+  - ruleName: "\u59B9\u59B9\u51FA\u73FE\u5728\u7384\u95DC\u7AD9\u8457"
+    heroineID: saya
+    requiredFlags:
+    - {fileID: 11400000, guid: 0ac3b17a9b69cb94086de20430b72c16, type: 2}
+    priorityLocationID: Corridor
+    priorityActivity: Saya_Standing
+  - ruleName: "\u59B9\u59B9\u51FA\u73FE\u5728\u5BA2\u5EF3\u5750\u8457"
+    heroineID: saya
+    requiredFlags:
+    - {fileID: 11400000, guid: 1b6387e05c0f48d4da52e96d4eba128a, type: 2}
+    priorityLocationID: LivingRoom
+    priorityActivity: Saya_Sitting
+  - ruleName: "\u59B9\u59B9\u51FA\u73FE\u5728\u5973\u751F\u623F\u5750\u8457"
+    heroineID: saya
+    requiredFlags:
+    - {fileID: 11400000, guid: 9c997e814a3ef744ca556ad6abcc26b1, type: 2}
+    priorityLocationID: HeroineRoom
+    priorityActivity: Saya_Sitting
+  riskPriorityScripts:
+  - ruleName: "\u5ABD\u5ABD\u51FA\u73FE\u5728\u5BA2\u5EF3\u716E\u83DC"
+    agentID: mom
+    priorityInspectionTypeID: Mom_Cooking
+    requiredFlags:
+    - {fileID: 11400000, guid: 2805b240795fdba4589ca69093b349f6, type: 2}
+    priorityLocationID: LivingRoom
+--- !u!114 &3678330288682224598
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8658884883466889431}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8f59b4a5c97404b4493c2275a2f869eb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::StoryManager
+  alertCharsPerSecond: 20
+  minAlertDuration: 1.5
+  customDelay: 3
+--- !u!114 &7256248257919297805
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8658884883466889431}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 16b222d8ac0d8c645832cfa99b28e5bb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ProgressLuaBridge
