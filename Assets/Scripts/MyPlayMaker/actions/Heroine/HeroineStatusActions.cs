@@ -1,10 +1,11 @@
-﻿using HutongGames.PlayMaker;
+using HutongGames.PlayMaker;
 using UnityEngine;
 using Tooltip = HutongGames.PlayMaker.TooltipAttribute;
 
 public enum HeroineEmotionDrawKind
 {
     Small,
+    Medium,
     Big,
     FakeBig
 }
@@ -77,11 +78,11 @@ public class SetEmotion : FsmStateAction
 
 // ==========================================================
 // HeroineEmotionDraw — PlayMaker 情緒卡抽選
-// 可選：有表演 / 無表演、小抽選 / 大抽選 / 造假大抽選。
+// 可選：有表演 / 無表演、小抽選 / 中抽選 / 大抽選 / 造假大抽選。
 // 抽選完成後可依照結果送出不同 FsmEvent。
 // ==========================================================
 [ActionCategory("Heroine Status")]
-[Tooltip("女主角情緒卡抽選。可有表演/無表演、小抽選/大抽選/造假大抽選，並依結果送出路線事件。")]
+[Tooltip("女主角情緒卡抽選。可有表演/無表演、小抽選/中抽選/大抽選/造假大抽選，並依結果送出路線事件。")]
 public class HeroineEmotionDraw : FsmStateAction
 {
     [RequiredField]
@@ -89,7 +90,7 @@ public class HeroineEmotionDraw : FsmStateAction
     public FsmString heroineID;
 
     [ObjectType(typeof(HeroineEmotionDrawKind))]
-    [Tooltip("抽選種類：Small 小抽選 / Big 大抽選 / FakeBig 造假大抽選")]
+    [Tooltip("抽選種類：Small 小抽選 / Medium 中抽選 / Big 大抽選 / FakeBig 造假大抽選")]
     public FsmEnum drawKind;
 
     [Tooltip("是否播放抽選動畫。")]
@@ -173,6 +174,9 @@ public class HeroineEmotionDraw : FsmStateAction
                 case HeroineEmotionDrawKind.Small:
                     result = EmotionCardDrawMachine.Instance.DrawSmallWithoutShow(id);
                     break;
+                case HeroineEmotionDrawKind.Medium:
+                    result = EmotionCardDrawMachine.Instance.DrawMediumWithoutShow(id);
+                    break;
                 case HeroineEmotionDrawKind.FakeBig:
                     result = EmotionCardDrawMachine.Instance.DrawFakeBigWithoutShow(id, GetFakeResult());
                     break;
@@ -189,6 +193,10 @@ public class HeroineEmotionDraw : FsmStateAction
         {
             case HeroineEmotionDrawKind.Small:
                 EmotionCardDrawMachine.Instance.StartSmallDraw(id, HandleResult);
+                break;
+
+            case HeroineEmotionDrawKind.Medium:
+                EmotionCardDrawMachine.Instance.StartMediumDraw(id, HandleResult);
                 break;
 
             case HeroineEmotionDrawKind.FakeBig:

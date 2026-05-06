@@ -7,28 +7,23 @@ using UnityEngine;
 /// <summary>
 /// NHK 女主角情緒卡變化提示 View。
 ///
-/// 用途：
+/// 用途:
 /// - 常駐在場景或不卸載 UI 場景中。
 /// - Inspector 指定 heroineID。
 /// - 訂閱該 HeroineStatusModel 的 OnEmotionCardAdded / OnEmotionCardRemoved。
-/// - 當情緒卡新增或移除時，顯示 EmotionCard + 「+1 / -1」。
-/// - ReplaceEmotionCard 這種同一瞬間的增減，會合併成同一次提示，例如：
+/// - 當情緒卡新增或移除時,顯示 EmotionCard +「+1 / -1」。
+/// - ReplaceEmotionCard 這種同一瞬間的增減,會合併成同一次提示,例如:
 ///   害羞 +1
 ///   生氣 -1
 ///
-/// 注意：
-/// - 本腳本只負責演出，不修改情緒卡資料。
-/// - 若沒有設定 linePrefab / entriesRoot，會退回使用 textMessage 顯示純文字。
+/// 注意:
+/// - 本腳本只負責演出,不修改情緒卡資料。
+/// - 若沒有設定 linePrefab / entriesRoot,會退回使用 textMessage 顯示純文字。
+/// - 情緒卡 prefab 來自 EmotionCardCatalog,不再各自維護一份對照表。
+/// - 顯示 EmotionCard 時一律隱藏情緒代表字 (與 EmotionCardDrawView 行為一致)。
 /// </summary>
 public class HeroineEmotionCardChangeView : MonoBehaviour
 {
-    [Serializable]
-    public class EmotionCardPrefabEntry
-    {
-        public HeroineEmotionCardType Type;
-        public EmotionCardView Prefab;
-    }
-
     private struct EmotionCardChangeData
     {
         public HeroineEmotionCardType Type;
@@ -54,32 +49,28 @@ public class HeroineEmotionCardChangeView : MonoBehaviour
     [SerializeField] private CanvasGroup canvasGroup;
     [SerializeField] private RectTransform viewRoot;
 
-    [Tooltip("純文字 fallback。若有設定 entriesRoot + linePrefab，這個可以不填。")]
+    [Tooltip("純文字 fallback。若有設定 entriesRoot + linePrefab,這個可以不填。")]
     [SerializeField] private TextMeshProUGUI textMessage;
 
     [Header("Emotion Card UI")]
     [Tooltip("變化列的父物件。建議加 VerticalLayoutGroup。")]
     [SerializeField] private RectTransform entriesRoot;
 
-    [Tooltip("一列變化 prefab：左邊放 EmotionCard，右邊顯示 +1 / -1。")]
+    [Tooltip("一列變化 prefab: 左邊放 EmotionCard,右邊顯示 +1 / -1。")]
     [SerializeField] private EmotionCardChangeLineView linePrefab;
 
-    [Tooltip("每種情緒對應一個 EmotionCard prefab。")]
-    [SerializeField] private List<EmotionCardPrefabEntry> emotionCardPrefabs = new List<EmotionCardPrefabEntry>();
-
-    [Tooltip("增減提示要顯示 EmotionCard 上方的情緒代表字。")]
-    [SerializeField] private bool showRepresentativeTextOnCard = true;
+    [Tooltip("情緒卡 prefab 對照表。所有用到 EmotionCard 的 View 共用同一份。")]
+    [SerializeField] private EmotionCardCatalog catalog;
 
     [Header("Timing")]
-    [Tooltip("同一瞬間連續收到的增減事件，會在這段時間內合併成同一次提示。")]
+    [Tooltip("同一瞬間連續收到的增減事件,會在這段時間內合併成同一次提示。")]
     [SerializeField, Min(0f)] private float combineWindowSeconds = 0.03f;
     [SerializeField, Min(0f)] private float holdSeconds = 2.0f;
     [SerializeField, Min(0f)] private float fadeSeconds = 0.35f;
     [SerializeField, Min(0f)] private float queueIntervalSeconds = 0.1f;
 
     [Header("Text Fallback Display")]
-    [SerializeField] private string addedFormat = "{0} +1";
-    [SerializeField] private string removedFormat = "{0} -1";
+    [Tooltip("沒有設定 entriesRoot + linePrefab 時,只會顯示 +1 / -1,不會從 enum 或 prefab 讀取名稱。正式顯示請使用 EmotionCard prefab。")]
     [SerializeField] private bool hideWhenDisabled = true;
 
     [Header("Optional Position")]
@@ -88,7 +79,6 @@ public class HeroineEmotionCardChangeView : MonoBehaviour
     [SerializeField] private Vector2 initialAnchoredPosition;
 
     private HeroineStatusModel currentModel;
-    private readonly Dictionary<HeroineEmotionCardType, EmotionCardView> cardPrefabMap = new Dictionary<HeroineEmotionCardType, EmotionCardView>();
     private readonly List<EmotionCardChangeData> pendingChanges = new List<EmotionCardChangeData>();
     private readonly Queue<EmotionCardChangeBatch> batchQueue = new Queue<EmotionCardChangeBatch>();
     private readonly List<GameObject> spawnedLines = new List<GameObject>();
@@ -98,6 +88,23 @@ public class HeroineEmotionCardChangeView : MonoBehaviour
     private bool serviceEventSubscribed;
 
     public string HeroineID => heroineID;
+
+    /// <summary>
+    /// 是否仍有情緒卡變化提示正在合併、排隊或播放。
+    /// SequencerCommand 可用這個狀態等待 UI 表演結束,避免對話太早進下一句。
+    /// </summary>
+    public bool IsBusy
+    {
+        get
+        {
+            if (pendingRoutine != null) return true;
+            if (playQueueRoutine != null) return true;
+            if (pendingChanges.Count > 0) return true;
+            if (batchQueue.Count > 0) return true;
+            if (canvasGroup != null && canvasGroup.alpha > 0.001f) return true;
+            return false;
+        }
+    }
 
     private void Reset()
     {
@@ -112,17 +119,10 @@ public class HeroineEmotionCardChangeView : MonoBehaviour
         if (viewRoot == null) viewRoot = GetComponent<RectTransform>();
         if (textMessage == null) textMessage = GetComponentInChildren<TextMeshProUGUI>(true);
 
-        RebuildCardPrefabMap();
-
         if (applyInitialAnchoredPosition && viewRoot != null)
             viewRoot.anchoredPosition = initialAnchoredPosition;
 
         HideImmediate();
-    }
-
-    private void OnValidate()
-    {
-        RebuildCardPrefabMap();
     }
 
     private void OnEnable()
@@ -133,7 +133,7 @@ public class HeroineEmotionCardChangeView : MonoBehaviour
 
     private void Start()
     {
-        // 如果本 View 比 GameStatusService 更早啟用，Start 時再嘗試一次。
+        // 如果本 View 比 GameStatusService 更早啟用,Start 時再嘗試一次。
         SubscribeServiceEvent();
         RefreshSubscription();
     }
@@ -187,7 +187,7 @@ public class HeroineEmotionCardChangeView : MonoBehaviour
     }
 
     /// <summary>
-    /// 修改目前監聽的女主角 ID，並重新訂閱。
+    /// 修改目前監聽的女主角 ID,並重新訂閱。
     /// 可由 PlayMaker / UnityEvent / 其他 UI 呼叫。
     /// </summary>
     public void SetHeroineID(string newHeroineID)
@@ -345,8 +345,12 @@ public class HeroineEmotionCardChangeView : MonoBehaviour
                 var line = Instantiate(linePrefab, entriesRoot);
                 spawnedLines.Add(line.gameObject);
 
-                cardPrefabMap.TryGetValue(change.Type, out var cardPrefab);
-                line.Setup(cardPrefab, change.Type, change.Delta, showRepresentativeTextOnCard);
+                EmotionCard cardPrefab = catalog != null ? catalog.GetPrefab(change.Type) : null;
+                if (cardPrefab == null)
+                    Debug.LogWarning($"[HeroineEmotionCardChangeView] Catalog missing prefab for: {change.Type}", this);
+
+                // 一律隱藏情緒代表字,只顯示卡面與數值。
+                line.Setup(cardPrefab, change.Delta);
             }
 
             if (textMessage != null) textMessage.text = string.Empty;
@@ -361,12 +365,12 @@ public class HeroineEmotionCardChangeView : MonoBehaviour
     {
         if (batch == null || batch.Changes.Count == 0) return string.Empty;
 
+        // 這只是沒有設定 linePrefab / entriesRoot 時的最低限度 fallback。
+        // 正式顯示名稱請由各 EmotionCard prefab 自己的 TextMeshPro 內容決定。
         List<string> lines = new List<string>();
         foreach (var change in batch.Changes)
         {
-            string label = GetEmotionLabel(change.Type);
-            string format = change.Delta >= 0 ? addedFormat : removedFormat;
-            lines.Add(string.Format(format, label));
+            lines.Add(change.Delta >= 0 ? $"+{change.Delta}" : change.Delta.ToString());
         }
 
         return string.Join("\n", lines);
@@ -402,22 +406,5 @@ public class HeroineEmotionCardChangeView : MonoBehaviour
         }
 
         spawnedLines.Clear();
-    }
-
-    private void RebuildCardPrefabMap()
-    {
-        cardPrefabMap.Clear();
-        if (emotionCardPrefabs == null) return;
-
-        foreach (var entry in emotionCardPrefabs)
-        {
-            if (entry == null) continue;
-            cardPrefabMap[entry.Type] = entry.Prefab;
-        }
-    }
-
-    private string GetEmotionLabel(HeroineEmotionCardType type)
-    {
-        return EmotionCardView.GetDefaultDisplayName(type);
     }
 }

@@ -29,6 +29,11 @@ internal static class ProtagonistPlayMakerUtil
     {
         if (variable != null && !variable.IsNone) variable.Value = value;
     }
+
+    public static void StoreString(FsmString variable, string value)
+    {
+        if (variable != null && !variable.IsNone) variable.Value = value;
+    }
 }
 
 // ==========================================================
@@ -48,6 +53,46 @@ public class AddMoney : FsmStateAction
         if (p != null)
         {
             p.AddMoney(amount.Value);
+            ProtagonistPlayMakerUtil.StoreInt(storeMoney, p.Money);
+        }
+        Finish();
+    }
+}
+
+[ActionCategory("Protagonist Status")]
+[Tooltip("扣除主角金錢 (數量為正數)。最低為 0。")]
+public class ReduceMoney : FsmStateAction
+{
+    public FsmInt amount;
+    [UIHint(UIHint.Variable)] public FsmInt storeMoney;
+
+    public override void Reset() { amount = 0; storeMoney = null; }
+    public override void OnEnter()
+    {
+        var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(ReduceMoney));
+        if (p != null)
+        {
+            p.AddMoney(-Mathf.Max(0, amount.Value));
+            ProtagonistPlayMakerUtil.StoreInt(storeMoney, p.Money);
+        }
+        Finish();
+    }
+}
+
+[ActionCategory("Protagonist Status")]
+[Tooltip("直接設定主角金錢數量。")]
+public class SetMoney : FsmStateAction
+{
+    public FsmInt value;
+    [UIHint(UIHint.Variable)] public FsmInt storeMoney;
+
+    public override void Reset() { value = 0; storeMoney = null; }
+    public override void OnEnter()
+    {
+        var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(SetMoney));
+        if (p != null)
+        {
+            p.SetMoney(value.Value);
             ProtagonistPlayMakerUtil.StoreInt(storeMoney, p.Money);
         }
         Finish();
@@ -105,6 +150,46 @@ public class AddSkillPoints : FsmStateAction
 }
 
 [ActionCategory("Protagonist Status")]
+[Tooltip("扣除主角技能點 (數量為正數)。最低為 0。")]
+public class ReduceSkillPoints : FsmStateAction
+{
+    public FsmInt amount;
+    [UIHint(UIHint.Variable)] public FsmInt storeSkillPoints;
+
+    public override void Reset() { amount = 0; storeSkillPoints = null; }
+    public override void OnEnter()
+    {
+        var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(ReduceSkillPoints));
+        if (p != null)
+        {
+            p.ReduceSkillPoints(Mathf.Max(0, amount.Value));
+            ProtagonistPlayMakerUtil.StoreInt(storeSkillPoints, p.SkillPoints);
+        }
+        Finish();
+    }
+}
+
+[ActionCategory("Protagonist Status")]
+[Tooltip("直接設定主角技能點。")]
+public class SetSkillPoints : FsmStateAction
+{
+    public FsmInt value;
+    [UIHint(UIHint.Variable)] public FsmInt storeSkillPoints;
+
+    public override void Reset() { value = 0; storeSkillPoints = null; }
+    public override void OnEnter()
+    {
+        var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(SetSkillPoints));
+        if (p != null)
+        {
+            p.SetSkillPoints(value.Value);
+            ProtagonistPlayMakerUtil.StoreInt(storeSkillPoints, p.SkillPoints);
+        }
+        Finish();
+    }
+}
+
+[ActionCategory("Protagonist Status")]
 [Tooltip("嘗試扣除主角指定技能點。成功/失敗可觸發對應事件。")]
 public class TryReduceSkillPoints : FsmStateAction
 {
@@ -146,6 +231,21 @@ public class AddStress : FsmStateAction
 }
 
 [ActionCategory("Protagonist Status")]
+[Tooltip("降低主角壓力 Stress (數量為正數)。")]
+public class ReduceStress : FsmStateAction
+{
+    public FsmInt amount;
+    [UIHint(UIHint.Variable)] public FsmInt storeStress;
+    public override void Reset() { amount = 0; storeStress = null; }
+    public override void OnEnter()
+    {
+        var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(ReduceStress));
+        if (p != null) { p.ReduceStress(Mathf.Max(0, amount.Value)); ProtagonistPlayMakerUtil.StoreInt(storeStress, p.Stress); }
+        Finish();
+    }
+}
+
+[ActionCategory("Protagonist Status")]
 [Tooltip("直接設定主角壓力 Stress。")]
 public class SetStress : FsmStateAction
 {
@@ -171,6 +271,21 @@ public class AddLifePower : FsmStateAction
     {
         var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(AddLifePower));
         if (p != null) { p.AddLifePower(amount.Value); ProtagonistPlayMakerUtil.StoreInt(storeLifePower, p.LifePower); }
+        Finish();
+    }
+}
+
+[ActionCategory("Protagonist Status")]
+[Tooltip("降低主角生活力 LifePower (數量為正數)。")]
+public class ReduceLifePower : FsmStateAction
+{
+    public FsmInt amount;
+    [UIHint(UIHint.Variable)] public FsmInt storeLifePower;
+    public override void Reset() { amount = 0; storeLifePower = null; }
+    public override void OnEnter()
+    {
+        var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(ReduceLifePower));
+        if (p != null) { p.ReduceLifePower(Mathf.Max(0, amount.Value)); ProtagonistPlayMakerUtil.StoreInt(storeLifePower, p.LifePower); }
         Finish();
     }
 }
@@ -206,6 +321,21 @@ public class AddSocialFear : FsmStateAction
 }
 
 [ActionCategory("Protagonist Status")]
+[Tooltip("降低主角社會恐懼 SocialFear (數量為正數)。")]
+public class ReduceSocialFear : FsmStateAction
+{
+    public FsmInt amount;
+    [UIHint(UIHint.Variable)] public FsmInt storeSocialFear;
+    public override void Reset() { amount = 0; storeSocialFear = null; }
+    public override void OnEnter()
+    {
+        var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(ReduceSocialFear));
+        if (p != null) { p.ReduceSocialFear(Mathf.Max(0, amount.Value)); ProtagonistPlayMakerUtil.StoreInt(storeSocialFear, p.SocialFear); }
+        Finish();
+    }
+}
+
+[ActionCategory("Protagonist Status")]
 [Tooltip("直接設定主角社會恐懼 SocialFear。")]
 public class SetSocialFear : FsmStateAction
 {
@@ -236,6 +366,21 @@ public class AddDependency : FsmStateAction
 }
 
 [ActionCategory("Protagonist Status")]
+[Tooltip("降低主角依賴度 Dependency (數量為正數)。")]
+public class ReduceDependency : FsmStateAction
+{
+    public FsmInt amount;
+    [UIHint(UIHint.Variable)] public FsmInt storeDependency;
+    public override void Reset() { amount = 0; storeDependency = null; }
+    public override void OnEnter()
+    {
+        var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(ReduceDependency));
+        if (p != null) { p.ReduceDependency(Mathf.Max(0, amount.Value)); ProtagonistPlayMakerUtil.StoreInt(storeDependency, p.Dependency); }
+        Finish();
+    }
+}
+
+[ActionCategory("Protagonist Status")]
 [Tooltip("直接設定主角依賴度 Dependency。")]
 public class SetDependency : FsmStateAction
 {
@@ -250,9 +395,113 @@ public class SetDependency : FsmStateAction
     }
 }
 
+[ActionCategory("Protagonist Status")]
+[Tooltip("一次套用主角四項核心數值的變化 (Stress / LifePower / SocialFear / Dependency)。")]
+public class ApplyProtagonistStatusChange : FsmStateAction
+{
+    public FsmInt stressDelta;
+    public FsmInt lifePowerDelta;
+    public FsmInt socialFearDelta;
+    public FsmInt dependencyDelta;
+
+    [UIHint(UIHint.Variable)] public FsmInt storeStress;
+    [UIHint(UIHint.Variable)] public FsmInt storeLifePower;
+    [UIHint(UIHint.Variable)] public FsmInt storeSocialFear;
+    [UIHint(UIHint.Variable)] public FsmInt storeDependency;
+
+    public override void Reset()
+    {
+        stressDelta = 0; lifePowerDelta = 0; socialFearDelta = 0; dependencyDelta = 0;
+        storeStress = null; storeLifePower = null; storeSocialFear = null; storeDependency = null;
+    }
+
+    public override void OnEnter()
+    {
+        var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(ApplyProtagonistStatusChange));
+        if (p != null)
+        {
+            var change = new ProtagonistStatusChange(
+                stressDelta.Value, lifePowerDelta.Value, socialFearDelta.Value, dependencyDelta.Value);
+            p.ApplyStatusChange(change);
+
+            ProtagonistPlayMakerUtil.StoreInt(storeStress, p.Stress);
+            ProtagonistPlayMakerUtil.StoreInt(storeLifePower, p.LifePower);
+            ProtagonistPlayMakerUtil.StoreInt(storeSocialFear, p.SocialFear);
+            ProtagonistPlayMakerUtil.StoreInt(storeDependency, p.Dependency);
+        }
+        Finish();
+    }
+}
+
 // ==========================================================
-// Daily Flag Actions
+// Daily Flow / Long-term Counters
 // ==========================================================
+[ActionCategory("Protagonist Status")]
+[Tooltip("呼叫主角的 OnDayStart：重置每日狀態旗標。")]
+public class ProtagonistDayStart : FsmStateAction
+{
+    public override void OnEnter()
+    {
+        var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(ProtagonistDayStart));
+        if (p != null) p.OnDayStart();
+        Finish();
+    }
+}
+
+[ActionCategory("Protagonist Status")]
+[Tooltip("呼叫主角的 OnDayEnd：依當日旗標更新長期統計 (尚未進入下一天)。")]
+public class ProtagonistDayEnd : FsmStateAction
+{
+    public override void OnEnter()
+    {
+        var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(ProtagonistDayEnd));
+        if (p != null) p.OnDayEnd();
+        Finish();
+    }
+}
+
+[ActionCategory("Protagonist Status")]
+[Tooltip("呼叫主角的 NextDay：結束當日 → 天數 +1 → 開啟新一日。")]
+public class ProtagonistNextDay : FsmStateAction
+{
+    [UIHint(UIHint.Variable)] public FsmInt storeDay;
+    public override void Reset() { storeDay = null; }
+    public override void OnEnter()
+    {
+        var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(ProtagonistNextDay));
+        if (p != null)
+        {
+            p.NextDay();
+            ProtagonistPlayMakerUtil.StoreInt(storeDay, p.Day);
+        }
+        Finish();
+    }
+}
+
+[ActionCategory("Protagonist Status")]
+[Tooltip("僅重置主角的每日狀態旗標 (不更新長期統計)。")]
+public class ResetProtagonistDailyFlags : FsmStateAction
+{
+    public override void OnEnter()
+    {
+        var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(ResetProtagonistDailyFlags));
+        if (p != null) p.ResetDailyFlags();
+        Finish();
+    }
+}
+
+[ActionCategory("Protagonist Status")]
+[Tooltip("重置主角所有長期統計計數器。")]
+public class ResetProtagonistLongTermCounters : FsmStateAction
+{
+    public override void OnEnter()
+    {
+        var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(ResetProtagonistLongTermCounters));
+        if (p != null) p.ResetLongTermCounters();
+        Finish();
+    }
+}
+
 [ActionCategory("Protagonist Status")]
 [Tooltip("標記今天主角做過某項每日行為。")]
 public class MarkProtagonistDailyFlag : FsmStateAction
@@ -297,133 +546,215 @@ public class MarkProtagonistDailyFlag : FsmStateAction
     }
 }
 
-// ==========================================================
-// Obsolete wrappers：保留舊 PlayMaker Action 名稱
-// ==========================================================
 [ActionCategory("Protagonist Status")]
-[Tooltip("舊版 AddStamina。NHK 中轉換為 Stress 反向變化：Stamina + = Stress -。")]
-public class AddStamina : FsmStateAction
+[Tooltip("增加主角的長期統計計數器 (NightExtend1 / NightExtend2 / StayOver)。")]
+public class AddProtagonistLongTermCounter : FsmStateAction
 {
-    public FsmFloat amount;
-    [UIHint(UIHint.Variable)] public FsmFloat storeStamina;
-    public override void Reset() { amount = 0f; storeStamina = null; }
+    public enum CounterType
+    {
+        NightExtend1Success,
+        NightExtend2Success,
+        StayOver
+    }
+
+    public CounterType counter;
+    public FsmInt amount;
+    [UIHint(UIHint.Variable)] public FsmInt storeCount;
+
+    public override void Reset() { counter = CounterType.NightExtend1Success; amount = 1; storeCount = null; }
+
     public override void OnEnter()
     {
-        var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(AddStamina));
+        var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(AddProtagonistLongTermCounter));
         if (p != null)
         {
-            p.AddStress(-Mathf.RoundToInt(amount.Value));
-            ProtagonistPlayMakerUtil.StoreFloat(storeStamina, 100 - p.Stress);
+            int n = amount.Value;
+            int result = 0;
+            switch (counter)
+            {
+                case CounterType.NightExtend1Success:
+                    p.AddNightExtend1SuccessCount(n);
+                    result = p.NightExtend1SuccessCount;
+                    break;
+                case CounterType.NightExtend2Success:
+                    p.AddNightExtend2SuccessCount(n);
+                    result = p.NightExtend2SuccessCount;
+                    break;
+                case CounterType.StayOver:
+                    p.AddStayOverCount(n);
+                    result = p.StayOverCount;
+                    break;
+            }
+            ProtagonistPlayMakerUtil.StoreInt(storeCount, result);
+        }
+        Finish();
+    }
+}
+
+// ==========================================================
+// 狀態查詢
+// ==========================================================
+[ActionCategory("Protagonist Status")]
+[Tooltip("查詢主角目前的壓力狀態 (Calm / Uneasy / Irritated / Strained / Critical / Collapsed)。")]
+public class GetProtagonistStressState : FsmStateAction
+{
+    [UIHint(UIHint.Variable)] public FsmString storeStateName;
+    [UIHint(UIHint.Variable)] public FsmInt storeStateIndex;
+    public override void Reset() { storeStateName = null; storeStateIndex = null; }
+    public override void OnEnter()
+    {
+        var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(GetProtagonistStressState));
+        if (p != null)
+        {
+            var state = p.GetStressState();
+            ProtagonistPlayMakerUtil.StoreString(storeStateName, state.ToString());
+            ProtagonistPlayMakerUtil.StoreInt(storeStateIndex, (int)state);
         }
         Finish();
     }
 }
 
 [ActionCategory("Protagonist Status")]
-[Tooltip("舊版 TryReduceStamina。NHK 中視為壓力上升；若會超過 100 則失敗。")]
-public class TryReduceStamina : FsmStateAction
+[Tooltip("查詢主角目前的生活力狀態 (VeryLow / Unstable / Stable / Healthy)。")]
+public class GetProtagonistLifeState : FsmStateAction
 {
-    public FsmFloat cost;
+    [UIHint(UIHint.Variable)] public FsmString storeStateName;
+    [UIHint(UIHint.Variable)] public FsmInt storeStateIndex;
+    public override void Reset() { storeStateName = null; storeStateIndex = null; }
+    public override void OnEnter()
+    {
+        var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(GetProtagonistLifeState));
+        if (p != null)
+        {
+            var state = p.GetLifeState();
+            ProtagonistPlayMakerUtil.StoreString(storeStateName, state.ToString());
+            ProtagonistPlayMakerUtil.StoreInt(storeStateIndex, (int)state);
+        }
+        Finish();
+    }
+}
+
+[ActionCategory("Protagonist Status")]
+[Tooltip("查詢主角目前的社會恐懼狀態 (Low / Medium / High)。")]
+public class GetProtagonistSocialFearState : FsmStateAction
+{
+    [UIHint(UIHint.Variable)] public FsmString storeStateName;
+    [UIHint(UIHint.Variable)] public FsmInt storeStateIndex;
+    public override void Reset() { storeStateName = null; storeStateIndex = null; }
+    public override void OnEnter()
+    {
+        var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(GetProtagonistSocialFearState));
+        if (p != null)
+        {
+            var state = p.GetSocialFearState();
+            ProtagonistPlayMakerUtil.StoreString(storeStateName, state.ToString());
+            ProtagonistPlayMakerUtil.StoreInt(storeStateIndex, (int)state);
+        }
+        Finish();
+    }
+}
+
+[ActionCategory("Protagonist Status")]
+[Tooltip("查詢主角目前的依賴度狀態 (Low / Medium / High / Extreme)。")]
+public class GetProtagonistDependencyState : FsmStateAction
+{
+    [UIHint(UIHint.Variable)] public FsmString storeStateName;
+    [UIHint(UIHint.Variable)] public FsmInt storeStateIndex;
+    public override void Reset() { storeStateName = null; storeStateIndex = null; }
+    public override void OnEnter()
+    {
+        var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(GetProtagonistDependencyState));
+        if (p != null)
+        {
+            var state = p.GetDependencyState();
+            ProtagonistPlayMakerUtil.StoreString(storeStateName, state.ToString());
+            ProtagonistPlayMakerUtil.StoreInt(storeStateIndex, (int)state);
+        }
+        Finish();
+    }
+}
+
+[ActionCategory("Protagonist Status")]
+[Tooltip("檢查主角的某個 bool 狀態 (壓力 / 生活力 / 社會恐懼 / 依賴度)。")]
+public class CheckProtagonistStatus : FsmStateAction
+{
+    public enum CheckType
+    {
+        IsStressCritical,
+        IsStressCollapsed,
+        IsLifeVeryLow,
+        IsLifeStable,
+        IsLifeHealthy,
+        IsSocialFearHigh,
+        IsSocialFearLow,
+        IsDependencyHigh,
+        IsDependencyExtreme
+    }
+
+    public CheckType check;
     [UIHint(UIHint.Variable)] public FsmBool storeResult;
-    [UIHint(UIHint.Variable)] public FsmFloat storeStamina;
-    public FsmBool logWarningOnFail;
+    public FsmEvent trueEvent;
+    public FsmEvent falseEvent;
+
+    public override void Reset() { check = CheckType.IsStressCritical; storeResult = null; trueEvent = null; falseEvent = null; }
+
+    public override void OnEnter()
+    {
+        var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(CheckProtagonistStatus));
+        if (p == null) { Finish(); return; }
+
+        bool result = false;
+        switch (check)
+        {
+            case CheckType.IsStressCritical: result = p.IsStressCritical(); break;
+            case CheckType.IsStressCollapsed: result = p.IsStressCollapsed(); break;
+            case CheckType.IsLifeVeryLow: result = p.IsLifeVeryLow(); break;
+            case CheckType.IsLifeStable: result = p.IsLifeStable(); break;
+            case CheckType.IsLifeHealthy: result = p.IsLifeHealthy(); break;
+            case CheckType.IsSocialFearHigh: result = p.IsSocialFearHigh(); break;
+            case CheckType.IsSocialFearLow: result = p.IsSocialFearLow(); break;
+            case CheckType.IsDependencyHigh: result = p.IsDependencyHigh(); break;
+            case CheckType.IsDependencyExtreme: result = p.IsDependencyExtreme(); break;
+        }
+
+        ProtagonistPlayMakerUtil.StoreBool(storeResult, result);
+        Fsm.Event(result ? trueEvent : falseEvent);
+        Finish();
+    }
+}
+
+[ActionCategory("Protagonist Status")]
+[Tooltip("取得主角面對外界的成功評分 (FaceRealityScore)。可選擇與門檻比對並觸發事件。")]
+public class GetProtagonistFaceRealityScore : FsmStateAction
+{
+    public FsmInt threshold;
+    public FsmBool useThreshold;
+    [UIHint(UIHint.Variable)] public FsmInt storeScore;
+    [UIHint(UIHint.Variable)] public FsmBool storeCanLikelyFace;
     public FsmEvent successEvent;
     public FsmEvent failedEvent;
-    public override void Reset() { cost = 0f; storeResult = null; storeStamina = null; logWarningOnFail = true; successEvent = null; failedEvent = null; }
+
+    public override void Reset()
+    {
+        threshold = 50; useThreshold = true;
+        storeScore = null; storeCanLikelyFace = null;
+        successEvent = null; failedEvent = null;
+    }
+
     public override void OnEnter()
     {
-        var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(TryReduceStamina));
+        var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(GetProtagonistFaceRealityScore));
         if (p == null) { Finish(); return; }
-        int addStress = Mathf.CeilToInt(cost.Value);
-        bool success = p.Stress + addStress <= ProtagonistStatusModel.MAX_STATUS_VALUE;
-        if (success) p.AddStress(addStress);
-        ProtagonistPlayMakerUtil.StoreBool(storeResult, success);
-        ProtagonistPlayMakerUtil.StoreFloat(storeStamina, 100 - p.Stress);
-        if (!success && logWarningOnFail.Value) Debug.LogWarning("[TryReduceStamina] NHK 壓力會爆表，判定失敗。");
-        Fsm.Event(success ? successEvent : failedEvent);
-        Finish();
-    }
-}
 
-[ActionCategory("Protagonist Status")]
-[Tooltip("舊版 SetStamina。NHK 中轉換為 Stress = 100 - Stamina。")]
-public class SetStamina : FsmStateAction
-{
-    public FsmFloat value;
-    [UIHint(UIHint.Variable)] public FsmFloat storeStamina;
-    public override void Reset() { value = 100f; storeStamina = null; }
-    public override void OnEnter()
-    {
-        var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(SetStamina));
-        if (p != null)
+        int score = p.GetFaceRealityScore();
+        ProtagonistPlayMakerUtil.StoreInt(storeScore, score);
+
+        if (useThreshold.Value)
         {
-            p.SetStress(100 - Mathf.RoundToInt(value.Value));
-            ProtagonistPlayMakerUtil.StoreFloat(storeStamina, 100 - p.Stress);
+            bool canFace = p.CanLikelyFaceReality(threshold.Value);
+            ProtagonistPlayMakerUtil.StoreBool(storeCanLikelyFace, canFace);
+            Fsm.Event(canFace ? successEvent : failedEvent);
         }
-        Finish();
-    }
-}
-
-[ActionCategory("Protagonist Status")]
-[Tooltip("舊版 SetStaminaMax。NHK Stress 固定 0～100，本 Action 不做事。")]
-public class SetStaminaMax : FsmStateAction
-{
-    public FsmFloat value;
-    [UIHint(UIHint.Variable)] public FsmFloat storeStaminaMax;
-    [UIHint(UIHint.Variable)] public FsmFloat storeStamina;
-    public override void Reset() { value = 100f; storeStaminaMax = null; storeStamina = null; }
-    public override void OnEnter()
-    {
-        ProtagonistPlayMakerUtil.StoreFloat(storeStaminaMax, 100f);
-        var p = GameStatusService.Instance?.Protagonist;
-        if (p != null) ProtagonistPlayMakerUtil.StoreFloat(storeStamina, 100 - p.Stress);
-        Finish();
-    }
-}
-
-[ActionCategory("Protagonist Status")]
-[Tooltip("舊版 AddStaminaMax。NHK Stress 固定 0～100，本 Action 不做事。")]
-public class AddStaminaMax : FsmStateAction
-{
-    public FsmFloat delta;
-    [UIHint(UIHint.Variable)] public FsmFloat storeStaminaMax;
-    [UIHint(UIHint.Variable)] public FsmFloat storeStamina;
-    public override void Reset() { delta = 0f; storeStaminaMax = null; storeStamina = null; }
-    public override void OnEnter()
-    {
-        ProtagonistPlayMakerUtil.StoreFloat(storeStaminaMax, 100f);
-        var p = GameStatusService.Instance?.Protagonist;
-        if (p != null) ProtagonistPlayMakerUtil.StoreFloat(storeStamina, 100 - p.Stress);
-        Finish();
-    }
-}
-
-[ActionCategory("Protagonist Status")]
-[Tooltip("舊版 AddSuspicion。NHK 中轉換為 Stress 變化。")]
-public class AddSuspicion : FsmStateAction
-{
-    public FsmInt amount;
-    [UIHint(UIHint.Variable)] public FsmInt storeSuspicion;
-    public override void Reset() { amount = 0; storeSuspicion = null; }
-    public override void OnEnter()
-    {
-        var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(AddSuspicion));
-        if (p != null) { p.AddStress(amount.Value); ProtagonistPlayMakerUtil.StoreInt(storeSuspicion, p.Stress); }
-        Finish();
-    }
-}
-
-[ActionCategory("Protagonist Status")]
-[Tooltip("舊版 SetSuspicion。NHK 中轉換為 SetStress。")]
-public class SetSuspicion : FsmStateAction
-{
-    public FsmInt value;
-    [UIHint(UIHint.Variable)] public FsmInt storeSuspicion;
-    public override void Reset() { value = 0; storeSuspicion = null; }
-    public override void OnEnter()
-    {
-        var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(SetSuspicion));
-        if (p != null) { p.SetStress(value.Value); ProtagonistPlayMakerUtil.StoreInt(storeSuspicion, p.Stress); }
         Finish();
     }
 }

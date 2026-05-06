@@ -2,82 +2,64 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
 
 /// <summary>
 /// 情緒卡抽選表演 View。
-/// 只負責 UI 表演，不決定抽選結果。
+/// 只負責 UI 表演,不決定抽選結果。
 ///
-/// 建議用法：
-/// - 為每種情緒做一個 EmotionCard prefab。
-/// - 把 prefab 登錄到 emotionCardPrefabs。
-/// - 抽卡演出時，本 View 會實例化對應 EmotionCard。
-/// - 抽卡演出不顯示情緒代表字，只顯示卡圖。
+/// 設計:
+/// - 從 EmotionCardCatalog 取得每種情緒對應的 EmotionCard prefab。
+/// - Awake 階段預先 Instantiate 每張 prefab,並重設 Transform 對齊到 cardRoot。
+/// - 中抽選 / 大抽選：新卡以較大尺寸出現,縮小到正常尺寸後取代舊卡。
+/// - 小抽選：不翻牌,直接顯示最終結果。
 /// </summary>
 public class EmotionCardDrawView : MonoBehaviour
 {
-    [Serializable]
-    public class EmotionCardPrefabEntry
-    {
-        public HeroineEmotionCardType Type;
-        public EmotionCardView Prefab;
-    }
-
-    [Serializable]
-    public class EmotionSpriteEntry
-    {
-        public HeroineEmotionCardType Type;
-        public Sprite Sprite;
-    }
-
     [Header("UI References")]
-    [Tooltip("建議指定子物件 root。若未指定，不會停用本 GameObject，以避免 Coroutine 無法啟動。")]
+    [Tooltip("建議指定子物件 root。若未指定,不會停用本 GameObject,以避免 Coroutine 無法啟動。")]
     [SerializeField] private GameObject root;
 
-    [Tooltip("EmotionCard prefab 生成位置。若未指定，會使用 root 或本物件 transform。")]
+    [Tooltip("EmotionCard 生成位置。所有卡片都會置中於此 (anchor/pivot 0.5,anchoredPosition 0)。")]
     [SerializeField] private Transform cardRoot;
 
-    [Header("Emotion Card Prefabs")]
-    [SerializeField] private List<EmotionCardPrefabEntry> emotionCardPrefabs = new List<EmotionCardPrefabEntry>();
-
-    [Header("Fallback UI")]
-    [Tooltip("沒有指定 EmotionCard prefab 時，才會使用這個舊圖示欄位。")]
-    [SerializeField] private Image emotionImage;
-
-    [Tooltip("舊圖示欄位用。新做法建議改用 EmotionCard prefab。")]
-    [SerializeField] private List<EmotionSpriteEntry> emotionSprites = new List<EmotionSpriteEntry>();
+    [Header("Emotion Card Catalog")]
+    [Tooltip("情緒卡 prefab 對照表。所有用到 EmotionCard 的 View 共用同一份。")]
+    [SerializeField] private EmotionCardCatalog catalog;
 
     [Header("Options")]
     [SerializeField] private bool hideAfterComplete = true;
-    [SerializeField, Min(0f)] private float completeHoldSeconds = 0.15f;
+    [SerializeField, Min(0f)] private float completeHoldSeconds = 0.25f;
+
+    [Header("Hit Replacement Animation")]
+    [Tooltip("中抽選/大抽選時,新卡出現的起始倍率。")]
+    [SerializeField, Min(1f)] private float incomingStartScale = 1.35f;
+
+    [Tooltip("每張卡切換間隔中,有多少比例用來做縮小打下去動畫。")]
+    [SerializeField, Range(0.1f, 1f)] private float hitAnimationRatio = 0.75f;
+
+    [Tooltip("每次打下去動畫的最短秒數。")]
+    [SerializeField, Min(0f)] private float minHitAnimationSeconds = 0.04f;
 
     private Coroutine currentRoutine;
-    private EmotionCardView currentCard;
-    private readonly Dictionary<HeroineEmotionCardType, EmotionCardView> cardPrefabMap = new Dictionary<HeroineEmotionCardType, EmotionCardView>();
-    private readonly Dictionary<HeroineEmotionCardType, Sprite> spriteMap = new Dictionary<HeroineEmotionCardType, Sprite>();
+    private EmotionCard currentCard;
+
+    // 預先 Instantiate 好的卡片實例,共用,不再每張 Destroy/Instantiate。
+    private readonly Dictionary<HeroineEmotionCardType, EmotionCard> cardInstances = new Dictionary<HeroineEmotionCardType, EmotionCard>();
 
     private void Awake()
     {
-        RebuildMaps();
-        if (cardRoot == null)
-        {
-            if (root != null) cardRoot = root.transform;
-            if (cardRoot == null) cardRoot = transform;
-        }
+        if (cardRoot == null) cardRoot = transform;
+        BuildCardInstances();
         SetVisible(false);
     }
 
-    private void OnValidate()
+    public void PlaySmallDrawShow(List<HeroineEmotionCardType> sequence, HeroineEmotionCardType finalResult, float duration, Action onComplete)
     {
-        RebuildMaps();
-        if (cardRoot == null)
-        {
-            if (root != null) cardRoot = root.transform;
-            if (cardRoot == null) cardRoot = transform;
-        }
+        // 小抽選不做翻牌/打牌表演,直接顯示目前主導情緒。
+        PlayInstantResultShow(finalResult, duration, onComplete);
     }
 
-    public void PlaySmallDrawShow(List<HeroineEmotionCardType> sequence, HeroineEmotionCardType finalResult, float duration, Action onComplete)
+    public void PlayMediumDrawShow(List<HeroineEmotionCardType> sequence, HeroineEmotionCardType finalResult, float duration, Action onComplete)
     {
         PlayDrawShow(sequence, finalResult, duration, onComplete);
     }
@@ -98,6 +80,32 @@ public class EmotionCardDrawView : MonoBehaviour
         currentRoutine = StartCoroutine(PlayRoutine(sequence, finalResult, duration, onComplete));
     }
 
+    private void PlayInstantResultShow(HeroineEmotionCardType finalResult, float duration, Action onComplete)
+    {
+        if (currentRoutine != null)
+        {
+            StopCoroutine(currentRoutine);
+            currentRoutine = null;
+        }
+
+        currentRoutine = StartCoroutine(InstantResultRoutine(finalResult, duration, onComplete));
+    }
+
+    private IEnumerator InstantResultRoutine(HeroineEmotionCardType finalResult, float duration, Action onComplete)
+    {
+        SetVisible(true);
+        ShowEmotion(finalResult);
+
+        float holdSeconds = Mathf.Max(duration, completeHoldSeconds);
+        if (holdSeconds > 0f) yield return new WaitForSeconds(holdSeconds);
+        else yield return null;
+
+        if (hideAfterComplete) SetVisible(false);
+
+        currentRoutine = null;
+        onComplete?.Invoke();
+    }
+
     private IEnumerator PlayRoutine(List<HeroineEmotionCardType> sequence, HeroineEmotionCardType finalResult, float duration, Action onComplete)
     {
         SetVisible(true);
@@ -106,18 +114,33 @@ public class EmotionCardDrawView : MonoBehaviour
         {
             sequence = new List<HeroineEmotionCardType> { finalResult };
         }
+        else if (sequence[sequence.Count - 1] != finalResult)
+        {
+            // 保險：避免結果卡沒有出現在最後。
+            sequence = new List<HeroineEmotionCardType>(sequence) { finalResult };
+        }
 
         duration = Mathf.Max(0f, duration);
         float interval = sequence.Count > 0 ? duration / sequence.Count : 0f;
+        float hitSeconds = interval > 0f
+            ? Mathf.Min(interval, Mathf.Max(minHitAnimationSeconds, interval * hitAnimationRatio))
+            : 0f;
 
         for (int i = 0; i < sequence.Count; i++)
         {
-            ShowEmotion(sequence[i]);
-            if (interval > 0f) yield return new WaitForSeconds(interval);
-            else yield return null;
+            if (hitSeconds > 0f)
+            {
+                yield return HitReplaceEmotionRoutine(sequence[i], hitSeconds);
+                float restSeconds = interval - hitSeconds;
+                if (restSeconds > 0f) yield return new WaitForSeconds(restSeconds);
+            }
+            else
+            {
+                ShowEmotion(sequence[i]);
+                yield return null;
+            }
         }
 
-        ShowEmotion(finalResult);
         if (completeHoldSeconds > 0f) yield return new WaitForSeconds(completeHoldSeconds);
 
         if (hideAfterComplete) SetVisible(false);
@@ -126,33 +149,63 @@ public class EmotionCardDrawView : MonoBehaviour
         onComplete?.Invoke();
     }
 
+    /// <summary>
+    /// 直接切成指定卡片,不做打下去動畫。
+    /// 小抽選與外部強制顯示使用。
+    /// </summary>
     public void ShowEmotion(HeroineEmotionCardType type)
     {
-        ClearCurrentCard();
+        HideAllCards();
 
-        if (cardPrefabMap.TryGetValue(type, out var prefab) && prefab != null)
+        if (!cardInstances.TryGetValue(type, out var instance) || instance == null)
         {
-            Transform parent = cardRoot != null ? cardRoot : transform;
-            currentCard = Instantiate(prefab, parent);
-            currentCard.Setup(type, false); // 抽卡演出不顯示情緒代表字。
-
-            if (emotionImage != null) emotionImage.enabled = false;
+            Debug.LogWarning($"[EmotionCardDrawView] EmotionCard instance not found: {type}", this);
             return;
         }
 
-        // Fallback：沒有 EmotionCard prefab 時，沿用舊 Image 顯示。
-        if (emotionImage != null)
+        instance.gameObject.SetActive(true);
+        instance.Setup(false);
+        ResetTransform(instance.transform);
+        currentCard = instance;
+    }
+
+    private IEnumerator HitReplaceEmotionRoutine(HeroineEmotionCardType type, float seconds)
+    {
+        if (!cardInstances.TryGetValue(type, out var incomingCard) || incomingCard == null)
         {
-            if (spriteMap.TryGetValue(type, out var sprite) && sprite != null)
-            {
-                emotionImage.enabled = true;
-                emotionImage.sprite = sprite;
-            }
-            else
-            {
-                emotionImage.enabled = false;
-            }
+            Debug.LogWarning($"[EmotionCardDrawView] EmotionCard instance not found: {type}", this);
+            yield break;
         }
+
+        EmotionCard previousCard = currentCard;
+
+        incomingCard.gameObject.SetActive(true);
+        incomingCard.Setup(false);
+        ResetTransform(incomingCard.transform);
+        incomingCard.transform.localScale = Vector3.one * incomingStartScale;
+        incomingCard.transform.SetAsLastSibling();
+
+        // 如果新舊是同一張實例,就不可能同時顯示兩張。
+        // 這種情況只重播縮放感,避免把自己關掉。
+        bool sameCard = previousCard == incomingCard;
+
+        float elapsed = 0f;
+        while (elapsed < seconds)
+        {
+            elapsed += Time.deltaTime;
+            float t = seconds > 0f ? Mathf.Clamp01(elapsed / seconds) : 1f;
+            incomingCard.transform.localScale = Vector3.Lerp(Vector3.one * incomingStartScale, Vector3.one, t);
+            yield return null;
+        }
+
+        incomingCard.transform.localScale = Vector3.one;
+
+        if (!sameCard && previousCard != null)
+        {
+            previousCard.gameObject.SetActive(false);
+        }
+
+        currentCard = incomingCard;
     }
 
     public void SetVisible(bool visible)
@@ -160,43 +213,68 @@ public class EmotionCardDrawView : MonoBehaviour
         if (root != null)
         {
             root.SetActive(visible);
-            if (!visible) ClearCurrentCard();
+        }
+
+        if (!visible)
+        {
+            HideAllCards();
+        }
+    }
+
+    private void HideAllCards()
+    {
+        foreach (var pair in cardInstances)
+        {
+            if (pair.Value == null) continue;
+            pair.Value.gameObject.SetActive(false);
+            ResetTransform(pair.Value.transform);
+        }
+
+        currentCard = null;
+    }
+
+    private void BuildCardInstances()
+    {
+        cardInstances.Clear();
+
+        if (catalog == null)
+        {
+            Debug.LogWarning("[EmotionCardDrawView] EmotionCardCatalog is not assigned.", this);
             return;
         }
 
-        if (emotionImage != null) emotionImage.enabled = visible;
-        if (!visible) ClearCurrentCard();
-    }
-
-    private void ClearCurrentCard()
-    {
-        if (currentCard != null)
+        foreach (var entry in catalog.Entries)
         {
-            Destroy(currentCard.gameObject);
-            currentCard = null;
+            if (entry == null || entry.Prefab == null) continue;
+            if (cardInstances.ContainsKey(entry.Type))
+            {
+                Debug.LogWarning($"[EmotionCardDrawView] Duplicate emotion type in catalog: {entry.Type}", this);
+                continue;
+            }
+
+            var instance = Instantiate(entry.Prefab, cardRoot);
+            ResetTransform(instance.transform);
+            instance.gameObject.SetActive(false);
+            cardInstances[entry.Type] = instance;
         }
     }
 
-    private void RebuildMaps()
+    private static void ResetTransform(Transform t)
     {
-        cardPrefabMap.Clear();
-        if (emotionCardPrefabs != null)
+        if (t is RectTransform rt)
         {
-            foreach (var entry in emotionCardPrefabs)
-            {
-                if (entry == null) continue;
-                cardPrefabMap[entry.Type] = entry.Prefab;
-            }
+            rt.anchorMin = new Vector2(0.5f, 0.5f);
+            rt.anchorMax = new Vector2(0.5f, 0.5f);
+            rt.pivot = new Vector2(0.5f, 0.5f);
+            rt.anchoredPosition = Vector2.zero;
+            rt.localScale = Vector3.one;
+            rt.localRotation = Quaternion.identity;
         }
-
-        spriteMap.Clear();
-        if (emotionSprites != null)
+        else
         {
-            foreach (var entry in emotionSprites)
-            {
-                if (entry == null) continue;
-                spriteMap[entry.Type] = entry.Sprite;
-            }
+            t.localPosition = Vector3.zero;
+            t.localRotation = Quaternion.identity;
+            t.localScale = Vector3.one;
         }
     }
 }
