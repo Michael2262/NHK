@@ -164,7 +164,7 @@ public class GameStatusService : MonoBehaviour
         // 實例化 ItemUseService
         ItemUseService = new ItemUseService(itemDatabase, this);
         // 實例化 ShopService，將所有它需要的依賴項從上面已經創建好的實例中傳入
-        ShopService = new ShopService(Protagonist, Inventory, ShopStatus, itemDatabase);
+        ShopService = new ShopService(Protagonist, Inventory, ShopStatus, PendingDelivery,itemDatabase, () => Protagonist.Day);
         // 啟動觸發系統
         TriggerManager = new HeroineStatTriggerManager(ProgressFlags, Heroines, heroineTriggerContainers);
 

@@ -83,6 +83,10 @@ public class ItemConfigData : ScriptableObject
     public int MaxPurchaseLimit = 0;
     public PurchaseFrequency ResetFrequency = PurchaseFrequency.None;
 
+    [Header("配送模式")]
+    [Tooltip("勾選後為網購模式，商品隔天 P0S1 到貨，而非現買現拿。")]
+    public bool IsOnlineOrder;
+
     [Header("Targeting")]
     [Tooltip("定義這個道具可以對誰使用")]
     public ItemTargetingRule TargetingRule;

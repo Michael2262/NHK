@@ -8,9 +8,13 @@ public class ShopService
     private readonly ProtagonistStatusModel _protagonistStatusModel;
     private readonly ProtagonistInventoryModel _inventoryModel;
     private readonly ShopStatusModel _shopStatusModel;
+    private readonly PendingDeliveryModel _pendingDeliveryModel;
 
     // 依賴的配置檔案 (從 GameStatusService 傳入)
     private readonly ItemDatabase _itemDatabase;
+
+    // 用於取得當前天數（下單時需要）
+    private readonly System.Func<int> _getCurrentDay;
 
     /// <summary>
     /// 建構函式，用來注入所有必要的依賴。
@@ -19,12 +23,16 @@ public class ShopService
         ProtagonistStatusModel protagonistStatus,
         ProtagonistInventoryModel inventory,
         ShopStatusModel shopStatus,
-        ItemDatabase itemDatabase)
+        PendingDeliveryModel pendingDelivery,
+        ItemDatabase itemDatabase,
+        System.Func<int> getCurrentDay)
     {
         _protagonistStatusModel = protagonistStatus;
         _inventoryModel = inventory;
         _shopStatusModel = shopStatus;
+        _pendingDeliveryModel = pendingDelivery;
         _itemDatabase = itemDatabase;
+        _getCurrentDay = getCurrentDay;
     }
 
     /// <summary>
@@ -66,11 +74,25 @@ public class ShopService
             return PurchaseResult.NotEnoughCoins;
         }
 
-        // 5. 增加道具到背包
-        _inventoryModel.AddItem(itemID, 1);
+        // 5. 入庫或下單
+        if (itemConfig.IsOnlineOrder)
+        {
+            // 網購模式：不直接入庫，改為下訂單，隔天 P0S1 到貨
+            _pendingDeliveryModel.PlaceOrder(itemID, 1, _getCurrentDay());
+        }
+        else
+        {
+            // 現買現拿：直接加入背包
+            _inventoryModel.AddItem(itemID, 1);
+        }
 
         // 6. 檢查是否為「無人使用的道具」(NoBody)，如果是，則直接套用被動效果
-        if (itemConfig.TargetingRule != null && itemConfig.TargetingRule.Category == TargetCategory.NoBody)
+        //    ★ 注意：網購商品的 NoBody 被動效果在到貨入庫時「不會」自動觸發，
+        //       因為被動效果語義上屬於「獲取當下」。
+        //       如果未來需要到貨時也觸發，可在 PendingDeliveryModel.ProcessDeliveries 中擴充。
+        if (!itemConfig.IsOnlineOrder &&
+            itemConfig.TargetingRule != null &&
+            itemConfig.TargetingRule.Category == TargetCategory.NoBody)
         {
             ApplyPassiveEffectsOnAcquire(itemConfig);
         }
@@ -78,11 +100,11 @@ public class ShopService
         // 7. 更新商店的已購買次數
         _shopStatusModel.IncreasePurchasedCount(itemID, 1);
 
-        Debug.Log($"[ShopService] 成功購買 {itemConfig.DisplayName}！");
+        Debug.Log($"[ShopService] 成功購買 {itemConfig.DisplayName}！" +
+                  (itemConfig.IsOnlineOrder ? "（網購，隔天到貨）" : ""));
         return PurchaseResult.Success;
     }
 
-    // ▼▼▼【★ 修改：改用新的效果系統 ★】▼▼▼
     /// <summary>
     /// 處理 NoBody 類型道具在獲取時觸發的被動效果。
     /// 使用新的 ItemEffect + EffectContext 系統，
@@ -113,7 +135,6 @@ public class ShopService
             }
         }
     }
-    // ▲▲▲【修改結束】▲▲▲
 }
 
 /// <summary>
