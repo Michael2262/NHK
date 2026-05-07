@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 // 這是一個輕量級的摘要類別,專門用於在「讀檔選單」中顯示資訊
@@ -35,13 +35,14 @@ public class GameSaveData
     public TimeSaveData TimeData;
 
     // ==========================================================
-    // 系統數據 (Inventory, Shop, Skill)
+    // 系統數據 (Inventory, Shop, Skill, Delivery)
     // ==========================================================
     public InventorySaveData InventoryData;
     public ShopSaveData ShopStatusData;
     public SkillSaveData SkillData;
     public ProtagonistStatusEffectSaveData StatusEffectData; //狀態效果的存檔數據
     public ProgressFlagSaveData ProgressFlagData;// 進度開關存檔數據
+    public DeliverySaveData DeliveryData; // 網購待到貨訂單
 
     // ==========================================================
     // 女主角數據 (已修改為 JsonUtility 相容格式)
@@ -63,11 +64,12 @@ public class GameSaveData
         MetaData = new SaveSlotMetaData();
         ProtagonistData = new ProtagonistSaveData();
         TimeData = new TimeSaveData();
-        InventoryData = new InventorySaveData(); // (假設類別名稱)
+        InventoryData = new InventorySaveData();
         ShopStatusData = new ShopSaveData();
         SkillData = new SkillSaveData();
         StatusEffectData = new ProtagonistStatusEffectSaveData();
         ProgressFlagData = new ProgressFlagSaveData();
+        DeliveryData = new DeliverySaveData();
 
         // 初始化新增的欄位
         ScenarioData = new CurrentScenarioSaveData();

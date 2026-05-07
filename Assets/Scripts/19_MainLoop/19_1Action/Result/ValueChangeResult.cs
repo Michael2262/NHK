@@ -5,7 +5,7 @@ using UnityEngine.Events;
 
 /// <summary>
 /// NHK 版資源 / 狀態變動結果處理器。
-/// 支援：Stress / LifePower / SocialFear / Dependency / Money / SkillPoints / Time / Heroine resources。
+/// 支援：Stress / LifePower / SocialFear / Dependency / Money / SkillPoints / Time / Heroine resources / Flag 開關。
 /// </summary>
 [AddComponentMenu("Game/API/Value Change Result")]
 public class ValueChangeResult : MonoBehaviour
@@ -81,6 +81,28 @@ public class ValueChangeResult : MonoBehaviour
         public RandomEffectSettings randomEffect = new RandomEffectSettings();
     }
 
+    // ==================================================
+    // Flag 操作類型
+    // ==================================================
+    public enum FlagOperation
+    {
+        AddFlag,    // 開啟 Flag
+        RemoveFlag  // 移除 Flag
+    }
+
+    [Serializable]
+    public class FlagChangeItem
+    {
+        [Tooltip("要操作的 Flag 定義（拖曳 ProgressFlagDefinition 資源）")]
+        public ProgressFlagDefinition flagDefinition;
+
+        [Tooltip("操作類型：開啟 / 移除")]
+        public FlagOperation operation = FlagOperation.AddFlag;
+
+        [Tooltip("Flag 生命週期（僅 AddFlag 時生效；RemoveFlag 會清掉所有桶子）")]
+        public FlagLifetime lifetime = FlagLifetime.Persistent;
+    }
+
     public enum EffectResult
     {
         Normal,
@@ -105,7 +127,10 @@ public class ValueChangeResult : MonoBehaviour
     [SerializeField] private string targetHeroineID = "";
     [SerializeField] private List<HeroineResourceChangeItem> heroineResourceChanges = new List<HeroineResourceChangeItem>();
 
-    [Header("6. 報告設定")]
+    [Header("6. Flag 開關（隱性，不報告）")]
+    [SerializeField] private List<FlagChangeItem> flagChanges = new List<FlagChangeItem>();
+
+    [Header("7. 報告設定")]
     [SerializeField] private bool autoReport = true;
 
     [Header("事件回調")]
@@ -141,6 +166,7 @@ public class ValueChangeResult : MonoBehaviour
         ExecuteTimeDeduction(t);
         ExecuteGains(p);
         ExecuteHeroineChanges();
+        ExecuteFlagChanges();
 
         if (autoReport)
         {
@@ -264,6 +290,49 @@ public class ValueChangeResult : MonoBehaviour
                 RecordChange(item.resourceType.ToString(), finalAmount, itemEffect, true, _targetHeroineNameKey);
                 Debug.Log($"[ValueChangeResult] 女主角資源變動 [{targetHeroineID}] - {item.resourceType}: {(finalAmount > 0 ? "+" : "")}{finalAmount} (效果: {itemEffect})");
             }
+        }
+    }
+
+    private void ExecuteFlagChanges()
+    {
+        if (flagChanges == null || flagChanges.Count == 0) return;
+
+        var service = GameStatusService.Instance;
+        var flagModel = service?.ProgressFlags;
+        if (flagModel == null)
+        {
+            Debug.LogWarning("[ValueChangeResult] ProgressFlags 尚未初始化，跳過 Flag 操作。");
+            return;
+        }
+
+        foreach (var item in flagChanges)
+        {
+            if (item == null || item.flagDefinition == null)
+            {
+                Debug.LogWarning("[ValueChangeResult] FlagChangeItem 缺少 flagDefinition，已跳過。");
+                continue;
+            }
+
+            string key = item.flagDefinition.FlagID;
+            if (string.IsNullOrEmpty(key))
+            {
+                Debug.LogWarning($"[ValueChangeResult] flagDefinition 的 FlagID 為空，已跳過：{item.flagDefinition.name}");
+                continue;
+            }
+
+            switch (item.operation)
+            {
+                case FlagOperation.AddFlag:
+                    flagModel.AddFlag(key, item.lifetime);
+                    Debug.Log($"[ValueChangeResult] Flag 開啟 - {key} (Lifetime: {item.lifetime})");
+                    break;
+
+                case FlagOperation.RemoveFlag:
+                    flagModel.RemoveFlag(key);
+                    Debug.Log($"[ValueChangeResult] Flag 移除 - {key}");
+                    break;
+            }
+            // 注意：刻意不呼叫 RecordChange，Flag 操作為隱性，不進報告。
         }
     }
 
@@ -459,6 +528,19 @@ public class ValueChangeResult : MonoBehaviour
     }
 
     public void ClearHeroineChangeItems() => heroineResourceChanges.Clear();
+
+    public void AddFlagChangeItem(ProgressFlagDefinition definition, FlagOperation operation, FlagLifetime lifetime = FlagLifetime.Persistent)
+    {
+        if (definition == null) return;
+        flagChanges.Add(new FlagChangeItem
+        {
+            flagDefinition = definition,
+            operation = operation,
+            lifetime = lifetime
+        });
+    }
+
+    public void ClearFlagChangeItems() => flagChanges.Clear();
 
     public void ExecuteHeroineChangesOnly()
     {

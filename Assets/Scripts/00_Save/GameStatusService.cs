@@ -59,6 +59,7 @@ public class GameStatusService : MonoBehaviour
     public ProtagonistSkillModel Skills { get; private set; }
     public TimeSystemModel Time { get; private set; }
     public ShopStatusModel ShopStatus { get; private set; }
+    public PendingDeliveryModel PendingDelivery { get; private set; }
     public ProgressFlagModel ProgressFlags { get; private set; }// 進度開關模型
 
     // 處理多女主角：使用 Dictionary 來儲存多個 Heroine Model
@@ -141,6 +142,7 @@ public class GameStatusService : MonoBehaviour
         ProgressFlags = new ProgressFlagModel();
         Skills = new ProtagonistSkillModel();
         ShopStatus = new ShopStatusModel();
+        PendingDelivery = new PendingDeliveryModel();
         StatusEffectModel = new ProtagonistStatusEffectModel();
 
         // TimeSystemModel: 注入 TimeConfig
@@ -237,6 +239,12 @@ public class GameStatusService : MonoBehaviour
 
             _scheduleProcessor?.NotifySlotAdvanced();
             _dayTriggerProcessor?.NotifySlotAdvanced();
+
+            // ── 網購到貨檢查：P0 S1 ──
+            if (Time.CurrentPhaseIndex == 0 && Time.CurrentSlotInPhase == 1)
+            {
+                PendingDelivery.ProcessDeliveries(Protagonist.Day, Inventory);
+            }
         };
 
         // 當進入下一個大階段(Phase)時，清理 Flag 並觸發數值映射
@@ -291,6 +299,7 @@ public class GameStatusService : MonoBehaviour
         Skills.NewGame();
         Inventory.NewGame();
         ShopStatus.NewGame();
+        PendingDelivery.NewGame();
         Time.NewGame();
         StatusEffectModel.NewGame();
         ProgressFlags.NewGame();

@@ -490,6 +490,13 @@ MonoBehaviour:
   duration: 2
   actionSprite: {fileID: 0}
   localizationKey: 
+  enableOutcomeResult: 0
+  successChance: 0.5
+  chanceProvider: {fileID: 0}
+  autoApplyChanceProviderOnExecute: 1
+  successLocalizationKey: Result.Success
+  failureLocalizationKey: Result.Failure
+  resultHoldSeconds: 2
   onCompleteEvents:
     m_PersistentCalls:
       m_Calls:
@@ -505,6 +512,15 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
+  onSuccessEvents:
+    m_PersistentCalls:
+      m_Calls: []
+  onFailureEvents:
+    m_PersistentCalls:
+      m_Calls: []
+  onStartEvents:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!114 &5701263640569232123
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -524,6 +540,7 @@ MonoBehaviour:
   manualTimeAmount: 0
   targetHeroineID: 
   heroineResourceChanges: []
+  flagChanges: []
   autoReport: 1
   onGoodEffect:
     m_PersistentCalls:
@@ -661,8 +678,6 @@ MonoBehaviour:
   amount: 0
   checkTime: 0
   timeAmount: 1
-  checkSuspicion: 0
-  suspicionLimit: 1
   onSuccess:
     m_PersistentCalls:
       m_Calls:
@@ -706,21 +721,6 @@ MonoBehaviour:
           m_IntArgument: 0
           m_FloatArgument: 0
           m_StringArgument: Ststem.Content_TimeNotEnough
-          m_BoolArgument: 0
-        m_CallState: 2
-  onSuspicionFailure:
-    m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 7114805782403896073}
-        m_TargetAssemblyTypeName: StoryBridge, Assembly-CSharp
-        m_MethodName: PlayConversation
-        m_Mode: 5
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: Common/TooSus
           m_BoolArgument: 0
         m_CallState: 2
 --- !u!114 &4241055633935974769

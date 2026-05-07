@@ -211,6 +211,7 @@ public class SaveGameManager
         _gameStatusService.Skills.LoadFromSaveData(data.SkillData);
         _gameStatusService.StatusEffectModel.LoadFromSaveData(data.StatusEffectData, _gameStatusService.StatusEffectDatabase);
         _gameStatusService.ProgressFlags.LoadFromSaveData(data.ProgressFlagData);
+        _gameStatusService.PendingDelivery.LoadFromSaveData(data.DeliveryData);
 
         // --- 女主角數據 ---
         if (data.HeroineIDs.Count == data.HeroineSaveDataList.Count)
@@ -270,6 +271,7 @@ public class SaveGameManager
         data.SkillData = _gameStatusService.Skills.ToSaveData();
         data.StatusEffectData = _gameStatusService.StatusEffectModel.ToSaveData();
         data.ProgressFlagData = _gameStatusService.ProgressFlags.ToSaveData();
+        data.DeliveryData = _gameStatusService.PendingDelivery.ToSaveData();
 
         data.HeroineIDs.Clear();
         data.HeroineSaveDataList.Clear();
