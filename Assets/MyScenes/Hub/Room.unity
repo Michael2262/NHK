@@ -1264,7 +1264,7 @@ MonoBehaviour:
           name: TRIGGER
           isSystemEvent: 0
           isGlobal: 0
-        toState: openBlockAndWait
+        toState: P3Open?
         linkStyle: 0
         linkConstraint: 0
         linkTarget: 0
@@ -1313,8 +1313,8 @@ MonoBehaviour:
       colorIndex: 0
       position:
         serializedVersion: 2
-        x: 55
-        y: 348
+        x: 53
+        y: 407
         width: 100
         height: 32
       isBreakpoint: 0
@@ -1384,8 +1384,8 @@ MonoBehaviour:
       colorIndex: 0
       position:
         serializedVersion: 2
-        x: 119
-        y: 263
+        x: 117
+        y: 322
         width: 100
         height: 48
       isBreakpoint: 0
@@ -1475,8 +1475,8 @@ MonoBehaviour:
       colorIndex: 0
       position:
         serializedVersion: 2
-        x: 201
-        y: 350
+        x: 199
+        y: 409
         width: 100
         height: 32
       isBreakpoint: 0
@@ -1546,8 +1546,8 @@ MonoBehaviour:
       colorIndex: 0
       position:
         serializedVersion: 2
-        x: 94
-        y: 188
+        x: 92
+        y: 247
         width: 140.85
         height: 32
       isBreakpoint: 0
@@ -1646,8 +1646,8 @@ MonoBehaviour:
       colorIndex: 0
       position:
         serializedVersion: 2
-        x: 128
-        y: 436
+        x: 126
+        y: 495
         width: 100
         height: 32
       isBreakpoint: 0
@@ -1729,6 +1729,97 @@ MonoBehaviour:
         - everyFrame
         paramDataPos: 0000000000000000010000000000000001000000
         paramByteDataSize: 0000000000000000000000000100000001000000
+    - name: P3Open?
+      description: 
+      colorIndex: 0
+      position:
+        serializedVersion: 2
+        x: 117
+        y: 170
+        width: 100
+        height: 48
+      isBreakpoint: 0
+      isSequence: 0
+      hideUnused: 0
+      transitions:
+      - fsmEvent:
+          name: P3Open
+          isSystemEvent: 0
+          isGlobal: 0
+        toState: wait
+        linkStyle: 0
+        linkConstraint: 0
+        linkTarget: 0
+        colorIndex: 0
+      - fsmEvent:
+          name: FINISHED
+          isSystemEvent: 1
+          isGlobal: 0
+        toState: openBlockAndWait
+        linkStyle: 0
+        linkConstraint: 0
+        linkTarget: 0
+        colorIndex: 0
+      actionData:
+        actionNames:
+        - MyGame.Actions.CheckProgressFlag
+        customNames:
+        - 
+        actionEnabled: 01
+        actionIsOpen: 01
+        actionStartIndex: 00000000
+        actionHashCodes: 4e617502
+        unityObjectParams: []
+        fsmGameObjectParams: []
+        fsmOwnerDefaultParams: []
+        animationCurveParams: []
+        functionCallParams: []
+        fsmTemplateControlParams: []
+        fsmEventTargetParams: []
+        fsmPropertyParams: []
+        layoutOptionParams: []
+        fsmStringParams:
+        - useVariable: 0
+          name: 
+          tooltip: 
+          showInInspector: 0
+          networkSync: 0
+          value: Flag_Scenario_Sister_P3Open
+        fsmObjectParams: []
+        fsmVarParams: []
+        fsmArrayParams: []
+        fsmEnumParams: []
+        fsmFloatParams: []
+        fsmIntParams: []
+        fsmBoolParams:
+        - useVariable: 1
+          name: 
+          tooltip: 
+          showInInspector: 0
+          networkSync: 0
+          value: 0
+        fsmVector2Params: []
+        fsmVector3Params: []
+        fsmColorParams: []
+        fsmRectParams: []
+        fsmQuaternionParams: []
+        stringParams:
+        - P3Open
+        - FINISHED
+        byteData: 00
+        arrayParamSizes: 
+        arrayParamTypes: []
+        customTypeSizes: 
+        customTypeNames: []
+        paramDataType: 1200000017000000170000001100000001000000
+        paramName:
+        - flag
+        - trueEvent
+        - falseEvent
+        - storeResult
+        - everyFrame
+        paramDataPos: 0000000000000000010000000000000000000000
+        paramByteDataSize: 0000000000000000000000000000000001000000
     events:
     - name: TRIGGER
       isSystemEvent: 0
@@ -1740,6 +1831,9 @@ MonoBehaviour:
       isSystemEvent: 0
       isGlobal: 0
     - name: Next
+      isSystemEvent: 0
+      isGlobal: 0
+    - name: P3Open
       isSystemEvent: 0
       isGlobal: 0
     globalTransitions: []
@@ -4008,7 +4102,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4598444958647385213, guid: ebb0911a63b51c4428ebcf8e42a79d78, type: 3}
       propertyPath: storyConditions.Array.size
-      value: 2
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 4598444958647385213, guid: ebb0911a63b51c4428ebcf8e42a79d78, type: 3}
       propertyPath: storyConditions.Array.data[0].isDefault
@@ -4016,6 +4110,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4598444958647385213, guid: ebb0911a63b51c4428ebcf8e42a79d78, type: 3}
       propertyPath: storyConditions.Array.data[1].isDefault
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4598444958647385213, guid: ebb0911a63b51c4428ebcf8e42a79d78, type: 3}
+      propertyPath: storyConditions.Array.data[2].isDefault
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4598444958647385213, guid: ebb0911a63b51c4428ebcf8e42a79d78, type: 3}
@@ -4025,14 +4123,18 @@ PrefabInstance:
     - target: {fileID: 4598444958647385213, guid: ebb0911a63b51c4428ebcf8e42a79d78, type: 3}
       propertyPath: storyConditions.Array.data[1].requiredFlag
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 11400000, guid: 0dd5b7f673488c34fad4d7bb4f298bc2, type: 2}
     - target: {fileID: 4598444958647385213, guid: ebb0911a63b51c4428ebcf8e42a79d78, type: 3}
       propertyPath: storyConditions.Array.data[0].conversationTitle
-      value: Hub/Sister/Room/DefaultTalk
+      value: DayLoopTalk/P2/Smoke
       objectReference: {fileID: 0}
     - target: {fileID: 4598444958647385213, guid: ebb0911a63b51c4428ebcf8e42a79d78, type: 3}
       propertyPath: storyConditions.Array.data[1].conversationTitle
-      value: Hub/Sister/Room/DefaultTalk
+      value: DayLoopTalk/P2/CleanRoom
+      objectReference: {fileID: 0}
+    - target: {fileID: 4598444958647385213, guid: ebb0911a63b51c4428ebcf8e42a79d78, type: 3}
+      propertyPath: storyConditions.Array.data[2].conversationTitle
+      value: DayLoopTalk/P2/Default
       objectReference: {fileID: 0}
     - target: {fileID: 4624978315523327898, guid: ebb0911a63b51c4428ebcf8e42a79d78, type: 3}
       propertyPath: m_AnchoredPosition.x
@@ -6929,6 +7031,63 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1069227519}
   m_CullTransparentMesh: 1
+--- !u!1001 &1082227874
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 7298670687876378204, guid: 58c999461c4ab274f9db2d80b5205093, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 948.32117
+      objectReference: {fileID: 0}
+    - target: {fileID: 7298670687876378204, guid: 58c999461c4ab274f9db2d80b5205093, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 869.96606
+      objectReference: {fileID: 0}
+    - target: {fileID: 7298670687876378204, guid: 58c999461c4ab274f9db2d80b5205093, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7298670687876378204, guid: 58c999461c4ab274f9db2d80b5205093, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7298670687876378204, guid: 58c999461c4ab274f9db2d80b5205093, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7298670687876378204, guid: 58c999461c4ab274f9db2d80b5205093, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7298670687876378204, guid: 58c999461c4ab274f9db2d80b5205093, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7298670687876378204, guid: 58c999461c4ab274f9db2d80b5205093, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7298670687876378204, guid: 58c999461c4ab274f9db2d80b5205093, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7298670687876378204, guid: 58c999461c4ab274f9db2d80b5205093, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8658884883466889431, guid: 58c999461c4ab274f9db2d80b5205093, type: 3}
+      propertyPath: m_Name
+      value: CoreManager
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 58c999461c4ab274f9db2d80b5205093, type: 3}
 --- !u!1 &1098861314
 GameObject:
   m_ObjectHideFlags: 0
@@ -8326,7 +8485,7 @@ MonoBehaviour:
       colorIndex: 0
       position:
         serializedVersion: 2
-        x: 66
+        x: 50
         y: 110
         width: 100
         height: 32
@@ -8387,7 +8546,7 @@ MonoBehaviour:
       colorIndex: 0
       position:
         serializedVersion: 2
-        x: 69
+        x: 53
         y: 183
         width: 100
         height: 48
@@ -8478,7 +8637,7 @@ MonoBehaviour:
       colorIndex: 0
       position:
         serializedVersion: 2
-        x: 249
+        x: 233
         y: 184
         width: 108.04
         height: 48
@@ -8588,8 +8747,8 @@ MonoBehaviour:
       colorIndex: 0
       position:
         serializedVersion: 2
-        x: 63
-        y: 291
+        x: 51
+        y: 294
         width: 116.55
         height: 48
       isBreakpoint: 0
@@ -8609,7 +8768,7 @@ MonoBehaviour:
           name: FINISHED
           isSystemEvent: 1
           isGlobal: 0
-        toState: "\u72C0\u614B 1"
+        toState: "\u662F\u5426\u8D70\"\u6E05\u7406\u623F\u9593'?"
         linkStyle: 0
         linkConstraint: 0
         linkTarget: 0
@@ -8679,7 +8838,7 @@ MonoBehaviour:
       colorIndex: 0
       position:
         serializedVersion: 2
-        x: 418
+        x: 402
         y: 188
         width: 100
         height: 32
@@ -8785,7 +8944,7 @@ MonoBehaviour:
       colorIndex: 0
       position:
         serializedVersion: 2
-        x: 240
+        x: 224
         y: 290
         width: 133.72
         height: 48
@@ -8895,7 +9054,7 @@ MonoBehaviour:
       colorIndex: 0
       position:
         serializedVersion: 2
-        x: 421
+        x: 405
         y: 291
         width: 103.71
         height: 32
@@ -8944,7 +9103,7 @@ MonoBehaviour:
           tooltip: 
           showInInspector: 0
           networkSync: 0
-          value: Flag_HubAction_CleanRoom
+          value: Flag_HubAction_Smoke
         - useVariable: 0
           name: 
           tooltip: 
@@ -9001,8 +9160,8 @@ MonoBehaviour:
       colorIndex: 0
       position:
         serializedVersion: 2
-        x: 630
-        y: 258
+        x: 622
+        y: 249
         width: 100
         height: 32
       isBreakpoint: 0
@@ -9062,14 +9221,23 @@ MonoBehaviour:
       colorIndex: 0
       position:
         serializedVersion: 2
-        x: 66
+        x: 50
         y: 404
         width: 100
-        height: 16
+        height: 32
       isBreakpoint: 0
       isSequence: 0
       hideUnused: 0
-      transitions: []
+      transitions:
+      - fsmEvent:
+          name: FINISHED
+          isSystemEvent: 1
+          isGlobal: 0
+        toState: "\u6536\u675F"
+        linkStyle: 0
+        linkConstraint: 0
+        linkTarget: 0
+        colorIndex: 0
       actionData:
         actionNames: []
         customNames: []
@@ -14147,3 +14315,4 @@ SceneRoots:
   - {fileID: 1931643958}
   - {fileID: 350774505}
   - {fileID: 1051075459}
+  - {fileID: 1082227874}

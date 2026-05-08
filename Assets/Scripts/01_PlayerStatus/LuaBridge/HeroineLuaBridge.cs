@@ -3,10 +3,29 @@ using PixelCrushers.DialogueSystem;
 
 /// <summary>
 /// 將 HeroineStatusModel 的數值橋接到 Pixel Crushers Dialogue System 的 Lua 環境。
-/// 在對話節點的 Conditions / Script 欄位即可使用，例如：
-///   GetLewdnessLevel("sister") >= 3;
-///   IsInHeat("sister") == true;
-///   GetCurrentEmotion("sister") == "Angry";
+/// NHK 版：核心為情緒卡池系統。
+///
+/// ── 情緒卡查詢 ──
+///   GetEmotionCardCount("sister", "Shy")           → 該情緒卡的張數
+///   GetEmotionDeckMax("sister")                    → 卡池上限
+///   GetIntimateMoodScore("sister")                 → 親密情緒分數 (Shy+Relaxed+Maternal)
+///   GetNegativeMoodScore("sister")                 → 負面情緒分數 (Angry+Disappointed)
+///   GetCareMoodScore("sister")                     → 關懷情緒分數 (Worried+Maternal)
+///   IsDisappointmentHigh("sister")                 → 失望卡 ≥ 3
+///   IsMaternalHigh("sister")                       → 母性卡 ≥ 3
+///   IsShyHigh("sister")                            → 害羞卡 ≥ 3
+///
+/// ── 主導情緒 ──
+///   GetCurrentEmotion("sister")                    → "Angry" / "Shy" / ...
+///
+/// ── H 次數 ──
+///   GetHCount("sister")                            → H 次數
+///
+/// 用法範例（Dialogue System Conditions）：
+///   GetEmotionCardCount("sister", "Shy") >= 3
+///   GetCurrentEmotion("sister") == "Maternal"
+///   GetHCount("sister") >= 1
+///   IsDisappointmentHigh("sister") == true
 /// </summary>
 public class HeroineLuaBridge : MonoBehaviour
 {
@@ -25,42 +44,50 @@ public class HeroineLuaBridge : MonoBehaviour
 
     void OnEnable()
     {
-        // ── 數值類 (回傳 double，Lua 端會自動視為 number) ──
-        Lua.RegisterFunction("GetLewdnessLevel", this,
-            SymbolExtensions.GetMethodInfo(() => GetLewdnessLevel(string.Empty)));
-        Lua.RegisterFunction("GetBaseAffinityLevel", this,
-            SymbolExtensions.GetMethodInfo(() => GetBaseAffinityLevel(string.Empty)));
-        Lua.RegisterFunction("GetBaseExcitementLevel", this,
-            SymbolExtensions.GetMethodInfo(() => GetBaseExcitementLevel(string.Empty)));
-        Lua.RegisterFunction("GetPersonalSuspicion", this,
-            SymbolExtensions.GetMethodInfo(() => GetPersonalSuspicion(string.Empty)));
-        Lua.RegisterFunction("GetHCount", this,
-            SymbolExtensions.GetMethodInfo(() => GetHCount(string.Empty)));
+        // ── 情緒卡查詢 ──
+        Lua.RegisterFunction("GetEmotionCardCount", this,
+            SymbolExtensions.GetMethodInfo(() => GetEmotionCardCount(string.Empty, string.Empty)));
+        Lua.RegisterFunction("GetEmotionDeckMax", this,
+            SymbolExtensions.GetMethodInfo(() => GetEmotionDeckMax(string.Empty)));
+        Lua.RegisterFunction("GetIntimateMoodScore", this,
+            SymbolExtensions.GetMethodInfo(() => GetIntimateMoodScore(string.Empty)));
+        Lua.RegisterFunction("GetNegativeMoodScore", this,
+            SymbolExtensions.GetMethodInfo(() => GetNegativeMoodScore(string.Empty)));
+        Lua.RegisterFunction("GetCareMoodScore", this,
+            SymbolExtensions.GetMethodInfo(() => GetCareMoodScore(string.Empty)));
+        Lua.RegisterFunction("IsDisappointmentHigh", this,
+            SymbolExtensions.GetMethodInfo(() => IsDisappointmentHigh(string.Empty)));
+        Lua.RegisterFunction("IsMaternalHigh", this,
+            SymbolExtensions.GetMethodInfo(() => IsMaternalHigh(string.Empty)));
+        Lua.RegisterFunction("IsShyHigh", this,
+            SymbolExtensions.GetMethodInfo(() => IsShyHigh(string.Empty)));
 
-        // ── 布林類 ──
-        Lua.RegisterFunction("IsSuspicionAtMax", this,
-            SymbolExtensions.GetMethodInfo(() => IsSuspicionAtMax(string.Empty)));
-        Lua.RegisterFunction("IsInHeat", this,
-            SymbolExtensions.GetMethodInfo(() => IsInHeat(string.Empty)));
-        Lua.RegisterFunction("IsEnraged", this,
-            SymbolExtensions.GetMethodInfo(() => IsEnraged(string.Empty)));
-
-        // ── 列舉類 (Lua 沒有 enum，回傳字串做比對) ──
+        // ── 主導情緒 ──
         Lua.RegisterFunction("GetCurrentEmotion", this,
             SymbolExtensions.GetMethodInfo(() => GetCurrentEmotion(string.Empty)));
+
+        // ── H 次數 ──
+        Lua.RegisterFunction("GetHCount", this,
+            SymbolExtensions.GetMethodInfo(() => GetHCount(string.Empty)));
     }
 
     void OnDisable()
     {
-        Lua.UnregisterFunction("GetLewdnessLevel");
-        Lua.UnregisterFunction("GetBaseAffinityLevel");
-        Lua.UnregisterFunction("GetBaseExcitementLevel");
-        Lua.UnregisterFunction("GetPersonalSuspicion");
-        Lua.UnregisterFunction("GetHCount");
-        Lua.UnregisterFunction("IsSuspicionAtMax");
-        Lua.UnregisterFunction("IsInHeat");
-        Lua.UnregisterFunction("IsEnraged");
+        // ── 情緒卡查詢 ──
+        Lua.UnregisterFunction("GetEmotionCardCount");
+        Lua.UnregisterFunction("GetEmotionDeckMax");
+        Lua.UnregisterFunction("GetIntimateMoodScore");
+        Lua.UnregisterFunction("GetNegativeMoodScore");
+        Lua.UnregisterFunction("GetCareMoodScore");
+        Lua.UnregisterFunction("IsDisappointmentHigh");
+        Lua.UnregisterFunction("IsMaternalHigh");
+        Lua.UnregisterFunction("IsShyHigh");
+
+        // ── 主導情緒 ──
         Lua.UnregisterFunction("GetCurrentEmotion");
+
+        // ── H 次數 ──
+        Lua.UnregisterFunction("GetHCount");
     }
 
     // ─────────────────────────────────────────────
@@ -78,27 +105,105 @@ public class HeroineLuaBridge : MonoBehaviour
     }
 
     // ─────────────────────────────────────────────
-    // 數值
+    // 情緒卡查詢
     // ─────────────────────────────────────────────
-    public double GetLewdnessLevel(string heroineID)       => GetModel(heroineID)?.LewdnessLevel ?? 0;
-    public double GetBaseAffinityLevel(string heroineID)   => GetModel(heroineID)?.BaseAffinityLevel ?? 0;
-    public double GetBaseExcitementLevel(string heroineID) => GetModel(heroineID)?.BaseExcitementLevel ?? 0;
-    public double GetPersonalSuspicion(string heroineID)   => GetModel(heroineID)?.PersonalSuspicion ?? 0;
-    public double GetHCount(string heroineID)              => GetModel(heroineID)?.HCount ?? 0;
+
+    /// <summary>
+    /// 取得指定情緒卡的張數。
+    /// Lua: GetEmotionCardCount("sister", "Shy")
+    /// emotionName 接受英文 enum 名稱：Angry / Shy / Worried / Maternal / Relaxed / Disappointed
+    /// </summary>
+    public double GetEmotionCardCount(string heroineID, string emotionName)
+    {
+        var model = GetModel(heroineID);
+        if (model == null) return 0;
+
+        if (!System.Enum.TryParse(emotionName?.Trim(), true, out HeroineEmotionCardType emotion))
+        {
+            Debug.LogWarning($"[HeroineLuaBridge] GetEmotionCardCount 無法解析情緒類型: {emotionName}");
+            return 0;
+        }
+
+        return model.GetCardCount(emotion);
+    }
+
+    /// <summary>
+    /// 取得情緒卡池上限張數。
+    /// Lua: GetEmotionDeckMax("sister")
+    /// </summary>
+    public double GetEmotionDeckMax(string heroineID)
+    {
+        return GetModel(heroineID)?.EmotionDeckMaxCount ?? 0;
+    }
+
+    /// <summary>
+    /// 親密情緒分數 = Shy + Relaxed + Maternal 張數。
+    /// Lua: GetIntimateMoodScore("sister")
+    /// </summary>
+    public double GetIntimateMoodScore(string heroineID)
+    {
+        return GetModel(heroineID)?.GetIntimateMoodScore() ?? 0;
+    }
+
+    /// <summary>
+    /// 負面情緒分數 = Angry + Disappointed 張數。
+    /// Lua: GetNegativeMoodScore("sister")
+    /// </summary>
+    public double GetNegativeMoodScore(string heroineID)
+    {
+        return GetModel(heroineID)?.GetNegativeMoodScore() ?? 0;
+    }
+
+    /// <summary>
+    /// 關懷情緒分數 = Worried + Maternal 張數。
+    /// Lua: GetCareMoodScore("sister")
+    /// </summary>
+    public double GetCareMoodScore(string heroineID)
+    {
+        return GetModel(heroineID)?.GetCareMoodScore() ?? 0;
+    }
+
+    /// <summary>失望卡 ≥ 3。</summary>
+    public bool IsDisappointmentHigh(string heroineID)
+    {
+        return GetModel(heroineID)?.IsDisappointmentHigh() ?? false;
+    }
+
+    /// <summary>母性卡 ≥ 3。</summary>
+    public bool IsMaternalHigh(string heroineID)
+    {
+        return GetModel(heroineID)?.IsMaternalHigh() ?? false;
+    }
+
+    /// <summary>害羞卡 ≥ 3。</summary>
+    public bool IsShyHigh(string heroineID)
+    {
+        return GetModel(heroineID)?.IsShyHigh() ?? false;
+    }
 
     // ─────────────────────────────────────────────
-    // 布林
+    // 主導情緒 → 字串
     // ─────────────────────────────────────────────
-    public bool IsSuspicionAtMax(string heroineID) => GetModel(heroineID)?.IsSuspicionAtMax ?? false;
-    public bool IsInHeat(string heroineID)         => GetModel(heroineID)?.IsInHeat ?? false;
-    public bool IsEnraged(string heroineID)        => GetModel(heroineID)?.IsEnraged ?? false;
 
-    // ─────────────────────────────────────────────
-    // 列舉 → 字串
-    // ─────────────────────────────────────────────
+    /// <summary>
+    /// 取得當前主導情緒（由卡池自動計算）。
+    /// Lua: GetCurrentEmotion("sister") == "Shy"
+    /// </summary>
     public string GetCurrentEmotion(string heroineID)
     {
         var m = GetModel(heroineID);
         return m != null ? m.CurrentEmotion.ToString() : string.Empty;
+    }
+
+    // ─────────────────────────────────────────────
+    // H 次數
+    // ─────────────────────────────────────────────
+
+    /// <summary>
+    /// Lua: GetHCount("sister") >= 1
+    /// </summary>
+    public double GetHCount(string heroineID)
+    {
+        return GetModel(heroineID)?.HCount ?? 0;
     }
 }

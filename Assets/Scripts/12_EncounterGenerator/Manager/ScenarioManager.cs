@@ -259,7 +259,8 @@ public class ScenarioManager : MonoBehaviour
                 if (handledHeroineIDs.Contains(script.heroineID)) continue;
 
                 // 檢查是否滿足所有定義的進度旗標
-                bool allFlagsMet = script.requiredFlags.All(f => _flags.Contains(f.FlagID));
+                bool allFlagsMet = script.requiredFlags != null
+                        && script.requiredFlags.All(f => f != null && _flags.Contains(f.FlagID));
 
                 if (allFlagsMet)
                 {
@@ -276,7 +277,8 @@ public class ScenarioManager : MonoBehaviour
             {
                 if (handledRiskIDs.Contains(script.agentID)) continue;
 
-                bool allFlagsMet = script.requiredFlags.All(f => _flags.Contains(f.FlagID));
+                bool allFlagsMet = script.requiredFlags != null
+                        && script.requiredFlags.All(f => f != null && _flags.Contains(f.FlagID));
 
                 if (allFlagsMet)
                 {
