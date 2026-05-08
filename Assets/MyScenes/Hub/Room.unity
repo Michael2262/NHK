@@ -2587,7 +2587,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &378151159
 Transform:
   m_ObjectHideFlags: 0
@@ -5736,7 +5736,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 2272863855504091501, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
       propertyPath: m_text
-      value: "\u5617\u8A66\u51FA\u9580\uFF08\uFF15\uFF05\uFF09"
+      value: "\u5617\u8A66\u51FA\u9580"
       objectReference: {fileID: 0}
     - target: {fileID: 3537198183688809409, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
       propertyPath: m_Name
@@ -5744,7 +5744,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6421439240120235383, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6421439240120235383, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 893368954}
+    - target: {fileID: 6421439240120235383, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: SwitchScene
+      objectReference: {fileID: 0}
+    - target: {fileID: 6421439240120235383, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
+      value: SceneChangeButton, Assembly-CSharp
       objectReference: {fileID: 0}
     - target: {fileID: 7840533614062965497, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
       propertyPath: m_Pivot.x
@@ -5877,13 +5889,36 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 333929077466992854, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 893368954}
   m_SourcePrefab: {fileID: 100100000, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
 --- !u!224 &893368952 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 7840533614062965497, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
   m_PrefabInstance: {fileID: 893368951}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &893368953 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 333929077466992854, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
+  m_PrefabInstance: {fileID: 893368951}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &893368954
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 893368953}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8233784672146cb439ef66d510c53f48, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SceneChangeButton
+  targetScene: FrontDoor
+  updateScenario: 1
+  entryID: DefaultEntry
 --- !u!1001 &920059166
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -5900,6 +5935,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Hub_Button_Eat
       objectReference: {fileID: 0}
+    - target: {fileID: 3537198183688809409, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 7840533614062965497, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -5914,7 +5953,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7840533614062965497, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7840533614062965497, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
       propertyPath: m_AnchorMin.x
@@ -5922,7 +5961,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7840533614062965497, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7840533614062965497, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
       propertyPath: m_SizeDelta.x
@@ -5962,11 +6001,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7840533614062965497, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 0
+      value: 343.88
       objectReference: {fileID: 0}
     - target: {fileID: 7840533614062965497, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0
+      value: -349.64
       objectReference: {fileID: 0}
     - target: {fileID: 7840533614062965497, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -8637,8 +8676,8 @@ MonoBehaviour:
       colorIndex: 0
       position:
         serializedVersion: 2
-        x: 233
-        y: 184
+        x: 241
+        y: 183
         width: 108.04
         height: 48
       isBreakpoint: 0
@@ -8768,7 +8807,7 @@ MonoBehaviour:
           name: FINISHED
           isSystemEvent: 1
           isGlobal: 0
-        toState: "\u662F\u5426\u8D70\"\u6E05\u7406\u623F\u9593'?"
+        toState: "\u72C0\u614B 1"
         linkStyle: 0
         linkConstraint: 0
         linkTarget: 0
@@ -8797,7 +8836,7 @@ MonoBehaviour:
           tooltip: 
           showInInspector: 0
           networkSync: 0
-          value: Flag_HubAction_Smoke
+          value: Flag_HubAction_CleanRoom
         fsmObjectParams: []
         fsmVarParams: []
         fsmArrayParams: []
@@ -8838,8 +8877,8 @@ MonoBehaviour:
       colorIndex: 0
       position:
         serializedVersion: 2
-        x: 402
-        y: 188
+        x: 403
+        y: 194
         width: 100
         height: 32
       isBreakpoint: 0
@@ -8862,16 +8901,18 @@ MonoBehaviour:
         - MyGame.Actions.RemoveProgressFlag
         - MyGame.Actions.RemoveProgressFlag
         - MyGame.Actions.RemoveProgressFlag
+        - MyGame.Actions.RemoveProgressFlag
         customNames:
         - 
         - 
         - 
         - 
         - 
-        actionEnabled: 0101010101
-        actionIsOpen: 0101010101
-        actionStartIndex: 0000000001000000020000000300000004000000
-        actionHashCodes: 1322710013227100132271001322710013227100
+        - 
+        actionEnabled: 010101010101
+        actionIsOpen: 010101010101
+        actionStartIndex: 000000000100000002000000030000000400000005000000
+        actionHashCodes: 132271001322710013227100132271001322710013227100
         unityObjectParams: []
         fsmGameObjectParams: []
         fsmOwnerDefaultParams: []
@@ -8912,6 +8953,12 @@ MonoBehaviour:
           showInInspector: 0
           networkSync: 0
           value: Flag_HubAction_SleepMorning
+        - useVariable: 0
+          name: 
+          tooltip: 
+          showInInspector: 0
+          networkSync: 0
+          value: Flag_HubAction_Exercise
         fsmObjectParams: []
         fsmVarParams: []
         fsmArrayParams: []
@@ -8930,22 +8977,23 @@ MonoBehaviour:
         arrayParamTypes: []
         customTypeSizes: 
         customTypeNames: []
-        paramDataType: 1200000012000000120000001200000012000000
+        paramDataType: 120000001200000012000000120000001200000012000000
         paramName:
         - flag
         - flag
         - flag
         - flag
         - flag
-        paramDataPos: 0000000001000000020000000300000004000000
-        paramByteDataSize: 0000000000000000000000000000000000000000
+        - flag
+        paramDataPos: 000000000100000002000000030000000400000005000000
+        paramByteDataSize: 000000000000000000000000000000000000000000000000
     - name: "\u662F\u5426\u8D70\"\u6E05\u7406\u623F\u9593'?"
       description: 
       colorIndex: 0
       position:
         serializedVersion: 2
-        x: 224
-        y: 290
+        x: 216
+        y: 291
         width: 133.72
         height: 48
       isBreakpoint: 0
@@ -8972,15 +9020,13 @@ MonoBehaviour:
         colorIndex: 0
       actionData:
         actionNames:
-        - MyGame.Actions.RemoveProgressFlag
         - HutongGames.PlayMaker.Actions.SendRandomEvent
         customNames:
         - 
-        - 
-        actionEnabled: 0101
-        actionIsOpen: 0101
-        actionStartIndex: 0000000001000000
-        actionHashCodes: 1322710072e62e01
+        actionEnabled: 01
+        actionIsOpen: 01
+        actionStartIndex: 00000000
+        actionHashCodes: 72e62e01
         unityObjectParams: []
         fsmGameObjectParams: []
         fsmOwnerDefaultParams: []
@@ -8990,13 +9036,7 @@ MonoBehaviour:
         fsmEventTargetParams: []
         fsmPropertyParams: []
         layoutOptionParams: []
-        fsmStringParams:
-        - useVariable: 0
-          name: 
-          tooltip: 
-          showInInspector: 0
-          networkSync: 0
-          value: Flag_HubAction_CleanRoom
+        fsmStringParams: []
         fsmObjectParams: []
         fsmVarParams: []
         fsmArrayParams: []
@@ -9007,13 +9047,13 @@ MonoBehaviour:
           tooltip: 
           showInInspector: 0
           networkSync: 0
-          value: 0.5
+          value: 1
         - useVariable: 0
           name: 
           tooltip: 
           showInInspector: 0
           networkSync: 0
-          value: 0.5
+          value: 0
         - useVariable: 0
           name: 
           tooltip: 
@@ -9037,9 +9077,8 @@ MonoBehaviour:
         - HutongGames.PlayMaker.FsmFloat
         customTypeSizes: 
         customTypeNames: []
-        paramDataType: 120000000c00000017000000170000000c0000000f0000000f0000000f000000
+        paramDataType: 0c00000017000000170000000c0000000f0000000f0000000f000000
         paramName:
-        - flag
         - events
         - 
         - 
@@ -9047,8 +9086,8 @@ MonoBehaviour:
         - 
         - 
         - delay
-        paramDataPos: 0000000000000000000000000100000001000000000000000100000002000000
-        paramByteDataSize: 0000000000000000000000000000000000000000000000000000000000000000
+        paramDataPos: 00000000000000000100000001000000000000000100000002000000
+        paramByteDataSize: 00000000000000000000000000000000000000000000000000000000
     - name: "\u7559\"\u6E05\u7406\u623F\u9593\""
       description: 
       colorIndex: 0
@@ -9078,16 +9117,18 @@ MonoBehaviour:
         - MyGame.Actions.RemoveProgressFlag
         - MyGame.Actions.RemoveProgressFlag
         - MyGame.Actions.RemoveProgressFlag
+        - MyGame.Actions.RemoveProgressFlag
         customNames:
         - 
         - 
         - 
         - 
         - 
-        actionEnabled: 0101010101
-        actionIsOpen: 0101010101
-        actionStartIndex: 0000000001000000020000000300000004000000
-        actionHashCodes: 1322710013227100132271001322710013227100
+        - 
+        actionEnabled: 010101010101
+        actionIsOpen: 010101010101
+        actionStartIndex: 000000000100000002000000030000000400000005000000
+        actionHashCodes: 132271001322710013227100132271001322710013227100
         unityObjectParams: []
         fsmGameObjectParams: []
         fsmOwnerDefaultParams: []
@@ -9128,6 +9169,12 @@ MonoBehaviour:
           showInInspector: 0
           networkSync: 0
           value: Flag_HubAction_SleepMorning
+        - useVariable: 0
+          name: 
+          tooltip: 
+          showInInspector: 0
+          networkSync: 0
+          value: Flag_HubAction_Exercise
         fsmObjectParams: []
         fsmVarParams: []
         fsmArrayParams: []
@@ -9146,15 +9193,16 @@ MonoBehaviour:
         arrayParamTypes: []
         customTypeSizes: 
         customTypeNames: []
-        paramDataType: 1200000012000000120000001200000012000000
+        paramDataType: 120000001200000012000000120000001200000012000000
         paramName:
         - flag
         - flag
         - flag
         - flag
         - flag
-        paramDataPos: 0000000001000000020000000300000004000000
-        paramByteDataSize: 0000000000000000000000000000000000000000
+        - flag
+        paramDataPos: 000000000100000002000000030000000400000005000000
+        paramByteDataSize: 000000000000000000000000000000000000000000000000
     - name: "\u6536\u675F"
       description: 
       colorIndex: 0
@@ -10323,6 +10371,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Hub_Button_CleanRoom
       objectReference: {fileID: 0}
+    - target: {fileID: 3537198183688809409, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 7840533614062965497, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -10337,7 +10389,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7840533614062965497, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7840533614062965497, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
       propertyPath: m_AnchorMin.x
@@ -10345,7 +10397,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7840533614062965497, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7840533614062965497, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
       propertyPath: m_SizeDelta.x
@@ -10385,11 +10437,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7840533614062965497, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 0
+      value: 343.88
       objectReference: {fileID: 0}
     - target: {fileID: 7840533614062965497, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0
+      value: -464.55002
       objectReference: {fileID: 0}
     - target: {fileID: 7840533614062965497, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -14256,7 +14308,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8344330051873758458, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
       propertyPath: resourceGains.Array.size
-      value: 3
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 8344330051873758458, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
       propertyPath: flagChanges.Array.data[0].lifetime

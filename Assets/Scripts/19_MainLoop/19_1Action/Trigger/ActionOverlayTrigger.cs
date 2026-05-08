@@ -9,7 +9,7 @@ using UnityEngine.Events;
 ///
 /// 注意：
 /// - 此腳本只負責跑條、顯示成功/失敗、分流 UnityEvent。
-/// - 成功率可以由 Inspector 直接填 successChance，也可以由 RecoveryActionChanceProvider 在執行前代入。
+/// - 成功率可以由 Inspector 直接填 successChance，也可以由 ActionChanceProvider 在執行前代入。
 /// </summary>
 public class ActionOverlayTrigger : MonoBehaviour
 {
@@ -24,14 +24,14 @@ public class ActionOverlayTrigger : MonoBehaviour
     public string localizationKey;
 
     [Header("結果判定設定")]
-    [Tooltip("是否在跑條結束後判定成功/失敗。白天 2 復歸行動建議打開。")]
+    [Tooltip("是否在跑條結束後判定成功/失敗?")]
     public bool enableOutcomeResult = false;
 
-    [Tooltip("成功率。0 = 必定失敗，1 = 必定成功。若有 RecoveryActionChanceProvider，執行前會被覆寫。")]
+    [Tooltip("成功率。0 = 必定失敗，1 = 必定成功。若有 ActionChanceProvider，執行前會被覆寫。")]
     [Range(0f, 1f)] public float successChance = 0.5f;
 
-    [Tooltip("成功率來源。復歸行動可指定 RecoveryActionChanceProvider，由它依主角數值計算成功率。")]
-    public RecoveryActionChanceProvider chanceProvider;
+    [Tooltip("成功率來源。復歸行動可指定 ActionChanceProvider，由它依主角數值計算成功率。")]
+    public ActionChanceProvider chanceProvider;
 
     [Tooltip("Execute() 時是否自動從 chanceProvider 重新取得成功率。")]
     public bool autoApplyChanceProviderOnExecute = true;
@@ -61,7 +61,7 @@ public class ActionOverlayTrigger : MonoBehaviour
     private void Reset()
     {
         // 方便掛在同一顆按鈕上時自動抓取。
-        chanceProvider = GetComponent<RecoveryActionChanceProvider>();
+        chanceProvider = GetComponent<ActionChanceProvider>();
     }
 
     /// <summary>

@@ -327,15 +327,25 @@ public class HeroineEmotionCardChangeView : MonoBehaviour
         List<string> lines = new List<string>();
         string heroineName = GetHeroineName();
 
+        // 判斷這個 batch 的意圖：
+        // 有任何 +1 → 這是 add/replace 操作，只顯示 Emotion.Change（忽略連帶的 -1）
+        // 全部都是 -1 → 這是純 remove 操作，顯示 Emotion.Remove
+        bool hasAdd = false;
+        foreach (var change in batch.Changes)
+        {
+            if (change.Delta > 0) { hasAdd = true; break; }
+        }
+
         foreach (var change in batch.Changes)
         {
             if (change.Delta == 0) continue;
 
-            string emotionName = GetEmotionName(change.Type);
-
-            if (change.Delta > 0)
+            if (hasAdd)
             {
-                // 新增：「{角色名} 有點 {情緒}」
+                // add/replace 操作：只顯示新增的部分
+                if (change.Delta <= 0) continue;
+
+                string emotionName = GetEmotionName(change.Type);
                 string template = DialogueManager.GetLocalizedText(changeTextKey);
                 if (string.IsNullOrEmpty(template))
                     template = "{0} 有點 {1}";
@@ -343,7 +353,8 @@ public class HeroineEmotionCardChangeView : MonoBehaviour
             }
             else
             {
-                // 移除：「{角色名} 不再 {情緒}」
+                // 純 remove 操作：顯示移除
+                string emotionName = GetEmotionName(change.Type);
                 string template = DialogueManager.GetLocalizedText(removeTextKey);
                 if (string.IsNullOrEmpty(template))
                     template = "{0} 不再 {1}";
