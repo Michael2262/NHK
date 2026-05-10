@@ -5,23 +5,42 @@ using System.Linq;
 using UnityEngine;
 
 /// <summary>
-/// NHK 情緒卡抽選模式。
-/// Small：小抽選，有表演，結果為目前主導情緒。
-/// Medium：中抽選，有表演，結果邏輯同大抽選。
-/// Big：大抽選，有表演，兩段式（表演用情緒 + 真正結果）。
-/// FakeBig：造假大抽選，有表演，結果由外部指定。
-/// *WithoutShow：無表演版本。
+/// 情緒抽選結果模式（決定結果怎麼來的）。
 /// </summary>
-public enum EmotionDrawMode
+public enum EmotionResultMode
 {
+    /// <summary>結果 = 主導情緒（CurrentEmotion，獨立儲存值）。</summary>
+    Current,
+
+    /// <summary>結果 = 大宗情緒（DominantEmotion，卡池最多者）。</summary>
+    Bulk,
+
+    /// <summary>結果 = 從卡池 10 取 1 隨機抽選。</summary>
+    Random,
+
+    /// <summary>結果 = 直接指定，但指定的情緒必須存在於卡池中。失敗時退回 Random。</summary>
+    Fake,
+
+    /// <summary>結果 = 直接指定，不管卡池有沒有。</summary>
+    Mock
+}
+
+/// <summary>
+/// 情緒抽選表演模式（決定怎麼演）。
+/// </summary>
+public enum EmotionShowMode
+{
+    /// <summary>無表演。</summary>
+    None,
+
+    /// <summary>小抽選表演：「考慮中…」+ SmallDrawFace。</summary>
     Small,
+
+    /// <summary>中抽選表演：同小抽選，秒數較長。</summary>
     Medium,
-    Big,
-    SmallWithoutShow,
-    MediumWithoutShow,
-    BigWithoutShow,
-    FakeBig,
-    FakeBigWithoutShow
+
+    /// <summary>大抽選表演：兩段式（考慮中 + 十分猶豫）。</summary>
+    Big
 }
 
 /// <summary>
@@ -31,58 +50,31 @@ public enum EmotionDrawMode
 public class EmotionDrawResult
 {
     public HeroineEmotionCardType ResultEmotion;
-    public EmotionDrawMode DrawMode;
-    public bool HasShow;
+    public EmotionResultMode ResultMode;
+    public EmotionShowMode ShowMode;
     public string HeroineID;
-    public List<HeroineEmotionCardType> ShowSequence = new List<HeroineEmotionCardType>();
 
-    [Tooltip("是否曾要求造假指定結果。")]
+    /// <summary>Fake 模式：是否要求了指定結果。</summary>
     public bool FakeRequested;
 
-    [Tooltip("造假是否成功。若指定情緒不在卡池中，會是 false，並退回普通大抽選。")]
+    /// <summary>Fake 模式：指定是否成功（卡池有該情緒）。</summary>
     public bool FakeSucceeded;
 
-    [Tooltip("造假要求指定的情緒。只有 FakeRequested=true 時有意義。")]
-    public HeroineEmotionCardType RequestedFakeEmotion;
+    /// <summary>Fake/Mock 模式：被指定的情緒。</summary>
+    public HeroineEmotionCardType RequestedEmotion;
 
-    /// <summary>
-    /// 大抽選第一段表演用的情緒（僅供表演，不影響實際結果）。
-    /// </summary>
+    /// <summary>大抽選第一段表演用的情緒。</summary>
     public HeroineEmotionCardType PerformanceEmotion;
-
-    public EmotionDrawResult(
-        HeroineEmotionCardType resultEmotion,
-        EmotionDrawMode drawMode,
-        bool hasShow,
-        List<HeroineEmotionCardType> showSequence = null,
-        string heroineID = null,
-        bool fakeRequested = false,
-        bool fakeSucceeded = false,
-        HeroineEmotionCardType requestedFakeEmotion = default,
-        HeroineEmotionCardType performanceEmotion = default)
-    {
-        ResultEmotion = resultEmotion;
-        DrawMode = drawMode;
-        HasShow = hasShow;
-        ShowSequence = showSequence ?? new List<HeroineEmotionCardType>();
-        HeroineID = heroineID;
-        FakeRequested = fakeRequested;
-        FakeSucceeded = fakeSucceeded;
-        RequestedFakeEmotion = requestedFakeEmotion;
-        PerformanceEmotion = performanceEmotion;
-    }
 }
 
 /// <summary>
-/// NHK 情緒卡抽選機（重構版：文字 + Tachie 表演）。
+/// NHK 情緒卡抽選機（重構版）。
 ///
-/// 責任：
-/// 1. 保存目前要抽選的女主角 ID。
-/// 2. 接收抽選請求。
-/// 3. 決定抽選結果。
-/// 4. 大抽選額外抽一個「表演用情緒」。
-/// 5. 呼叫 EmotionCardDrawView 播放文字 + Tachie 表演。
-/// 6. 等 View 表演完成後，把結果回傳。
+/// 結果模式（EmotionResultMode）與表演模式（EmotionShowMode）完全解耦。
+/// 呼叫端可以任意組合，例如：
+/// - Random 結果 + Big 表演
+/// - Current 結果 + None 表演
+/// - Mock 指定結果 + Small 表演
 /// </summary>
 public class EmotionCardDrawMachine : MonoBehaviour
 {
@@ -99,14 +91,13 @@ public class EmotionCardDrawMachine : MonoBehaviour
     [Tooltip("全域抽選演出 View。")]
     [SerializeField] private EmotionCardDrawView drawView;
 
-    [Header("Fallback Show Settings")]
+    [Header("Show Duration Settings")]
     [SerializeField, Min(0f)] private float smallDrawDuration = 0.45f;
     [SerializeField, Min(0f)] private float mediumDrawDuration = 1.0f;
     [SerializeField, Min(0f)] private float bigDrawPhase1Duration = 1.0f;
     [SerializeField, Min(0f)] private float bigDrawPhase2Duration = 1.5f;
 
     [Header("Optional Config Override")]
-    [Tooltip("若指定，秒數會優先使用 HeroineStatusConfig 的設定。")]
     [SerializeField] private HeroineStatusConfig heroineStatusConfig;
 
     private Coroutine currentDrawRoutine;
@@ -123,12 +114,7 @@ public class EmotionCardDrawMachine : MonoBehaviour
 
     private void Awake()
     {
-        if (Instance != null && Instance != this)
-        {
-            Destroy(gameObject);
-            return;
-        }
-
+        if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
         if (dontDestroyOnLoad) DontDestroyOnLoad(gameObject);
     }
@@ -147,105 +133,124 @@ public class EmotionCardDrawMachine : MonoBehaviour
     public void SetDrawView(EmotionCardDrawView view) => drawView = view;
 
     // ─────────────────────────────────────────────────────────────
-    // Public entry points：使用目前 currentHeroineID
+    // 統一入口
     // ─────────────────────────────────────────────────────────────
 
-    public void StartSmallDraw(Action<EmotionDrawResult> onComplete) => StartDraw(currentHeroineID, EmotionDrawMode.Small, onComplete);
-    public void StartMediumDraw(Action<EmotionDrawResult> onComplete) => StartDraw(currentHeroineID, EmotionDrawMode.Medium, onComplete);
-    public void StartBigDraw(Action<EmotionDrawResult> onComplete) => StartDraw(currentHeroineID, EmotionDrawMode.Big, onComplete);
-    public void StartFakeBigDraw(HeroineEmotionCardType fakeResult, Action<EmotionDrawResult> onComplete) => StartFakeBigDraw(currentHeroineID, fakeResult, true, onComplete);
-
-    public EmotionDrawResult DrawSmallWithoutShow() => DrawSmallWithoutShow(currentHeroineID);
-    public EmotionDrawResult DrawMediumWithoutShow() => DrawMediumWithoutShow(currentHeroineID);
-    public EmotionDrawResult DrawBigWithoutShow() => DrawBigWithoutShow(currentHeroineID);
-    public EmotionDrawResult DrawFakeBigWithoutShow(HeroineEmotionCardType fakeResult) => DrawFakeBigWithoutShow(currentHeroineID, fakeResult);
-
-    public void StartDraw(EmotionDrawMode mode, Action<EmotionDrawResult> onComplete) => StartDraw(currentHeroineID, mode, onComplete);
-
-    // ─────────────────────────────────────────────────────────────
-    // Public entry points：直接傳 HeroineStatusModel
-    // ─────────────────────────────────────────────────────────────
-
-    public void StartSmallDraw(HeroineStatusModel heroine, Action<EmotionDrawResult> onComplete) => StartDraw(heroine, EmotionDrawMode.Small, onComplete);
-    public void StartMediumDraw(HeroineStatusModel heroine, Action<EmotionDrawResult> onComplete) => StartDraw(heroine, EmotionDrawMode.Medium, onComplete);
-    public void StartBigDraw(HeroineStatusModel heroine, Action<EmotionDrawResult> onComplete) => StartDraw(heroine, EmotionDrawMode.Big, onComplete);
-
-    public void StartFakeBigDraw(HeroineStatusModel heroine, HeroineEmotionCardType fakeResult, bool hasShow, Action<EmotionDrawResult> onComplete)
+    /// <summary>
+    /// 統一抽選入口。結果模式與表演模式完全獨立。
+    /// </summary>
+    /// <param name="heroineID">女主角 ID。</param>
+    /// <param name="resultMode">結果怎麼決定。</param>
+    /// <param name="showMode">表演怎麼演。</param>
+    /// <param name="specifiedEmotion">Fake/Mock 模式下指定的情緒。其他模式忽略。</param>
+    /// <param name="onComplete">完成後回呼。</param>
+    public void StartDraw(string heroineID, EmotionResultMode resultMode, EmotionShowMode showMode,
+        HeroineEmotionCardType specifiedEmotion, Action<EmotionDrawResult> onComplete)
     {
-        StartDrawInternal(heroine, hasShow ? EmotionDrawMode.FakeBig : EmotionDrawMode.FakeBigWithoutShow, fakeResult, onComplete);
+        var heroine = GetHeroineByID(heroineID);
+        StartDrawInternal(heroine, heroineID, resultMode, showMode, specifiedEmotion, onComplete);
     }
 
-    public EmotionDrawResult DrawSmallWithoutShow(HeroineStatusModel heroine)
+    /// <summary>使用 currentHeroineID 的簡化版。</summary>
+    public void StartDraw(EmotionResultMode resultMode, EmotionShowMode showMode,
+        HeroineEmotionCardType specifiedEmotion, Action<EmotionDrawResult> onComplete)
     {
-        HeroineEmotionCardType result = GetSmallDrawResult(heroine);
-        return new EmotionDrawResult(result, EmotionDrawMode.SmallWithoutShow, false, null, heroine?.HeroineID);
+        StartDraw(currentHeroineID, resultMode, showMode, specifiedEmotion, onComplete);
     }
 
-    public EmotionDrawResult DrawMediumWithoutShow(HeroineStatusModel heroine)
+    /// <summary>無指定情緒的簡化版（Fake/Mock 以外的模式）。</summary>
+    public void StartDraw(string heroineID, EmotionResultMode resultMode, EmotionShowMode showMode,
+        Action<EmotionDrawResult> onComplete)
     {
-        HeroineEmotionCardType result = GetBigDrawResult(heroine);
-        return new EmotionDrawResult(result, EmotionDrawMode.MediumWithoutShow, false, null, heroine?.HeroineID);
-    }
-
-    public EmotionDrawResult DrawBigWithoutShow(HeroineStatusModel heroine)
-    {
-        HeroineEmotionCardType result = GetBigDrawResult(heroine);
-        return new EmotionDrawResult(result, EmotionDrawMode.BigWithoutShow, false, null, heroine?.HeroineID);
-    }
-
-    public EmotionDrawResult DrawFakeBigWithoutShow(HeroineStatusModel heroine, HeroineEmotionCardType fakeResult)
-    {
-        bool fakeSucceeded = CanForceBigDraw(heroine, fakeResult);
-        HeroineEmotionCardType result = fakeSucceeded ? fakeResult : GetBigDrawResult(heroine);
-        return new EmotionDrawResult(result, EmotionDrawMode.FakeBigWithoutShow, false, null,
-            heroine?.HeroineID, true, fakeSucceeded, fakeResult);
-    }
-
-    public void StartDraw(HeroineStatusModel heroine, EmotionDrawMode mode, Action<EmotionDrawResult> onComplete)
-    {
-        StartDrawInternal(heroine, mode, null, onComplete);
+        StartDraw(heroineID, resultMode, showMode, default, onComplete);
     }
 
     // ─────────────────────────────────────────────────────────────
-    // Public entry points：用 heroineID
+    // 向下相容入口（保留舊的方法名稱）
     // ─────────────────────────────────────────────────────────────
 
-    public void StartSmallDraw(string heroineID, Action<EmotionDrawResult> onComplete) => StartDraw(heroineID, EmotionDrawMode.Small, onComplete);
-    public void StartMediumDraw(string heroineID, Action<EmotionDrawResult> onComplete) => StartDraw(heroineID, EmotionDrawMode.Medium, onComplete);
-    public void StartBigDraw(string heroineID, Action<EmotionDrawResult> onComplete) => StartDraw(heroineID, EmotionDrawMode.Big, onComplete);
+    public void StartSmallDraw(string heroineID, Action<EmotionDrawResult> onComplete)
+        => StartDraw(heroineID, EmotionResultMode.Current, EmotionShowMode.Small, default, onComplete);
+
+    public void StartMediumDraw(string heroineID, Action<EmotionDrawResult> onComplete)
+        => StartDraw(heroineID, EmotionResultMode.Current, EmotionShowMode.Medium, default, onComplete);
+
+    public void StartBigDraw(string heroineID, Action<EmotionDrawResult> onComplete)
+        => StartDraw(heroineID, EmotionResultMode.Current, EmotionShowMode.Big, default, onComplete);
 
     public void StartFakeBigDraw(string heroineID, HeroineEmotionCardType fakeResult, bool hasShow, Action<EmotionDrawResult> onComplete)
+        => StartDraw(heroineID, EmotionResultMode.Fake, hasShow ? EmotionShowMode.Big : EmotionShowMode.None, fakeResult, onComplete);
+
+    public EmotionDrawResult DrawWithoutShow(string heroineID, EmotionResultMode resultMode, HeroineEmotionCardType specifiedEmotion = default)
     {
-        StartDrawInternal(GetHeroineByID(heroineID), hasShow ? EmotionDrawMode.FakeBig : EmotionDrawMode.FakeBigWithoutShow, fakeResult, onComplete);
+        var heroine = GetHeroineByID(heroineID);
+        return ResolveResult(heroine, heroineID, resultMode, EmotionShowMode.None, specifiedEmotion);
     }
 
-    public EmotionDrawResult DrawSmallWithoutShow(string heroineID) => DrawSmallWithoutShow(GetHeroineByID(heroineID));
-    public EmotionDrawResult DrawMediumWithoutShow(string heroineID) => DrawMediumWithoutShow(GetHeroineByID(heroineID));
-    public EmotionDrawResult DrawBigWithoutShow(string heroineID) => DrawBigWithoutShow(GetHeroineByID(heroineID));
-    public EmotionDrawResult DrawFakeBigWithoutShow(string heroineID, HeroineEmotionCardType fakeResult) => DrawFakeBigWithoutShow(GetHeroineByID(heroineID), fakeResult);
-
-    public void StartDraw(string heroineID, EmotionDrawMode mode, Action<EmotionDrawResult> onComplete)
-    {
-        StartDrawInternal(GetHeroineByID(heroineID), mode, null, onComplete);
-    }
+    public EmotionDrawResult DrawSmallWithoutShow(string heroineID) => DrawWithoutShow(heroineID, EmotionResultMode.Current);
+    public EmotionDrawResult DrawMediumWithoutShow(string heroineID) => DrawWithoutShow(heroineID, EmotionResultMode.Current);
+    public EmotionDrawResult DrawBigWithoutShow(string heroineID) => DrawWithoutShow(heroineID, EmotionResultMode.Current);
+    public EmotionDrawResult DrawFakeBigWithoutShow(string heroineID, HeroineEmotionCardType fakeResult)
+        => DrawWithoutShow(heroineID, EmotionResultMode.Fake, fakeResult);
 
     // ─────────────────────────────────────────────────────────────
-    // Draw result decision
+    // Result resolution
     // ─────────────────────────────────────────────────────────────
 
-    public bool CanForceBigDraw(string heroineID, HeroineEmotionCardType fakeResult) => CanForceBigDraw(GetHeroineByID(heroineID), fakeResult);
-
-    public bool CanForceBigDraw(HeroineStatusModel heroine, HeroineEmotionCardType fakeResult)
+    private EmotionDrawResult ResolveResult(HeroineStatusModel heroine, string heroineID,
+        EmotionResultMode resultMode, EmotionShowMode showMode, HeroineEmotionCardType specifiedEmotion)
     {
-        return heroine != null && heroine.GetCardCount(fakeResult) > 0;
+        var result = new EmotionDrawResult
+        {
+            ResultMode = resultMode,
+            ShowMode = showMode,
+            HeroineID = heroineID
+        };
+
+        switch (resultMode)
+        {
+            case EmotionResultMode.Current:
+                result.ResultEmotion = heroine != null ? heroine.CurrentEmotion : HeroineEmotionCardType.Angry;
+                break;
+
+            case EmotionResultMode.Bulk:
+                result.ResultEmotion = heroine != null ? heroine.GetDominantEmotion() : HeroineEmotionCardType.Angry;
+                break;
+
+            case EmotionResultMode.Random:
+                result.ResultEmotion = GetRandomFromDeck(heroine);
+                break;
+
+            case EmotionResultMode.Fake:
+                result.FakeRequested = true;
+                result.RequestedEmotion = specifiedEmotion;
+                bool canFake = heroine != null && heroine.GetCardCount(specifiedEmotion) > 0;
+                result.FakeSucceeded = canFake;
+                result.ResultEmotion = canFake ? specifiedEmotion : GetRandomFromDeck(heroine);
+                break;
+
+            case EmotionResultMode.Mock:
+                result.FakeRequested = true;
+                result.RequestedEmotion = specifiedEmotion;
+                result.FakeSucceeded = true;
+                result.ResultEmotion = specifiedEmotion;
+                break;
+
+            default:
+                result.ResultEmotion = heroine != null ? heroine.CurrentEmotion : HeroineEmotionCardType.Angry;
+                break;
+        }
+
+        // 大抽選表演需要額外一個表演用情緒
+        if (showMode == EmotionShowMode.Big)
+            result.PerformanceEmotion = GetRandomFromDeck(heroine);
+        else
+            result.PerformanceEmotion = result.ResultEmotion;
+
+        return result;
     }
 
-    private HeroineEmotionCardType GetSmallDrawResult(HeroineStatusModel heroine)
-    {
-        return heroine != null ? heroine.GetDominantEmotion() : HeroineEmotionCardType.Angry;
-    }
-
-    private HeroineEmotionCardType GetBigDrawResult(HeroineStatusModel heroine)
+    private HeroineEmotionCardType GetRandomFromDeck(HeroineStatusModel heroine)
     {
         if (heroine == null) return HeroineEmotionCardType.Angry;
 
@@ -256,21 +261,25 @@ public class EmotionCardDrawMachine : MonoBehaviour
         return deck[index].Type;
     }
 
-    /// <summary>
-    /// 大抽選第一段表演用的情緒：從卡池隨機抽一張（共用中小抽選的資料庫）。
-    /// </summary>
-    private HeroineEmotionCardType GetPerformanceEmotion(HeroineStatusModel heroine)
-    {
-        return GetBigDrawResult(heroine);
-    }
+    // ─────────────────────────────────────────────────────────────
+    // Internal draw flow
+    // ─────────────────────────────────────────────────────────────
 
-    private void StartDrawInternal(HeroineStatusModel heroine, EmotionDrawMode mode, HeroineEmotionCardType? fakeResult, Action<EmotionDrawResult> onComplete)
+    private void StartDrawInternal(HeroineStatusModel heroine, string heroineID,
+        EmotionResultMode resultMode, EmotionShowMode showMode,
+        HeroineEmotionCardType specifiedEmotion, Action<EmotionDrawResult> onComplete)
     {
         if (heroine == null)
         {
-            Debug.LogWarning($"[EmotionCardDrawMachine] StartDraw failed: heroine is null. currentHeroineID={currentHeroineID}");
-            bool hasShowOnNull = mode == EmotionDrawMode.Small || mode == EmotionDrawMode.Medium || mode == EmotionDrawMode.Big || mode == EmotionDrawMode.FakeBig;
-            onComplete?.Invoke(new EmotionDrawResult(HeroineEmotionCardType.Angry, mode, hasShowOnNull, null, currentHeroineID));
+            Debug.LogWarning($"[EmotionCardDrawMachine] StartDraw failed: heroine is null. heroineID={heroineID}");
+            var fallback = new EmotionDrawResult
+            {
+                ResultEmotion = HeroineEmotionCardType.Angry,
+                ResultMode = resultMode,
+                ShowMode = showMode,
+                HeroineID = heroineID
+            };
+            onComplete?.Invoke(fallback);
             return;
         }
 
@@ -281,105 +290,58 @@ public class EmotionCardDrawMachine : MonoBehaviour
             isDrawing = false;
         }
 
-        switch (mode)
+        EmotionDrawResult result = ResolveResult(heroine, heroineID, resultMode, showMode, specifiedEmotion);
+
+        if (showMode == EmotionShowMode.None)
         {
-            case EmotionDrawMode.SmallWithoutShow:
-                onComplete?.Invoke(DrawSmallWithoutShow(heroine));
-                break;
-            case EmotionDrawMode.MediumWithoutShow:
-                onComplete?.Invoke(DrawMediumWithoutShow(heroine));
-                break;
-            case EmotionDrawMode.BigWithoutShow:
-                onComplete?.Invoke(DrawBigWithoutShow(heroine));
-                break;
-            case EmotionDrawMode.FakeBigWithoutShow:
-                onComplete?.Invoke(DrawFakeBigWithoutShow(heroine, fakeResult ?? HeroineEmotionCardType.Angry));
-                break;
-            case EmotionDrawMode.Small:
-            case EmotionDrawMode.Medium:
-            case EmotionDrawMode.Big:
-            case EmotionDrawMode.FakeBig:
-                currentDrawRoutine = StartCoroutine(DrawRoutine(heroine, mode, fakeResult, onComplete));
-                break;
-            default:
-                Debug.LogWarning($"[EmotionCardDrawMachine] Unsupported draw mode: {mode}");
-                onComplete?.Invoke(DrawSmallWithoutShow(heroine));
-                break;
+            onComplete?.Invoke(result);
+            return;
         }
+
+        currentDrawRoutine = StartCoroutine(DrawRoutine(heroine, result, onComplete));
     }
 
-    private IEnumerator DrawRoutine(HeroineStatusModel heroine, EmotionDrawMode mode, HeroineEmotionCardType? fakeResult, Action<EmotionDrawResult> onComplete)
+    private IEnumerator DrawRoutine(HeroineStatusModel heroine, EmotionDrawResult result, Action<EmotionDrawResult> onComplete)
     {
         isDrawing = true;
 
-        bool fakeRequested = mode == EmotionDrawMode.FakeBig;
-        HeroineEmotionCardType requestedFakeEmotion = fakeResult ?? HeroineEmotionCardType.Angry;
-        bool fakeSucceeded = false;
-        HeroineEmotionCardType finalResult;
-
-        // 先決定最終結果
-        if (mode == EmotionDrawMode.FakeBig)
-        {
-            fakeSucceeded = CanForceBigDraw(heroine, requestedFakeEmotion);
-            finalResult = fakeSucceeded ? requestedFakeEmotion : GetBigDrawResult(heroine);
-        }
-        else if (mode == EmotionDrawMode.Big || mode == EmotionDrawMode.Medium)
-        {
-            finalResult = GetBigDrawResult(heroine);
-        }
-        else
-        {
-            finalResult = GetSmallDrawResult(heroine);
-        }
-
-        // 大抽選額外抽一個表演用情緒
-        bool isBigStyle = mode == EmotionDrawMode.Big || mode == EmotionDrawMode.FakeBig;
-        HeroineEmotionCardType performanceEmotion = isBigStyle ? GetPerformanceEmotion(heroine) : finalResult;
-
-        EmotionDrawResult result = new EmotionDrawResult(
-            finalResult, mode, true, null,
-            heroine.HeroineID,
-            fakeRequested, fakeSucceeded, requestedFakeEmotion,
-            performanceEmotion);
-
-        // 播放表演
         if (drawView != null)
         {
             bool completed = false;
 
-            if (isBigStyle)
+            switch (result.ShowMode)
             {
-                // 大抽選：兩段式
-                drawView.PlayBigDrawShow(
-                    heroine.HeroineID,
-                    performanceEmotion,
-                    finalResult,
-                    BigDrawPhase1Duration,
-                    BigDrawPhase2Duration,
-                    () => completed = true);
-            }
-            else if (mode == EmotionDrawMode.Medium)
-            {
-                drawView.PlayMediumDrawShow(heroine.HeroineID, finalResult, MediumDrawDuration, () => completed = true);
-            }
-            else
-            {
-                drawView.PlaySmallDrawShow(heroine.HeroineID, finalResult, SmallDrawDuration, () => completed = true);
+                case EmotionShowMode.Big:
+                    drawView.PlayBigDrawShow(
+                        result.HeroineID,
+                        result.PerformanceEmotion,
+                        result.ResultEmotion,
+                        BigDrawPhase1Duration,
+                        BigDrawPhase2Duration,
+                        () => completed = true);
+                    break;
+
+                case EmotionShowMode.Medium:
+                    drawView.PlayMediumDrawShow(result.HeroineID, result.ResultEmotion, MediumDrawDuration, () => completed = true);
+                    break;
+
+                case EmotionShowMode.Small:
+                default:
+                    drawView.PlaySmallDrawShow(result.HeroineID, result.ResultEmotion, SmallDrawDuration, () => completed = true);
+                    break;
             }
 
             while (!completed) yield return null;
         }
         else
         {
-            // 沒有 View 時，純等待
             float duration;
-            if (isBigStyle)
-                duration = BigDrawPhase1Duration + BigDrawPhase2Duration;
-            else if (mode == EmotionDrawMode.Medium)
-                duration = MediumDrawDuration;
-            else
-                duration = SmallDrawDuration;
-
+            switch (result.ShowMode)
+            {
+                case EmotionShowMode.Big: duration = BigDrawPhase1Duration + BigDrawPhase2Duration; break;
+                case EmotionShowMode.Medium: duration = MediumDrawDuration; break;
+                default: duration = SmallDrawDuration; break;
+            }
             if (duration > 0f) yield return new WaitForSeconds(duration);
         }
 
@@ -389,23 +351,8 @@ public class EmotionCardDrawMachine : MonoBehaviour
     }
 
     // ─────────────────────────────────────────────────────────────
-    // Show sequence generation（保留向下相容，但新表演不使用 sequence）
+    // Utility
     // ─────────────────────────────────────────────────────────────
-
-    public List<HeroineEmotionCardType> GenerateSmallShowSequence(HeroineStatusModel heroine, HeroineEmotionCardType finalResult)
-    {
-        return new List<HeroineEmotionCardType> { finalResult };
-    }
-
-    public List<HeroineEmotionCardType> GenerateMediumShowSequence(HeroineStatusModel heroine, HeroineEmotionCardType finalResult)
-    {
-        return new List<HeroineEmotionCardType> { finalResult };
-    }
-
-    public List<HeroineEmotionCardType> GenerateBigShowSequence(HeroineStatusModel heroine, HeroineEmotionCardType finalResult)
-    {
-        return new List<HeroineEmotionCardType> { finalResult };
-    }
 
     private HeroineStatusModel GetHeroineByID(string heroineID)
     {

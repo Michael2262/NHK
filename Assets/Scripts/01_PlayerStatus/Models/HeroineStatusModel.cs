@@ -5,19 +5,21 @@ using UnityEngine;
 
 /// <summary>
 /// NHK 版女主角狀態模型。
-/// 保留 HeroineStatusModel 類名與多女主角架構，但核心內容改為「情緒卡池」。
 ///
 /// 核心責任：
 /// 1. 保存女主角識別資訊。
 /// 2. 管理固定張數的情緒卡池。
-/// 3. CurrentEmotion 永遠自動等於目前卡池的主導情緒。
-/// 4. 提供情緒分數與卡片替換規則。
-/// 5. 保存 H 次數。
+/// 3. DominantEmotion（大宗情緒）：由卡池自動計算，數量最多者。
+/// 4. CurrentEmotion（主導情緒）：獨立儲存，可由外部 Set。
+/// 5. LastAddedEmotion：最近一次被新增的情緒。
+/// 6. Libido（性慾）：0~150 的獨立數值。
+/// 7. 提供情緒分數與卡片替換規則。
+/// 8. 保存 H 次數。
 ///
-/// CurrentEmotion 規則：
+/// DominantEmotion 規則：
 /// - 不允許外部主動設定。
 /// - 每當情緒卡池變動，自動重新計算。
-/// - 數量最多者成為 CurrentEmotion。
+/// - 數量最多者成為 DominantEmotion。
 /// - 若數量一樣多，取 tied emotions 中最近加入卡池的情緒。
 /// </summary>
 public class HeroineStatusModel
@@ -33,7 +35,17 @@ public class HeroineStatusModel
     // NHK core state
     // ─────────────────────────────────────────────────────────────
     public int EmotionDeckMaxCount { get; private set; }
+
+    /// <summary>大宗情緒：由卡池自動計算。</summary>
+    public HeroineEmotionCardType DominantEmotion { get; private set; }
+
+    /// <summary>主導情緒：獨立儲存，可由外部 Set。</summary>
     public HeroineEmotionCardType CurrentEmotion { get; private set; }
+
+    /// <summary>性慾值，0~LibidoMax。</summary>
+    public int Libido { get; private set; }
+    public const int LibidoMax = 150;
+
     public int HCount { get; private set; }
 
     private readonly HeroineStatusConfig cfg;
@@ -53,8 +65,16 @@ public class HeroineStatusModel
     public event Action<HeroineEmotionCardType> OnEmotionCardAdded;
     public event Action<HeroineEmotionCardType> OnEmotionCardRemoved;
     public event Action<HeroineEmotionCardType> OnDominantEmotionChanged;
-    public event Action<HeroineEmotionCardType> OnEmotionChanged;
+    public event Action<HeroineEmotionCardType> OnCurrentEmotionChanged;
+    public event Action<int> OnLibidoChanged;
     public event Action<int> OnHCountChanged;
+
+    // 向下相容：舊的 OnEmotionChanged 對應新的 OnCurrentEmotionChanged
+    public event Action<HeroineEmotionCardType> OnEmotionChanged
+    {
+        add => OnCurrentEmotionChanged += value;
+        remove => OnCurrentEmotionChanged -= value;
+    }
 
     // ─────────────────────────────────────────────────────────────
     // Compatibility events from previous project.
@@ -97,7 +117,9 @@ public class HeroineStatusModel
         cfg = config;
         EmotionDeckMaxCount = Mathf.Max(1, config != null ? config.EmotionDeckMaxCount : 10);
 
+        DominantEmotion = HeroineEmotionCardType.Angry;
         CurrentEmotion = HeroineEmotionCardType.Angry;
+        Libido = 0;
         HCount = 0;
 
         Statistics = new HeroineStatisticsModel();
@@ -115,7 +137,7 @@ public class HeroineStatusModel
     // ─────────────────────────────────────────────────────────────
     public void InitializeDefaultEmotionDeck(HeroineStat stat = null)
     {
-        HeroineEmotionCardType oldDominant = GetDominantEmotion();
+        HeroineEmotionCardType oldDominant = CalculateDominantEmotion();
 
         emotionDeck.Clear();
         nextEmotionCardOrder = 0;
@@ -129,7 +151,7 @@ public class HeroineStatusModel
         AddInitialCards(targetStat, HeroineEmotionCardType.Disappointed);
 
         NormalizeDeckSize();
-        NotifyDeckChanged(oldDominant, forceEmotionNotify: true);
+        NotifyDeckChanged(oldDominant, forceNotify: true);
     }
 
     private void AddInitialCards(HeroineStat stat, HeroineEmotionCardType type)
@@ -155,7 +177,6 @@ public class HeroineStatusModel
             RemoveOldestCardInternal();
         }
 
-        // 如果設定總數少於上限，補生氣卡到滿，以維持「固定張數」規則。
         while (emotionDeck.Count < EmotionDeckMaxCount)
         {
             AddCardInternal(HeroineEmotionCardType.Angry);
@@ -172,13 +193,17 @@ public class HeroineStatusModel
 
     public int GetEmotionDeckCount() => emotionDeck.Count;
 
+    /// <summary>
+    /// 計算大宗情緒（卡池數量最多者）。
+    /// 舊名 GetDominantEmotion，保留公開介面。
+    /// </summary>
     public HeroineEmotionCardType GetDominantEmotion()
     {
         if (emotionDeck.Count == 0) return HeroineEmotionCardType.Angry;
-        return GetDominantEmotionWithoutFallback();
+        return CalculateDominantEmotion();
     }
 
-    private HeroineEmotionCardType GetDominantEmotionWithoutFallback()
+    private HeroineEmotionCardType CalculateDominantEmotion()
     {
         if (emotionDeck.Count == 0) return HeroineEmotionCardType.Angry;
 
@@ -192,7 +217,6 @@ public class HeroineStatusModel
             .Select(g => g.Key)
             .ToHashSet();
 
-        // 平手時取 tied emotions 中最近加入的卡。
         return emotionDeck
             .Where(c => tiedTypes.Contains(c.Type))
             .OrderByDescending(c => c.AddedOrder)
@@ -224,6 +248,46 @@ public class HeroineStatusModel
     public bool IsShyHigh() => GetCardCount(HeroineEmotionCardType.Shy) >= 3;
 
     // ─────────────────────────────────────────────────────────────
+    // CurrentEmotion（主導情緒）── 獨立儲存，可外部設定
+    // ─────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// 設定主導情緒。
+    /// </summary>
+    public void SetCurrentEmotion(HeroineEmotionCardType emotion)
+    {
+        if (CurrentEmotion == emotion) return;
+        CurrentEmotion = emotion;
+        OnCurrentEmotionChanged?.Invoke(CurrentEmotion);
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Libido（性慾）
+    // ─────────────────────────────────────────────────────────────
+
+    /// <summary>增減性慾值。</summary>
+    public void AddLibido(int amount)
+    {
+        if (amount == 0) return;
+        int newValue = Mathf.Clamp(Libido + amount, 0, LibidoMax);
+        if (Libido == newValue) return;
+        Libido = newValue;
+        OnLibidoChanged?.Invoke(Libido);
+    }
+
+    /// <summary>直接設定性慾值。</summary>
+    public void SetLibido(int value)
+    {
+        value = Mathf.Clamp(value, 0, LibidoMax);
+        if (Libido == value) return;
+        Libido = value;
+        OnLibidoChanged?.Invoke(Libido);
+    }
+
+    /// <summary>取得目前性慾值。</summary>
+    public int GetLibido() => Libido;
+
+    // ─────────────────────────────────────────────────────────────
     // Emotion deck mutation
     // ─────────────────────────────────────────────────────────────
     public void AddEmotionCard(HeroineEmotionCardType type)
@@ -233,7 +297,7 @@ public class HeroineStatusModel
 
     public void ReplaceEmotionCard(HeroineEmotionCardType newType)
     {
-        HeroineEmotionCardType oldDominant = GetDominantEmotion();
+        HeroineEmotionCardType oldDominant = CalculateDominantEmotion();
 
         AddCardInternal(newType);
         OnEmotionCardAdded?.Invoke(newType);
@@ -249,7 +313,7 @@ public class HeroineStatusModel
 
     public bool RemoveOneCardOfType(HeroineEmotionCardType type)
     {
-        HeroineEmotionCardType oldDominant = GetDominantEmotion();
+        HeroineEmotionCardType oldDominant = CalculateDominantEmotion();
         var target = emotionDeck
             .Where(c => c.Type == type)
             .OrderBy(c => c.AddedOrder)
@@ -264,7 +328,7 @@ public class HeroineStatusModel
 
     public void RemoveOldestCard()
     {
-        HeroineEmotionCardType oldDominant = GetDominantEmotion();
+        HeroineEmotionCardType oldDominant = CalculateDominantEmotion();
         RemoveOldestCardInternal();
         NotifyDeckChanged(oldDominant);
     }
@@ -345,26 +409,20 @@ public class HeroineStatusModel
         }
     }
 
-    private void NotifyDeckChanged(HeroineEmotionCardType oldDominant, bool forceEmotionNotify = false)
+    private void NotifyDeckChanged(HeroineEmotionCardType oldDominant, bool forceNotify = false)
     {
         OnEmotionDeckChanged?.Invoke();
 
-        HeroineEmotionCardType newDominant = GetDominantEmotion();
-        if (newDominant != oldDominant)
+        HeroineEmotionCardType newDominant = CalculateDominantEmotion();
+        if (newDominant != oldDominant || forceNotify)
         {
+            DominantEmotion = newDominant;
             OnDominantEmotionChanged?.Invoke(newDominant);
         }
-
-        UpdateCurrentEmotionFromDeck(forceEmotionNotify);
-    }
-
-    private void UpdateCurrentEmotionFromDeck(bool forceNotify = false)
-    {
-        HeroineEmotionCardType newEmotion = GetDominantEmotion();
-        if (!forceNotify && CurrentEmotion == newEmotion) return;
-
-        CurrentEmotion = newEmotion;
-        OnEmotionChanged?.Invoke(CurrentEmotion);
+        else
+        {
+            DominantEmotion = newDominant;
+        }
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -393,6 +451,8 @@ public class HeroineStatusModel
         return new HeroineSaveData
         {
             Emotion = CurrentEmotion,
+            DominantEmotion = DominantEmotion,
+            Libido = Libido,
             HCount = HCount,
             NextEmotionCardOrder = nextEmotionCardOrder,
             EmotionDeckData = emotionDeck
@@ -412,9 +472,11 @@ public class HeroineStatusModel
     {
         if (data == null) return;
 
-        HeroineEmotionCardType oldDominant = GetDominantEmotion();
+        HeroineEmotionCardType oldDominant = CalculateDominantEmotion();
 
         HCount = Mathf.Max(0, data.HCount);
+        CurrentEmotion = data.Emotion;
+        Libido = Mathf.Clamp(data.Libido, 0, LibidoMax);
         nextEmotionCardOrder = Mathf.Max(0, data.NextEmotionCardOrder);
 
         emotionDeck.Clear();
@@ -445,7 +507,9 @@ public class HeroineStatusModel
         if (data.StatusEffectData != null) StatusEffectModel.LoadFromSaveData(data.StatusEffectData, effectDatabase);
 
         OnHCountChanged?.Invoke(HCount);
-        NotifyDeckChanged(oldDominant, forceEmotionNotify: true);
+        OnLibidoChanged?.Invoke(Libido);
+        OnCurrentEmotionChanged?.Invoke(CurrentEmotion);
+        NotifyDeckChanged(oldDominant, forceNotify: true);
     }
 
     // ─────────────────────────────────────────────────────────────

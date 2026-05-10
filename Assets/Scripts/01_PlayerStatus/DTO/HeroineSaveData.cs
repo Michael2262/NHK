@@ -9,6 +9,8 @@ using System.Collections.Generic;
 public class HeroineSaveData
 {
     public HeroineEmotionCardType Emotion;
+    public HeroineEmotionCardType DominantEmotion;
+    public int Libido;
     public int HCount;
 
     public int NextEmotionCardOrder;
