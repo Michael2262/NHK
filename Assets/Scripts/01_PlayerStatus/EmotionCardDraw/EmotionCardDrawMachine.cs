@@ -22,7 +22,10 @@ public enum EmotionResultMode
     Fake,
 
     /// <summary>結果 = 直接指定，不管卡池有沒有。</summary>
-    Mock
+    Mock,
+
+    /// <summary>結果 = 情緒鄰近抽選。依據 CurrentEmotion 限定可抽到的情緒，再從卡池中隨機。</summary>
+    Adjacent
 }
 
 /// <summary>
@@ -236,6 +239,10 @@ public class EmotionCardDrawMachine : MonoBehaviour
                 result.ResultEmotion = specifiedEmotion;
                 break;
 
+            case EmotionResultMode.Adjacent:
+                result.ResultEmotion = GetAdjacentRandomFromDeck(heroine);
+                break;
+
             default:
                 result.ResultEmotion = heroine != null ? heroine.CurrentEmotion : HeroineEmotionCardType.Angry;
                 break;
@@ -259,6 +266,94 @@ public class EmotionCardDrawMachine : MonoBehaviour
 
         int index = UnityEngine.Random.Range(0, deck.Count);
         return deck[index].Type;
+    }
+
+    /// <summary>
+    /// 情緒鄰近抽選：依據 CurrentEmotion 取得可抽到的情緒清單，
+    /// 再從卡池中只抽這些情緒。若卡池中沒有任何鄰近情緒的卡，退回 CurrentEmotion。
+    /// </summary>
+    private HeroineEmotionCardType GetAdjacentRandomFromDeck(HeroineStatusModel heroine)
+    {
+        if (heroine == null) return HeroineEmotionCardType.Angry;
+
+        var allowed = GetAdjacentEmotions(heroine.CurrentEmotion);
+        IReadOnlyList<HeroineEmotionCardSaveData> deck = heroine.EmotionDeck;
+        if (deck == null || deck.Count == 0) return heroine.CurrentEmotion;
+
+        // 篩選卡池中屬於鄰近情緒的卡
+        var candidates = new List<HeroineEmotionCardSaveData>();
+        foreach (var card in deck)
+        {
+            if (allowed.Contains(card.Type))
+                candidates.Add(card);
+        }
+
+        if (candidates.Count == 0) return heroine.CurrentEmotion;
+
+        int index = UnityEngine.Random.Range(0, candidates.Count);
+        return candidates[index].Type;
+    }
+
+    /// <summary>
+    /// 取得指定主導情緒的鄰近情緒清單（含自身）。
+    /// </summary>
+    private static HashSet<HeroineEmotionCardType> GetAdjacentEmotions(HeroineEmotionCardType current)
+    {
+        switch (current)
+        {
+            case HeroineEmotionCardType.Angry:
+                return new HashSet<HeroineEmotionCardType>
+                {
+                    HeroineEmotionCardType.Angry,
+                    HeroineEmotionCardType.Worried,
+                    HeroineEmotionCardType.Disappointed
+                };
+
+            case HeroineEmotionCardType.Worried:
+                return new HashSet<HeroineEmotionCardType>
+                {
+                    HeroineEmotionCardType.Worried,
+                    HeroineEmotionCardType.Maternal,
+                    HeroineEmotionCardType.Angry
+                };
+
+            case HeroineEmotionCardType.Maternal:
+                return new HashSet<HeroineEmotionCardType>
+                {
+                    HeroineEmotionCardType.Maternal,
+                    HeroineEmotionCardType.Worried,
+                    HeroineEmotionCardType.Relaxed,
+                    HeroineEmotionCardType.Shy
+                };
+
+            case HeroineEmotionCardType.Relaxed:
+                return new HashSet<HeroineEmotionCardType>
+                {
+                    HeroineEmotionCardType.Relaxed,
+                    HeroineEmotionCardType.Shy,
+                    HeroineEmotionCardType.Maternal
+                };
+
+            case HeroineEmotionCardType.Shy:
+                return new HashSet<HeroineEmotionCardType>
+                {
+                    HeroineEmotionCardType.Shy,
+                    HeroineEmotionCardType.Relaxed,
+                    HeroineEmotionCardType.Maternal,
+                    HeroineEmotionCardType.Angry
+                };
+
+            case HeroineEmotionCardType.Disappointed:
+                return new HashSet<HeroineEmotionCardType>
+                {
+                    HeroineEmotionCardType.Disappointed,
+                    HeroineEmotionCardType.Angry,
+                    HeroineEmotionCardType.Worried
+                };
+
+            default:
+                return new HashSet<HeroineEmotionCardType> { current };
+        }
     }
 
     // ─────────────────────────────────────────────────────────────

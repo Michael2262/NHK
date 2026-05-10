@@ -6,7 +6,7 @@
 //   HeroineEmotionDraw(heroineID, resultMode, showMode, resultLuaVariable, specifiedEmotion)
 //   HeroineEmotionDraw(heroineID, resultMode, showMode, resultLuaVariable, specifiedEmotion, wait, doneMessage)
 //
-// resultMode = current | bulk | random | fake | mock
+// resultMode = current | bulk | random | fake | mock | adjacent
 // showMode   = none | small | medium | big
 //
 // 範例：
@@ -129,6 +129,7 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
                 case "random": case "隨機": case "rand": case "rng": return EmotionResultMode.Random;
                 case "fake": case "造假": return EmotionResultMode.Fake;
                 case "mock": case "強制": case "指定": return EmotionResultMode.Mock;
+                case "adjacent": case "鄰近": case "adj": case "near": return EmotionResultMode.Adjacent;
                 default:
                     Debug.LogWarning($"[HeroineEmotionDraw] 無法解析 resultMode: {text}，使用 Current");
                     return EmotionResultMode.Current;
