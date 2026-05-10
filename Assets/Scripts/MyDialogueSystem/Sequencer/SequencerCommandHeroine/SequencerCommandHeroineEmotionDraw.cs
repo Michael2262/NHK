@@ -85,6 +85,8 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
         // 共用執行
         // ─────────────────────────────────────────────────────────
 
+        private const string DefaultDoneMessage = "EmotionDrawDone";
+
         private void ExecuteDraw(string heroineID, EmotionResultMode resultMode, EmotionShowMode showMode,
             HeroineEmotionCardType specifiedEmotion, string resultLuaVariable, bool wait, string doneMessage)
         {
@@ -98,7 +100,13 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
             Action<EmotionDrawResult> onComplete = result =>
             {
                 WriteLuaResult(resultLuaVariable, result);
-                SendDoneMessage(doneMessage);
+
+                // 固定發 EmotionDrawDone
+                Sequencer.Message(DefaultDoneMessage);
+
+                // 若有額外指定 doneMessage 且跟預設不同，也一併發
+                if (!string.IsNullOrWhiteSpace(doneMessage) && doneMessage != DefaultDoneMessage)
+                    Sequencer.Message(doneMessage.Trim());
 
                 if (wait && !stopped)
                 {
