@@ -1,4 +1,6 @@
 using HutongGames.PlayMaker;
+using UnityEngine;
+using Tooltip = HutongGames.PlayMaker.TooltipAttribute;
 
 namespace MyGame.Actions
 {
@@ -6,7 +8,10 @@ namespace MyGame.Actions
     [Tooltip("檢查標記是否存在（或數值 > 0），發送 True/False 事件。")]
     public class CheckProgressFlag : FsmStateAction
     {
-        [RequiredField] public FsmString flag;
+        [RequiredField]
+        [Tooltip("拖入旗標定義")]
+        public ProgressFlagDefinition flagDef;
+
         public FsmEvent trueEvent;
         public FsmEvent falseEvent;
 
@@ -28,7 +33,7 @@ namespace MyGame.Actions
 
         private void DoCheck()
         {
-            bool exists = GameStatusService.Instance.ProgressFlags.Contains(flag.Value);
+            bool exists = flagDef != null && GameStatusService.Instance.ProgressFlags.Contains(flagDef.FlagID);
             storeResult.Value = exists;
             Fsm.Event(exists ? trueEvent : falseEvent);
         }
@@ -38,12 +43,16 @@ namespace MyGame.Actions
     [Tooltip("在當前狀態等待，直到指定標記出現才發送事件跳轉。")]
     public class WaitForProgressFlag : FsmStateAction
     {
-        [RequiredField] public FsmString flag;
-        [RequiredField] public FsmEvent sendEvent;
+        [RequiredField]
+        [Tooltip("拖入旗標定義")]
+        public ProgressFlagDefinition flagDef;
+
+        [RequiredField]
+        public FsmEvent sendEvent;
 
         public override void OnUpdate()
         {
-            if (GameStatusService.Instance.ProgressFlags.Contains(flag.Value))
+            if (flagDef != null && GameStatusService.Instance.ProgressFlags.Contains(flagDef.FlagID))
             {
                 Fsm.Event(sendEvent);
                 Finish();

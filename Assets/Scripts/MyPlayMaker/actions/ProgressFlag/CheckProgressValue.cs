@@ -1,4 +1,6 @@
 using HutongGames.PlayMaker;
+using UnityEngine;
+using Tooltip = HutongGames.PlayMaker.TooltipAttribute;
 
 namespace MyGame.Actions
 {
@@ -17,8 +19,8 @@ namespace MyGame.Actions
         }
 
         [RequiredField]
-        [Tooltip("要檢查的數值 Key")]
-        public FsmString key;
+        [Tooltip("拖入數值定義")]
+        public ProgressValueDefinition valueDef;
 
         [Tooltip("比較方式")]
         public CompareType compareType = CompareType.GreaterThan;
@@ -55,7 +57,9 @@ namespace MyGame.Actions
 
         private void DoCheck()
         {
-            int currentValue = GameStatusService.Instance.ProgressFlags.GetValue(key.Value);
+            int currentValue = valueDef != null
+                ? GameStatusService.Instance.ProgressFlags.GetValue(valueDef.FlagID)
+                : 0;
 
             if (!storeCurrentValue.IsNone)
                 storeCurrentValue.Value = currentValue;

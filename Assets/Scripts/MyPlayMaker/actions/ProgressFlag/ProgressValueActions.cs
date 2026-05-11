@@ -1,4 +1,6 @@
-﻿using HutongGames.PlayMaker;
+using HutongGames.PlayMaker;
+using UnityEngine;
+using Tooltip = HutongGames.PlayMaker.TooltipAttribute;
 
 namespace MyGame.Actions
 {
@@ -6,12 +8,16 @@ namespace MyGame.Actions
     [Tooltip("設定進度數值變數。")]
     public class SetProgressValue : FsmStateAction
     {
-        [RequiredField] public FsmString key;
+        [RequiredField]
+        [Tooltip("拖入數值定義")]
+        public ProgressValueDefinition valueDef;
+
         [RequiredField] public FsmInt value;
 
         public override void OnEnter()
         {
-            GameStatusService.Instance.ProgressFlags.SetValue(key.Value, value.Value);
+            if (valueDef != null)
+                GameStatusService.Instance.ProgressFlags.SetValue(valueDef.FlagID, value.Value);
             Finish();
         }
     }
@@ -20,12 +26,16 @@ namespace MyGame.Actions
     [Tooltip("獲取進度數值並存入 PlayMaker 變數。")]
     public class GetProgressValue : FsmStateAction
     {
-        [RequiredField] public FsmString key;
+        [RequiredField]
+        [Tooltip("拖入數值定義")]
+        public ProgressValueDefinition valueDef;
+
         [RequiredField][UIHint(UIHint.Variable)] public FsmInt storeValue;
 
         public override void OnEnter()
         {
-            storeValue.Value = GameStatusService.Instance.ProgressFlags.GetValue(key.Value);
+            if (valueDef != null)
+                storeValue.Value = GameStatusService.Instance.ProgressFlags.GetValue(valueDef.FlagID);
             Finish();
         }
     }
@@ -34,12 +44,16 @@ namespace MyGame.Actions
     [Tooltip("增加或減少進度數值。")]
     public class AddProgressValue : FsmStateAction
     {
-        [RequiredField] public FsmString key;
+        [RequiredField]
+        [Tooltip("拖入數值定義")]
+        public ProgressValueDefinition valueDef;
+
         [RequiredField] public FsmInt amount;
 
         public override void OnEnter()
         {
-            GameStatusService.Instance.ProgressFlags.AddValue(key.Value, amount.Value);
+            if (valueDef != null)
+                GameStatusService.Instance.ProgressFlags.AddValue(valueDef.FlagID, amount.Value);
             Finish();
         }
     }

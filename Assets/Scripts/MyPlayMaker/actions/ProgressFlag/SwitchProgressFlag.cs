@@ -12,8 +12,8 @@ namespace MyGame.Actions
         [Serializable]
         public class FlagEventEntry
         {
-            [Tooltip("要檢查的旗標 key")]
-            public FsmString flag;
+            [Tooltip("拖入旗標定義")]
+            public ProgressFlagDefinition flagDef;
 
             [Tooltip("該旗標開啟時要發送的事件")]
             public FsmEvent sendEvent;
@@ -33,10 +33,10 @@ namespace MyGame.Actions
             {
                 foreach (var entry in entries)
                 {
-                    if (entry.flag == null || entry.flag.IsNone || string.IsNullOrEmpty(entry.flag.Value))
+                    if (entry.flagDef == null)
                         continue;
 
-                    if (model.Contains(entry.flag.Value))
+                    if (model.Contains(entry.flagDef.FlagID))
                     {
                         Fsm.Event(entry.sendEvent);
                         Finish();

@@ -18,9 +18,8 @@ namespace MyGame.Actions
         [Tooltip("檢查模式：All = 全部存在才為 true；Any = 任一存在即為 true")]
         public CheckMode checkMode = CheckMode.All;
 
-        [Tooltip("手動指定要檢查的旗標 key 清單")]
-        [ArrayEditor(VariableType.String)]
-        public FsmString[] flags;
+        [Tooltip("拖入要檢查的旗標定義")]
+        public ProgressFlagDefinition[] flags;
 
         [Tooltip("額外引用的 FlagBundle（可為空）")]
         public FlagBundle[] bundles;
@@ -52,15 +51,14 @@ namespace MyGame.Actions
         {
             var model = GameStatusService.Instance.ProgressFlags;
 
-            // 收集所有要檢查的 key
             var keys = new List<string>();
 
             if (flags != null)
             {
                 foreach (var f in flags)
                 {
-                    if (!f.IsNone && !string.IsNullOrEmpty(f.Value))
-                        keys.Add(f.Value);
+                    if (f != null)
+                        keys.Add(f.FlagID);
                 }
             }
 
@@ -73,7 +71,6 @@ namespace MyGame.Actions
                 }
             }
 
-            // 空清單：All 模式下視為 true（vacuous truth），Any 模式下視為 false
             bool result;
             if (keys.Count == 0)
             {

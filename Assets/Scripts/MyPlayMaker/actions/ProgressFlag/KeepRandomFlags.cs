@@ -13,9 +13,8 @@ namespace MyGame.Actions
         [Tooltip("要保留幾個開啟的旗標")]
         public FsmInt keepCount;
 
-        [Tooltip("手動指定候選旗標 key 清單")]
-        [ArrayEditor(VariableType.String)]
-        public FsmString[] flags;
+        [Tooltip("拖入候選旗標定義")]
+        public ProgressFlagDefinition[] flags;
 
         [Tooltip("額外引用的 FlagBundle（可為空）")]
         public FlagBundle[] bundles;
@@ -35,8 +34,8 @@ namespace MyGame.Actions
             {
                 foreach (var f in flags)
                 {
-                    if (!f.IsNone && !string.IsNullOrEmpty(f.Value))
-                        allKeys.Add(f.Value);
+                    if (f != null)
+                        allKeys.Add(f.FlagID);
                 }
             }
 
