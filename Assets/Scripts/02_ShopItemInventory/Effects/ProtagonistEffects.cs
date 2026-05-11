@@ -1,7 +1,7 @@
 using UnityEngine;
 
 // ==========================================================
-// NHK 主角效果：Stress / LifePower / SocialFear / Dependency
+// NHK 主角效果：Stress / LifePower / Sociality / Dependency
 // 原檔名保留。舊 Stamina / Spirit / Action / ShootTimes 等效果已改為 NHK 狀態效果。
 // ==========================================================
 
@@ -78,17 +78,17 @@ public class ReduceLifePowerEffect : ItemEffect
 }
 
 [System.Serializable]
-public class AddSocialFearEffect : ItemEffect
+public class AddSocialityEffect : ItemEffect
 {
     public override EffectTarget Target => EffectTarget.Protagonist;
     public int Amount = 10;
 
-    public override void Apply(EffectContext ctx) => ctx.Protagonist.AddSocialFear(Amount);
+    public override void Apply(EffectContext ctx) => ctx.Protagonist.AddSociality(Amount);
 
     public override ValueChangeRecord? ReportChange(EffectContext ctx) => new ValueChangeRecord
     {
         isHeroineResource = false,
-        resourceTypeKey = "SocialFear",
+        resourceTypeKey = "Sociality",
         finalAmount = Amount,
         effectResult = ValueChangeResult.EffectResult.Normal,
         heroineNameKey = ""
@@ -96,17 +96,17 @@ public class AddSocialFearEffect : ItemEffect
 }
 
 [System.Serializable]
-public class ReduceSocialFearEffect : ItemEffect
+public class ReduceSocialityEffect : ItemEffect
 {
     public override EffectTarget Target => EffectTarget.Protagonist;
     public int Amount = 10;
 
-    public override void Apply(EffectContext ctx) => ctx.Protagonist.ReduceSocialFear(Amount);
+    public override void Apply(EffectContext ctx) => ctx.Protagonist.ReduceSociality(Amount);
 
     public override ValueChangeRecord? ReportChange(EffectContext ctx) => new ValueChangeRecord
     {
         isHeroineResource = false,
-        resourceTypeKey = "SocialFear",
+        resourceTypeKey = "Sociality",
         finalAmount = -Amount,
         effectResult = ValueChangeResult.EffectResult.Normal,
         heroineNameKey = ""
@@ -319,7 +319,7 @@ public class AddExcuseChargeEffect : ReduceStressEffect { }
 public class AddProtagonistAttackEffect : AddLifePowerEffect { }
 
 [System.Serializable]
-public class AddProtagonistDefenseEffect : ReduceSocialFearEffect { }
+public class AddProtagonistDefenseEffect : AddSocialityEffect { }
 
 [System.Serializable]
 public class AddRestRecoveryPerSlotEffect : ReduceStressEffect { }

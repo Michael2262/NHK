@@ -67,18 +67,18 @@ public class ValueTriggerBridgeAPI : MonoBehaviour
         Debug.Log($"[BridgeAPI] 執行降低生活力 {amount}");
     }
 
-    public void ExecuteAddSocialFear(int amount)
+    public void ExecuteAddSociality(int amount)
     {
         var p = GameStatusService.Instance.Protagonist;
-        p.AddSocialFear(amount);
-        Debug.Log($"[BridgeAPI] 執行增加社會恐懼 {amount}");
+        p.AddSociality(amount);
+        Debug.Log($"[BridgeAPI] 執行增加社會性 {amount}");
     }
 
-    public void ExecuteReduceSocialFear(int amount)
+    public void ExecuteReduceSociality(int amount)
     {
         var p = GameStatusService.Instance.Protagonist;
-        p.ReduceSocialFear(amount);
-        Debug.Log($"[BridgeAPI] 執行降低社會恐懼 {amount}");
+        p.ReduceSociality(amount);
+        Debug.Log($"[BridgeAPI] 執行降低社會性 {amount}");
     }
 
     public void ExecuteAddDependency(int amount)

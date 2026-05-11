@@ -13,7 +13,7 @@ public class ProtagonistSaveData
     // ───── NHK 主角核心數值 ─────
     public int Stress;       // 壓力：0～100，越高越危險
     public int LifePower;    // 生活力：0～100，越高越能維持正常生活
-    public int SocialFear;   // 社會恐懼：0～100，越高越害怕外界
+    public int Sociality;    // 社會性：0～100，越高越能面對外界
     public int Dependency;   // 依賴度：0～100，主角對妹妹的依賴
 
     // ───── 保留資源 ─────

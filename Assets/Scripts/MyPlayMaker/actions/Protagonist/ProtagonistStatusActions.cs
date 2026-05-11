@@ -306,46 +306,46 @@ public class SetLifePower : FsmStateAction
 }
 
 [ActionCategory("Protagonist Status")]
-[Tooltip("增減主角社會恐懼 SocialFear。")]
-public class AddSocialFear : FsmStateAction
+[Tooltip("增減主角社會性 Sociality。")]
+public class AddSociality : FsmStateAction
 {
     public FsmInt amount;
-    [UIHint(UIHint.Variable)] public FsmInt storeSocialFear;
-    public override void Reset() { amount = 0; storeSocialFear = null; }
+    [UIHint(UIHint.Variable)] public FsmInt storeSociality;
+    public override void Reset() { amount = 0; storeSociality = null; }
     public override void OnEnter()
     {
-        var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(AddSocialFear));
-        if (p != null) { p.AddSocialFear(amount.Value); ProtagonistPlayMakerUtil.StoreInt(storeSocialFear, p.SocialFear); }
+        var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(AddSociality));
+        if (p != null) { p.AddSociality(amount.Value); ProtagonistPlayMakerUtil.StoreInt(storeSociality, p.Sociality); }
         Finish();
     }
 }
 
 [ActionCategory("Protagonist Status")]
-[Tooltip("降低主角社會恐懼 SocialFear (數量為正數)。")]
-public class ReduceSocialFear : FsmStateAction
+[Tooltip("降低主角社會性 Sociality (數量為正數)。")]
+public class ReduceSociality : FsmStateAction
 {
     public FsmInt amount;
-    [UIHint(UIHint.Variable)] public FsmInt storeSocialFear;
-    public override void Reset() { amount = 0; storeSocialFear = null; }
+    [UIHint(UIHint.Variable)] public FsmInt storeSociality;
+    public override void Reset() { amount = 0; storeSociality = null; }
     public override void OnEnter()
     {
-        var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(ReduceSocialFear));
-        if (p != null) { p.ReduceSocialFear(Mathf.Max(0, amount.Value)); ProtagonistPlayMakerUtil.StoreInt(storeSocialFear, p.SocialFear); }
+        var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(ReduceSociality));
+        if (p != null) { p.ReduceSociality(Mathf.Max(0, amount.Value)); ProtagonistPlayMakerUtil.StoreInt(storeSociality, p.Sociality); }
         Finish();
     }
 }
 
 [ActionCategory("Protagonist Status")]
-[Tooltip("直接設定主角社會恐懼 SocialFear。")]
-public class SetSocialFear : FsmStateAction
+[Tooltip("直接設定主角社會性 Sociality。")]
+public class SetSociality : FsmStateAction
 {
     public FsmInt value;
-    [UIHint(UIHint.Variable)] public FsmInt storeSocialFear;
-    public override void Reset() { value = 0; storeSocialFear = null; }
+    [UIHint(UIHint.Variable)] public FsmInt storeSociality;
+    public override void Reset() { value = 0; storeSociality = null; }
     public override void OnEnter()
     {
-        var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(SetSocialFear));
-        if (p != null) { p.SetSocialFear(value.Value); ProtagonistPlayMakerUtil.StoreInt(storeSocialFear, p.SocialFear); }
+        var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(SetSociality));
+        if (p != null) { p.SetSociality(value.Value); ProtagonistPlayMakerUtil.StoreInt(storeSociality, p.Sociality); }
         Finish();
     }
 }
@@ -396,23 +396,23 @@ public class SetDependency : FsmStateAction
 }
 
 [ActionCategory("Protagonist Status")]
-[Tooltip("一次套用主角四項核心數值的變化 (Stress / LifePower / SocialFear / Dependency)。")]
+[Tooltip("一次套用主角四項核心數值的變化 (Stress / LifePower / Sociality / Dependency)。")]
 public class ApplyProtagonistStatusChange : FsmStateAction
 {
     public FsmInt stressDelta;
     public FsmInt lifePowerDelta;
-    public FsmInt socialFearDelta;
+    public FsmInt socialityDelta;
     public FsmInt dependencyDelta;
 
     [UIHint(UIHint.Variable)] public FsmInt storeStress;
     [UIHint(UIHint.Variable)] public FsmInt storeLifePower;
-    [UIHint(UIHint.Variable)] public FsmInt storeSocialFear;
+    [UIHint(UIHint.Variable)] public FsmInt storeSociality;
     [UIHint(UIHint.Variable)] public FsmInt storeDependency;
 
     public override void Reset()
     {
-        stressDelta = 0; lifePowerDelta = 0; socialFearDelta = 0; dependencyDelta = 0;
-        storeStress = null; storeLifePower = null; storeSocialFear = null; storeDependency = null;
+        stressDelta = 0; lifePowerDelta = 0; socialityDelta = 0; dependencyDelta = 0;
+        storeStress = null; storeLifePower = null; storeSociality = null; storeDependency = null;
     }
 
     public override void OnEnter()
@@ -421,12 +421,12 @@ public class ApplyProtagonistStatusChange : FsmStateAction
         if (p != null)
         {
             var change = new ProtagonistStatusChange(
-                stressDelta.Value, lifePowerDelta.Value, socialFearDelta.Value, dependencyDelta.Value);
+                stressDelta.Value, lifePowerDelta.Value, socialityDelta.Value, dependencyDelta.Value);
             p.ApplyStatusChange(change);
 
             ProtagonistPlayMakerUtil.StoreInt(storeStress, p.Stress);
             ProtagonistPlayMakerUtil.StoreInt(storeLifePower, p.LifePower);
-            ProtagonistPlayMakerUtil.StoreInt(storeSocialFear, p.SocialFear);
+            ProtagonistPlayMakerUtil.StoreInt(storeSociality, p.Sociality);
             ProtagonistPlayMakerUtil.StoreInt(storeDependency, p.Dependency);
         }
         Finish();
@@ -635,18 +635,18 @@ public class GetProtagonistLifeState : FsmStateAction
 }
 
 [ActionCategory("Protagonist Status")]
-[Tooltip("查詢主角目前的社會恐懼狀態 (Low / Medium / High)。")]
-public class GetProtagonistSocialFearState : FsmStateAction
+[Tooltip("查詢主角目前的社會性狀態 (Low / Medium / High)。")]
+public class GetProtagonistSocialityState : FsmStateAction
 {
     [UIHint(UIHint.Variable)] public FsmString storeStateName;
     [UIHint(UIHint.Variable)] public FsmInt storeStateIndex;
     public override void Reset() { storeStateName = null; storeStateIndex = null; }
     public override void OnEnter()
     {
-        var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(GetProtagonistSocialFearState));
+        var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(GetProtagonistSocialityState));
         if (p != null)
         {
-            var state = p.GetSocialFearState();
+            var state = p.GetSocialityState();
             ProtagonistPlayMakerUtil.StoreString(storeStateName, state.ToString());
             ProtagonistPlayMakerUtil.StoreInt(storeStateIndex, (int)state);
         }
@@ -675,7 +675,7 @@ public class GetProtagonistDependencyState : FsmStateAction
 }
 
 [ActionCategory("Protagonist Status")]
-[Tooltip("檢查主角的某個 bool 狀態 (壓力 / 生活力 / 社會恐懼 / 依賴度)。")]
+[Tooltip("檢查主角的某個 bool 狀態 (壓力 / 生活力 / 社會性 / 依賴度)。")]
 public class CheckProtagonistStatus : FsmStateAction
 {
     public enum CheckType
@@ -685,8 +685,8 @@ public class CheckProtagonistStatus : FsmStateAction
         IsLifeVeryLow,
         IsLifeStable,
         IsLifeHealthy,
-        IsSocialFearHigh,
-        IsSocialFearLow,
+        IsSocialityHigh,
+        IsSocialityLow,
         IsDependencyHigh,
         IsDependencyExtreme
     }
@@ -711,8 +711,8 @@ public class CheckProtagonistStatus : FsmStateAction
             case CheckType.IsLifeVeryLow: result = p.IsLifeVeryLow(); break;
             case CheckType.IsLifeStable: result = p.IsLifeStable(); break;
             case CheckType.IsLifeHealthy: result = p.IsLifeHealthy(); break;
-            case CheckType.IsSocialFearHigh: result = p.IsSocialFearHigh(); break;
-            case CheckType.IsSocialFearLow: result = p.IsSocialFearLow(); break;
+            case CheckType.IsSocialityHigh: result = p.IsSocialityHigh(); break;
+            case CheckType.IsSocialityLow: result = p.IsSocialityLow(); break;
             case CheckType.IsDependencyHigh: result = p.IsDependencyHigh(); break;
             case CheckType.IsDependencyExtreme: result = p.IsDependencyExtreme(); break;
         }

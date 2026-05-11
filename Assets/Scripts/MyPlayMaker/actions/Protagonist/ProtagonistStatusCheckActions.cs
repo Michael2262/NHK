@@ -124,11 +124,11 @@ public class CheckLifePower : ProtagonistIntCheckActionBase
 }
 
 [ActionCategory("Protagonist Status")]
-[Tooltip("比較主角社會恐懼 SocialFear 與指定閾值。")]
-public class CheckSocialFear : ProtagonistIntCheckActionBase
+[Tooltip("比較主角社會性 Sociality 與指定閾值。社會性為正向值，越高越好。")]
+public class CheckSociality : ProtagonistIntCheckActionBase
 {
-    protected override string DebugName => nameof(CheckSocialFear);
-    protected override int GetCurrentValue(ProtagonistStatusModel protagonist) => protagonist.SocialFear;
+    protected override string DebugName => nameof(CheckSociality);
+    protected override int GetCurrentValue(ProtagonistStatusModel protagonist) => protagonist.Sociality;
 }
 
 [ActionCategory("Protagonist Status")]

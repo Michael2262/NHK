@@ -25,13 +25,13 @@ public enum ProtagonistLifeState
 }
 
 /// <summary>
-/// 社會恐懼狀態。用於 UI 顯示與事件條件判斷。
+/// 社會性狀態。用於 UI 顯示與事件條件判斷。越高越好。
 /// </summary>
-public enum ProtagonistSocialFearState
+public enum ProtagonistSocialityState
 {
-    Low,     // 0～40
-    Medium,  // 41～69
-    High     // 70～100
+    Low,     // 0～30：幾乎無法面對外界
+    Medium,  // 31～59：勉強能應對
+    High     // 60～100：能正常社交
 }
 
 /// <summary>
@@ -52,21 +52,21 @@ public struct ProtagonistStatusChange
 {
     public int stressDelta;
     public int lifePowerDelta;
-    public int socialFearDelta;
+    public int socialityDelta;
     public int dependencyDelta;
 
-    public ProtagonistStatusChange(int stressDelta, int lifePowerDelta, int socialFearDelta, int dependencyDelta)
+    public ProtagonistStatusChange(int stressDelta, int lifePowerDelta, int socialityDelta, int dependencyDelta)
     {
         this.stressDelta = stressDelta;
         this.lifePowerDelta = lifePowerDelta;
-        this.socialFearDelta = socialFearDelta;
+        this.socialityDelta = socialityDelta;
         this.dependencyDelta = dependencyDelta;
     }
 }
 
 /// <summary>
 /// 職責：負責儲存與管理「主角自身」的核心數值與行為統計。
-/// NHK 版：保留舊類名，但核心改為壓力、生活力、社會恐懼、依賴度。
+/// NHK 版：保留舊類名，但核心改為壓力、生活力、社會性、依賴度。
 /// Money / SkillPoints 依需求保留。
 /// </summary>
 public class ProtagonistStatusModel
@@ -75,7 +75,7 @@ public class ProtagonistStatusModel
     public const int INITIAL_DAY = 1;
     public const int INITIAL_STRESS = 40;
     public const int INITIAL_LIFE_POWER = 5;
-    public const int INITIAL_SOCIAL_FEAR = 70;
+    public const int INITIAL_SOCIALITY = 5;
     public const int INITIAL_DEPENDENCY = 0;
     public const int INITIAL_MONEY = 0;
     public const int INITIAL_SKILL_POINTS = 0;
@@ -94,8 +94,8 @@ public class ProtagonistStatusModel
     public const int LIFE_STABLE_THRESHOLD = 50;
     public const int LIFE_HEALTHY_THRESHOLD = 70;
 
-    public const int SOCIAL_FEAR_MEDIUM_THRESHOLD = 41;
-    public const int SOCIAL_FEAR_HIGH_THRESHOLD = 70;
+    public const int SOCIALITY_MEDIUM_THRESHOLD = 31;   // 31 以上為 Medium
+    public const int SOCIALITY_HIGH_THRESHOLD = 60;     // 60 以上為 High
 
     public const int DEPENDENCY_MEDIUM_THRESHOLD = 40;
     public const int DEPENDENCY_HIGH_THRESHOLD = 60;
@@ -110,8 +110,8 @@ public class ProtagonistStatusModel
     /// <summary>生活力：0～100。越高代表越能維持正常生活。</summary>
     public int LifePower { get; private set; } = INITIAL_LIFE_POWER;
 
-    /// <summary>社會恐懼：0～100。越高越害怕外界。</summary>
-    public int SocialFear { get; private set; } = INITIAL_SOCIAL_FEAR;
+    /// <summary>社會性：0～100。越高代表越能面對外界與正常社交。</summary>
+    public int Sociality { get; private set; } = INITIAL_SOCIALITY;
 
     /// <summary>依賴度：0～100。主角對妹妹的心理與生活依賴。</summary>
     public int Dependency { get; private set; } = INITIAL_DEPENDENCY;
@@ -151,14 +151,14 @@ public class ProtagonistStatusModel
     public event Action<int> OnDayChanged;
     public event Action<int> OnStressChanged;       // delta
     public event Action<int> OnLifePowerChanged;    // delta
-    public event Action<int> OnSocialFearChanged;   // delta
+    public event Action<int> OnSocialityChanged;    // delta
     public event Action<int> OnDependencyChanged;   // delta
     public event Action<int> OnMoneyChanged;        // delta
     public event Action<int> OnSkillPointsChanged;  // delta
 
     public event Action<ProtagonistStressState, ProtagonistStressState> OnStressStateChanged;
     public event Action<ProtagonistLifeState, ProtagonistLifeState> OnLifeStateChanged;
-    public event Action<ProtagonistSocialFearState, ProtagonistSocialFearState> OnSocialFearStateChanged;
+    public event Action<ProtagonistSocialityState, ProtagonistSocialityState> OnSocialityStateChanged;
     public event Action<ProtagonistDependencyState, ProtagonistDependencyState> OnDependencyStateChanged;
 
     public event Action OnStressCollapsed;
@@ -171,7 +171,7 @@ public class ProtagonistStatusModel
         Day = INITIAL_DAY;
         Stress = INITIAL_STRESS;
         LifePower = INITIAL_LIFE_POWER;
-        SocialFear = INITIAL_SOCIAL_FEAR;
+        Sociality = INITIAL_SOCIALITY;
         Dependency = INITIAL_DEPENDENCY;
         Money = INITIAL_MONEY;
         SkillPoints = INITIAL_SKILL_POINTS;
@@ -188,7 +188,7 @@ public class ProtagonistStatusModel
             Day = Day,
             Stress = Stress,
             LifePower = LifePower,
-            SocialFear = SocialFear,
+            Sociality = Sociality,
             Dependency = Dependency,
             Money = Money,
             SkillPoints = SkillPoints,
@@ -229,7 +229,7 @@ public class ProtagonistStatusModel
         Day = Math.Max(INITIAL_DAY, data.Day);
         Stress = ClampStatus(data.Stress);
         LifePower = ClampStatus(data.LifePower);
-        SocialFear = ClampStatus(data.SocialFear);
+        Sociality = ClampStatus(data.Sociality);
         Dependency = ClampStatus(data.Dependency);
         Money = Math.Max(0, data.Money);
         SkillPoints = Math.Max(0, data.SkillPoints);
@@ -266,7 +266,7 @@ public class ProtagonistStatusModel
         OnDayChanged?.Invoke(Day);
         OnStressChanged?.Invoke(0);
         OnLifePowerChanged?.Invoke(0);
-        OnSocialFearChanged?.Invoke(0);
+        OnSocialityChanged?.Invoke(0);
         OnDependencyChanged?.Invoke(0);
         OnMoneyChanged?.Invoke(0);
         OnSkillPointsChanged?.Invoke(0);
@@ -348,7 +348,7 @@ public class ProtagonistStatusModel
     {
         AddStress(change.stressDelta);
         AddLifePower(change.lifePowerDelta);
-        AddSocialFear(change.socialFearDelta);
+        AddSociality(change.socialityDelta);
         AddDependency(change.dependencyDelta);
     }
 
@@ -414,32 +414,32 @@ public class ProtagonistStatusModel
         AddLifePower(ClampStatus(value) - LifePower);
     }
 
-    public void AddSocialFear(int delta)
+    public void AddSociality(int delta)
     {
         if (delta == 0) return;
 
-        int prevValue = SocialFear;
-        ProtagonistSocialFearState prevState = GetSocialFearState();
-        SocialFear = ClampStatus(SocialFear + delta);
+        int prevValue = Sociality;
+        ProtagonistSocialityState prevState = GetSocialityState();
+        Sociality = ClampStatus(Sociality + delta);
 
-        if (SocialFear == prevValue) return;
+        if (Sociality == prevValue) return;
 
-        OnSocialFearChanged?.Invoke(SocialFear - prevValue);
+        OnSocialityChanged?.Invoke(Sociality - prevValue);
 
-        ProtagonistSocialFearState newState = GetSocialFearState();
+        ProtagonistSocialityState newState = GetSocialityState();
         if (newState != prevState)
-            OnSocialFearStateChanged?.Invoke(prevState, newState);
+            OnSocialityStateChanged?.Invoke(prevState, newState);
     }
 
-    public void ReduceSocialFear(int delta)
+    public void ReduceSociality(int delta)
     {
         if (delta <= 0) return;
-        AddSocialFear(-delta);
+        AddSociality(-delta);
     }
 
-    public void SetSocialFear(int value)
+    public void SetSociality(int value)
     {
-        AddSocialFear(ClampStatus(value) - SocialFear);
+        AddSociality(ClampStatus(value) - Sociality);
     }
 
     public void AddDependency(int delta)
@@ -597,11 +597,11 @@ public class ProtagonistStatusModel
         return ProtagonistLifeState.Unstable;
     }
 
-    public ProtagonistSocialFearState GetSocialFearState()
+    public ProtagonistSocialityState GetSocialityState()
     {
-        if (SocialFear >= SOCIAL_FEAR_HIGH_THRESHOLD) return ProtagonistSocialFearState.High;
-        if (SocialFear >= SOCIAL_FEAR_MEDIUM_THRESHOLD) return ProtagonistSocialFearState.Medium;
-        return ProtagonistSocialFearState.Low;
+        if (Sociality >= SOCIALITY_HIGH_THRESHOLD) return ProtagonistSocialityState.High;
+        if (Sociality >= SOCIALITY_MEDIUM_THRESHOLD) return ProtagonistSocialityState.Medium;
+        return ProtagonistSocialityState.Low;
     }
 
     public ProtagonistDependencyState GetDependencyState()
@@ -617,8 +617,8 @@ public class ProtagonistStatusModel
     public bool IsLifeVeryLow() => LifePower <= LIFE_VERY_LOW_MAX;
     public bool IsLifeStable() => LifePower >= LIFE_STABLE_THRESHOLD;
     public bool IsLifeHealthy() => LifePower >= LIFE_HEALTHY_THRESHOLD;
-    public bool IsSocialFearHigh() => SocialFear >= SOCIAL_FEAR_HIGH_THRESHOLD;
-    public bool IsSocialFearLow() => SocialFear < SOCIAL_FEAR_MEDIUM_THRESHOLD;
+    public bool IsSocialityHigh() => Sociality >= SOCIALITY_HIGH_THRESHOLD;
+    public bool IsSocialityLow() => Sociality < SOCIALITY_MEDIUM_THRESHOLD;
     public bool IsDependencyHigh() => Dependency >= DEPENDENCY_HIGH_THRESHOLD;
     public bool IsDependencyExtreme() => Dependency >= DEPENDENCY_EXTREME_THRESHOLD;
 
@@ -626,7 +626,8 @@ public class ProtagonistStatusModel
     public int GetFaceRealityScore()
     {
         // 給事件系統使用的粗略評分：越高代表越可能成功面對外界。
-        return 100 - SocialFear + (LifePower / 2) - (Stress / 3);
+        // 社會性現在是正向值，直接加即可。
+        return Sociality + (LifePower / 2) - (Stress / 3);
     }
 
     public bool CanLikelyFaceReality(int threshold = 50)

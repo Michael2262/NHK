@@ -3,12 +3,12 @@ using UnityEngine.Events;
 
 /// <summary>
 /// NHK 版主角狀態門檻觸發器。
-/// 原檔名保留，但用途改為監測 Stress / LifePower / SocialFear / Dependency。
+/// 原檔名保留，但用途改為監測 Stress / LifePower / Sociality / Dependency。
 /// 
 /// 主要用途：
 /// 1. Stress 進入危險 / 崩潰時觸發事件。
 /// 2. LifePower 低於門檻時觸發事件。
-/// 3. SocialFear 高於門檻時觸發事件。
+/// 3. Sociality 低於門檻時觸發事件。
 /// 4. Dependency 高於門檻時觸發事件。
 /// 
 /// 一次性事件預設「場景內只觸發一次」，可由 ResetAllTriggers() 重置。
@@ -25,9 +25,10 @@ public class ProtagonistStatusDepletionTrigger : MonoBehaviour
     [SerializeField] private int _lifePowerLowThreshold = ProtagonistStatusModel.LIFE_VERY_LOW_MAX;
     [SerializeField] private UnityEvent _onLifePowerLow;
 
-    [Header("SocialFear 門檻")]
-    [SerializeField] private int _socialFearHighThreshold = ProtagonistStatusModel.SOCIAL_FEAR_HIGH_THRESHOLD;
-    [SerializeField] private UnityEvent _onSocialFearHigh;
+    [Header("Sociality 門檻")]
+    [Tooltip("社會性低於此值時觸發。預設 31，代表 30 以下為 Low。")]
+    [SerializeField] private int _socialityLowThreshold = ProtagonistStatusModel.SOCIALITY_MEDIUM_THRESHOLD;
+    [SerializeField] private UnityEvent _onSocialityLow;
 
     [Header("Dependency 門檻")]
     [SerializeField] private int _dependencyHighThreshold = ProtagonistStatusModel.DEPENDENCY_HIGH_THRESHOLD;
@@ -37,7 +38,7 @@ public class ProtagonistStatusDepletionTrigger : MonoBehaviour
     private bool _stressCriticalTriggered;
     private bool _stressCollapsedTriggered;
     private bool _lifePowerLowTriggered;
-    private bool _socialFearHighTriggered;
+    private bool _socialityLowTriggered;
     private bool _dependencyHighTriggered;
 
     private void Start()
@@ -70,7 +71,7 @@ public class ProtagonistStatusDepletionTrigger : MonoBehaviour
         Unsubscribe();
         _model.OnStressChanged += HandleStressChanged;
         _model.OnLifePowerChanged += HandleLifePowerChanged;
-        _model.OnSocialFearChanged += HandleSocialFearChanged;
+        _model.OnSocialityChanged += HandleSocialityChanged;
         _model.OnDependencyChanged += HandleDependencyChanged;
     }
 
@@ -79,7 +80,7 @@ public class ProtagonistStatusDepletionTrigger : MonoBehaviour
         if (_model == null) return;
         _model.OnStressChanged -= HandleStressChanged;
         _model.OnLifePowerChanged -= HandleLifePowerChanged;
-        _model.OnSocialFearChanged -= HandleSocialFearChanged;
+        _model.OnSocialityChanged -= HandleSocialityChanged;
         _model.OnDependencyChanged -= HandleDependencyChanged;
     }
 
@@ -88,7 +89,7 @@ public class ProtagonistStatusDepletionTrigger : MonoBehaviour
         _stressCriticalTriggered = _model.Stress >= _stressCriticalThreshold;
         _stressCollapsedTriggered = _model.Stress >= _stressCollapseThreshold;
         _lifePowerLowTriggered = _model.LifePower <= _lifePowerLowThreshold;
-        _socialFearHighTriggered = _model.SocialFear >= _socialFearHighThreshold;
+        _socialityLowTriggered = _model.Sociality < _socialityLowThreshold;
         _dependencyHighTriggered = _model.Dependency >= _dependencyHighThreshold;
     }
 
@@ -102,7 +103,7 @@ public class ProtagonistStatusDepletionTrigger : MonoBehaviour
         TryInvokeIfConditionsMet();
     }
 
-    private void HandleSocialFearChanged(int delta)
+    private void HandleSocialityChanged(int delta)
     {
         TryInvokeIfConditionsMet();
     }
@@ -138,10 +139,10 @@ public class ProtagonistStatusDepletionTrigger : MonoBehaviour
             _onLifePowerLow?.Invoke();
         }
 
-        if (!_socialFearHighTriggered && _model.SocialFear >= _socialFearHighThreshold)
+        if (!_socialityLowTriggered && _model.Sociality < _socialityLowThreshold)
         {
-            _socialFearHighTriggered = true;
-            _onSocialFearHigh?.Invoke();
+            _socialityLowTriggered = true;
+            _onSocialityLow?.Invoke();
         }
 
         if (!_dependencyHighTriggered && _model.Dependency >= _dependencyHighThreshold)
@@ -156,13 +157,13 @@ public class ProtagonistStatusDepletionTrigger : MonoBehaviour
         _stressCriticalTriggered = false;
         _stressCollapsedTriggered = false;
         _lifePowerLowTriggered = false;
-        _socialFearHighTriggered = false;
+        _socialityLowTriggered = false;
         _dependencyHighTriggered = false;
     }
 
     public void ResetStressCriticalTrigger() => _stressCriticalTriggered = false;
     public void ResetStressCollapsedTrigger() => _stressCollapsedTriggered = false;
     public void ResetLifePowerLowTrigger() => _lifePowerLowTriggered = false;
-    public void ResetSocialFearHighTrigger() => _socialFearHighTriggered = false;
+    public void ResetSocialityLowTrigger() => _socialityLowTriggered = false;
     public void ResetDependencyHighTrigger() => _dependencyHighTriggered = false;
 }

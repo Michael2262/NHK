@@ -19,7 +19,7 @@
 //   SkillPoints: AddSkillPoints / ReduceSkillPoints / SetSkillPoints
 //   Stress:      AddStress / ReduceStress / SetStress
 //   LifePower:   AddLifePower / ReduceLifePower / SetLifePower
-//   SocialFear:  AddSocialFear / ReduceSocialFear / SetSocialFear
+//   Sociality:  AddSociality / ReduceSociality / SetSociality
 //   Dependency:  AddDependency / ReduceDependency / SetDependency
 // ============================================================
 
@@ -309,48 +309,48 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
     }
 
     // ========================================================
-    // SocialFear (社會恐懼)
+    // Sociality (社會性)
     // ========================================================
-    public class SequencerCommandAddSocialFear : SequencerCommandProtagonistResourceBase
+    public class SequencerCommandAddSociality : SequencerCommandProtagonistResourceBase
     {
-        protected override string ResourceTypeKey => "SocialFear";
-        protected override string CommandName => "AddSocialFear";
-        protected override int GetCurrentValue(ProtagonistStatusModel p) => p.SocialFear;
+        protected override string ResourceTypeKey => "Sociality";
+        protected override string CommandName => "AddSociality";
+        protected override int GetCurrentValue(ProtagonistStatusModel p) => p.Sociality;
 
         protected override int ApplyChange(ProtagonistStatusModel p, int parameter)
         {
-            int prev = p.SocialFear;
-            p.AddSocialFear(parameter);
-            return p.SocialFear - prev;
+            int prev = p.Sociality;
+            p.AddSociality(parameter);
+            return p.Sociality - prev;
         }
     }
 
-    public class SequencerCommandReduceSocialFear : SequencerCommandProtagonistResourceBase
+    public class SequencerCommandReduceSociality : SequencerCommandProtagonistResourceBase
     {
-        protected override string ResourceTypeKey => "SocialFear";
-        protected override string CommandName => "ReduceSocialFear";
-        protected override int GetCurrentValue(ProtagonistStatusModel p) => p.SocialFear;
+        protected override string ResourceTypeKey => "Sociality";
+        protected override string CommandName => "ReduceSociality";
+        protected override int GetCurrentValue(ProtagonistStatusModel p) => p.Sociality;
 
         protected override int ApplyChange(ProtagonistStatusModel p, int parameter)
         {
             int amount = Math.Max(0, parameter);
-            int prev = p.SocialFear;
-            p.ReduceSocialFear(amount);
-            return p.SocialFear - prev;
+            int prev = p.Sociality;
+            p.ReduceSociality(amount);
+            return p.Sociality - prev;
         }
     }
 
-    public class SequencerCommandSetSocialFear : SequencerCommandProtagonistResourceBase
+    public class SequencerCommandSetSociality : SequencerCommandProtagonistResourceBase
     {
-        protected override string ResourceTypeKey => "SocialFear";
-        protected override string CommandName => "SetSocialFear";
-        protected override int GetCurrentValue(ProtagonistStatusModel p) => p.SocialFear;
+        protected override string ResourceTypeKey => "Sociality";
+        protected override string CommandName => "SetSociality";
+        protected override int GetCurrentValue(ProtagonistStatusModel p) => p.Sociality;
 
         protected override int ApplyChange(ProtagonistStatusModel p, int parameter)
         {
-            int prev = p.SocialFear;
-            p.SetSocialFear(parameter);
-            return p.SocialFear - prev;
+            int prev = p.Sociality;
+            p.SetSociality(parameter);
+            return p.Sociality - prev;
         }
     }
 

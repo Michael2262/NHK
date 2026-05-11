@@ -27,7 +27,7 @@ public class PlayMakerGameBridge : MonoBehaviour
 
     public int PlayerStress => Protagonist?.Stress ?? 0;
     public int PlayerLifePower => Protagonist?.LifePower ?? 0;
-    public int PlayerSocialFear => Protagonist?.SocialFear ?? 0;
+    public int PlayerSociality => Protagonist?.Sociality ?? 0;
     public int PlayerDependency => Protagonist?.Dependency ?? 0;
     public int PlayerMoney => Protagonist?.Money ?? 0;
     public int PlayerSkillPoints => Protagonist?.SkillPoints ?? 0;
@@ -52,8 +52,8 @@ public class PlayMakerGameBridge : MonoBehaviour
     public void ReducePlayerStress(int amount) => Protagonist?.ReduceStress(amount);
     public void AddPlayerLifePower(int amount) => Protagonist?.AddLifePower(amount);
     public void ReducePlayerLifePower(int amount) => Protagonist?.ReduceLifePower(amount);
-    public void AddPlayerSocialFear(int amount) => Protagonist?.AddSocialFear(amount);
-    public void ReducePlayerSocialFear(int amount) => Protagonist?.ReduceSocialFear(amount);
+    public void AddPlayerSociality(int amount) => Protagonist?.AddSociality(amount);
+    public void ReducePlayerSociality(int amount) => Protagonist?.ReduceSociality(amount);
     public void AddPlayerDependency(int amount) => Protagonist?.AddDependency(amount);
     public void ReducePlayerDependency(int amount) => Protagonist?.ReduceDependency(amount);
 

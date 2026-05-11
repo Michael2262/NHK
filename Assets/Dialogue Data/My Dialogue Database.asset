@@ -178541,7 +178541,7 @@ MonoBehaviour:
       canvasRect:
         serializedVersion: 2
         x: 294.30185
-        y: 170.22641
+        y: 171.14383
         width: 160
         height: 30
     - id: 17
@@ -185333,7 +185333,9 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: SetContinueMode(false)@0;
+        value: 'SetContinueMode(false)@0;
+
+          Delay({{end}});'
         type: 0
         typeString: CustomFieldType_Text
       - title: zh-TW
@@ -185401,8 +185403,8 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 1641
-        y: 94
+        x: 1640
+        y: 93
         width: 160
         height: 30
     - id: 38
@@ -185428,13 +185430,14 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Dialogue Text
-        value: 
+        value: "\u2026\u2026"
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: 'HeroineEmotionDraw(sister, random,middle, LastEmotionDraw);
+        value: 'HeroineEmotionDraw(sister, random,big, LastEmotionDraw);
 
-          
+
+          Delay({{end}});
 
           SetContinueMode(Optional)@Message(EmotionDrawDone);'
         type: 0
@@ -185664,7 +185667,9 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: 'SetContinueMode(Optional);
+        value: 'EmotionResultMessage(sister);
+
+          SetContinueMode(Optional);
 
           Continue();'
         type: 0
@@ -185765,7 +185770,9 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: 'SetContinueMode(Optional);
+        value: 'EmotionResultMessage(sister);
+
+          SetContinueMode(Optional);
 
           Continue();'
         type: 0
@@ -185866,7 +185873,9 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: 'SetContinueMode(Optional);
+        value: 'EmotionResultMessage(sister);
+
+          SetContinueMode(Optional);
 
           Continue();'
         type: 0
@@ -185967,7 +185976,9 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: 'SetContinueMode(Optional);
+        value: 'EmotionResultMessage(sister);
+
+          SetContinueMode(Optional);
 
           Continue();'
         type: 0
@@ -186068,7 +186079,9 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: 'SetContinueMode(Optional);
+        value: 'EmotionResultMessage(sister);
+
+          SetContinueMode(Optional);
 
           Continue();'
         type: 0
@@ -186169,7 +186182,9 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: 'SetContinueMode(Optional);
+        value: 'EmotionResultMessage(sister);
+
+          SetContinueMode(Optional);
 
           Continue();'
         type: 0
@@ -196635,7 +196650,7 @@ MonoBehaviour:
       - originConversationID: 105
         originDialogueID: 0
         destinationConversationID: 105
-        destinationDialogueID: 39
+        destinationDialogueID: 40
         isConnector: 0
         priority: 2
       conditionsString: 
@@ -196645,8 +196660,8 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 333.76697
-        y: 11
+        x: 141.76697
+        y: 14
         width: 160
         height: 30
     - id: 14

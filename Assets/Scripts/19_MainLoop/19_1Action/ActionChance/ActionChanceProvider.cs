@@ -61,7 +61,7 @@ public abstract class ActionChanceProvider : MonoBehaviour
 
         protagonist.OnStressChanged += OnStatusValueChanged;
         protagonist.OnLifePowerChanged += OnStatusValueChanged;
-        protagonist.OnSocialFearChanged += OnStatusValueChanged;
+        protagonist.OnSocialityChanged += OnStatusValueChanged;
         protagonist.OnDependencyChanged += OnStatusValueChanged;
     }
 
@@ -72,7 +72,7 @@ public abstract class ActionChanceProvider : MonoBehaviour
 
         protagonist.OnStressChanged -= OnStatusValueChanged;
         protagonist.OnLifePowerChanged -= OnStatusValueChanged;
-        protagonist.OnSocialFearChanged -= OnStatusValueChanged;
+        protagonist.OnSocialityChanged -= OnStatusValueChanged;
         protagonist.OnDependencyChanged -= OnStatusValueChanged;
     }
 
@@ -122,7 +122,7 @@ public abstract class ActionChanceProvider : MonoBehaviour
     protected virtual string BuildDebugSummary(ProtagonistStatusModel p, float chance)
     {
         return $"{GetType().Name}: chance={chance:P0}, Stress={p.Stress}, LifePower={p.LifePower}, " +
-               $"SocialFear={p.SocialFear}, Dependency={p.Dependency}";
+               $"Sociality={p.Sociality}, Dependency={p.Dependency}";
     }
 
     /// <summary>

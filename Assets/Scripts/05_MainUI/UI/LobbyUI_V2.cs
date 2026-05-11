@@ -7,7 +7,7 @@ using PixelCrushers;
 
 // 職責：Lobby 場景的 Presenter/View (NHK 版)
 // 主要顯示：星期、天數、Phase 名稱、金錢、主角核心數值。
-// NHK 主角核心數值：Stress / LifePower / SocialFear / Dependency。
+// NHK 主角核心數值：Stress / LifePower / Sociality / Dependency。
 // 注意：ProtagonistStatusModel.OnXXXChanged(int) 傳入的是「delta」，不是新值。
 public class LobbyUI_V2 : MonoBehaviour
 {
@@ -37,8 +37,8 @@ public class LobbyUI_V2 : MonoBehaviour
     [SerializeField] private TextMeshProUGUI textLifePower;
     [SerializeField] private TextMeshProUGUI textLifePowerPreview;
 
-    [SerializeField] private TextMeshProUGUI textSocialFear;
-    [SerializeField] private TextMeshProUGUI textSocialFearPreview;
+    [SerializeField] private TextMeshProUGUI textSociality;
+    [SerializeField] private TextMeshProUGUI textSocialityPreview;
 
     [SerializeField] private TextMeshProUGUI textDependency;
     [SerializeField] private TextMeshProUGUI textDependencyPreview;
@@ -126,7 +126,7 @@ public class LobbyUI_V2 : MonoBehaviour
         {
             _protagonistModel.OnStressChanged += HandleStressChanged;
             _protagonistModel.OnLifePowerChanged += HandleLifePowerChanged;
-            _protagonistModel.OnSocialFearChanged += HandleSocialFearChanged;
+            _protagonistModel.OnSocialityChanged += HandleSocialityChanged;
             _protagonistModel.OnDependencyChanged += HandleDependencyChanged;
             _protagonistModel.OnMoneyChanged += HandleMoneyChanged;
         }
@@ -148,7 +148,7 @@ public class LobbyUI_V2 : MonoBehaviour
         {
             _protagonistModel.OnStressChanged -= HandleStressChanged;
             _protagonistModel.OnLifePowerChanged -= HandleLifePowerChanged;
-            _protagonistModel.OnSocialFearChanged -= HandleSocialFearChanged;
+            _protagonistModel.OnSocialityChanged -= HandleSocialityChanged;
             _protagonistModel.OnDependencyChanged -= HandleDependencyChanged;
             _protagonistModel.OnMoneyChanged -= HandleMoneyChanged;
         }
@@ -207,10 +207,10 @@ public class LobbyUI_V2 : MonoBehaviour
         ShowDeltaPreview(textLifePowerPreview, delta);
     }
 
-    private void HandleSocialFearChanged(int delta)
+    private void HandleSocialityChanged(int delta)
     {
-        UpdateSocialFearUI();
-        ShowDeltaPreview(textSocialFearPreview, delta);
+        UpdateSocialityUI();
+        ShowDeltaPreview(textSocialityPreview, delta);
     }
 
     private void HandleDependencyChanged(int delta)
@@ -252,7 +252,7 @@ public class LobbyUI_V2 : MonoBehaviour
     {
         UpdateStressUI();
         UpdateLifePowerUI();
-        UpdateSocialFearUI();
+        UpdateSocialityUI();
         UpdateDependencyUI();
     }
 
@@ -268,10 +268,10 @@ public class LobbyUI_V2 : MonoBehaviour
             textLifePower.text = _protagonistModel.LifePower.ToString();
     }
 
-    private void UpdateSocialFearUI()
+    private void UpdateSocialityUI()
     {
-        if (textSocialFear != null && _protagonistModel != null)
-            textSocialFear.text = _protagonistModel.SocialFear.ToString();
+        if (textSociality != null && _protagonistModel != null)
+            textSociality.text = _protagonistModel.Sociality.ToString();
     }
 
     private void UpdateDependencyUI()
@@ -284,7 +284,7 @@ public class LobbyUI_V2 : MonoBehaviour
     {
         HidePreviewText(textStressPreview);
         HidePreviewText(textLifePowerPreview);
-        HidePreviewText(textSocialFearPreview);
+        HidePreviewText(textSocialityPreview);
         HidePreviewText(textDependencyPreview);
     }
 

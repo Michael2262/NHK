@@ -5,7 +5,7 @@ using UnityEngine.Events;
 /// NHK 版主角數值檢查器。
 /// 用途：在 UI 按鈕或事件觸發前，檢查主角數值 / 金錢 / 技能點 / 時間是否符合條件。
 /// 注意：本腳本只做「檢查」與 Money / SkillPoints 的扣除。
-/// Stress / LifePower / SocialFear / Dependency 的實際增減，建議交給專門的數值變化腳本或事件本身處理。
+/// Stress / LifePower / Sociality / Dependency 的實際增減，建議交給專門的數值變化腳本或事件本身處理。
 /// </summary>
 [AddComponentMenu("Game/UI/Protagonist Value Router")]
 public class ProtagonistValueRouter : MonoBehaviour
@@ -17,7 +17,7 @@ public class ProtagonistValueRouter : MonoBehaviour
         CheckSkillPoints,
         CheckStressAtMost,
         CheckLifePowerAtLeast,
-        CheckSocialFearAtMost,
+        CheckSocialityAtLeast,
         CheckDependencyAtLeast
     }
 
@@ -25,7 +25,7 @@ public class ProtagonistValueRouter : MonoBehaviour
     [Tooltip("選擇要檢查的主角數值類型。")]
     public CheckType checkType = CheckType.None;
 
-    [Tooltip("檢查門檻。Money / SkillPoints 表示需求量；Stress / SocialFear 表示不可超過；LifePower / Dependency 表示至少需要。")]
+    [Tooltip("檢查門檻。Money / SkillPoints 表示需求量；Stress 表示不可超過；LifePower / Sociality / Dependency 表示至少需要。")]
     public int amount = 1;
 
     [Header("時間檢查設定")]
@@ -111,7 +111,7 @@ public class ProtagonistValueRouter : MonoBehaviour
     /// <summary>
     /// 實際扣除資源與時間。
     /// Money / SkillPoints 會扣除；其他主角狀態只檢查不扣除。
-    /// Stress / LifePower / SocialFear / Dependency 的變化，請由事件或其他數值變化腳本處理。
+    /// Stress / LifePower / Sociality / Dependency 的變化，請由事件或其他數值變化腳本處理。
     /// </summary>
     public void ExecuteDeduction()
     {
@@ -168,8 +168,8 @@ public class ProtagonistValueRouter : MonoBehaviour
             case CheckType.CheckLifePowerAtLeast:
                 return p.LifePower >= threshold;
 
-            case CheckType.CheckSocialFearAtMost:
-                return p.SocialFear <= threshold;
+            case CheckType.CheckSocialityAtLeast:
+                return p.Sociality >= threshold;
 
             case CheckType.CheckDependencyAtLeast:
                 return p.Dependency >= threshold;

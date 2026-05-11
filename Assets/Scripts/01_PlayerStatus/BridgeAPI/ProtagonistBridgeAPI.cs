@@ -4,8 +4,7 @@ using UnityEngine;
 /// NHK 版主角數值變化 UnityEvent 橋接 API。
 /// 保留原檔名 / class 名，供 Inspector 的 UnityEvent 拖曳使用。
 /// 
-/// 核心：Stress / LifePower / SocialFear / Dependency / Money / SkillPoints / Time / Daily Flags / Counters。
-/// 舊 API 名稱若仍被場景綁定，會轉接到最接近的 NHK 數值，避免編譯錯誤。
+/// 核心：Stress / LifePower / Sociality / Dependency / Money / SkillPoints / Time / Daily Flags / Counters。
 /// </summary>
 [AddComponentMenu("Game/API/Protagonist Bridge API")]
 public class ProtagonistBridgeAPI : MonoBehaviour
@@ -24,17 +23,17 @@ public class ProtagonistBridgeAPI : MonoBehaviour
     public void ReduceLifePower(int amount) => P?.ReduceLifePower(amount);
     public void SetLifePower(int value) => P?.SetLifePower(value);
 
-    public void AddSocialFear(int amount) => P?.AddSocialFear(amount);
-    public void ReduceSocialFear(int amount) => P?.ReduceSocialFear(amount);
-    public void SetSocialFear(int value) => P?.SetSocialFear(value);
+    public void AddSociality(int amount) => P?.AddSociality(amount);
+    public void ReduceSociality(int amount) => P?.ReduceSociality(amount);
+    public void SetSociality(int value) => P?.SetSociality(value);
 
     public void AddDependency(int amount) => P?.AddDependency(amount);
     public void ReduceDependency(int amount) => P?.ReduceDependency(amount);
     public void SetDependency(int value) => P?.SetDependency(value);
 
-    public void ApplyStatusChange(int stressDelta, int lifePowerDelta, int socialFearDelta, int dependencyDelta)
+    public void ApplyStatusChange(int stressDelta, int lifePowerDelta, int socialityDelta, int dependencyDelta)
     {
-        P?.ApplyStatusChange(new ProtagonistStatusChange(stressDelta, lifePowerDelta, socialFearDelta, dependencyDelta));
+        P?.ApplyStatusChange(new ProtagonistStatusChange(stressDelta, lifePowerDelta, socialityDelta, dependencyDelta));
     }
 
     // ==========================================

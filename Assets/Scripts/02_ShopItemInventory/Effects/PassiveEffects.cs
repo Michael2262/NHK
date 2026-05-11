@@ -2,8 +2,8 @@ using UnityEngine;
 
 // ==========================================================
 // 被動效果：永久數值提升（購買時自動套用）
-// NHK 版：對 Stress / LifePower / SocialFear / Dependency / Money / SkillPoints 生效。
-// 注意：Stress / SocialFear 正值是變糟，若要降低請填負數。
+// NHK 版：對 Stress / LifePower / Sociality / Dependency / Money / SkillPoints 生效。
+// 注意：Stress 正值是變糟；Sociality 正值是變好，若要降低請填負數。
 // ==========================================================
 [System.Serializable]
 public class PermanentStatBoostEffect : ItemEffect
@@ -14,7 +14,7 @@ public class PermanentStatBoostEffect : ItemEffect
     {
         Stress,
         LifePower,
-        SocialFear,
+        Sociality,
         Dependency,
         Money,
         SkillPoints
@@ -33,8 +33,8 @@ public class PermanentStatBoostEffect : ItemEffect
             case BoostStatType.LifePower:
                 ctx.Protagonist.AddLifePower(Amount);
                 break;
-            case BoostStatType.SocialFear:
-                ctx.Protagonist.AddSocialFear(Amount);
+            case BoostStatType.Sociality:
+                ctx.Protagonist.AddSociality(Amount);
                 break;
             case BoostStatType.Dependency:
                 ctx.Protagonist.AddDependency(Amount);

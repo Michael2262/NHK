@@ -2,7 +2,7 @@ using UnityEngine;
 
 /// <summary>
 /// 提供給 Unity Events / Button / 動畫事件呼叫的公共接口。
-/// NHK 版：核心主角數值為 Stress / LifePower / SocialFear / Dependency，並保留 Money / SkillPoints。
+/// NHK 版：核心主角數值為 Stress / LifePower / Sociality / Dependency，並保留 Money / SkillPoints。
 /// 舊版 Stamina / Spirit / Action / Suspicion 等方法保留為相容 wrapper，避免 UnityEvent 參照瞬間斷掉。
 /// </summary>
 public class CoreSystemBridge : MonoBehaviour
@@ -34,9 +34,9 @@ public class CoreSystemBridge : MonoBehaviour
     public void ReduceLifePower(int amount) => Model?.ReduceLifePower(amount);
     public void SetLifePower(int value) => Model?.SetLifePower(value);
 
-    public void AddSocialFear(int amount) => Model?.AddSocialFear(amount);
-    public void ReduceSocialFear(int amount) => Model?.ReduceSocialFear(amount);
-    public void SetSocialFear(int value) => Model?.SetSocialFear(value);
+    public void AddSociality(int amount) => Model?.AddSociality(amount);
+    public void ReduceSociality(int amount) => Model?.ReduceSociality(amount);
+    public void SetSociality(int value) => Model?.SetSociality(value);
 
     public void AddDependency(int amount) => Model?.AddDependency(amount);
     public void ReduceDependency(int amount) => Model?.ReduceDependency(amount);

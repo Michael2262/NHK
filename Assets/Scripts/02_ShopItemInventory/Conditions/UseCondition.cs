@@ -7,7 +7,7 @@ using UnityEngine;
 /// <summary>
 /// 自用條件的抽象基底。
 /// 判斷主角「是否能使用」這個道具或選項。
-/// NHK 版：以 Stress / LifePower / SocialFear / Dependency / Money / SkillPoints 為主。
+/// NHK 版：以 Stress / LifePower / Sociality / Dependency / Money / SkillPoints 為主。
 /// </summary>
 [System.Serializable]
 public abstract class UseCondition
@@ -47,14 +47,14 @@ public class LifePowerAtLeastCondition : UseCondition
 }
 
 [System.Serializable]
-public class SocialFearAtMostCondition : UseCondition
+public class SocialityAtLeastCondition : UseCondition
 {
-    [Tooltip("社會恐懼必須小於等於此值")]
-    public int MaxSocialFear = 100;
+    [Tooltip("社會性必須大於等於此值")]
+    public int MinSociality = 0;
 
     public override bool IsMet(ProtagonistStatusModel protagonist)
     {
-        return protagonist != null && protagonist.SocialFear <= MaxSocialFear;
+        return protagonist != null && protagonist.Sociality >= MinSociality;
     }
 }
 

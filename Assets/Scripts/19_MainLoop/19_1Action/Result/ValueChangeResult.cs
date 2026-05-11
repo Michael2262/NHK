@@ -5,7 +5,7 @@ using UnityEngine.Events;
 
 /// <summary>
 /// NHK 版資源 / 狀態變動結果處理器。
-/// 支援：Stress / LifePower / SocialFear / Dependency / Money / SkillPoints / Time / Heroine resources / Flag 開關。
+/// 支援：Stress / LifePower / Sociality / Dependency / Money / SkillPoints / Time / Heroine resources / Flag 開關。
 /// </summary>
 [AddComponentMenu("Game/API/Value Change Result")]
 public class ValueChangeResult : MonoBehaviour
@@ -17,7 +17,7 @@ public class ValueChangeResult : MonoBehaviour
     {
         Stress,
         LifePower,
-        SocialFear,
+        Sociality,
         Dependency,
         Money,
         SkillPoints
@@ -64,7 +64,7 @@ public class ValueChangeResult : MonoBehaviour
         [Tooltip("資源 / 狀態類型")]
         public ResourceType resourceType = ResourceType.Money;
 
-        [Tooltip("基礎增加數量。若要降低 Stress / SocialFear 等，也可填負數。")]
+        [Tooltip("基礎增加數量。若要降低 Stress 等，也可填負數。")]
         public int baseAmount = 0;
 
         [Tooltip("隨機效果設定")]
@@ -398,8 +398,8 @@ public class ValueChangeResult : MonoBehaviour
             case ResourceType.LifePower:
                 p.ReduceLifePower(amount);
                 break;
-            case ResourceType.SocialFear:
-                p.ReduceSocialFear(amount);
+            case ResourceType.Sociality:
+                p.ReduceSociality(amount);
                 break;
             case ResourceType.Dependency:
                 p.ReduceDependency(amount);
@@ -425,8 +425,8 @@ public class ValueChangeResult : MonoBehaviour
             case ResourceType.LifePower:
                 p.AddLifePower(amount);
                 break;
-            case ResourceType.SocialFear:
-                p.AddSocialFear(amount);
+            case ResourceType.Sociality:
+                p.AddSociality(amount);
                 break;
             case ResourceType.Dependency:
                 p.AddDependency(amount);
