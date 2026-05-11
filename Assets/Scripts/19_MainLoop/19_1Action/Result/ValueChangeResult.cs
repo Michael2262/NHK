@@ -28,9 +28,7 @@ public class ValueChangeResult : MonoBehaviour
     // ==================================================
     public enum HeroineResourceType
     {
-        LewdnessExp,
-        AffinityExp,
-        ExcitementExp
+        Libido
     }
 
     [Serializable]
@@ -76,7 +74,7 @@ public class ValueChangeResult : MonoBehaviour
     [Serializable]
     public class HeroineResourceChangeItem
     {
-        public HeroineResourceType resourceType = HeroineResourceType.AffinityExp;
+        public HeroineResourceType resourceType = HeroineResourceType.Libido;
         public int amount = 0;
         public RandomEffectSettings randomEffect = new RandomEffectSettings();
     }
@@ -340,14 +338,8 @@ public class ValueChangeResult : MonoBehaviour
     {
         switch (type)
         {
-            case HeroineResourceType.LewdnessExp:
-                heroine.AddLewdnessExp(amount);
-                break;
-            case HeroineResourceType.AffinityExp:
-                heroine.AddAffinityExp(amount);
-                break;
-            case HeroineResourceType.ExcitementExp:
-                heroine.AddExcitementExp(amount);
+            case HeroineResourceType.Libido:
+                heroine.AddLibido(amount);
                 break;
         }
     }

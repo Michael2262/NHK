@@ -48,54 +48,24 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ba30821dafcaaf346adf476f77b72a3e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ProtagonistStatusDepletionTrigger
-  _shootTimesThreshold: 0
-  _onShootTimesDepleted:
+  _stressCriticalThreshold: 80
+  _stressCollapseThreshold: 100
+  _onStressCritical:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 8784783665335360952}
-        m_TargetAssemblyTypeName: FsmTrigge, Assembly-CSharp
-        m_MethodName: Trigger
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-  _onShootTimesOverdrawing:
+      m_Calls: []
+  _onStressCollapsed:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 4635113498941756044}
-        m_TargetAssemblyTypeName: FsmTrigge, Assembly-CSharp
-        m_MethodName: Trigger
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-  _onShootTimesExhausted:
+      m_Calls: []
+  _lifePowerLowThreshold: 25
+  _onLifePowerLow:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 7621686186356617641}
-        m_TargetAssemblyTypeName: FsmTrigge, Assembly-CSharp
-        m_MethodName: Trigger
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-  _energyDrinkThreshold: 0
-  _onEnergyDrinkDepleted:
+      m_Calls: []
+  _socialFearHighThreshold: 70
+  _onSocialFearHigh:
+    m_PersistentCalls:
+      m_Calls: []
+  _dependencyHighThreshold: 60
+  _onDependencyHigh:
     m_PersistentCalls:
       m_Calls: []
 --- !u!114 &7003448863570116171
@@ -509,14 +479,12 @@ MonoBehaviour:
         linkTarget: 0
         colorIndex: 0
       actionData:
-        actionNames:
-        - AddStamina
-        customNames:
-        - 
-        actionEnabled: 01
-        actionIsOpen: 01
-        actionStartIndex: 00000000
-        actionHashCodes: 6d4d2a05
+        actionNames: []
+        customNames: []
+        actionEnabled: 
+        actionIsOpen: 
+        actionStartIndex: 
+        actionHashCodes: 
         unityObjectParams: []
         fsmGameObjectParams: []
         fsmOwnerDefaultParams: []
@@ -531,19 +499,7 @@ MonoBehaviour:
         fsmVarParams: []
         fsmArrayParams: []
         fsmEnumParams: []
-        fsmFloatParams:
-        - useVariable: 0
-          name: 
-          tooltip: 
-          showInInspector: 0
-          networkSync: 0
-          value: -5
-        - useVariable: 1
-          name: 
-          tooltip: 
-          showInInspector: 0
-          networkSync: 0
-          value: 0
+        fsmFloatParams: []
         fsmIntParams: []
         fsmBoolParams: []
         fsmVector2Params: []
@@ -557,12 +513,10 @@ MonoBehaviour:
         arrayParamTypes: []
         customTypeSizes: 
         customTypeNames: []
-        paramDataType: 0f0000000f000000
-        paramName:
-        - amount
-        - storeStamina
-        paramDataPos: 0000000001000000
-        paramByteDataSize: 0000000000000000
+        paramDataType: 
+        paramName: []
+        paramDataPos: 
+        paramByteDataSize: 
     - name: "\u9AD4\u529B\u4E0B\u964D"
       description: 
       colorIndex: 0
@@ -586,14 +540,12 @@ MonoBehaviour:
         linkTarget: 0
         colorIndex: 0
       actionData:
-        actionNames:
-        - AddStamina
-        customNames:
-        - 
-        actionEnabled: 01
-        actionIsOpen: 01
-        actionStartIndex: 00000000
-        actionHashCodes: 6d4d2a05
+        actionNames: []
+        customNames: []
+        actionEnabled: 
+        actionIsOpen: 
+        actionStartIndex: 
+        actionHashCodes: 
         unityObjectParams: []
         fsmGameObjectParams: []
         fsmOwnerDefaultParams: []
@@ -608,19 +560,7 @@ MonoBehaviour:
         fsmVarParams: []
         fsmArrayParams: []
         fsmEnumParams: []
-        fsmFloatParams:
-        - useVariable: 0
-          name: 
-          tooltip: 
-          showInInspector: 0
-          networkSync: 0
-          value: -5
-        - useVariable: 1
-          name: 
-          tooltip: 
-          showInInspector: 0
-          networkSync: 0
-          value: 0
+        fsmFloatParams: []
         fsmIntParams: []
         fsmBoolParams: []
         fsmVector2Params: []
@@ -634,12 +574,10 @@ MonoBehaviour:
         arrayParamTypes: []
         customTypeSizes: 
         customTypeNames: []
-        paramDataType: 0f0000000f000000
-        paramName:
-        - amount
-        - storeStamina
-        paramDataPos: 0000000001000000
-        paramByteDataSize: 0000000000000000
+        paramDataType: 
+        paramName: []
+        paramDataPos: 
+        paramByteDataSize: 
     - name: "\u6AA2\u67E5\u9AD4\u529B\u662F\u5426\u70BA0"
       description: 
       colorIndex: 0
@@ -873,14 +811,12 @@ MonoBehaviour:
         linkTarget: 0
         colorIndex: 0
       actionData:
-        actionNames:
-        - AddStamina
-        customNames:
-        - 
-        actionEnabled: 01
-        actionIsOpen: 01
-        actionStartIndex: 00000000
-        actionHashCodes: 6d4d2a05
+        actionNames: []
+        customNames: []
+        actionEnabled: 
+        actionIsOpen: 
+        actionStartIndex: 
+        actionHashCodes: 
         unityObjectParams: []
         fsmGameObjectParams: []
         fsmOwnerDefaultParams: []
@@ -895,19 +831,7 @@ MonoBehaviour:
         fsmVarParams: []
         fsmArrayParams: []
         fsmEnumParams: []
-        fsmFloatParams:
-        - useVariable: 0
-          name: 
-          tooltip: 
-          showInInspector: 0
-          networkSync: 0
-          value: -20
-        - useVariable: 1
-          name: 
-          tooltip: 
-          showInInspector: 0
-          networkSync: 0
-          value: 0
+        fsmFloatParams: []
         fsmIntParams: []
         fsmBoolParams: []
         fsmVector2Params: []
@@ -921,12 +845,10 @@ MonoBehaviour:
         arrayParamTypes: []
         customTypeSizes: 
         customTypeNames: []
-        paramDataType: 0f0000000f000000
-        paramName:
-        - amount
-        - storeStamina
-        paramDataPos: 0000000001000000
-        paramByteDataSize: 0000000000000000
+        paramDataType: 
+        paramName: []
+        paramDataPos: 
+        paramByteDataSize: 
     events:
     - name: FINISHED
       isSystemEvent: 1
@@ -1025,6 +947,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6e8b12bee42e8aa45bc35d52f71819e1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FsmTrigge
+  fsmName: 
   eventName: TriggerShootTimesDepltedFSM
 --- !u!114 &4635113498941756044
 MonoBehaviour:
@@ -1038,6 +961,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6e8b12bee42e8aa45bc35d52f71819e1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FsmTrigge
+  fsmName: 
   eventName: TriggerShootTimesOverdrawingFSM
 --- !u!114 &7621686186356617641
 MonoBehaviour:
@@ -1051,4 +975,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6e8b12bee42e8aa45bc35d52f71819e1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FsmTrigge
+  fsmName: 
   eventName: TriggerShootTimesExhaustedFSM
