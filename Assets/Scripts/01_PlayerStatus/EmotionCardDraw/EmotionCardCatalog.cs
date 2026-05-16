@@ -63,6 +63,9 @@ public class TachieFacePreset
 /// 2. EmotionNameTextKey（情緒名稱的 TextTable Key，用於 Emotion.Change 的 {1}）
 /// 3. SmallDrawFace — 小/中抽選用的考慮表情預設組（完整 Tachie 各部位）
 /// 4. BigDrawFace — 大抽選第二段用的猶豫表情預設組（完整 Tachie 各部位）
+///
+/// ★ Normal 不需要在 entries 中配置。Catalog 的查詢方法會安全處理 Normal，
+///   回傳 null / 預設值而不報錯。
 /// </summary>
 [CreateAssetMenu(menuName = "Heroine Status/Emotion Card Catalog", fileName = "EmotionCardCatalog")]
 public class EmotionCardCatalog : ScriptableObject
@@ -89,6 +92,10 @@ public class EmotionCardCatalog : ScriptableObject
     [Tooltip("Tachie 切換時使用的預設 groupID（例如 Sister）。可在 View 層覆寫。")]
     [SerializeField] private string defaultTachieGroupID = "Sister";
 
+    [Header("Normal 情緒設定")]
+    [Tooltip("Normal 情緒的 TextTable Key。Normal 不進卡池也不需要 Tachie 表情，但可能需要顯示名稱。")]
+    [SerializeField] private string normalEmotionNameTextKey = "Emotion.Normal";
+
     [Tooltip("每種情緒對應的資料。")]
     [SerializeField] private List<Entry> entries = new List<Entry>();
 
@@ -101,10 +108,12 @@ public class EmotionCardCatalog : ScriptableObject
     private void OnValidate() => RebuildMap();
 
     /// <summary>
-    /// 取得指定情緒的完整 Entry。找不到時回傳 null。
+    /// 取得指定情緒的完整 Entry。
+    /// Normal 沒有 Entry，回傳 null。
     /// </summary>
     public Entry GetEntry(HeroineEmotionCardType type)
     {
+        if (type == HeroineEmotionCardType.Normal) return null;
         EnsureMap();
         return map.TryGetValue(type, out var entry) ? entry : null;
     }
@@ -120,15 +129,18 @@ public class EmotionCardCatalog : ScriptableObject
 
     /// <summary>
     /// 取得該情緒的 TextTable Key（情緒名稱）。
+    /// Normal 會回傳專用的 normalEmotionNameTextKey。
     /// </summary>
     public string GetEmotionNameTextKey(HeroineEmotionCardType type)
     {
+        if (type == HeroineEmotionCardType.Normal) return normalEmotionNameTextKey;
         var entry = GetEntry(type);
         return entry != null ? entry.EmotionNameTextKey : type.ToString();
     }
 
     /// <summary>
     /// 取得小/中抽選用的 Tachie 表情預設組。
+    /// Normal 回傳 null（不需要抽選表情）。
     /// </summary>
     public TachieFacePreset GetSmallDrawFace(HeroineEmotionCardType type)
     {
@@ -138,6 +150,7 @@ public class EmotionCardCatalog : ScriptableObject
 
     /// <summary>
     /// 取得大抽選第二段用的 Tachie 表情預設組。
+    /// Normal 回傳 null（不需要抽選表情）。
     /// </summary>
     public TachieFacePreset GetBigDrawFace(HeroineEmotionCardType type)
     {
@@ -146,10 +159,11 @@ public class EmotionCardCatalog : ScriptableObject
     }
 
     /// <summary>
-    /// 是否有指定情緒的資料。
+    /// 是否有指定情緒的資料。Normal 永遠回傳 false。
     /// </summary>
     public bool Contains(HeroineEmotionCardType type)
     {
+        if (type == HeroineEmotionCardType.Normal) return false;
         EnsureMap();
         return map.ContainsKey(type);
     }
@@ -169,6 +183,14 @@ public class EmotionCardCatalog : ScriptableObject
         foreach (var entry in entries)
         {
             if (entry == null) continue;
+
+            // ★ 防禦：如果有人在 Inspector 不小心加了 Normal Entry，跳過它
+            if (entry.Type == HeroineEmotionCardType.Normal)
+            {
+                Debug.LogWarning("[EmotionCardCatalog] Normal should not have an Entry in the catalog. Skipping.");
+                continue;
+            }
+
             map[entry.Type] = entry;
         }
     }

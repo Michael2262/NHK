@@ -270,6 +270,7 @@ public class GameStatusService : MonoBehaviour
             {
                 heroine.ApplyExcitementDecay();
                 heroine.ApplySuspicionDecay();
+                heroine.ApplyLibidoDecay();
                 heroine.AdvanceCycleDay(); // 推進排卵週期計數器
             }
         };

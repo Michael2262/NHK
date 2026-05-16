@@ -24,6 +24,11 @@ using PixelCrushers.DialogueSystem;
 ///   SetLibido("sister", 50)                        → 設定性慾值
 ///   AddLibido("sister", 10)                        → 增減性慾值
 ///
+/// ── 信賴 ──
+///   GetTrust("sister")                             → 信賴值 (0~150)
+///   SetTrust("sister", 50)                         → 設定信賴值
+///   AddTrust("sister", 10)                         → 增減信賴值
+///
 /// ── H 次數 ──
 ///   GetHCount("sister")                            → H 次數
 /// </summary>
@@ -78,6 +83,14 @@ public class HeroineLuaBridge : MonoBehaviour
         Lua.RegisterFunction("AddLibido", this,
             SymbolExtensions.GetMethodInfo(() => AddLibido(string.Empty, (double)0)));
 
+        // ── 信賴 ──
+        Lua.RegisterFunction("GetTrust", this,
+            SymbolExtensions.GetMethodInfo(() => GetTrust(string.Empty)));
+        Lua.RegisterFunction("SetTrust", this,
+            SymbolExtensions.GetMethodInfo(() => SetTrust(string.Empty, (double)0)));
+        Lua.RegisterFunction("AddTrust", this,
+            SymbolExtensions.GetMethodInfo(() => AddTrust(string.Empty, (double)0)));
+
         // ── H 次數 ──
         Lua.RegisterFunction("GetHCount", this,
             SymbolExtensions.GetMethodInfo(() => GetHCount(string.Empty)));
@@ -101,6 +114,10 @@ public class HeroineLuaBridge : MonoBehaviour
         Lua.UnregisterFunction("GetLibido");
         Lua.UnregisterFunction("SetLibido");
         Lua.UnregisterFunction("AddLibido");
+
+        Lua.UnregisterFunction("GetTrust");
+        Lua.UnregisterFunction("SetTrust");
+        Lua.UnregisterFunction("AddTrust");
 
         Lua.UnregisterFunction("GetHCount");
     }
@@ -165,20 +182,12 @@ public class HeroineLuaBridge : MonoBehaviour
     // 情緒
     // ─────────────────────────────────────────────
 
-    /// <summary>
-    /// 取得主導情緒（獨立儲存值，可 Set）。
-    /// Lua: GetCurrentEmotion("sister") == "Shy"
-    /// </summary>
     public string GetCurrentEmotion(string heroineID)
     {
         var m = GetModel(heroineID);
         return m != null ? m.CurrentEmotion.ToString() : string.Empty;
     }
 
-    /// <summary>
-    /// 設定主導情緒。
-    /// Lua: SetCurrentEmotion("sister", "Shy")
-    /// </summary>
     public void SetCurrentEmotion(string heroineID, string emotionName)
     {
         var m = GetModel(heroineID);
@@ -193,10 +202,6 @@ public class HeroineLuaBridge : MonoBehaviour
         m.SetCurrentEmotion(emotion);
     }
 
-    /// <summary>
-    /// 取得大宗情緒（卡池自動計算，數量最多者）。
-    /// Lua: GetDominantEmotion("sister") == "Angry"
-    /// </summary>
     public string GetDominantEmotion(string heroineID)
     {
         var m = GetModel(heroineID);
@@ -207,31 +212,50 @@ public class HeroineLuaBridge : MonoBehaviour
     // 性慾
     // ─────────────────────────────────────────────
 
-    /// <summary>
-    /// 取得性慾值。
-    /// Lua: GetLibido("sister") >= 50
-    /// </summary>
     public double GetLibido(string heroineID)
     {
         return GetModel(heroineID)?.Libido ?? 0;
     }
 
-    /// <summary>
-    /// 設定性慾值（0~150）。
-    /// Lua: SetLibido("sister", 50)
-    /// </summary>
     public void SetLibido(string heroineID, double value)
     {
         GetModel(heroineID)?.SetLibido((int)value);
     }
 
-    /// <summary>
-    /// 增減性慾值。
-    /// Lua: AddLibido("sister", 10) / AddLibido("sister", -5)
-    /// </summary>
     public void AddLibido(string heroineID, double amount)
     {
         GetModel(heroineID)?.AddLibido((int)amount);
+    }
+
+    // ─────────────────────────────────────────────
+    // 信賴
+    // ─────────────────────────────────────────────
+
+    /// <summary>
+    /// 取得信賴值。
+    /// Lua: GetTrust("sister") >= 50
+    /// </summary>
+    public double GetTrust(string heroineID)
+    {
+        return GetModel(heroineID)?.Trust ?? 0;
+    }
+
+    /// <summary>
+    /// 設定信賴值（0~150）。
+    /// Lua: SetTrust("sister", 50)
+    /// </summary>
+    public void SetTrust(string heroineID, double value)
+    {
+        GetModel(heroineID)?.SetTrust((int)value);
+    }
+
+    /// <summary>
+    /// 增減信賴值。
+    /// Lua: AddTrust("sister", 10) / AddTrust("sister", -5)
+    /// </summary>
+    public void AddTrust(string heroineID, double amount)
+    {
+        GetModel(heroineID)?.AddTrust((int)amount);
     }
 
     // ─────────────────────────────────────────────

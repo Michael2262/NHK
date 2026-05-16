@@ -706,6 +706,108 @@ public class CheckLibido : FsmStateAction
 }
 
 // ############################################################
+//  信賴（Trust）
+// ############################################################
+
+[ActionCategory("Heroine Status")]
+[Tooltip("取得女主角的信賴值。")]
+public class GetTrust : FsmStateAction
+{
+    [RequiredField] public FsmString heroineID;
+    [RequiredField][UIHint(UIHint.Variable)] public FsmInt storeValue;
+
+    public override void Reset() { heroineID = null; storeValue = null; }
+
+    public override void OnEnter()
+    {
+        if (HeroineActionHelper.TryGetHeroine(heroineID.Value, out var h, "GetTrust"))
+            storeValue.Value = h.Trust;
+        Finish();
+    }
+}
+
+[ActionCategory("Heroine Status")]
+[Tooltip("設定女主角的信賴值（0~150）。")]
+public class SetTrustAction : FsmStateAction
+{
+    [RequiredField] public FsmString heroineID;
+    [RequiredField] public FsmInt value;
+
+    public override void Reset() { heroineID = null; value = 0; }
+
+    public override void OnEnter()
+    {
+        if (HeroineActionHelper.TryGetHeroine(heroineID.Value, out var h, "SetTrustAction"))
+            h.SetTrust(value.Value);
+        Finish();
+    }
+}
+
+[ActionCategory("Heroine Status")]
+[Tooltip("增減女主角的信賴值。正值增加，負值減少。")]
+public class AddTrustAction : FsmStateAction
+{
+    [RequiredField] public FsmString heroineID;
+    [RequiredField] public FsmInt amount;
+
+    public override void Reset() { heroineID = null; amount = 0; }
+
+    public override void OnEnter()
+    {
+        if (HeroineActionHelper.TryGetHeroine(heroineID.Value, out var h, "AddTrustAction"))
+            h.AddTrust(amount.Value);
+        Finish();
+    }
+}
+
+[ActionCategory("Heroine Status")]
+[Tooltip("檢查女主角的信賴值是否符合條件（>, >=, ==, <, <=）。")]
+public class CheckTrust : FsmStateAction
+{
+    [RequiredField] public FsmString heroineID;
+
+    [ObjectType(typeof(HeroineCompareOp))]
+    public FsmEnum compareOperator;
+
+    [RequiredField] public FsmInt threshold;
+
+    [UIHint(UIHint.Variable)] public FsmInt storeValue;
+
+    public FsmEvent passEvent;
+    public FsmEvent failEvent;
+
+    public override void Reset()
+    {
+        heroineID = null;
+        compareOperator = HeroineCompareOp.GreaterOrEqual;
+        threshold = 50;
+        storeValue = null;
+        passEvent = null;
+        failEvent = null;
+    }
+
+    public override void OnEnter()
+    {
+        if (!HeroineActionHelper.TryGetHeroine(heroineID.Value, out var h, "CheckTrust"))
+        {
+            Fsm.Event(failEvent);
+            Finish();
+            return;
+        }
+
+        int val = h.Trust;
+        if (storeValue != null && !storeValue.IsNone) storeValue.Value = val;
+
+        var op = compareOperator != null && compareOperator.Value != null
+            ? (HeroineCompareOp)compareOperator.Value
+            : HeroineCompareOp.GreaterOrEqual;
+
+        Fsm.Event(HeroineActionHelper.Compare(val, threshold.Value, op) ? passEvent : failEvent);
+        Finish();
+    }
+}
+
+// ############################################################
 //  H 次數（HCount）
 // ############################################################
 

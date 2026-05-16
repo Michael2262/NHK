@@ -3,9 +3,15 @@ using System;
 /// <summary>
 /// NHK 情緒卡種類。
 /// 獨立成檔案，供 HeroineStatusModel / SaveData / 抽選機 / View 共用。
+///
+/// Normal 放在最前面（= 0），為 default 值。
+/// Normal 是「無特殊情緒」狀態，不會進入卡池，僅作為 CurrentEmotion 的合法值。
 /// </summary>
 public enum HeroineEmotionCardType
 {
+    /// <summary>普通（無特殊情緒）。不進卡池，僅作為 CurrentEmotion 值。</summary>
+    Normal,
+
     Angry,
     Shy,
     Worried,

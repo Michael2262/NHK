@@ -12,9 +12,10 @@ using UnityEngine;
 /// 3. DominantEmotion（大宗情緒）：由卡池自動計算，數量最多者。
 /// 4. CurrentEmotion（主導情緒）：獨立儲存，可由外部 Set。
 /// 5. LastAddedEmotion：最近一次被新增的情緒。
-/// 6. Libido（性慾）：0~150 的獨立數值。
-/// 7. 提供情緒分數與卡片替換規則。
-/// 8. 保存 H 次數。
+/// 6. Libido（性慾）：0~150 的獨立數值，每日衰減 LibidoDailyDecay。
+/// 7. Trust（信賴）：0~150 的獨立數值。
+/// 8. 提供情緒分數與卡片替換規則。
+/// 9. 保存 H 次數。
 ///
 /// DominantEmotion 規則：
 /// - 不允許外部主動設定。
@@ -45,6 +46,11 @@ public class HeroineStatusModel
     /// <summary>性慾值，0~LibidoMax。</summary>
     public int Libido { get; private set; }
     public const int LibidoMax = 150;
+    public const int LibidoDailyDecay = 5;
+
+    /// <summary>信賴值，0~TrustMax。</summary>
+    public int Trust { get; private set; }
+    public const int TrustMax = 150;
 
     public int HCount { get; private set; }
 
@@ -67,6 +73,7 @@ public class HeroineStatusModel
     public event Action<HeroineEmotionCardType> OnDominantEmotionChanged;
     public event Action<HeroineEmotionCardType> OnCurrentEmotionChanged;
     public event Action<int> OnLibidoChanged;
+    public event Action<int> OnTrustChanged;
     public event Action<int> OnHCountChanged;
 
     // 向下相容：舊的 OnEmotionChanged 對應新的 OnCurrentEmotionChanged
@@ -120,6 +127,7 @@ public class HeroineStatusModel
         DominantEmotion = HeroineEmotionCardType.Angry;
         CurrentEmotion = HeroineEmotionCardType.Angry;
         Libido = 0;
+        Trust = 0;
         HCount = 0;
 
         Statistics = new HeroineStatisticsModel();
@@ -287,6 +295,38 @@ public class HeroineStatusModel
     /// <summary>取得目前性慾值。</summary>
     public int GetLibido() => Libido;
 
+    /// <summary>每日性慾衰減。由 GameStatusService 在換日時呼叫。</summary>
+    public void ApplyLibidoDecay()
+    {
+        AddLibido(-LibidoDailyDecay);
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Trust（信賴）
+    // ─────────────────────────────────────────────────────────────
+
+    /// <summary>增減信賴值。</summary>
+    public void AddTrust(int amount)
+    {
+        if (amount == 0) return;
+        int newValue = Mathf.Clamp(Trust + amount, 0, TrustMax);
+        if (Trust == newValue) return;
+        Trust = newValue;
+        OnTrustChanged?.Invoke(Trust);
+    }
+
+    /// <summary>直接設定信賴值。</summary>
+    public void SetTrust(int value)
+    {
+        value = Mathf.Clamp(value, 0, TrustMax);
+        if (Trust == value) return;
+        Trust = value;
+        OnTrustChanged?.Invoke(Trust);
+    }
+
+    /// <summary>取得目前信賴值。</summary>
+    public int GetTrust() => Trust;
+
     // ─────────────────────────────────────────────────────────────
     // Emotion deck mutation
     // ─────────────────────────────────────────────────────────────
@@ -453,6 +493,7 @@ public class HeroineStatusModel
             Emotion = CurrentEmotion,
             DominantEmotion = DominantEmotion,
             Libido = Libido,
+            Trust = Trust,
             HCount = HCount,
             NextEmotionCardOrder = nextEmotionCardOrder,
             EmotionDeckData = emotionDeck
@@ -477,6 +518,7 @@ public class HeroineStatusModel
         HCount = Mathf.Max(0, data.HCount);
         CurrentEmotion = data.Emotion;
         Libido = Mathf.Clamp(data.Libido, 0, LibidoMax);
+        Trust = Mathf.Clamp(data.Trust, 0, TrustMax);
         nextEmotionCardOrder = Mathf.Max(0, data.NextEmotionCardOrder);
 
         emotionDeck.Clear();
@@ -508,6 +550,7 @@ public class HeroineStatusModel
 
         OnHCountChanged?.Invoke(HCount);
         OnLibidoChanged?.Invoke(Libido);
+        OnTrustChanged?.Invoke(Trust);
         OnCurrentEmotionChanged?.Invoke(CurrentEmotion);
         NotifyDeckChanged(oldDominant, forceNotify: true);
     }
