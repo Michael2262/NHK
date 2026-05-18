@@ -434,10 +434,10 @@ public class ApplyProtagonistStatusChange : FsmStateAction
 }
 
 // ==========================================================
-// Daily Flow / Long-term Counters
+// Daily Flow (預留空殼，未來可加邏輯)
 // ==========================================================
 [ActionCategory("Protagonist Status")]
-[Tooltip("呼叫主角的 OnDayStart：重置每日狀態旗標。")]
+[Tooltip("呼叫主角的 OnDayStart（預留擴充點）。")]
 public class ProtagonistDayStart : FsmStateAction
 {
     public override void OnEnter()
@@ -449,7 +449,7 @@ public class ProtagonistDayStart : FsmStateAction
 }
 
 [ActionCategory("Protagonist Status")]
-[Tooltip("呼叫主角的 OnDayEnd：依當日旗標更新長期統計 (尚未進入下一天)。")]
+[Tooltip("呼叫主角的 OnDayEnd（預留擴充點）。")]
 public class ProtagonistDayEnd : FsmStateAction
 {
     public override void OnEnter()
@@ -473,119 +473,6 @@ public class ProtagonistNextDay : FsmStateAction
         {
             p.NextDay();
             ProtagonistPlayMakerUtil.StoreInt(storeDay, p.Day);
-        }
-        Finish();
-    }
-}
-
-[ActionCategory("Protagonist Status")]
-[Tooltip("僅重置主角的每日狀態旗標 (不更新長期統計)。")]
-public class ResetProtagonistDailyFlags : FsmStateAction
-{
-    public override void OnEnter()
-    {
-        var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(ResetProtagonistDailyFlags));
-        if (p != null) p.ResetDailyFlags();
-        Finish();
-    }
-}
-
-[ActionCategory("Protagonist Status")]
-[Tooltip("重置主角所有長期統計計數器。")]
-public class ResetProtagonistLongTermCounters : FsmStateAction
-{
-    public override void OnEnter()
-    {
-        var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(ResetProtagonistLongTermCounters));
-        if (p != null) p.ResetLongTermCounters();
-        Finish();
-    }
-}
-
-[ActionCategory("Protagonist Status")]
-[Tooltip("標記今天主角做過某項每日行為。")]
-public class MarkProtagonistDailyFlag : FsmStateAction
-{
-    public enum DailyFlag
-    {
-        Bathed,
-        CleanedRoom,
-        HadMeal,
-        CheckedMail,
-        RepliedFamily,
-        IgnoredPhone,
-        Escaped,
-        GoneOutsideSuccess,
-        GoneOutsideFail,
-        StressCollapsed
-    }
-
-    public DailyFlag flag;
-
-    public override void Reset() { flag = DailyFlag.Bathed; }
-    public override void OnEnter()
-    {
-        var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(MarkProtagonistDailyFlag));
-        if (p != null)
-        {
-            switch (flag)
-            {
-                case DailyFlag.Bathed: p.MarkBathedToday(); break;
-                case DailyFlag.CleanedRoom: p.MarkCleanedRoomToday(); break;
-                case DailyFlag.HadMeal: p.MarkHadMealToday(); break;
-                case DailyFlag.CheckedMail: p.MarkCheckedMailToday(); break;
-                case DailyFlag.RepliedFamily: p.MarkRepliedFamilyToday(); break;
-                case DailyFlag.IgnoredPhone: p.MarkIgnoredPhoneToday(); break;
-                case DailyFlag.Escaped: p.MarkEscapedToday(); break;
-                case DailyFlag.GoneOutsideSuccess: p.MarkGoneOutsideToday(true); break;
-                case DailyFlag.GoneOutsideFail: p.MarkGoneOutsideToday(false); break;
-                case DailyFlag.StressCollapsed: p.MarkStressCollapsedToday(); break;
-            }
-        }
-        Finish();
-    }
-}
-
-[ActionCategory("Protagonist Status")]
-[Tooltip("增加主角的長期統計計數器 (NightExtend1 / NightExtend2 / StayOver)。")]
-public class AddProtagonistLongTermCounter : FsmStateAction
-{
-    public enum CounterType
-    {
-        NightExtend1Success,
-        NightExtend2Success,
-        StayOver
-    }
-
-    public CounterType counter;
-    public FsmInt amount;
-    [UIHint(UIHint.Variable)] public FsmInt storeCount;
-
-    public override void Reset() { counter = CounterType.NightExtend1Success; amount = 1; storeCount = null; }
-
-    public override void OnEnter()
-    {
-        var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(AddProtagonistLongTermCounter));
-        if (p != null)
-        {
-            int n = amount.Value;
-            int result = 0;
-            switch (counter)
-            {
-                case CounterType.NightExtend1Success:
-                    p.AddNightExtend1SuccessCount(n);
-                    result = p.NightExtend1SuccessCount;
-                    break;
-                case CounterType.NightExtend2Success:
-                    p.AddNightExtend2SuccessCount(n);
-                    result = p.NightExtend2SuccessCount;
-                    break;
-                case CounterType.StayOver:
-                    p.AddStayOverCount(n);
-                    result = p.StayOverCount;
-                    break;
-            }
-            ProtagonistPlayMakerUtil.StoreInt(storeCount, result);
         }
         Finish();
     }
@@ -719,42 +606,6 @@ public class CheckProtagonistStatus : FsmStateAction
 
         ProtagonistPlayMakerUtil.StoreBool(storeResult, result);
         Fsm.Event(result ? trueEvent : falseEvent);
-        Finish();
-    }
-}
-
-[ActionCategory("Protagonist Status")]
-[Tooltip("取得主角面對外界的成功評分 (FaceRealityScore)。可選擇與門檻比對並觸發事件。")]
-public class GetProtagonistFaceRealityScore : FsmStateAction
-{
-    public FsmInt threshold;
-    public FsmBool useThreshold;
-    [UIHint(UIHint.Variable)] public FsmInt storeScore;
-    [UIHint(UIHint.Variable)] public FsmBool storeCanLikelyFace;
-    public FsmEvent successEvent;
-    public FsmEvent failedEvent;
-
-    public override void Reset()
-    {
-        threshold = 50; useThreshold = true;
-        storeScore = null; storeCanLikelyFace = null;
-        successEvent = null; failedEvent = null;
-    }
-
-    public override void OnEnter()
-    {
-        var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(GetProtagonistFaceRealityScore));
-        if (p == null) { Finish(); return; }
-
-        int score = p.GetFaceRealityScore();
-        ProtagonistPlayMakerUtil.StoreInt(storeScore, score);
-
-        if (useThreshold.Value)
-        {
-            bool canFace = p.CanLikelyFaceReality(threshold.Value);
-            ProtagonistPlayMakerUtil.StoreBool(storeCanLikelyFace, canFace);
-            Fsm.Event(canFace ? successEvent : failedEvent);
-        }
         Finish();
     }
 }

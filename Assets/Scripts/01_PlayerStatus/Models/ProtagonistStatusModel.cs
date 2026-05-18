@@ -122,31 +122,6 @@ public class ProtagonistStatusModel
     /// <summary>保留資源：技能點。</summary>
     public int SkillPoints { get; private set; } = INITIAL_SKILL_POINTS;
 
-    // ───── 每日狀態：每日開始時重置 ─────
-    public bool HasBathedToday { get; private set; }
-    public bool HasCleanedRoomToday { get; private set; }
-    public bool HasHadMealToday { get; private set; }
-    public bool HasCheckedMailToday { get; private set; }
-    public bool HasRepliedFamilyToday { get; private set; }
-    public bool HasIgnoredPhoneToday { get; private set; }
-    public bool HasGoneOutsideToday { get; private set; }
-    public bool SucceededGoingOutsideToday { get; private set; }
-    public bool FailedGoingOutsideToday { get; private set; }
-    public bool HasEscapedToday { get; private set; }
-    public bool StressCollapsedToday { get; private set; }
-
-    // ───── 長期統計 ─────
-    public int CollapseCount { get; private set; }
-    public int OutsideSuccessCount { get; private set; }
-    public int OutsideFailCount { get; private set; }
-    public int ConsecutiveNoBathDays { get; private set; }
-    public int ConsecutiveEscapeDays { get; private set; }
-    public int DaysImprovedLife { get; private set; }
-    public int DaysIgnoredReality { get; private set; }
-    public int NightExtend1SuccessCount { get; private set; }
-    public int NightExtend2SuccessCount { get; private set; }
-    public int StayOverCount { get; private set; }
-
     // ───── 事件通知 ─────
     public event Action<int> OnDayChanged;
     public event Action<int> OnStressChanged;       // delta
@@ -161,10 +136,6 @@ public class ProtagonistStatusModel
     public event Action<ProtagonistSocialityState, ProtagonistSocialityState> OnSocialityStateChanged;
     public event Action<ProtagonistDependencyState, ProtagonistDependencyState> OnDependencyStateChanged;
 
-    public event Action OnStressCollapsed;
-    public event Action OnDailyFlagsReset;
-    public event Action OnLongTermCountersChanged;
-
     // ───── 初始化 / 存讀檔 ─────
     public void NewGame()
     {
@@ -176,8 +147,6 @@ public class ProtagonistStatusModel
         Money = INITIAL_MONEY;
         SkillPoints = INITIAL_SKILL_POINTS;
 
-        ResetDailyFlags();
-        ResetLongTermCounters();
         NotifyAllCoreValues();
     }
 
@@ -191,30 +160,7 @@ public class ProtagonistStatusModel
             Sociality = Sociality,
             Dependency = Dependency,
             Money = Money,
-            SkillPoints = SkillPoints,
-
-            HasBathedToday = HasBathedToday,
-            HasCleanedRoomToday = HasCleanedRoomToday,
-            HasHadMealToday = HasHadMealToday,
-            HasCheckedMailToday = HasCheckedMailToday,
-            HasRepliedFamilyToday = HasRepliedFamilyToday,
-            HasIgnoredPhoneToday = HasIgnoredPhoneToday,
-            HasGoneOutsideToday = HasGoneOutsideToday,
-            SucceededGoingOutsideToday = SucceededGoingOutsideToday,
-            FailedGoingOutsideToday = FailedGoingOutsideToday,
-            HasEscapedToday = HasEscapedToday,
-            StressCollapsedToday = StressCollapsedToday,
-
-            CollapseCount = CollapseCount,
-            OutsideSuccessCount = OutsideSuccessCount,
-            OutsideFailCount = OutsideFailCount,
-            ConsecutiveNoBathDays = ConsecutiveNoBathDays,
-            ConsecutiveEscapeDays = ConsecutiveEscapeDays,
-            DaysImprovedLife = DaysImprovedLife,
-            DaysIgnoredReality = DaysIgnoredReality,
-            NightExtend1SuccessCount = NightExtend1SuccessCount,
-            NightExtend2SuccessCount = NightExtend2SuccessCount,
-            StayOverCount = StayOverCount
+            SkillPoints = SkillPoints
         };
     }
 
@@ -234,31 +180,7 @@ public class ProtagonistStatusModel
         Money = Math.Max(0, data.Money);
         SkillPoints = Math.Max(0, data.SkillPoints);
 
-        HasBathedToday = data.HasBathedToday;
-        HasCleanedRoomToday = data.HasCleanedRoomToday;
-        HasHadMealToday = data.HasHadMealToday;
-        HasCheckedMailToday = data.HasCheckedMailToday;
-        HasRepliedFamilyToday = data.HasRepliedFamilyToday;
-        HasIgnoredPhoneToday = data.HasIgnoredPhoneToday;
-        HasGoneOutsideToday = data.HasGoneOutsideToday;
-        SucceededGoingOutsideToday = data.SucceededGoingOutsideToday;
-        FailedGoingOutsideToday = data.FailedGoingOutsideToday;
-        HasEscapedToday = data.HasEscapedToday;
-        StressCollapsedToday = data.StressCollapsedToday;
-
-        CollapseCount = Math.Max(0, data.CollapseCount);
-        OutsideSuccessCount = Math.Max(0, data.OutsideSuccessCount);
-        OutsideFailCount = Math.Max(0, data.OutsideFailCount);
-        ConsecutiveNoBathDays = Math.Max(0, data.ConsecutiveNoBathDays);
-        ConsecutiveEscapeDays = Math.Max(0, data.ConsecutiveEscapeDays);
-        DaysImprovedLife = Math.Max(0, data.DaysImprovedLife);
-        DaysIgnoredReality = Math.Max(0, data.DaysIgnoredReality);
-        NightExtend1SuccessCount = Math.Max(0, data.NightExtend1SuccessCount);
-        NightExtend2SuccessCount = Math.Max(0, data.NightExtend2SuccessCount);
-        StayOverCount = Math.Max(0, data.StayOverCount);
-
         NotifyAllCoreValues();
-        OnLongTermCountersChanged?.Invoke();
     }
 
     private void NotifyAllCoreValues()
@@ -272,15 +194,13 @@ public class ProtagonistStatusModel
         OnSkillPointsChanged?.Invoke(0);
     }
 
-    // ───── 每日流程 ─────
+    // ───── 每日流程（預留，未來可加邏輯） ─────
     public void OnDayStart()
     {
-        ResetDailyFlags();
     }
 
     public void OnDayEnd()
     {
-        UpdateLongTermCountersFromDailyFlags();
     }
 
     public void NextDay()
@@ -289,58 +209,6 @@ public class ProtagonistStatusModel
         Day++;
         OnDayChanged?.Invoke(Day);
         OnDayStart();
-    }
-
-    public void ResetDailyFlags()
-    {
-        HasBathedToday = false;
-        HasCleanedRoomToday = false;
-        HasHadMealToday = false;
-        HasCheckedMailToday = false;
-        HasRepliedFamilyToday = false;
-        HasIgnoredPhoneToday = false;
-        HasGoneOutsideToday = false;
-        SucceededGoingOutsideToday = false;
-        FailedGoingOutsideToday = false;
-        HasEscapedToday = false;
-        StressCollapsedToday = false;
-
-        OnDailyFlagsReset?.Invoke();
-    }
-
-    public void ResetLongTermCounters()
-    {
-        CollapseCount = 0;
-        OutsideSuccessCount = 0;
-        OutsideFailCount = 0;
-        ConsecutiveNoBathDays = 0;
-        ConsecutiveEscapeDays = 0;
-        DaysImprovedLife = 0;
-        DaysIgnoredReality = 0;
-        NightExtend1SuccessCount = 0;
-        NightExtend2SuccessCount = 0;
-        StayOverCount = 0;
-
-        OnLongTermCountersChanged?.Invoke();
-    }
-
-    private void UpdateLongTermCountersFromDailyFlags()
-    {
-        if (StressCollapsedToday) CollapseCount++;
-
-        if (SucceededGoingOutsideToday) OutsideSuccessCount++;
-        if (FailedGoingOutsideToday) OutsideFailCount++;
-
-        ConsecutiveNoBathDays = HasBathedToday ? 0 : ConsecutiveNoBathDays + 1;
-        ConsecutiveEscapeDays = HasEscapedToday ? ConsecutiveEscapeDays + 1 : 0;
-
-        if (HasBathedToday || HasCleanedRoomToday || HasHadMealToday || SucceededGoingOutsideToday)
-            DaysImprovedLife++;
-
-        if (HasIgnoredPhoneToday || HasEscapedToday)
-            DaysIgnoredReality++;
-
-        OnLongTermCountersChanged?.Invoke();
     }
 
     // ───── 主角核心數值方法 ─────
@@ -367,12 +235,6 @@ public class ProtagonistStatusModel
         ProtagonistStressState newState = GetStressState();
         if (newState != prevState)
             OnStressStateChanged?.Invoke(prevState, newState);
-
-        if (Stress >= STRESS_COLLAPSE_THRESHOLD && prevValue < STRESS_COLLAPSE_THRESHOLD)
-        {
-            StressCollapsedToday = true;
-            OnStressCollapsed?.Invoke();
-        }
     }
 
     public void ReduceStress(int delta)
@@ -535,49 +397,6 @@ public class ProtagonistStatusModel
         if (SkillPoints != prev) OnSkillPointsChanged?.Invoke(SkillPoints - prev);
     }
 
-    // ───── 每日狀態標記方法 ─────
-    public void MarkBathedToday(bool value = true) => HasBathedToday = value;
-    public void MarkCleanedRoomToday(bool value = true) => HasCleanedRoomToday = value;
-    public void MarkHadMealToday(bool value = true) => HasHadMealToday = value;
-    public void MarkCheckedMailToday(bool value = true) => HasCheckedMailToday = value;
-    public void MarkRepliedFamilyToday(bool value = true) => HasRepliedFamilyToday = value;
-    public void MarkIgnoredPhoneToday(bool value = true) => HasIgnoredPhoneToday = value;
-    public void MarkEscapedToday(bool value = true) => HasEscapedToday = value;
-
-    public void MarkGoneOutsideToday(bool succeeded)
-    {
-        HasGoneOutsideToday = true;
-        SucceededGoingOutsideToday = succeeded;
-        FailedGoingOutsideToday = !succeeded;
-    }
-
-    public void MarkStressCollapsedToday(bool value = true)
-    {
-        StressCollapsedToday = value;
-    }
-
-    // ───── 長期統計手動加算：供事件系統使用 ─────
-    public void AddNightExtend1SuccessCount(int amount = 1)
-    {
-        if (amount == 0) return;
-        NightExtend1SuccessCount = Math.Max(0, NightExtend1SuccessCount + amount);
-        OnLongTermCountersChanged?.Invoke();
-    }
-
-    public void AddNightExtend2SuccessCount(int amount = 1)
-    {
-        if (amount == 0) return;
-        NightExtend2SuccessCount = Math.Max(0, NightExtend2SuccessCount + amount);
-        OnLongTermCountersChanged?.Invoke();
-    }
-
-    public void AddStayOverCount(int amount = 1)
-    {
-        if (amount == 0) return;
-        StayOverCount = Math.Max(0, StayOverCount + amount);
-        OnLongTermCountersChanged?.Invoke();
-    }
-
     // ───── 狀態查詢 ─────
     public ProtagonistStressState GetStressState()
     {
@@ -622,19 +441,7 @@ public class ProtagonistStatusModel
     public bool IsDependencyHigh() => Dependency >= DEPENDENCY_HIGH_THRESHOLD;
     public bool IsDependencyExtreme() => Dependency >= DEPENDENCY_EXTREME_THRESHOLD;
 
-    // ───── 外界行動成功率輔助 ─────
-    public int GetFaceRealityScore()
-    {
-        // 給事件系統使用的粗略評分：越高代表越可能成功面對外界。
-        // 社會性現在是正向值，直接加即可。
-        return Sociality + (LifePower / 2) - (Stress / 3);
-    }
-
-    public bool CanLikelyFaceReality(int threshold = 50)
-    {
-        return GetFaceRealityScore() >= threshold;
-    }
-
+    // ───── 內部工具 ─────
     private static int ClampStatus(int value)
     {
         if (value < MIN_STATUS_VALUE) return MIN_STATUS_VALUE;

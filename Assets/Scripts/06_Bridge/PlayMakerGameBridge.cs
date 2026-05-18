@@ -62,16 +62,6 @@ public class PlayMakerGameBridge : MonoBehaviour
     public void AddPlayerSkillPoints(int amount) => Protagonist?.AddSkillPoints(amount);
     public bool TryReducePlayerSkillPoints(int cost) => Protagonist?.TryReduceSkillPoints(cost) ?? false;
 
-    public void MarkPlayerBathedToday() => Protagonist?.MarkBathedToday(true);
-    public void MarkPlayerCleanedRoomToday() => Protagonist?.MarkCleanedRoomToday(true);
-    public void MarkPlayerHadMealToday() => Protagonist?.MarkHadMealToday(true);
-    public void MarkPlayerCheckedMailToday() => Protagonist?.MarkCheckedMailToday(true);
-    public void MarkPlayerRepliedFamilyToday() => Protagonist?.MarkRepliedFamilyToday(true);
-    public void MarkPlayerIgnoredPhoneToday() => Protagonist?.MarkIgnoredPhoneToday(true);
-    public void MarkPlayerEscapedToday() => Protagonist?.MarkEscapedToday(true);
-    public void MarkPlayerWentOutsideSuccess() => Protagonist?.MarkGoneOutsideToday(true);
-    public void MarkPlayerWentOutsideFail() => Protagonist?.MarkGoneOutsideToday(false);
-
     // Legacy method aliases. These are kept to avoid old FSM references breaking immediately.
     public void AddPlayerAction(int amount) => Debug.LogWarning("[PlayMakerGameBridge] AddPlayerAction ignored in NHK.");
     public bool TryReducePlayerAction(int cost) => true;

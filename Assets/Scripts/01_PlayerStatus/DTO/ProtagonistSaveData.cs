@@ -19,29 +19,4 @@ public class ProtagonistSaveData
     // ───── 保留資源 ─────
     public int Money;
     public int SkillPoints;
-
-    // ───── 每日狀態：若允許日中存檔，需保存 ─────
-    public bool HasBathedToday;
-    public bool HasCleanedRoomToday;
-    public bool HasHadMealToday;
-    public bool HasCheckedMailToday;
-    public bool HasRepliedFamilyToday;
-    public bool HasIgnoredPhoneToday;
-    public bool HasGoneOutsideToday;
-    public bool SucceededGoingOutsideToday;
-    public bool FailedGoingOutsideToday;
-    public bool HasEscapedToday;
-    public bool StressCollapsedToday;
-
-    // ───── 長期統計 ─────
-    public int CollapseCount;
-    public int OutsideSuccessCount;
-    public int OutsideFailCount;
-    public int ConsecutiveNoBathDays;
-    public int ConsecutiveEscapeDays;
-    public int DaysImprovedLife;
-    public int DaysIgnoredReality;
-    public int NightExtend1SuccessCount;
-    public int NightExtend2SuccessCount;
-    public int StayOverCount;
 }

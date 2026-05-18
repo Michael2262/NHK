@@ -4,7 +4,7 @@ using UnityEngine;
 /// NHK 版主角數值變化 UnityEvent 橋接 API。
 /// 保留原檔名 / class 名，供 Inspector 的 UnityEvent 拖曳使用。
 /// 
-/// 核心：Stress / LifePower / Sociality / Dependency / Money / SkillPoints / Time / Daily Flags / Counters。
+/// 核心：Stress / LifePower / Sociality / Dependency / Money / SkillPoints / Time。
 /// </summary>
 [AddComponentMenu("Game/API/Protagonist Bridge API")]
 public class ProtagonistBridgeAPI : MonoBehaviour
@@ -57,29 +57,6 @@ public class ProtagonistBridgeAPI : MonoBehaviour
 
     public void AddSkillPoints(int amount) => P?.AddSkillPoints(amount);
     public void SetSkillPoints(int amount) => P?.SetSkillPoints(amount);
-
-    // ==========================================
-    // Daily Flags
-    // ==========================================
-
-    public void MarkBathedToday(bool value = true) => P?.MarkBathedToday(value);
-    public void MarkCleanedRoomToday(bool value = true) => P?.MarkCleanedRoomToday(value);
-    public void MarkHadMealToday(bool value = true) => P?.MarkHadMealToday(value);
-    public void MarkCheckedMailToday(bool value = true) => P?.MarkCheckedMailToday(value);
-    public void MarkRepliedFamilyToday(bool value = true) => P?.MarkRepliedFamilyToday(value);
-    public void MarkIgnoredPhoneToday(bool value = true) => P?.MarkIgnoredPhoneToday(value);
-    public void MarkEscapedToday(bool value = true) => P?.MarkEscapedToday(value);
-    public void MarkGoneOutsideSucceeded() => P?.MarkGoneOutsideToday(true);
-    public void MarkGoneOutsideFailed() => P?.MarkGoneOutsideToday(false);
-    public void MarkStressCollapsedToday(bool value = true) => P?.MarkStressCollapsedToday(value);
-
-    // ==========================================
-    // Long-term Counters
-    // ==========================================
-
-    public void AddNightExtend1SuccessCount(int amount = 1) => P?.AddNightExtend1SuccessCount(amount);
-    public void AddNightExtend2SuccessCount(int amount = 1) => P?.AddNightExtend2SuccessCount(amount);
-    public void AddStayOverCount(int amount = 1) => P?.AddStayOverCount(amount);
 
     // ==========================================
     // Time

@@ -74,24 +74,6 @@ public class CoreSystemBridge : MonoBehaviour
     }
 
     // ==========================================================
-    // 每日狀態標記
-    // ==========================================================
-    public void MarkBathedToday() => Model?.MarkBathedToday(true);
-    public void MarkCleanedRoomToday() => Model?.MarkCleanedRoomToday(true);
-    public void MarkHadMealToday() => Model?.MarkHadMealToday(true);
-    public void MarkCheckedMailToday() => Model?.MarkCheckedMailToday(true);
-    public void MarkRepliedFamilyToday() => Model?.MarkRepliedFamilyToday(true);
-    public void MarkIgnoredPhoneToday() => Model?.MarkIgnoredPhoneToday(true);
-    public void MarkEscapedToday() => Model?.MarkEscapedToday(true);
-    public void MarkGoneOutsideSuccess() => Model?.MarkGoneOutsideToday(true);
-    public void MarkGoneOutsideFail() => Model?.MarkGoneOutsideToday(false);
-    public void MarkStressCollapsedToday() => Model?.MarkStressCollapsedToday(true);
-
-    public void AddNightExtend1SuccessCount(int amount = 1) => Model?.AddNightExtend1SuccessCount(amount);
-    public void AddNightExtend2SuccessCount(int amount = 1) => Model?.AddNightExtend2SuccessCount(amount);
-    public void AddStayOverCount(int amount = 1) => Model?.AddStayOverCount(amount);
-
-    // ==========================================================
     // 舊版相容 wrapper
     // ==========================================================
     public void AddStamina(int amount)
