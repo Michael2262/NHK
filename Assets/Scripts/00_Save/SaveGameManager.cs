@@ -59,7 +59,7 @@ public class SaveGameManager
             {
                 IsEmpty = false,
                 SaveTimestamp = DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss"),
-                GameDay = _gameStatusService.Protagonist.Day,
+                GameDay = _gameStatusService.Time.DayIndex,
 
                 // v3.1:存下 Phase 資訊,供讀檔 UI 顯示「DAY X + 時段」
                 PhaseIndex = _gameStatusService.Time.CurrentPhaseIndex,

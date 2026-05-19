@@ -6,7 +6,7 @@ using UnityEngine.Events;
 /// 原檔名保留，但用途改為監測 Stress / LifePower / Sociality / Dependency。
 /// 
 /// 主要用途：
-/// 1. Stress 進入危險 / 崩潰時觸發事件。
+/// 1. Stress 進入 High / Extreme 時觸發事件。
 /// 2. LifePower 低於門檻時觸發事件。
 /// 3. Sociality 低於門檻時觸發事件。
 /// 4. Dependency 高於門檻時觸發事件。
@@ -16,17 +16,18 @@ using UnityEngine.Events;
 public class ProtagonistStatusDepletionTrigger : MonoBehaviour
 {
     [Header("Stress 門檻")]
-    [SerializeField] private int _stressCriticalThreshold = ProtagonistStatusModel.STRESS_CRITICAL_THRESHOLD;
-    [SerializeField] private int _stressCollapseThreshold = ProtagonistStatusModel.STRESS_COLLAPSE_THRESHOLD;
-    [SerializeField] private UnityEvent _onStressCritical;
-    [SerializeField] private UnityEvent _onStressCollapsed;
+    [SerializeField] private int _stressHighThreshold = ProtagonistStatusModel.STRESS_HIGH_THRESHOLD;
+    [SerializeField] private int _stressExtremeThreshold = ProtagonistStatusModel.STRESS_EXTREME_THRESHOLD;
+    [SerializeField] private UnityEvent _onStressHigh;
+    [SerializeField] private UnityEvent _onStressExtreme;
 
     [Header("LifePower 門檻")]
-    [SerializeField] private int _lifePowerLowThreshold = ProtagonistStatusModel.LIFE_VERY_LOW_MAX;
+    [Tooltip("生活力低於此值時觸發（即處於 Low 分級）。")]
+    [SerializeField] private int _lifePowerLowThreshold = ProtagonistStatusModel.LIFE_MEDIUM_THRESHOLD;
     [SerializeField] private UnityEvent _onLifePowerLow;
 
     [Header("Sociality 門檻")]
-    [Tooltip("社會性低於此值時觸發。預設 31，代表 30 以下為 Low。")]
+    [Tooltip("社會性低於此值時觸發（即處於 Low 分級）。")]
     [SerializeField] private int _socialityLowThreshold = ProtagonistStatusModel.SOCIALITY_MEDIUM_THRESHOLD;
     [SerializeField] private UnityEvent _onSocialityLow;
 
@@ -35,8 +36,8 @@ public class ProtagonistStatusDepletionTrigger : MonoBehaviour
     [SerializeField] private UnityEvent _onDependencyHigh;
 
     private ProtagonistStatusModel _model;
-    private bool _stressCriticalTriggered;
-    private bool _stressCollapsedTriggered;
+    private bool _stressHighTriggered;
+    private bool _stressExtremeTriggered;
     private bool _lifePowerLowTriggered;
     private bool _socialityLowTriggered;
     private bool _dependencyHighTriggered;
@@ -86,9 +87,9 @@ public class ProtagonistStatusDepletionTrigger : MonoBehaviour
 
     private void MarkAlreadySatisfiedAsTriggered()
     {
-        _stressCriticalTriggered = _model.Stress >= _stressCriticalThreshold;
-        _stressCollapsedTriggered = _model.Stress >= _stressCollapseThreshold;
-        _lifePowerLowTriggered = _model.LifePower <= _lifePowerLowThreshold;
+        _stressHighTriggered = _model.Stress >= _stressHighThreshold;
+        _stressExtremeTriggered = _model.Stress >= _stressExtremeThreshold;
+        _lifePowerLowTriggered = _model.LifePower < _lifePowerLowThreshold;
         _socialityLowTriggered = _model.Sociality < _socialityLowThreshold;
         _dependencyHighTriggered = _model.Dependency >= _dependencyHighThreshold;
     }
@@ -120,20 +121,20 @@ public class ProtagonistStatusDepletionTrigger : MonoBehaviour
     {
         if (_model == null) return;
 
-        if (!_stressCollapsedTriggered && _model.Stress >= _stressCollapseThreshold)
+        if (!_stressExtremeTriggered && _model.Stress >= _stressExtremeThreshold)
         {
-            _stressCollapsedTriggered = true;
-            _onStressCollapsed?.Invoke();
+            _stressExtremeTriggered = true;
+            _onStressExtreme?.Invoke();
             return;
         }
 
-        if (!_stressCriticalTriggered && _model.Stress >= _stressCriticalThreshold)
+        if (!_stressHighTriggered && _model.Stress >= _stressHighThreshold)
         {
-            _stressCriticalTriggered = true;
-            _onStressCritical?.Invoke();
+            _stressHighTriggered = true;
+            _onStressHigh?.Invoke();
         }
 
-        if (!_lifePowerLowTriggered && _model.LifePower <= _lifePowerLowThreshold)
+        if (!_lifePowerLowTriggered && _model.LifePower < _lifePowerLowThreshold)
         {
             _lifePowerLowTriggered = true;
             _onLifePowerLow?.Invoke();
@@ -154,15 +155,15 @@ public class ProtagonistStatusDepletionTrigger : MonoBehaviour
 
     public void ResetAllTriggers()
     {
-        _stressCriticalTriggered = false;
-        _stressCollapsedTriggered = false;
+        _stressHighTriggered = false;
+        _stressExtremeTriggered = false;
         _lifePowerLowTriggered = false;
         _socialityLowTriggered = false;
         _dependencyHighTriggered = false;
     }
 
-    public void ResetStressCriticalTrigger() => _stressCriticalTriggered = false;
-    public void ResetStressCollapsedTrigger() => _stressCollapsedTriggered = false;
+    public void ResetStressHighTrigger() => _stressHighTriggered = false;
+    public void ResetStressExtremeTrigger() => _stressExtremeTriggered = false;
     public void ResetLifePowerLowTrigger() => _lifePowerLowTriggered = false;
     public void ResetSocialityLowTrigger() => _socialityLowTriggered = false;
     public void ResetDependencyHighTrigger() => _dependencyHighTriggered = false;

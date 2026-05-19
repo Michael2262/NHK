@@ -10,13 +10,15 @@ public class SkillSystemManager
     private readonly ProtagonistSkillModel _pSkill;
     private readonly SkillConfig _config;
     private readonly ProgressFlagModel _pFlags;
+    private readonly TimeSystemModel _time;
 
-    public SkillSystemManager(ProtagonistStatusModel pStatus, ProtagonistSkillModel pSkill, SkillConfig config, ProgressFlagModel pFlags)
+    public SkillSystemManager(ProtagonistStatusModel pStatus, ProtagonistSkillModel pSkill, SkillConfig config, ProgressFlagModel pFlags, TimeSystemModel time)
     {
         _pStatus = pStatus;
         _pSkill = pSkill;
         _config = config;
         _pFlags = pFlags;
+        _time = time;
     }
 
     public SkillStatus GetSkillStatus(string skillID)
@@ -31,8 +33,8 @@ public class SkillSystemManager
             if (!_pSkill.IsSkillUnlocked(preRequisite.SkillID)) return SkillStatus.Locked;
         }
 
-        // 既有欄位 RequiredLevel 暫作「解鎖天數」使用。
-        if (_pStatus.Day >= skill.RequiredLevel && _pStatus.SkillPoints >= skill.Cost)
+        // 既有欄位 RequiredLevel 暫作「解鎖天數」使用。Day 由 TimeSystemModel 統一管理。
+        if (_time.DayIndex >= skill.RequiredLevel && _pStatus.SkillPoints >= skill.Cost)
             return SkillStatus.Learnable;
 
         return SkillStatus.Locked;

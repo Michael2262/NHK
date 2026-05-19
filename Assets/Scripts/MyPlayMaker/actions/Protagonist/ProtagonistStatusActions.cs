@@ -461,7 +461,7 @@ public class ProtagonistDayEnd : FsmStateAction
 }
 
 [ActionCategory("Protagonist Status")]
-[Tooltip("呼叫主角的 NextDay：結束當日 → 天數 +1 → 開啟新一日。")]
+[Tooltip("呼叫主角的 NextDay（OnDayEnd → OnDayStart）。Day 由 TimeSystemModel 管理。")]
 public class ProtagonistNextDay : FsmStateAction
 {
     [UIHint(UIHint.Variable)] public FsmInt storeDay;
@@ -472,108 +472,69 @@ public class ProtagonistNextDay : FsmStateAction
         if (p != null)
         {
             p.NextDay();
-            ProtagonistPlayMakerUtil.StoreInt(storeDay, p.Day);
+            // Day 由 TimeSystemModel.DayIndex 統一管理
+            var time = GameStatusService.Instance?.Time;
+            if (time != null)
+                ProtagonistPlayMakerUtil.StoreInt(storeDay, time.DayIndex);
         }
         Finish();
     }
 }
 
 // ==========================================================
-// 狀態查詢
+// 分級查詢（統一 StatusGrade enum）
 // ==========================================================
 [ActionCategory("Protagonist Status")]
-[Tooltip("查詢主角目前的壓力狀態 (Calm / Uneasy / Irritated / Strained / Critical / Collapsed)。")]
-public class GetProtagonistStressState : FsmStateAction
+[Tooltip("查詢主角指定數值的分級 (Low / Medium / High / Extreme)。")]
+public class GetProtagonistGrade : FsmStateAction
 {
-    [UIHint(UIHint.Variable)] public FsmString storeStateName;
-    [UIHint(UIHint.Variable)] public FsmInt storeStateIndex;
-    public override void Reset() { storeStateName = null; storeStateIndex = null; }
+    public enum GradeTarget
+    {
+        Stress,
+        LifePower,
+        Sociality,
+        Dependency
+    }
+
+    public GradeTarget target;
+    [UIHint(UIHint.Variable)] public FsmString storeGradeName;
+    [UIHint(UIHint.Variable)] public FsmInt storeGradeIndex;
+
+    public override void Reset() { target = GradeTarget.Stress; storeGradeName = null; storeGradeIndex = null; }
+
     public override void OnEnter()
     {
-        var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(GetProtagonistStressState));
+        var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(GetProtagonistGrade));
         if (p != null)
         {
-            var state = p.GetStressState();
-            ProtagonistPlayMakerUtil.StoreString(storeStateName, state.ToString());
-            ProtagonistPlayMakerUtil.StoreInt(storeStateIndex, (int)state);
+            StatusGrade grade = target switch
+            {
+                GradeTarget.Stress => p.GetStressGrade(),
+                GradeTarget.LifePower => p.GetLifeGrade(),
+                GradeTarget.Sociality => p.GetSocialityGrade(),
+                GradeTarget.Dependency => p.GetDependencyGrade(),
+                _ => StatusGrade.Low
+            };
+
+            ProtagonistPlayMakerUtil.StoreString(storeGradeName, grade.ToString());
+            ProtagonistPlayMakerUtil.StoreInt(storeGradeIndex, (int)grade);
         }
         Finish();
     }
 }
 
 [ActionCategory("Protagonist Status")]
-[Tooltip("查詢主角目前的生活力狀態 (VeryLow / Unstable / Stable / Healthy)。")]
-public class GetProtagonistLifeState : FsmStateAction
-{
-    [UIHint(UIHint.Variable)] public FsmString storeStateName;
-    [UIHint(UIHint.Variable)] public FsmInt storeStateIndex;
-    public override void Reset() { storeStateName = null; storeStateIndex = null; }
-    public override void OnEnter()
-    {
-        var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(GetProtagonistLifeState));
-        if (p != null)
-        {
-            var state = p.GetLifeState();
-            ProtagonistPlayMakerUtil.StoreString(storeStateName, state.ToString());
-            ProtagonistPlayMakerUtil.StoreInt(storeStateIndex, (int)state);
-        }
-        Finish();
-    }
-}
-
-[ActionCategory("Protagonist Status")]
-[Tooltip("查詢主角目前的社會性狀態 (Low / Medium / High)。")]
-public class GetProtagonistSocialityState : FsmStateAction
-{
-    [UIHint(UIHint.Variable)] public FsmString storeStateName;
-    [UIHint(UIHint.Variable)] public FsmInt storeStateIndex;
-    public override void Reset() { storeStateName = null; storeStateIndex = null; }
-    public override void OnEnter()
-    {
-        var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(GetProtagonistSocialityState));
-        if (p != null)
-        {
-            var state = p.GetSocialityState();
-            ProtagonistPlayMakerUtil.StoreString(storeStateName, state.ToString());
-            ProtagonistPlayMakerUtil.StoreInt(storeStateIndex, (int)state);
-        }
-        Finish();
-    }
-}
-
-[ActionCategory("Protagonist Status")]
-[Tooltip("查詢主角目前的依賴度狀態 (Low / Medium / High / Extreme)。")]
-public class GetProtagonistDependencyState : FsmStateAction
-{
-    [UIHint(UIHint.Variable)] public FsmString storeStateName;
-    [UIHint(UIHint.Variable)] public FsmInt storeStateIndex;
-    public override void Reset() { storeStateName = null; storeStateIndex = null; }
-    public override void OnEnter()
-    {
-        var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(GetProtagonistDependencyState));
-        if (p != null)
-        {
-            var state = p.GetDependencyState();
-            ProtagonistPlayMakerUtil.StoreString(storeStateName, state.ToString());
-            ProtagonistPlayMakerUtil.StoreInt(storeStateIndex, (int)state);
-        }
-        Finish();
-    }
-}
-
-[ActionCategory("Protagonist Status")]
-[Tooltip("檢查主角的某個 bool 狀態 (壓力 / 生活力 / 社會性 / 依賴度)。")]
+[Tooltip("檢查主角的某個 bool 狀態。")]
 public class CheckProtagonistStatus : FsmStateAction
 {
     public enum CheckType
     {
-        IsStressCritical,
-        IsStressCollapsed,
-        IsLifeVeryLow,
-        IsLifeStable,
-        IsLifeHealthy,
-        IsSocialityHigh,
+        IsStressHigh,
+        IsStressExtreme,
+        IsLifeLow,
+        IsLifeHigh,
         IsSocialityLow,
+        IsSocialityHigh,
         IsDependencyHigh,
         IsDependencyExtreme
     }
@@ -583,26 +544,25 @@ public class CheckProtagonistStatus : FsmStateAction
     public FsmEvent trueEvent;
     public FsmEvent falseEvent;
 
-    public override void Reset() { check = CheckType.IsStressCritical; storeResult = null; trueEvent = null; falseEvent = null; }
+    public override void Reset() { check = CheckType.IsStressHigh; storeResult = null; trueEvent = null; falseEvent = null; }
 
     public override void OnEnter()
     {
         var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(CheckProtagonistStatus));
         if (p == null) { Finish(); return; }
 
-        bool result = false;
-        switch (check)
+        bool result = check switch
         {
-            case CheckType.IsStressCritical: result = p.IsStressCritical(); break;
-            case CheckType.IsStressCollapsed: result = p.IsStressCollapsed(); break;
-            case CheckType.IsLifeVeryLow: result = p.IsLifeVeryLow(); break;
-            case CheckType.IsLifeStable: result = p.IsLifeStable(); break;
-            case CheckType.IsLifeHealthy: result = p.IsLifeHealthy(); break;
-            case CheckType.IsSocialityHigh: result = p.IsSocialityHigh(); break;
-            case CheckType.IsSocialityLow: result = p.IsSocialityLow(); break;
-            case CheckType.IsDependencyHigh: result = p.IsDependencyHigh(); break;
-            case CheckType.IsDependencyExtreme: result = p.IsDependencyExtreme(); break;
-        }
+            CheckType.IsStressHigh => p.IsStressHigh(),
+            CheckType.IsStressExtreme => p.IsStressExtreme(),
+            CheckType.IsLifeLow => p.IsLifeLow(),
+            CheckType.IsLifeHigh => p.IsLifeHigh(),
+            CheckType.IsSocialityLow => p.IsSocialityLow(),
+            CheckType.IsSocialityHigh => p.IsSocialityHigh(),
+            CheckType.IsDependencyHigh => p.IsDependencyHigh(),
+            CheckType.IsDependencyExtreme => p.IsDependencyExtreme(),
+            _ => false
+        };
 
         ProtagonistPlayMakerUtil.StoreBool(storeResult, result);
         Fsm.Event(result ? trueEvent : falseEvent);

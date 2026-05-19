@@ -31,7 +31,7 @@ public class PlayMakerGameBridge : MonoBehaviour
     public int PlayerDependency => Protagonist?.Dependency ?? 0;
     public int PlayerMoney => Protagonist?.Money ?? 0;
     public int PlayerSkillPoints => Protagonist?.SkillPoints ?? 0;
-    public int CurrentDay => Protagonist?.Day ?? 1;
+    public int CurrentDay => Time?.DayIndex ?? 1;
     public int CurrentPhase => Time?.CurrentPhaseIndex ?? 0;
 
     // Legacy property aliases. Prefer NHK properties above.

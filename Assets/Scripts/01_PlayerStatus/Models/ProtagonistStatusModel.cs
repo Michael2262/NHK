@@ -1,48 +1,15 @@
 using System;
 
 /// <summary>
-/// 壓力狀態。用於 UI 顯示與事件條件判斷。
+/// 統一的主角數值分級。四項核心數值共用同一個 enum，
+/// 各自的門檻可獨立調整，但預設一致。
 /// </summary>
-public enum ProtagonistStressState
+public enum StatusGrade
 {
-    Calm,       // 0～20：平穩
-    Uneasy,     // 21～40：不安
-    Irritated,  // 41～60：焦躁
-    Strained,   // 61～79：快撐不住
-    Critical,   // 80～99：危險
-    Collapsed   // 100：崩潰
-}
-
-/// <summary>
-/// 生活力狀態。用於 UI 顯示與事件條件判斷。
-/// </summary>
-public enum ProtagonistLifeState
-{
-    VeryLow,   // 0～25：極差
-    Unstable,  // 26～49：不穩
-    Stable,    // 50～69：穩定
-    Healthy    // 70～100：健康
-}
-
-/// <summary>
-/// 社會性狀態。用於 UI 顯示與事件條件判斷。越高越好。
-/// </summary>
-public enum ProtagonistSocialityState
-{
-    Low,     // 0～30：幾乎無法面對外界
-    Medium,  // 31～59：勉強能應對
-    High     // 60～100：能正常社交
-}
-
-/// <summary>
-/// 依賴度狀態。用於 UI 顯示與事件條件判斷。
-/// </summary>
-public enum ProtagonistDependencyState
-{
-    Low,      // 0～39
-    Medium,   // 40～59
-    High,     // 60～79
-    Extreme   // 80～100
+    Low,      // 預設 0～49
+    Medium,   // 預設 50～79
+    High,     // 預設 80～99
+    Extreme   // 預設 100
 }
 
 /// <summary>
@@ -65,14 +32,12 @@ public struct ProtagonistStatusChange
 }
 
 /// <summary>
-/// 職責：負責儲存與管理「主角自身」的核心數值與行為統計。
-/// NHK 版：保留舊類名，但核心改為壓力、生活力、社會性、依賴度。
-/// Money / SkillPoints 依需求保留。
+/// 職責：負責儲存與管理「主角自身」的核心數值。
+/// Day 由 TimeSystemModel.DayIndex 統一管理，本 Model 不再持有。
 /// </summary>
 public class ProtagonistStatusModel
 {
     // ───── 初始值 ─────
-    public const int INITIAL_DAY = 1;
     public const int INITIAL_STRESS = 40;
     public const int INITIAL_LIFE_POWER = 5;
     public const int INITIAL_SOCIALITY = 5;
@@ -80,31 +45,34 @@ public class ProtagonistStatusModel
     public const int INITIAL_MONEY = 0;
     public const int INITIAL_SKILL_POINTS = 0;
 
-    // ───── 門檻 ─────
+    // ───── 數值範圍 ─────
     public const int MIN_STATUS_VALUE = 0;
     public const int MAX_STATUS_VALUE = 100;
 
-    public const int STRESS_UNEASY_THRESHOLD = 21;
-    public const int STRESS_IRRITATED_THRESHOLD = 41;
-    public const int STRESS_STRAINED_THRESHOLD = 61;
-    public const int STRESS_CRITICAL_THRESHOLD = 80;
-    public const int STRESS_COLLAPSE_THRESHOLD = 100;
+    // ───── 分級門檻（各數值可獨立調整，預設一致） ─────
+    // Stress
+    public const int STRESS_MEDIUM_THRESHOLD = 50;
+    public const int STRESS_HIGH_THRESHOLD = 80;
+    public const int STRESS_EXTREME_THRESHOLD = 100;
 
-    public const int LIFE_VERY_LOW_MAX = 25;
-    public const int LIFE_STABLE_THRESHOLD = 50;
-    public const int LIFE_HEALTHY_THRESHOLD = 70;
+    // LifePower
+    public const int LIFE_MEDIUM_THRESHOLD = 50;
+    public const int LIFE_HIGH_THRESHOLD = 80;
+    public const int LIFE_EXTREME_THRESHOLD = 100;
 
-    public const int SOCIALITY_MEDIUM_THRESHOLD = 31;   // 31 以上為 Medium
-    public const int SOCIALITY_HIGH_THRESHOLD = 60;     // 60 以上為 High
+    // Sociality
+    public const int SOCIALITY_MEDIUM_THRESHOLD = 50;
+    public const int SOCIALITY_HIGH_THRESHOLD = 80;
+    public const int SOCIALITY_EXTREME_THRESHOLD = 100;
 
-    public const int DEPENDENCY_MEDIUM_THRESHOLD = 40;
-    public const int DEPENDENCY_HIGH_THRESHOLD = 60;
-    public const int DEPENDENCY_EXTREME_THRESHOLD = 80;
+    // Dependency
+    public const int DEPENDENCY_MEDIUM_THRESHOLD = 50;
+    public const int DEPENDENCY_HIGH_THRESHOLD = 80;
+    public const int DEPENDENCY_EXTREME_THRESHOLD = 100;
 
     // ───── 核心狀態 ─────
-    public int Day { get; private set; } = INITIAL_DAY;
 
-    /// <summary>壓力：0～100。越高越危險，100 可觸發崩潰事件。</summary>
+    /// <summary>壓力：0～100。越高越危險。</summary>
     public int Stress { get; private set; } = INITIAL_STRESS;
 
     /// <summary>生活力：0～100。越高代表越能維持正常生活。</summary>
@@ -123,7 +91,6 @@ public class ProtagonistStatusModel
     public int SkillPoints { get; private set; } = INITIAL_SKILL_POINTS;
 
     // ───── 事件通知 ─────
-    public event Action<int> OnDayChanged;
     public event Action<int> OnStressChanged;       // delta
     public event Action<int> OnLifePowerChanged;    // delta
     public event Action<int> OnSocialityChanged;    // delta
@@ -131,15 +98,14 @@ public class ProtagonistStatusModel
     public event Action<int> OnMoneyChanged;        // delta
     public event Action<int> OnSkillPointsChanged;  // delta
 
-    public event Action<ProtagonistStressState, ProtagonistStressState> OnStressStateChanged;
-    public event Action<ProtagonistLifeState, ProtagonistLifeState> OnLifeStateChanged;
-    public event Action<ProtagonistSocialityState, ProtagonistSocialityState> OnSocialityStateChanged;
-    public event Action<ProtagonistDependencyState, ProtagonistDependencyState> OnDependencyStateChanged;
+    public event Action<StatusGrade, StatusGrade> OnStressGradeChanged;
+    public event Action<StatusGrade, StatusGrade> OnLifeGradeChanged;
+    public event Action<StatusGrade, StatusGrade> OnSocialityGradeChanged;
+    public event Action<StatusGrade, StatusGrade> OnDependencyGradeChanged;
 
     // ───── 初始化 / 存讀檔 ─────
     public void NewGame()
     {
-        Day = INITIAL_DAY;
         Stress = INITIAL_STRESS;
         LifePower = INITIAL_LIFE_POWER;
         Sociality = INITIAL_SOCIALITY;
@@ -154,7 +120,6 @@ public class ProtagonistStatusModel
     {
         return new ProtagonistSaveData
         {
-            Day = Day,
             Stress = Stress,
             LifePower = LifePower,
             Sociality = Sociality,
@@ -172,7 +137,6 @@ public class ProtagonistStatusModel
             return;
         }
 
-        Day = Math.Max(INITIAL_DAY, data.Day);
         Stress = ClampStatus(data.Stress);
         LifePower = ClampStatus(data.LifePower);
         Sociality = ClampStatus(data.Sociality);
@@ -185,7 +149,6 @@ public class ProtagonistStatusModel
 
     private void NotifyAllCoreValues()
     {
-        OnDayChanged?.Invoke(Day);
         OnStressChanged?.Invoke(0);
         OnLifePowerChanged?.Invoke(0);
         OnSocialityChanged?.Invoke(0);
@@ -206,8 +169,7 @@ public class ProtagonistStatusModel
     public void NextDay()
     {
         OnDayEnd();
-        Day++;
-        OnDayChanged?.Invoke(Day);
+        // Day 由 TimeSystemModel.DayIndex 管理，這裡不再遞增。
         OnDayStart();
     }
 
@@ -225,16 +187,16 @@ public class ProtagonistStatusModel
         if (delta == 0) return;
 
         int prevValue = Stress;
-        ProtagonistStressState prevState = GetStressState();
+        StatusGrade prevGrade = GetStressGrade();
         Stress = ClampStatus(Stress + delta);
 
         if (Stress == prevValue) return;
 
         OnStressChanged?.Invoke(Stress - prevValue);
 
-        ProtagonistStressState newState = GetStressState();
-        if (newState != prevState)
-            OnStressStateChanged?.Invoke(prevState, newState);
+        StatusGrade newGrade = GetStressGrade();
+        if (newGrade != prevGrade)
+            OnStressGradeChanged?.Invoke(prevGrade, newGrade);
     }
 
     public void ReduceStress(int delta)
@@ -253,16 +215,16 @@ public class ProtagonistStatusModel
         if (delta == 0) return;
 
         int prevValue = LifePower;
-        ProtagonistLifeState prevState = GetLifeState();
+        StatusGrade prevGrade = GetLifeGrade();
         LifePower = ClampStatus(LifePower + delta);
 
         if (LifePower == prevValue) return;
 
         OnLifePowerChanged?.Invoke(LifePower - prevValue);
 
-        ProtagonistLifeState newState = GetLifeState();
-        if (newState != prevState)
-            OnLifeStateChanged?.Invoke(prevState, newState);
+        StatusGrade newGrade = GetLifeGrade();
+        if (newGrade != prevGrade)
+            OnLifeGradeChanged?.Invoke(prevGrade, newGrade);
     }
 
     public void ReduceLifePower(int delta)
@@ -281,16 +243,16 @@ public class ProtagonistStatusModel
         if (delta == 0) return;
 
         int prevValue = Sociality;
-        ProtagonistSocialityState prevState = GetSocialityState();
+        StatusGrade prevGrade = GetSocialityGrade();
         Sociality = ClampStatus(Sociality + delta);
 
         if (Sociality == prevValue) return;
 
         OnSocialityChanged?.Invoke(Sociality - prevValue);
 
-        ProtagonistSocialityState newState = GetSocialityState();
-        if (newState != prevState)
-            OnSocialityStateChanged?.Invoke(prevState, newState);
+        StatusGrade newGrade = GetSocialityGrade();
+        if (newGrade != prevGrade)
+            OnSocialityGradeChanged?.Invoke(prevGrade, newGrade);
     }
 
     public void ReduceSociality(int delta)
@@ -309,16 +271,16 @@ public class ProtagonistStatusModel
         if (delta == 0) return;
 
         int prevValue = Dependency;
-        ProtagonistDependencyState prevState = GetDependencyState();
+        StatusGrade prevGrade = GetDependencyGrade();
         Dependency = ClampStatus(Dependency + delta);
 
         if (Dependency == prevValue) return;
 
         OnDependencyChanged?.Invoke(Dependency - prevValue);
 
-        ProtagonistDependencyState newState = GetDependencyState();
-        if (newState != prevState)
-            OnDependencyStateChanged?.Invoke(prevState, newState);
+        StatusGrade newGrade = GetDependencyGrade();
+        if (newGrade != prevGrade)
+            OnDependencyGradeChanged?.Invoke(prevGrade, newGrade);
     }
 
     public void ReduceDependency(int delta)
@@ -332,7 +294,7 @@ public class ProtagonistStatusModel
         AddDependency(ClampStatus(value) - Dependency);
     }
 
-    // ───── Money / SkillPoints：依需求保留 ─────
+    // ───── Money / SkillPoints ─────
     public bool CanReduceMoney(int cost)
     {
         if (cost < 0) return false;
@@ -397,47 +359,49 @@ public class ProtagonistStatusModel
         if (SkillPoints != prev) OnSkillPointsChanged?.Invoke(SkillPoints - prev);
     }
 
-    // ───── 狀態查詢 ─────
-    public ProtagonistStressState GetStressState()
+    // ───── 分級查詢 ─────
+    public StatusGrade GetStressGrade()
     {
-        if (Stress >= STRESS_COLLAPSE_THRESHOLD) return ProtagonistStressState.Collapsed;
-        if (Stress >= STRESS_CRITICAL_THRESHOLD) return ProtagonistStressState.Critical;
-        if (Stress >= STRESS_STRAINED_THRESHOLD) return ProtagonistStressState.Strained;
-        if (Stress >= STRESS_IRRITATED_THRESHOLD) return ProtagonistStressState.Irritated;
-        if (Stress >= STRESS_UNEASY_THRESHOLD) return ProtagonistStressState.Uneasy;
-        return ProtagonistStressState.Calm;
+        if (Stress >= STRESS_EXTREME_THRESHOLD) return StatusGrade.Extreme;
+        if (Stress >= STRESS_HIGH_THRESHOLD) return StatusGrade.High;
+        if (Stress >= STRESS_MEDIUM_THRESHOLD) return StatusGrade.Medium;
+        return StatusGrade.Low;
     }
 
-    public ProtagonistLifeState GetLifeState()
+    public StatusGrade GetLifeGrade()
     {
-        if (LifePower <= LIFE_VERY_LOW_MAX) return ProtagonistLifeState.VeryLow;
-        if (LifePower >= LIFE_HEALTHY_THRESHOLD) return ProtagonistLifeState.Healthy;
-        if (LifePower >= LIFE_STABLE_THRESHOLD) return ProtagonistLifeState.Stable;
-        return ProtagonistLifeState.Unstable;
+        if (LifePower >= LIFE_EXTREME_THRESHOLD) return StatusGrade.Extreme;
+        if (LifePower >= LIFE_HIGH_THRESHOLD) return StatusGrade.High;
+        if (LifePower >= LIFE_MEDIUM_THRESHOLD) return StatusGrade.Medium;
+        return StatusGrade.Low;
     }
 
-    public ProtagonistSocialityState GetSocialityState()
+    public StatusGrade GetSocialityGrade()
     {
-        if (Sociality >= SOCIALITY_HIGH_THRESHOLD) return ProtagonistSocialityState.High;
-        if (Sociality >= SOCIALITY_MEDIUM_THRESHOLD) return ProtagonistSocialityState.Medium;
-        return ProtagonistSocialityState.Low;
+        if (Sociality >= SOCIALITY_EXTREME_THRESHOLD) return StatusGrade.Extreme;
+        if (Sociality >= SOCIALITY_HIGH_THRESHOLD) return StatusGrade.High;
+        if (Sociality >= SOCIALITY_MEDIUM_THRESHOLD) return StatusGrade.Medium;
+        return StatusGrade.Low;
     }
 
-    public ProtagonistDependencyState GetDependencyState()
+    public StatusGrade GetDependencyGrade()
     {
-        if (Dependency >= DEPENDENCY_EXTREME_THRESHOLD) return ProtagonistDependencyState.Extreme;
-        if (Dependency >= DEPENDENCY_HIGH_THRESHOLD) return ProtagonistDependencyState.High;
-        if (Dependency >= DEPENDENCY_MEDIUM_THRESHOLD) return ProtagonistDependencyState.Medium;
-        return ProtagonistDependencyState.Low;
+        if (Dependency >= DEPENDENCY_EXTREME_THRESHOLD) return StatusGrade.Extreme;
+        if (Dependency >= DEPENDENCY_HIGH_THRESHOLD) return StatusGrade.High;
+        if (Dependency >= DEPENDENCY_MEDIUM_THRESHOLD) return StatusGrade.Medium;
+        return StatusGrade.Low;
     }
 
-    public bool IsStressCritical() => Stress >= STRESS_CRITICAL_THRESHOLD;
-    public bool IsStressCollapsed() => Stress >= STRESS_COLLAPSE_THRESHOLD;
-    public bool IsLifeVeryLow() => LifePower <= LIFE_VERY_LOW_MAX;
-    public bool IsLifeStable() => LifePower >= LIFE_STABLE_THRESHOLD;
-    public bool IsLifeHealthy() => LifePower >= LIFE_HEALTHY_THRESHOLD;
-    public bool IsSocialityHigh() => Sociality >= SOCIALITY_HIGH_THRESHOLD;
+    // ───── Bool 快捷查詢 ─────
+    public bool IsStressHigh() => Stress >= STRESS_HIGH_THRESHOLD;
+    public bool IsStressExtreme() => Stress >= STRESS_EXTREME_THRESHOLD;
+
+    public bool IsLifeLow() => LifePower < LIFE_MEDIUM_THRESHOLD;
+    public bool IsLifeHigh() => LifePower >= LIFE_HIGH_THRESHOLD;
+
     public bool IsSocialityLow() => Sociality < SOCIALITY_MEDIUM_THRESHOLD;
+    public bool IsSocialityHigh() => Sociality >= SOCIALITY_HIGH_THRESHOLD;
+
     public bool IsDependencyHigh() => Dependency >= DEPENDENCY_HIGH_THRESHOLD;
     public bool IsDependencyExtreme() => Dependency >= DEPENDENCY_EXTREME_THRESHOLD;
 

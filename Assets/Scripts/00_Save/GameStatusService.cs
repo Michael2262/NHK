@@ -28,7 +28,7 @@ public class GameStatusService : MonoBehaviour
     [SerializeField] private LocationDatabase locationDatabase; //  ScenarioManager 需要的地點資料庫
     [SerializeField] private DailyScheduleConfig dailyScheduleConfig; //
     [SerializeField] private DayTriggerConfig dayTriggerConfig; //
-    
+
 
 
     [Header("存檔通知（已改為事件驅動，此欄位不再使用）")]
@@ -160,11 +160,11 @@ public class GameStatusService : MonoBehaviour
         // TimeSystemManager: 注入 Time Model 和 Time Config
         TimeManager = new TimeSystemManager(Time, timeConfig);
         // SkillSystemManager: 注入 Protagonist Model, Skill Model 和 Skill Config
-        SkillManager = new SkillSystemManager(Protagonist, Skills, skillConfig, ProgressFlags);
+        SkillManager = new SkillSystemManager(Protagonist, Skills, skillConfig, ProgressFlags, Time);
         // 實例化 ItemUseService
         ItemUseService = new ItemUseService(itemDatabase, this);
         // 實例化 ShopService，將所有它需要的依賴項從上面已經創建好的實例中傳入
-        ShopService = new ShopService(Protagonist, Inventory, ShopStatus, PendingDelivery,itemDatabase, () => Protagonist.Day);
+        ShopService = new ShopService(Protagonist, Inventory, ShopStatus, PendingDelivery, itemDatabase, () => Time.DayIndex);
         // 啟動觸發系統
         TriggerManager = new HeroineStatTriggerManager(ProgressFlags, Heroines, heroineTriggerContainers);
 
@@ -243,7 +243,7 @@ public class GameStatusService : MonoBehaviour
             // ── 網購到貨檢查：P0 S1 ──
             if (Time.CurrentPhaseIndex == 0 && Time.CurrentSlotInPhase == 1)
             {
-                PendingDelivery.ProcessDeliveries(Protagonist.Day, Inventory);
+                PendingDelivery.ProcessDeliveries(Time.DayIndex, Inventory);
             }
         };
 
@@ -441,7 +441,7 @@ public class GameStatusService : MonoBehaviour
     // 在 GameStatusService.cs 內
     private void HandleDayPassed()
     {
-        Debug.Log($"GameStatusService: Starting NextDay Reset for Day {Protagonist.Day + 1}.");
+        Debug.Log($"GameStatusService: Starting NextDay Reset for Day {Time.DayIndex}.");
 
         // 1. 清除所有每日標記 (UntilNextDay)
         ProgressFlags.ClearDayFlags();
@@ -538,7 +538,7 @@ public class GameStatusService : MonoBehaviour
         }
     }
 
-    
+
     // ==========================================================
     // HeroineUnlockManager
     // ==========================================================

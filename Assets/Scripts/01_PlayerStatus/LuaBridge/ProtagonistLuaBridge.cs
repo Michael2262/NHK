@@ -4,10 +4,10 @@ using PixelCrushers.DialogueSystem;
 /// <summary>
 /// NHK 版：將 ProtagonistStatusModel 的數值橋接到 Pixel Crushers Dialogue System 的 Lua 環境。
 /// 可於 Dialogue Conditions / Script 使用：
-///   GetStress() <= 70;
-///   GetLifePower() >= 50;
-///   GetSociality() >= 40;
-///   GetDependency() >= 40;
+///   GetStress() &lt;= 70;
+///   GetLifePower() &gt;= 50;
+///   GetStressGrade() == "High";
+///   IsStressHigh();
 /// </summary>
 public class ProtagonistLuaBridge : MonoBehaviour
 {
@@ -26,6 +26,7 @@ public class ProtagonistLuaBridge : MonoBehaviour
 
     void OnEnable()
     {
+        // ── 數值直讀 ──
         Lua.RegisterFunction("GetStress", this, SymbolExtensions.GetMethodInfo(() => GetStress()));
         Lua.RegisterFunction("GetLifePower", this, SymbolExtensions.GetMethodInfo(() => GetLifePower()));
         Lua.RegisterFunction("GetSociality", this, SymbolExtensions.GetMethodInfo(() => GetSociality()));
@@ -34,17 +35,30 @@ public class ProtagonistLuaBridge : MonoBehaviour
         Lua.RegisterFunction("GetSkillPoints", this, SymbolExtensions.GetMethodInfo(() => GetSkillPoints()));
         Lua.RegisterFunction("GetDay", this, SymbolExtensions.GetMethodInfo(() => GetDay()));
 
-        Lua.RegisterFunction("IsStressCritical", this, SymbolExtensions.GetMethodInfo(() => IsStressCritical()));
-        Lua.RegisterFunction("IsStressCollapsed", this, SymbolExtensions.GetMethodInfo(() => IsStressCollapsed()));
-        Lua.RegisterFunction("IsLifeHealthy", this, SymbolExtensions.GetMethodInfo(() => IsLifeHealthy()));
-        Lua.RegisterFunction("IsSocialityHigh", this, SymbolExtensions.GetMethodInfo(() => IsSocialityHigh()));
-        Lua.RegisterFunction("IsSocialityLow", this, SymbolExtensions.GetMethodInfo(() => IsSocialityLow()));
-        Lua.RegisterFunction("IsDependencyHigh", this, SymbolExtensions.GetMethodInfo(() => IsDependencyHigh()));
+        // ── 分級查詢（回傳 "Low" / "Medium" / "High" / "Extreme"） ──
+        Lua.RegisterFunction("GetStressGrade", this, SymbolExtensions.GetMethodInfo(() => GetStressGrade()));
+        Lua.RegisterFunction("GetLifeGrade", this, SymbolExtensions.GetMethodInfo(() => GetLifeGrade()));
+        Lua.RegisterFunction("GetSocialityGrade", this, SymbolExtensions.GetMethodInfo(() => GetSocialityGrade()));
+        Lua.RegisterFunction("GetDependencyGrade", this, SymbolExtensions.GetMethodInfo(() => GetDependencyGrade()));
 
-        // Legacy aliases: keep old dialogue conditions from breaking. Prefer new names above.
+        // ── Bool 快捷 ──
+        Lua.RegisterFunction("IsStressHigh", this, SymbolExtensions.GetMethodInfo(() => IsStressHigh()));
+        Lua.RegisterFunction("IsStressExtreme", this, SymbolExtensions.GetMethodInfo(() => IsStressExtreme()));
+        Lua.RegisterFunction("IsLifeLow", this, SymbolExtensions.GetMethodInfo(() => IsLifeLow()));
+        Lua.RegisterFunction("IsLifeHigh", this, SymbolExtensions.GetMethodInfo(() => IsLifeHigh()));
+        Lua.RegisterFunction("IsSocialityLow", this, SymbolExtensions.GetMethodInfo(() => IsSocialityLow()));
+        Lua.RegisterFunction("IsSocialityHigh", this, SymbolExtensions.GetMethodInfo(() => IsSocialityHigh()));
+        Lua.RegisterFunction("IsDependencyHigh", this, SymbolExtensions.GetMethodInfo(() => IsDependencyHigh()));
+        Lua.RegisterFunction("IsDependencyExtreme", this, SymbolExtensions.GetMethodInfo(() => IsDependencyExtreme()));
+
+        // ── Legacy aliases ──
         Lua.RegisterFunction("GetStamina", this, SymbolExtensions.GetMethodInfo(() => GetLifePower()));
         Lua.RegisterFunction("GetSocialFear", this, SymbolExtensions.GetMethodInfo(() => GetSocialFearCompat()));
         Lua.RegisterFunction("IsSocialFearHigh", this, SymbolExtensions.GetMethodInfo(() => IsSocialFearHighCompat()));
+        // 舊名相容
+        Lua.RegisterFunction("IsStressCritical", this, SymbolExtensions.GetMethodInfo(() => IsStressHigh()));
+        Lua.RegisterFunction("IsStressCollapsed", this, SymbolExtensions.GetMethodInfo(() => IsStressExtreme()));
+        Lua.RegisterFunction("IsLifeHealthy", this, SymbolExtensions.GetMethodInfo(() => IsLifeHigh()));
     }
 
     void OnDisable()
@@ -56,17 +70,30 @@ public class ProtagonistLuaBridge : MonoBehaviour
         Lua.UnregisterFunction("GetMoney");
         Lua.UnregisterFunction("GetSkillPoints");
         Lua.UnregisterFunction("GetDay");
-        Lua.UnregisterFunction("IsStressCritical");
-        Lua.UnregisterFunction("IsStressCollapsed");
-        Lua.UnregisterFunction("IsLifeHealthy");
-        Lua.UnregisterFunction("IsSocialityHigh");
+
+        Lua.UnregisterFunction("GetStressGrade");
+        Lua.UnregisterFunction("GetLifeGrade");
+        Lua.UnregisterFunction("GetSocialityGrade");
+        Lua.UnregisterFunction("GetDependencyGrade");
+
+        Lua.UnregisterFunction("IsStressHigh");
+        Lua.UnregisterFunction("IsStressExtreme");
+        Lua.UnregisterFunction("IsLifeLow");
+        Lua.UnregisterFunction("IsLifeHigh");
         Lua.UnregisterFunction("IsSocialityLow");
+        Lua.UnregisterFunction("IsSocialityHigh");
         Lua.UnregisterFunction("IsDependencyHigh");
+        Lua.UnregisterFunction("IsDependencyExtreme");
+
         Lua.UnregisterFunction("GetStamina");
         Lua.UnregisterFunction("GetSocialFear");
         Lua.UnregisterFunction("IsSocialFearHigh");
+        Lua.UnregisterFunction("IsStressCritical");
+        Lua.UnregisterFunction("IsStressCollapsed");
+        Lua.UnregisterFunction("IsLifeHealthy");
     }
 
+    // ───── 內部取得 Model ─────
     private static ProtagonistStatusModel GetModel()
     {
         var svc = GameStatusService.Instance;
@@ -83,24 +110,32 @@ public class ProtagonistLuaBridge : MonoBehaviour
         return svc.Protagonist;
     }
 
+    // ───── 數值直讀 ─────
     public double GetStress() => GetModel()?.Stress ?? 0;
     public double GetLifePower() => GetModel()?.LifePower ?? 0;
     public double GetSociality() => GetModel()?.Sociality ?? 0;
     public double GetDependency() => GetModel()?.Dependency ?? 0;
     public double GetMoney() => GetModel()?.Money ?? 0;
     public double GetSkillPoints() => GetModel()?.SkillPoints ?? 0;
-    public double GetDay() => GetModel()?.Day ?? 1;
+    public double GetDay() => GameStatusService.Instance?.Time?.DayIndex ?? 1;
 
-    public bool IsStressCritical() => GetModel()?.IsStressCritical() ?? false;
-    public bool IsStressCollapsed() => GetModel()?.IsStressCollapsed() ?? false;
-    public bool IsLifeHealthy() => GetModel()?.IsLifeHealthy() ?? false;
-    public bool IsSocialityHigh() => GetModel()?.IsSocialityHigh() ?? false;
+    // ───── 分級查詢 ─────
+    public string GetStressGrade() => GetModel()?.GetStressGrade().ToString() ?? "Low";
+    public string GetLifeGrade() => GetModel()?.GetLifeGrade().ToString() ?? "Low";
+    public string GetSocialityGrade() => GetModel()?.GetSocialityGrade().ToString() ?? "Low";
+    public string GetDependencyGrade() => GetModel()?.GetDependencyGrade().ToString() ?? "Low";
+
+    // ───── Bool 快捷 ─────
+    public bool IsStressHigh() => GetModel()?.IsStressHigh() ?? false;
+    public bool IsStressExtreme() => GetModel()?.IsStressExtreme() ?? false;
+    public bool IsLifeLow() => GetModel()?.IsLifeLow() ?? false;
+    public bool IsLifeHigh() => GetModel()?.IsLifeHigh() ?? false;
     public bool IsSocialityLow() => GetModel()?.IsSocialityLow() ?? false;
+    public bool IsSocialityHigh() => GetModel()?.IsSocialityHigh() ?? false;
     public bool IsDependencyHigh() => GetModel()?.IsDependencyHigh() ?? false;
+    public bool IsDependencyExtreme() => GetModel()?.IsDependencyExtreme() ?? false;
 
-    // ───── Legacy 相容：舊對話條件若仍使用 GetSocialFear / IsSocialFearHigh，回傳反轉值 ─────
-    /// <summary>相容用：回傳 100 - Sociality，模擬舊版社會恐懼值（越高越恐懼）。</summary>
+    // ───── Legacy 相容 ─────
     public double GetSocialFearCompat() => 100 - (GetModel()?.Sociality ?? 0);
-    /// <summary>相容用：Sociality 低 = 舊版 SocialFear 高。</summary>
     public bool IsSocialFearHighCompat() => GetModel()?.IsSocialityLow() ?? false;
 }
