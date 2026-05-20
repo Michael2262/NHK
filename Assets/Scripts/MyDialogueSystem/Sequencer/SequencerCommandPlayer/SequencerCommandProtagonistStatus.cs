@@ -21,6 +21,7 @@
 //   LifePower:   AddLifePower / ReduceLifePower / SetLifePower
 //   Sociality:  AddSociality / ReduceSociality / SetSociality
 //   Dependency:  AddDependency / ReduceDependency / SetDependency
+//   ShootTimes:  AddShootTimes / ReduceShootTimes
 // ============================================================
 
 using UnityEngine;
@@ -397,6 +398,47 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
             int prev = p.Dependency;
             p.SetDependency(parameter);
             return p.Dependency - prev;
+        }
+    }
+
+    // ========================================================
+    // ShootTimes（射精次數）
+    // ========================================================
+
+    /// <summary>
+    /// 用法: AddShootTimes(amount) / AddShootTimes(amount, alert)
+    /// 無上限，可以一直加。
+    /// </summary>
+    public class SequencerCommandAddShootTimes : SequencerCommandProtagonistResourceBase
+    {
+        protected override string ResourceTypeKey => "ShootTimes";
+        protected override string CommandName => "AddShootTimes";
+        protected override int GetCurrentValue(ProtagonistStatusModel p) => p.CheckShootTimes();
+
+        protected override int ApplyChange(ProtagonistStatusModel p, int parameter)
+        {
+            int prev = p.CheckShootTimes();
+            p.AddShootTimes(parameter);
+            return p.CheckShootTimes() - prev;
+        }
+    }
+
+    /// <summary>
+    /// 用法: ReduceShootTimes(amount) / ReduceShootTimes(amount, alert)
+    /// 呼叫 TryReduceShootTimes，若失敗（已達下限）則 delta 為 0。
+    /// </summary>
+    public class SequencerCommandReduceShootTimes : SequencerCommandProtagonistResourceBase
+    {
+        protected override string ResourceTypeKey => "ShootTimes";
+        protected override string CommandName => "ReduceShootTimes";
+        protected override int GetCurrentValue(ProtagonistStatusModel p) => p.CheckShootTimes();
+
+        protected override int ApplyChange(ProtagonistStatusModel p, int parameter)
+        {
+            int amount = Math.Max(0, parameter);
+            int prev = p.CheckShootTimes();
+            p.TryReduceShootTimes(amount);
+            return p.CheckShootTimes() - prev;
         }
     }
 }

@@ -45,6 +45,11 @@ public class ProtagonistStatusModel
     public const int INITIAL_MONEY = 0;
     public const int INITIAL_SKILL_POINTS = 0;
 
+    // ───── ShootTimes ─────
+    public const int SHOOT_TIMES_MAX = 3;
+    public const int SHOOT_TIMES_MIN = -5;
+    public const int INITIAL_SHOOT_TIMES = SHOOT_TIMES_MAX;
+
     // ───── 數值範圍 ─────
     public const int MIN_STATUS_VALUE = 0;
     public const int MAX_STATUS_VALUE = 100;
@@ -90,6 +95,12 @@ public class ProtagonistStatusModel
     /// <summary>保留資源：技能點。</summary>
     public int SkillPoints { get; private set; } = INITIAL_SKILL_POINTS;
 
+    /// <summary>射精次數。每日重製回 Max。可加超過 Max，但不可扣低於 Min。<= 0 時為耗盡狀態。</summary>
+    public int ShootTimes { get; private set; } = INITIAL_SHOOT_TIMES;
+
+    /// <summary>射精耗盡狀態：ShootTimes <= 0 即為 true。</summary>
+    public bool IsOverShoot => ShootTimes <= 0;
+
     // ───── 事件通知 ─────
     public event Action<int> OnStressChanged;       // delta
     public event Action<int> OnLifePowerChanged;    // delta
@@ -97,6 +108,7 @@ public class ProtagonistStatusModel
     public event Action<int> OnDependencyChanged;   // delta
     public event Action<int> OnMoneyChanged;        // delta
     public event Action<int> OnSkillPointsChanged;  // delta
+    public event Action<int> OnShootTimesChanged;   // delta
 
     public event Action<StatusGrade, StatusGrade> OnStressGradeChanged;
     public event Action<StatusGrade, StatusGrade> OnLifeGradeChanged;
@@ -112,6 +124,7 @@ public class ProtagonistStatusModel
         Dependency = INITIAL_DEPENDENCY;
         Money = INITIAL_MONEY;
         SkillPoints = INITIAL_SKILL_POINTS;
+        ShootTimes = INITIAL_SHOOT_TIMES;
 
         NotifyAllCoreValues();
     }
@@ -125,7 +138,8 @@ public class ProtagonistStatusModel
             Sociality = Sociality,
             Dependency = Dependency,
             Money = Money,
-            SkillPoints = SkillPoints
+            SkillPoints = SkillPoints,
+            ShootTimes = ShootTimes
         };
     }
 
@@ -143,6 +157,7 @@ public class ProtagonistStatusModel
         Dependency = ClampStatus(data.Dependency);
         Money = Math.Max(0, data.Money);
         SkillPoints = Math.Max(0, data.SkillPoints);
+        ShootTimes = Math.Max(SHOOT_TIMES_MIN, Math.Min(data.ShootTimes, int.MaxValue));
 
         NotifyAllCoreValues();
     }
@@ -155,11 +170,13 @@ public class ProtagonistStatusModel
         OnDependencyChanged?.Invoke(0);
         OnMoneyChanged?.Invoke(0);
         OnSkillPointsChanged?.Invoke(0);
+        OnShootTimesChanged?.Invoke(0);
     }
 
-    // ───── 每日流程（預留，未來可加邏輯） ─────
+    // ───── 每日流程 ─────
     public void OnDayStart()
     {
+        ResetShootTimes();
     }
 
     public void OnDayEnd()
@@ -357,6 +374,46 @@ public class ProtagonistStatusModel
         int prev = SkillPoints;
         SkillPoints = Math.Max(0, amount);
         if (SkillPoints != prev) OnSkillPointsChanged?.Invoke(SkillPoints - prev);
+    }
+
+    // ───── ShootTimes（射精次數） ─────
+
+    /// <summary>查詢目前射精次數。</summary>
+    public int CheckShootTimes() => ShootTimes;
+
+    /// <summary>增加射精次數。可以超過 Max，無上限。</summary>
+    public void AddShootTimes(int delta)
+    {
+        if (delta == 0) return;
+        int prev = ShootTimes;
+        ShootTimes += delta;
+        if (ShootTimes != prev) OnShootTimesChanged?.Invoke(ShootTimes - prev);
+    }
+
+    /// <summary>
+    /// 嘗試消耗射精次數（amount 為正數）。
+    /// 若扣除後會低於 Min，回傳 false 且不扣除。
+    /// </summary>
+    public bool TryReduceShootTimes(int amount = 1)
+    {
+        if (amount <= 0) return true;
+        if (ShootTimes - amount < SHOOT_TIMES_MIN) return false;
+
+        int prev = ShootTimes;
+        ShootTimes -= amount;
+        if (ShootTimes != prev) OnShootTimesChanged?.Invoke(ShootTimes - prev);
+        return true;
+    }
+
+    /// <summary>
+    /// 重製射精次數回 Max。若目前超過 Max 也會被截回 Max。
+    /// OnDayStart 會自動呼叫，也可由外部獨立呼叫。
+    /// </summary>
+    public void ResetShootTimes()
+    {
+        int prev = ShootTimes;
+        ShootTimes = SHOOT_TIMES_MAX;
+        if (ShootTimes != prev) OnShootTimesChanged?.Invoke(ShootTimes - prev);
     }
 
     // ───── 分級查詢 ─────

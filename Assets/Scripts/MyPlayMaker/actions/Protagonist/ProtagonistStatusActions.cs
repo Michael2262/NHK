@@ -536,7 +536,8 @@ public class CheckProtagonistStatus : FsmStateAction
         IsSocialityLow,
         IsSocialityHigh,
         IsDependencyHigh,
-        IsDependencyExtreme
+        IsDependencyExtreme,
+        IsOverShoot
     }
 
     public CheckType check;
@@ -561,11 +562,80 @@ public class CheckProtagonistStatus : FsmStateAction
             CheckType.IsSocialityHigh => p.IsSocialityHigh(),
             CheckType.IsDependencyHigh => p.IsDependencyHigh(),
             CheckType.IsDependencyExtreme => p.IsDependencyExtreme(),
+            CheckType.IsOverShoot => p.IsOverShoot,
             _ => false
         };
 
         ProtagonistPlayMakerUtil.StoreBool(storeResult, result);
         Fsm.Event(result ? trueEvent : falseEvent);
+        Finish();
+    }
+}
+
+// ==========================================================
+// ShootTimes（射精次數）
+// ==========================================================
+[ActionCategory("Protagonist Status")]
+[Tooltip("查詢主角目前的射精次數 ShootTimes，以及是否處於 IsOverShoot 狀態。")]
+public class CheckShootTimesAction : FsmStateAction
+{
+    [UIHint(UIHint.Variable)] public FsmInt storeShootTimes;
+    [UIHint(UIHint.Variable)] public FsmBool storeIsOverShoot;
+
+    public override void Reset() { storeShootTimes = null; storeIsOverShoot = null; }
+    public override void OnEnter()
+    {
+        var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(CheckShootTimesAction));
+        if (p != null)
+        {
+            ProtagonistPlayMakerUtil.StoreInt(storeShootTimes, p.CheckShootTimes());
+            ProtagonistPlayMakerUtil.StoreBool(storeIsOverShoot, p.IsOverShoot);
+        }
+        Finish();
+    }
+}
+
+[ActionCategory("Protagonist Status")]
+[Tooltip("增加主角射精次數。無上限，可以一直加。")]
+public class AddShootTimesAction : FsmStateAction
+{
+    public FsmInt amount;
+    [UIHint(UIHint.Variable)] public FsmInt storeShootTimes;
+
+    public override void Reset() { amount = 1; storeShootTimes = null; }
+    public override void OnEnter()
+    {
+        var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(AddShootTimesAction));
+        if (p != null)
+        {
+            p.AddShootTimes(amount.Value);
+            ProtagonistPlayMakerUtil.StoreInt(storeShootTimes, p.CheckShootTimes());
+        }
+        Finish();
+    }
+}
+
+[ActionCategory("Protagonist Status")]
+[Tooltip("嘗試消耗主角射精次數。到達下限時回傳失敗，可走 failedEvent 分支。")]
+public class TryReduceShootTimesAction : FsmStateAction
+{
+    public FsmInt amount;
+    [UIHint(UIHint.Variable)] public FsmBool storeResult;
+    [UIHint(UIHint.Variable)] public FsmInt storeShootTimes;
+    public FsmEvent successEvent;
+    public FsmEvent failedEvent;
+
+    public override void Reset() { amount = 1; storeResult = null; storeShootTimes = null; successEvent = null; failedEvent = null; }
+
+    public override void OnEnter()
+    {
+        var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(TryReduceShootTimesAction));
+        if (p == null) { Finish(); return; }
+
+        bool success = p.TryReduceShootTimes(amount.Value);
+        ProtagonistPlayMakerUtil.StoreBool(storeResult, success);
+        ProtagonistPlayMakerUtil.StoreInt(storeShootTimes, p.CheckShootTimes());
+        Fsm.Event(success ? successEvent : failedEvent);
         Finish();
     }
 }

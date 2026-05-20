@@ -50,6 +50,10 @@ public class ProtagonistLuaBridge : MonoBehaviour
         Lua.RegisterFunction("IsSocialityHigh", this, SymbolExtensions.GetMethodInfo(() => IsSocialityHigh()));
         Lua.RegisterFunction("IsDependencyHigh", this, SymbolExtensions.GetMethodInfo(() => IsDependencyHigh()));
         Lua.RegisterFunction("IsDependencyExtreme", this, SymbolExtensions.GetMethodInfo(() => IsDependencyExtreme()));
+        Lua.RegisterFunction("IsOverShoot", this, SymbolExtensions.GetMethodInfo(() => IsOverShoot()));
+
+        // ── ShootTimes ──
+        Lua.RegisterFunction("GetShootTimes", this, SymbolExtensions.GetMethodInfo(() => GetShootTimes()));
 
         // ── Legacy aliases ──
         Lua.RegisterFunction("GetStamina", this, SymbolExtensions.GetMethodInfo(() => GetLifePower()));
@@ -84,6 +88,9 @@ public class ProtagonistLuaBridge : MonoBehaviour
         Lua.UnregisterFunction("IsSocialityHigh");
         Lua.UnregisterFunction("IsDependencyHigh");
         Lua.UnregisterFunction("IsDependencyExtreme");
+        Lua.UnregisterFunction("IsOverShoot");
+
+        Lua.UnregisterFunction("GetShootTimes");
 
         Lua.UnregisterFunction("GetStamina");
         Lua.UnregisterFunction("GetSocialFear");
@@ -134,6 +141,10 @@ public class ProtagonistLuaBridge : MonoBehaviour
     public bool IsSocialityHigh() => GetModel()?.IsSocialityHigh() ?? false;
     public bool IsDependencyHigh() => GetModel()?.IsDependencyHigh() ?? false;
     public bool IsDependencyExtreme() => GetModel()?.IsDependencyExtreme() ?? false;
+    public bool IsOverShoot() => GetModel()?.IsOverShoot ?? false;
+
+    // ───── ShootTimes ─────
+    public double GetShootTimes() => GetModel()?.CheckShootTimes() ?? 0;
 
     // ───── Legacy 相容 ─────
     public double GetSocialFearCompat() => 100 - (GetModel()?.Sociality ?? 0);

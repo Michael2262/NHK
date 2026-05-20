@@ -16,4 +16,7 @@ public class ProtagonistSaveData
     // ───── 保留資源 ─────
     public int Money;
     public int SkillPoints;
+
+    // ───── 射精次數 ─────
+    public int ShootTimes;
 }
