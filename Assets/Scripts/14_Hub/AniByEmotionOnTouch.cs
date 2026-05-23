@@ -66,7 +66,7 @@ public class AniByEmotionOnTouch : ConditionalTouchReactionBase, IPointerExitHan
     private Dictionary<HeroineEmotionCardType, EmotionSpriteAnimation> _animationMap;
 
     // 用於快取同物件上的播放器
-    private EmotionAnimationPlayer _linkedPlayer; 
+    private EmotionAnimationPlayer _linkedPlayer;
 
     void Start()
     {
@@ -219,6 +219,20 @@ public class AniByEmotionOnTouch : ConditionalTouchReactionBase, IPointerExitHan
             _isPlaying = false;
             _animationCoroutine = null;
         }
+    }
+
+    /// <summary>
+    /// 外部呼叫：立即停止動畫並重設狀態（例如對話開始時）
+    /// </summary>
+    public void StopAndReset()
+    {
+        if (_animationCoroutine != null)
+        {
+            StopCoroutine(_animationCoroutine);
+            _animationCoroutine = null;
+        }
+        _isPlaying = false;
+        _awaitingMouseExit = false;
     }
 
     // ★ 6. 新增 IPointerExitHandler 的實作

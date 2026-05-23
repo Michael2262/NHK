@@ -69,7 +69,7 @@ public class EmotionAnimationPlayer : MonoBehaviour
         }
     }
 
-    
+
     void OnEnable()
     {
         // 1. 確保服務與 Model 存在 (這部分邏輯不變)
@@ -187,6 +187,29 @@ public class EmotionAnimationPlayer : MonoBehaviour
         if (_heroine != null)
         {
             _heroine.OnEmotionChanged -= HandleEmotionChanged;
+        }
+    }
+
+    /// <summary>
+    /// 外部呼叫：立即停止動畫（例如對話開始時）
+    /// </summary>
+    public void StopAndReset()
+    {
+        if (_animationCoroutine != null)
+        {
+            StopCoroutine(_animationCoroutine);
+            _animationCoroutine = null;
+        }
+    }
+
+    /// <summary>
+    /// 外部呼叫：根據當前情緒重新播放動畫（例如對話結束時）
+    /// </summary>
+    public void Resume()
+    {
+        if (_heroine != null)
+        {
+            HandleEmotionChanged(_heroine.CurrentEmotion);
         }
     }
 }

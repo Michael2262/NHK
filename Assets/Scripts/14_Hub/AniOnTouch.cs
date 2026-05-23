@@ -129,6 +129,20 @@ public class AniOnTouch : ConditionalTouchReactionBase, IPointerExitHandler
     }
 
     /// <summary>
+    /// 外部呼叫：立即停止動畫並重設狀態（例如對話開始時）
+    /// </summary>
+    public void StopAndReset()
+    {
+        if (_animationCoroutine != null)
+        {
+            StopCoroutine(_animationCoroutine);
+            _animationCoroutine = null;
+        }
+        _isPlaying = false;
+        _awaitingMouseExit = false;
+    }
+
+    /// <summary>
     /// 實作 IPointerExitHandler：當滑鼠移出 Collider 時觸發
     /// </summary>
     public void OnPointerExit(PointerEventData eventData)

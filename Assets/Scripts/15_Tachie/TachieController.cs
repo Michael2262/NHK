@@ -214,6 +214,12 @@ public class TachieController : MonoBehaviour
         ExecuteAppearance(id, linkId => GetActor(linkId)?.ChangeBody(bodyName));
     }
 
+    // --- 3.5 套用表情預設 (有連動) ---
+    public void ChangeExpression(string id, string presetName)
+    {
+        ExecuteAppearance(id, linkId => GetActor(linkId)?.ApplyExpression(presetName));
+    }
+
     // --- 4. 移動與位置控制 (不連動) ---
 
     // 移動 X 值

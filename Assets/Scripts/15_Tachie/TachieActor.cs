@@ -34,6 +34,10 @@ public class TachieActor : MonoBehaviour
     public List<TachieSpriteData> otherDataList;
     public List<TachieSpriteData> aboveDataList;
 
+    [Header("表情預設配置")]
+    [Tooltip("可多個角色共用同一份 config")]
+    public TachieExpressionConfig expressionConfig;
+
     // 通用的更換圖片邏輯
     private void UpdateLayerSprite(List<TachieSpriteData> dataList, Image targetImage, string spriteName)
     {
@@ -73,6 +77,35 @@ public class TachieActor : MonoBehaviour
         ChangeEye(eyeName);
         ChangeMouth(mouthName);
         if (!string.IsNullOrEmpty(eyebrowName)) ChangeEyebrow(eyebrowName);
+    }
+
+    /// <summary>
+    /// 套用表情預設。從 expressionConfig 中查找預設名稱，
+    /// 只更換預設中有填值的部位，留空的部位維持現狀。
+    /// </summary>
+    public bool ApplyExpression(string presetName)
+    {
+        if (expressionConfig == null)
+        {
+            Debug.LogWarning($"[TachieActor] {characterID} 沒有設定 expressionConfig");
+            return false;
+        }
+
+        var preset = expressionConfig.GetPreset(presetName);
+        if (preset == null)
+        {
+            Debug.LogWarning($"[TachieActor] {characterID} 的 config 中找不到表情預設: {presetName}");
+            return false;
+        }
+
+        if (!string.IsNullOrEmpty(preset.eye)) ChangeEye(preset.eye);
+        if (!string.IsNullOrEmpty(preset.mouth)) ChangeMouth(preset.mouth);
+        if (!string.IsNullOrEmpty(preset.eyebrow)) ChangeEyebrow(preset.eyebrow);
+        if (!string.IsNullOrEmpty(preset.blush)) ChangeBlush(preset.blush);
+        if (!string.IsNullOrEmpty(preset.other)) ChangeOther(preset.other);
+        if (!string.IsNullOrEmpty(preset.above)) ChangeAbove(preset.above);
+
+        return true;
     }
 
     public void Fade(float targetAlpha, float duration)

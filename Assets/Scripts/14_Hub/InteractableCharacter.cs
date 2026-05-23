@@ -32,27 +32,31 @@ public class ConditionalButton
 [RequireComponent(typeof(Collider2D))]
 public class InteractableCharacter : ConditionalTouchReactionBase
 {
+    [Header("角色顯示")]
+    [Tooltip("角色實際顯示用的 SpriteRenderer（子物件上的那張圖）")]
+    public SpriteRenderer characterSprite;
+
     [Header("UI 連結")]
     [Tooltip("子層級的 World Space Canvas 物件 (所有按鈕的總面板)")]
-    public GameObject interactionUIPanel; 
+    public GameObject interactionUIPanel;
 
     [Header("按鈕顯示條件")]
     [Tooltip("設定此面板中的所有按鈕及其顯示條件")]
     public List<ConditionalButton> conditionalButtons;
 
     // --- 內部狀態 ---
-    private Collider2D _myCollider; 
-    private Camera _mainCamera; 
+    private Collider2D _myCollider;
+    private Camera _mainCamera;
 
     private GameStatusService _service;
     private ProgressFlagModel _flags;
 
     void Start()
     {
-        
 
-        _myCollider = GetComponent<Collider2D>(); 
-        _mainCamera = Camera.main; 
+
+        _myCollider = GetComponent<Collider2D>();
+        _mainCamera = Camera.main;
         _service = GameStatusService.Instance;
 
         if (_service != null)
@@ -67,9 +71,9 @@ public class InteractableCharacter : ConditionalTouchReactionBase
         }
 
         if (interactionUIPanel != null)
-            interactionUIPanel.SetActive(false); 
+            interactionUIPanel.SetActive(false);
         else
-            Debug.LogError("interactionUIPanel 沒有在 Inspector 中設定！", this); 
+            Debug.LogError("interactionUIPanel 沒有在 Inspector 中設定！", this);
 
         swipeConds = new SwipeDir[0]; // [cite: ConditionalTouchReactionBase.cs]
     }
@@ -121,7 +125,7 @@ public class InteractableCharacter : ConditionalTouchReactionBase
             {
                 if (button.requiredFlag == null)
                 {
-                    
+
                     show = false;
                 }
                 else
@@ -140,7 +144,7 @@ public class InteractableCharacter : ConditionalTouchReactionBase
     /// </summary>
     void Update()
     {
-        if (interactionUIPanel == null || !interactionUIPanel.activeSelf) 
+        if (interactionUIPanel == null || !interactionUIPanel.activeSelf)
             return;
 
         // 安全檢查：確保滑鼠存在
@@ -151,7 +155,7 @@ public class InteractableCharacter : ConditionalTouchReactionBase
         if (Mouse.current.leftButton.wasPressedThisFrame)
         {
             if (EventSystem.current.IsPointerOverGameObject())
-            
+
             {
                 // 點在 UI 上，不關閉
                 return;
@@ -159,17 +163,17 @@ public class InteractableCharacter : ConditionalTouchReactionBase
 
             // 修正：使用 Mouse.current.position.ReadValue()
             Vector2 mousePosition = _mainCamera.ScreenToWorldPoint(Mouse.current.position.ReadValue());
-            RaycastHit2D hit = Physics2D.Raycast(mousePosition, Vector2.zero); 
+            RaycastHit2D hit = Physics2D.Raycast(mousePosition, Vector2.zero);
 
             if (hit.collider == _myCollider)
-            
+
             {
                 // 點在自己身上，OnTouched 會處理，這裡不關閉
                 return;
             }
 
             // 點在外部，關閉面板
-            interactionUIPanel.SetActive(false); 
+            interactionUIPanel.SetActive(false);
         }
     }
 

@@ -9,14 +9,16 @@ using UnityEngine;
 public class InteractableCharacterEditor : Editor
 {
     // 1. 宣告我們要連結的屬性
+    private SerializedProperty characterSpriteProp;   // ★ 新增
     private SerializedProperty interactionUIPanelProp;
-    private SerializedProperty conditionalButtonsProp; // ★ 新增
+    private SerializedProperty conditionalButtonsProp;
 
     // 2. 在 OnEnable 時連結屬性
     private void OnEnable()
     {
+        characterSpriteProp = serializedObject.FindProperty("characterSprite");       // ★ 新增
         interactionUIPanelProp = serializedObject.FindProperty("interactionUIPanel");
-        conditionalButtonsProp = serializedObject.FindProperty("conditionalButtons"); // ★ 新增
+        conditionalButtonsProp = serializedObject.FindProperty("conditionalButtons");
     }
 
     // 3. 繪製 Inspector
@@ -25,7 +27,22 @@ public class InteractableCharacterEditor : Editor
         // 更新序列化物件
         serializedObject.Update();
 
+        // --- ★ 繪製「角色顯示」 ---
+        EditorGUILayout.LabelField("角色顯示", EditorStyles.boldLabel);
+
+        if (characterSpriteProp != null)
+        {
+            EditorGUILayout.PropertyField(characterSpriteProp);
+        }
+        else
+        {
+            EditorGUILayout.HelpBox("找不到 'characterSprite' 欄位。", MessageType.Error);
+        }
+
+        EditorGUILayout.Space(10);
+
         // --- 繪製 UI 連結 ---
+        EditorGUILayout.LabelField("UI 連結", EditorStyles.boldLabel);
         if (interactionUIPanelProp != null)
         {
             EditorGUILayout.PropertyField(interactionUIPanelProp);

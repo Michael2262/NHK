@@ -16,9 +16,10 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
     /// 4. Face (一次換多個): TachieControl(Face, Sister, Eye, Mouth, Eyebrow, Blush, Other, Above)
     /// 5. Brow/Eye/Mouth/Blush/Other/Above (單獨換): TachieControl(Eye, Sister, Cry)
     /// 6. Body: TachieControl(Body, Sister, Uniform)
-    /// 7. Move: TachieControl(Move, Sister, 500, 0.5)
-    /// 8. Left/Right/Center: TachieControl(Left, Sister, 0.5)
-    /// 9. Clear: TachieControl(Clear, 0.5)
+    /// 7. Expression (表情預設): TachieControl(Expression, Sister, Angry)
+    /// 8. Move: TachieControl(Move, Sister, 500, 0.5)
+    /// 9. Left/Right/Center: TachieControl(Left, Sister, 0.5)
+    /// 10. Clear: TachieControl(Clear, 0.5)
     /// </summary>
 
 
@@ -82,8 +83,9 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
             else if (IsAction(action, "Other")) TachieController.Instance.ChangeOther(actorID, GetParameter(2));
             else if (IsAction(action, "Above")) TachieController.Instance.ChangeAbove(actorID, GetParameter(2));
 
-            // --- 4. 身體與位置控制 ---
+            // --- 4. 身體與表情預設控制 ---
             else if (IsAction(action, "Body")) TachieController.Instance.ChangeBody(actorID, GetParameter(2));
+            else if (IsAction(action, "Expression", "Expr")) TachieController.Instance.ChangeExpression(actorID, GetParameter(2));
             else if (IsAction(action, "Move"))
             {
                 float xValue = GetParameterAsFloat(2);
