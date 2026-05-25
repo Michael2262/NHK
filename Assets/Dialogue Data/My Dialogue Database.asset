@@ -173060,15 +173060,10 @@ MonoBehaviour:
       - title: Sequence
         value: 'TachieControl(Show, Sister, 0.5);
 
-          TachieControl(Eye, Sister,Half);
+          TachieControl(Expression,
+          Sister, Sad1);
 
-          TachieControl(Body,
-          Sister,Casual);
-
-          TachieControl(Mouth, Sister, Small1);
-
-          TachieControl(Brow,
-          Sister, Angry2);
+          TachieControl(Body, Sister, Casual_Worry1);
 
           Delay({{end}});
 
@@ -173237,7 +173232,7 @@ MonoBehaviour:
       - originConversationID: 94
         originDialogueID: 3
         destinationConversationID: 94
-        destinationDialogueID: 5
+        destinationDialogueID: 11
         isConnector: 0
         priority: 2
       conditionsString: 
@@ -173453,8 +173448,8 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 161
-        y: 234
+        x: 26
+        y: 241
         width: 160
         height: 30
     - id: 6
@@ -173484,7 +173479,15 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: 
+        value: 'TachieControl(Show, Sister, 0.5);
+
+
+          TachieControl(Expression,
+          Sister, Angry1);
+
+          Delay({{end}});
+
+'
         type: 0
         typeString: CustomFieldType_Text
       - title: zh-TW

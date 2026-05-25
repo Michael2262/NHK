@@ -29,8 +29,8 @@ public class ProtagonistStatusModel
 {
     // ───── 初始值 ─────
     public const int INITIAL_STRESS = 40;
-    public const int INITIAL_LIFE_POWER = 5;
-    public const int INITIAL_SOCIALITY = 5;
+    public const int INITIAL_LIFE_POWER = 0;
+    public const int INITIAL_SOCIALITY = 0;
     public const int INITIAL_DEPENDENCY = 0;
     public const int INITIAL_MONEY = 0;
     public const int INITIAL_SKILL_POINTS = 0;
