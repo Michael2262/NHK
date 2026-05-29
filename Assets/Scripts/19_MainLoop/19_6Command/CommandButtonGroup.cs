@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
+using TMPro;
+using PixelCrushers.DialogueSystem;
 
 /// <summary>
 /// 機率性觸發結果按鈕群組。
@@ -31,6 +33,21 @@ public class CommandButtonGroup : MonoBehaviour
 
     [Tooltip("時間條的父物件。跑條時自動顯示，結束後自動隱藏。若未指定則不控制顯隱。")]
     public GameObject progressBarRoot;
+
+    [Header("結果文字")]
+    [Tooltip("顯示成功或失敗文字的 TMP 元件。")]
+    public TMP_Text resultText;
+
+    [Tooltip("成功時的多語系 Key。")]
+    public string successLocalizationKey = "System.Succese";
+
+    [Tooltip("失敗時的多語系 Key。")]
+    public string failLocalizationKey = "System.Failed";
+
+    [Header("結果停留")]
+    [Tooltip("時間條跑完後，結果文字與時間條一起停留的秒數，之後才消失並解鎖。")]
+    [Min(0f)]
+    public float delayAfterBar = 1.5f;
 
     [Header("群組全域事件（可選）")]
     [Tooltip("任一按鈕開始跑時間條時觸發。")]
@@ -153,6 +170,9 @@ public class CommandButtonGroup : MonoBehaviour
         Debug.Log($"[CommandButtonGroup] {button.gameObject.name}: " +
                   $"chance={chance:P1}, roll={roll:F3}, result={(success ? "SUCCESS" : "FAIL")}");
 
+        // 顯示結果文字（多語系查表）
+        ShowResultText(success);
+
         if (success)
             button.FireSuccessEvents();
         else
@@ -160,8 +180,13 @@ public class CommandButtonGroup : MonoBehaviour
 
         onBarFinished?.Invoke();
 
-        // 隱藏時間條
+        // 結果停留一段時間，讓玩家看到結果
+        if (delayAfterBar > 0f)
+            yield return new WaitForSeconds(delayAfterBar);
+
+        // 隱藏時間條與結果文字
         SetProgressBarVisible(false);
+        HideResultText();
 
         // 解鎖群組
         SetLocked(false);
@@ -189,6 +214,31 @@ public class CommandButtonGroup : MonoBehaviour
     }
 
     // ─────────────────────────────────────────────
+    // 結果文字
+    // ─────────────────────────────────────────────
+
+    private void ShowResultText(bool success)
+    {
+        if (resultText == null) return;
+
+        string key = success ? successLocalizationKey : failLocalizationKey;
+        string localized = DialogueManager.GetLocalizedText(key);
+
+        // 查不到就直接顯示 key
+        if (string.IsNullOrEmpty(localized))
+            localized = key;
+
+        resultText.text = localized;
+        resultText.gameObject.SetActive(true);
+    }
+
+    private void HideResultText()
+    {
+        if (resultText == null) return;
+        resultText.gameObject.SetActive(false);
+    }
+
+    // ─────────────────────────────────────────────
     // 公共工具
     // ─────────────────────────────────────────────
 
@@ -205,6 +255,7 @@ public class CommandButtonGroup : MonoBehaviour
         }
 
         SetProgressBarVisible(false);
+        HideResultText();
         SetLocked(false);
     }
 
