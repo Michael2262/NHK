@@ -84,6 +84,8 @@ public class SpineAnimationController : MonoBehaviour
         KeepTrack = 1,
         /// <summary>完成後等待一段時間再清軌。</summary>
         ClearAfterDelay = 2,
+        /// <summary>播完後自動重播，直到同 Track 有新動畫或主動清軌為止。</summary>
+        Loop = 3,
     }
 
     [Header("Targets (可不填，會自動抓)")]
@@ -173,6 +175,17 @@ public class SpineAnimationController : MonoBehaviour
 
         int t = (int)track;
 
+        // 若是 Loop 模式，且該 track 已在播同名動畫，直接跳過不重啟
+        if (mode == ClearMode.Loop)
+        {
+            var current = _state.GetCurrent(t);
+            if (current != null && current.Animation?.Name == animationName)
+            {
+                if (_entryPolicies.TryGetValue(current, out var existingPolicy) && existingPolicy.mode == ClearMode.Loop)
+                    return current;
+            }
+        }
+
         CancelDelayedClearOnTrack(t);
         _state.ClearTrack(t);
         TryStopPlayByListIfSameTrack(t);
@@ -239,6 +252,17 @@ public class SpineAnimationController : MonoBehaviour
                 var co = StartCoroutine(CoClearTrackAfterDelay(entry.TrackIndex, entry, policy.delay));
                 _delayedClearRoutines[entry.TrackIndex] = co;
                 _entryPolicies.Remove(entry);
+                break;
+
+            case ClearMode.Loop:
+                _entryPolicies.Remove(entry);
+                // 確認此 Track 沒有被新動畫佔用才重播
+                var currentEntry = _state.GetCurrent(entry.TrackIndex);
+                if (currentEntry == null || currentEntry == entry)
+                {
+                    var loopEntry = _state.SetAnimation(entry.TrackIndex, entry.Animation.Name, false);
+                    _entryPolicies[loopEntry] = (ClearMode.Loop, policy.delay);
+                }
                 break;
         }
     }

@@ -137,6 +137,8 @@ public class SpineAnimationPadEditor : Editor
                     PlaySelectedWithMode(SpineAnimationController.ClearMode.KeepTrack);
                 if (GUILayout.Button("ClearAfterDelay"))
                     PlaySelectedWithMode(SpineAnimationController.ClearMode.ClearAfterDelay);
+                if (GUILayout.Button("🔁 Loop"))
+                    PlaySelectedWithMode(SpineAnimationController.ClearMode.Loop);
                 EditorGUILayout.EndHorizontal();
             }
 

@@ -31,8 +31,24 @@ public class CommandButtonGroup : MonoBehaviour
     [Tooltip("Slider（value 0→1）。與 Image 二選一。")]
     public Slider progressBarSlider;
 
+    [Tooltip("啟用後時間條從中間同時往左右展開（使用 RectTransform 寬度）。progressBarImage 的 Pivot 請設為 (0.5, 0.5)。")]
+    public bool fillFromCenter = false;
+
     [Tooltip("時間條的父物件。跑條時自動顯示，結束後自動隱藏。若未指定則不控制顯隱。")]
     public GameObject progressBarRoot;
+
+    [Header("思考動畫")]
+    [Tooltip("思考氣泡的父物件。跑條時自動顯示，結束後自動隱藏。若未指定則不控制。")]
+    public GameObject thinkingRoot;
+
+    [Tooltip("思考氣泡的 Animator。使用 'Play' trigger 開始播放、'Stop' trigger 停止。")]
+    public Animator thinkingAnimator;
+
+    [Tooltip("Animator 開始播放的 Trigger 名稱。")]
+    public string thinkingPlayTrigger = "Play";
+
+    [Tooltip("Animator 停止播放的 Trigger 名稱。")]
+    public string thinkingStopTrigger = "Stop";
 
     [Header("結果文字")]
     [Tooltip("顯示成功或失敗文字的 TMP 元件。")]
@@ -56,12 +72,25 @@ public class CommandButtonGroup : MonoBehaviour
     [Tooltip("時間條結束且判定完畢後觸發（無論成功失敗）。")]
     public UnityEvent onBarFinished;
 
+    [Header("按鈕顯示條件")]
+    [Tooltip("設定群組中需要依照 Flag 條件顯示/隱藏的按鈕。" +
+             "此列表獨立於按鈕的自動註冊機制，確保被隱藏的按鈕不會丟失參考。")]
+    public List<ConditionalButton> conditionalButtons;
+
     [Header("Debug")]
     [SerializeField] private bool isLocked;
     [SerializeField] private int registeredButtonCount;
 
     private readonly List<CommandButton> _buttons = new List<CommandButton>();
     private Coroutine _barCoroutine;
+
+    private void Awake()
+    {
+        SetProgressValue(0f);
+        SetProgressBarVisible(false);
+        SetThinkingVisible(false);
+        HideResultText();
+    }
 
     // ─────────────────────────────────────────────
     // 註冊 / 取消註冊
@@ -143,8 +172,9 @@ public class CommandButtonGroup : MonoBehaviour
         // 鎖定群組
         SetLocked(true);
 
-        // 顯示時間條
+        // 顯示時間條與思考動畫
         SetProgressBarVisible(true);
+        SetThinkingVisible(true);
         SetProgressValue(0f);
 
         onBarStarted?.Invoke();
@@ -161,6 +191,9 @@ public class CommandButtonGroup : MonoBehaviour
         }
 
         SetProgressValue(1f);
+
+        // 時間條結束，停止思考動畫
+        SetThinkingVisible(false);
 
         // 判定成功 / 失敗
         float chance = button.chanceProvider.CalculateSuccessChance();
@@ -201,7 +234,19 @@ public class CommandButtonGroup : MonoBehaviour
     private void SetProgressValue(float value)
     {
         if (progressBarImage != null)
-            progressBarImage.fillAmount = value;
+        {
+            if (fillFromCenter)
+            {
+                // 從中間往兩邊展開：X 軸縮放 0→1，Pivot (0.5, 0.5) 確保從中心擴張
+                var scale = progressBarImage.rectTransform.localScale;
+                scale.x = value;
+                progressBarImage.rectTransform.localScale = scale;
+            }
+            else
+            {
+                progressBarImage.fillAmount = value;
+            }
+        }
 
         if (progressBarSlider != null)
             progressBarSlider.value = value;
@@ -211,6 +256,20 @@ public class CommandButtonGroup : MonoBehaviour
     {
         if (progressBarRoot != null)
             progressBarRoot.SetActive(visible);
+    }
+
+    private void SetThinkingVisible(bool visible)
+    {
+        if (thinkingRoot != null)
+            thinkingRoot.SetActive(visible);
+
+        if (thinkingAnimator != null)
+        {
+            if (visible)
+                thinkingAnimator.SetTrigger(thinkingPlayTrigger);
+            else
+                thinkingAnimator.SetTrigger(thinkingStopTrigger);
+        }
     }
 
     // ─────────────────────────────────────────────
@@ -255,8 +314,48 @@ public class CommandButtonGroup : MonoBehaviour
         }
 
         SetProgressBarVisible(false);
+        SetThinkingVisible(false);
         HideResultText();
         SetLocked(false);
+    }
+
+    /// <summary>
+    /// 根據 ProgressFlag 條件更新按鈕的顯示/隱藏狀態。
+    /// 適合在面板開啟時呼叫，或掛到 UnityEvent。
+    /// </summary>
+    public void UpdateButtonConditions()
+    {
+        if (conditionalButtons == null || conditionalButtons.Count == 0) return;
+
+        ProgressFlagModel flags = GameStatusService.Instance?.ProgressFlags;
+        if (flags == null)
+        {
+            Debug.LogWarning("[CommandButtonGroup] 找不到 ProgressFlagModel，無法檢查按鈕條件。");
+            return;
+        }
+
+        foreach (var entry in conditionalButtons)
+        {
+            if (entry.buttonObject == null) continue;
+
+            bool show;
+
+            if (entry.isDefault)
+            {
+                show = true;
+            }
+            else
+            {
+                show = entry.requiredFlag != null && flags.Contains(entry.requiredFlag.FlagID);
+            }
+
+            entry.buttonObject.SetActive(show);
+        }
+    }
+
+    private void OnEnable()
+    {
+        UpdateButtonConditions();
     }
 
     private void OnDisable()

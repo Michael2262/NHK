@@ -79,6 +79,31 @@ public static class HeroineActionHelper
             default: return false;
         }
     }
+
+    /// <summary>
+    /// 共用路線分發：依情緒類型回傳對應 event，未設定則 fallback 到 defaultEvent。
+    /// </summary>
+    public static FsmEvent GetEmotionRouteEvent(
+        HeroineEmotionCardType type,
+        FsmEvent angryEvent,
+        FsmEvent shyEvent,
+        FsmEvent worriedEvent,
+        FsmEvent maternalEvent,
+        FsmEvent relaxedEvent,
+        FsmEvent disappointedEvent,
+        FsmEvent defaultEvent)
+    {
+        switch (type)
+        {
+            case HeroineEmotionCardType.Angry: return angryEvent ?? defaultEvent;
+            case HeroineEmotionCardType.Shy: return shyEvent ?? defaultEvent;
+            case HeroineEmotionCardType.Worried: return worriedEvent ?? defaultEvent;
+            case HeroineEmotionCardType.Maternal: return maternalEvent ?? defaultEvent;
+            case HeroineEmotionCardType.Relaxed: return relaxedEvent ?? defaultEvent;
+            case HeroineEmotionCardType.Disappointed: return disappointedEvent ?? defaultEvent;
+            default: return defaultEvent;
+        }
+    }
 }
 
 // ############################################################
@@ -315,21 +340,17 @@ public class CheckEmotionCardCount : FsmStateAction
 }
 
 // ############################################################
-//  主導情緒（CurrentEmotion）
+//  主導情緒（CurrentEmotion）— 多情緒分支
 // ############################################################
 
 // ============================================================
 // CheckCurrentEmotion
 // ============================================================
 [ActionCategory("Heroine Status")]
-[Tooltip("檢查主導情緒（CurrentEmotion）是否為指定值。")]
+[Tooltip("檢查主導情緒（CurrentEmotion），依情緒類型送出對應路線事件。未設定的情緒走 defaultEvent。")]
 public class CheckCurrentEmotion : FsmStateAction
 {
     [RequiredField] public FsmString heroineID;
-
-    [RequiredField]
-    [ObjectType(typeof(HeroineEmotionCardType))]
-    public FsmEnum expectedEmotion;
 
     [UIHint(UIHint.Variable)]
     [ObjectType(typeof(HeroineEmotionCardType))]
@@ -338,24 +359,36 @@ public class CheckCurrentEmotion : FsmStateAction
     [UIHint(UIHint.Variable)]
     public FsmString storeCurrentString;
 
-    public FsmEvent matchEvent;
-    public FsmEvent mismatchEvent;
+    [Header("Route Events")]
+    public FsmEvent angryEvent;
+    public FsmEvent shyEvent;
+    public FsmEvent worriedEvent;
+    public FsmEvent maternalEvent;
+    public FsmEvent relaxedEvent;
+    public FsmEvent disappointedEvent;
+    public FsmEvent defaultEvent;
+    public FsmEvent failedEvent;
 
     public override void Reset()
     {
         heroineID = null;
-        expectedEmotion = HeroineEmotionCardType.Angry;
         storeCurrent = null;
         storeCurrentString = null;
-        matchEvent = null;
-        mismatchEvent = null;
+        angryEvent = null;
+        shyEvent = null;
+        worriedEvent = null;
+        maternalEvent = null;
+        relaxedEvent = null;
+        disappointedEvent = null;
+        defaultEvent = null;
+        failedEvent = null;
     }
 
     public override void OnEnter()
     {
         if (!HeroineActionHelper.TryGetHeroine(heroineID.Value, out var heroine, "CheckCurrentEmotion"))
         {
-            Fsm.Event(mismatchEvent);
+            Fsm.Event(failedEvent);
             Finish();
             return;
         }
@@ -367,7 +400,11 @@ public class CheckCurrentEmotion : FsmStateAction
         if (storeCurrentString != null && !storeCurrentString.IsNone)
             storeCurrentString.Value = current.ToString();
 
-        Fsm.Event(current == (HeroineEmotionCardType)expectedEmotion.Value ? matchEvent : mismatchEvent);
+        Fsm.Event(HeroineActionHelper.GetEmotionRouteEvent(
+            current,
+            angryEvent, shyEvent, worriedEvent,
+            maternalEvent, relaxedEvent, disappointedEvent,
+            defaultEvent));
         Finish();
     }
 }
@@ -400,21 +437,17 @@ public class SetCurrentEmotionAction : FsmStateAction
 }
 
 // ############################################################
-//  大宗情緒（DominantEmotion）
+//  大宗情緒（DominantEmotion）— 多情緒分支
 // ############################################################
 
 // ============================================================
 // CheckDominantEmotion
 // ============================================================
 [ActionCategory("Heroine Status")]
-[Tooltip("檢查大宗情緒（DominantEmotion，卡池最多者）是否為指定值。")]
+[Tooltip("檢查大宗情緒（DominantEmotion，卡池最多者），依情緒類型送出對應路線事件。未設定的情緒走 defaultEvent。")]
 public class CheckDominantEmotion : FsmStateAction
 {
     [RequiredField] public FsmString heroineID;
-
-    [RequiredField]
-    [ObjectType(typeof(HeroineEmotionCardType))]
-    public FsmEnum expectedEmotion;
 
     [UIHint(UIHint.Variable)]
     [ObjectType(typeof(HeroineEmotionCardType))]
@@ -423,24 +456,36 @@ public class CheckDominantEmotion : FsmStateAction
     [UIHint(UIHint.Variable)]
     public FsmString storeDominantString;
 
-    public FsmEvent matchEvent;
-    public FsmEvent mismatchEvent;
+    [Header("Route Events")]
+    public FsmEvent angryEvent;
+    public FsmEvent shyEvent;
+    public FsmEvent worriedEvent;
+    public FsmEvent maternalEvent;
+    public FsmEvent relaxedEvent;
+    public FsmEvent disappointedEvent;
+    public FsmEvent defaultEvent;
+    public FsmEvent failedEvent;
 
     public override void Reset()
     {
         heroineID = null;
-        expectedEmotion = HeroineEmotionCardType.Angry;
         storeDominant = null;
         storeDominantString = null;
-        matchEvent = null;
-        mismatchEvent = null;
+        angryEvent = null;
+        shyEvent = null;
+        worriedEvent = null;
+        maternalEvent = null;
+        relaxedEvent = null;
+        disappointedEvent = null;
+        defaultEvent = null;
+        failedEvent = null;
     }
 
     public override void OnEnter()
     {
         if (!HeroineActionHelper.TryGetHeroine(heroineID.Value, out var heroine, "CheckDominantEmotion"))
         {
-            Fsm.Event(mismatchEvent);
+            Fsm.Event(failedEvent);
             Finish();
             return;
         }
@@ -452,7 +497,11 @@ public class CheckDominantEmotion : FsmStateAction
         if (storeDominantString != null && !storeDominantString.IsNone)
             storeDominantString.Value = dominant.ToString();
 
-        Fsm.Event(dominant == (HeroineEmotionCardType)expectedEmotion.Value ? matchEvent : mismatchEvent);
+        Fsm.Event(HeroineActionHelper.GetEmotionRouteEvent(
+            dominant,
+            angryEvent, shyEvent, worriedEvent,
+            maternalEvent, relaxedEvent, disappointedEvent,
+            defaultEvent));
         Finish();
     }
 }
@@ -579,21 +628,11 @@ public class HeroineEmotionDraw : FsmStateAction
         if (storeFakeSucceeded != null && !storeFakeSucceeded.IsNone)
             storeFakeSucceeded.Value = result.FakeSucceeded;
 
-        SendAndFinish(GetRouteEvent(result.ResultEmotion));
-    }
-
-    private FsmEvent GetRouteEvent(HeroineEmotionCardType type)
-    {
-        switch (type)
-        {
-            case HeroineEmotionCardType.Angry: return angryEvent ?? defaultEvent;
-            case HeroineEmotionCardType.Shy: return shyEvent ?? defaultEvent;
-            case HeroineEmotionCardType.Worried: return worriedEvent ?? defaultEvent;
-            case HeroineEmotionCardType.Maternal: return maternalEvent ?? defaultEvent;
-            case HeroineEmotionCardType.Relaxed: return relaxedEvent ?? defaultEvent;
-            case HeroineEmotionCardType.Disappointed: return disappointedEvent ?? defaultEvent;
-            default: return defaultEvent;
-        }
+        SendAndFinish(HeroineActionHelper.GetEmotionRouteEvent(
+            result.ResultEmotion,
+            angryEvent, shyEvent, worriedEvent,
+            maternalEvent, relaxedEvent, disappointedEvent,
+            defaultEvent));
     }
 
     private void SendAndFinish(FsmEvent evt)
