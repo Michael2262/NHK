@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -30,9 +31,39 @@ public class CommandButton : MonoBehaviour
     public ActionChanceProvider chanceProvider;
 
     [Header("時間條設定")]
-    [Tooltip("時間條跑完所需的秒數。僅機率按鈕有效。")]
-    [Min(0.1f)]
-    public float barDuration = 2f;
+    [Tooltip("時間條跑完所需的秒數列表。第一次點擊用第一個值，第二次用第二個，超出列表長度後一律用最後一個值。")]
+    public List<float> barDurations = new List<float> { 2f };
+
+    private int _clickCount;
+
+    /// <summary>
+    /// 取得本次點擊應使用的時間條秒數。
+    /// </summary>
+    public float GetCurrentBarDuration()
+    {
+        if (barDurations == null || barDurations.Count == 0) return 2f;
+        int index = Mathf.Min(_clickCount, barDurations.Count - 1);
+        return Mathf.Max(barDurations[index], 0.1f);
+    }
+
+    /// <summary>
+    /// 由 Group 在時間條開始時呼叫，推進點擊計數。
+    /// </summary>
+    internal void AdvanceClickCount()
+    {
+        _clickCount++;
+    }
+
+    /// <summary>
+    /// 重置點擊計數。
+    /// 注意：若此物件會隨場景卸載銷毀，則不需要手動呼叫，
+    /// 新場景載入時會是全新實例，計數器自然為 0。
+    /// 僅在物件位於 DontDestroyOnLoad 場景時才需要手動呼叫。
+    /// </summary>
+    public void ResetClickCount()
+    {
+        _clickCount = 0;
+    }
 
     // ─────────────────────────────────────────────
     // 點擊瞬間

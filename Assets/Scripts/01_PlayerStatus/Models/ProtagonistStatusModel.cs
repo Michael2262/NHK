@@ -40,6 +40,11 @@ public class ProtagonistStatusModel
     public const int SHOOT_TIMES_MIN = -5;
     public const int INITIAL_SHOOT_TIMES = SHOOT_TIMES_MAX;
 
+    // ───── RoomMessLevel（房間髒亂度） ─────
+    public const int ROOM_MESS_LEVEL_MAX = 10;
+    public const int ROOM_MESS_LEVEL_MIN = 0;
+    public const int INITIAL_ROOM_MESS_LEVEL = ROOM_MESS_LEVEL_MIN;
+
     // ───── 數值範圍 ─────
     public const int MIN_STATUS_VALUE = 0;
     public const int MAX_STATUS_VALUE = 100;
@@ -91,6 +96,9 @@ public class ProtagonistStatusModel
     /// <summary>射精耗盡狀態：ShootTimes <= 0 即為 true。</summary>
     public bool IsOverShoot => ShootTimes <= 0;
 
+    /// <summary>房間髒亂度：0～10。每日結束自動 +1。越高代表房間越亂。</summary>
+    public int RoomMessLevel { get; private set; } = INITIAL_ROOM_MESS_LEVEL;
+
     // ───── 事件通知 ─────
     public event Action<int> OnStressChanged;       // delta
     public event Action<int> OnLifePowerChanged;    // delta
@@ -99,6 +107,7 @@ public class ProtagonistStatusModel
     public event Action<int> OnMoneyChanged;        // delta
     public event Action<int> OnSkillPointsChanged;  // delta
     public event Action<int> OnShootTimesChanged;   // delta
+    public event Action<int> OnRoomMessLevelChanged; // delta
 
     public event Action<StatusGrade, StatusGrade> OnStressGradeChanged;
     public event Action<StatusGrade, StatusGrade> OnLifeGradeChanged;
@@ -115,6 +124,7 @@ public class ProtagonistStatusModel
         Money = INITIAL_MONEY;
         SkillPoints = INITIAL_SKILL_POINTS;
         ShootTimes = INITIAL_SHOOT_TIMES;
+        RoomMessLevel = INITIAL_ROOM_MESS_LEVEL;
 
         NotifyAllCoreValues();
     }
@@ -129,7 +139,8 @@ public class ProtagonistStatusModel
             Dependency = Dependency,
             Money = Money,
             SkillPoints = SkillPoints,
-            ShootTimes = ShootTimes
+            ShootTimes = ShootTimes,
+            RoomMessLevel = RoomMessLevel
         };
     }
 
@@ -148,6 +159,7 @@ public class ProtagonistStatusModel
         Money = Math.Max(0, data.Money);
         SkillPoints = Math.Max(0, data.SkillPoints);
         ShootTimes = Math.Max(SHOOT_TIMES_MIN, Math.Min(data.ShootTimes, int.MaxValue));
+        RoomMessLevel = ClampRoomMessLevel(data.RoomMessLevel);
 
         NotifyAllCoreValues();
     }
@@ -161,6 +173,7 @@ public class ProtagonistStatusModel
         OnMoneyChanged?.Invoke(0);
         OnSkillPointsChanged?.Invoke(0);
         OnShootTimesChanged?.Invoke(0);
+        OnRoomMessLevelChanged?.Invoke(0);
     }
 
     // ───── 每日流程 ─────
@@ -171,6 +184,7 @@ public class ProtagonistStatusModel
 
     public void OnDayEnd()
     {
+        AddRoomMessLevel(1);
     }
 
     public void NextDay()
@@ -406,6 +420,35 @@ public class ProtagonistStatusModel
         if (ShootTimes != prev) OnShootTimesChanged?.Invoke(ShootTimes - prev);
     }
 
+    // ───── RoomMessLevel（房間髒亂度） ─────
+
+    /// <summary>查詢目前房間髒亂度。</summary>
+    public int CheckRoomMessLevel() => RoomMessLevel;
+
+    /// <summary>增加髒亂度。封頂於 Max，不會超過。</summary>
+    public void AddRoomMessLevel(int delta)
+    {
+        if (delta == 0) return;
+        int prev = RoomMessLevel;
+        RoomMessLevel = ClampRoomMessLevel(RoomMessLevel + delta);
+        if (RoomMessLevel != prev) OnRoomMessLevelChanged?.Invoke(RoomMessLevel - prev);
+    }
+
+    /// <summary>降低髒亂度（delta 為正數）。保底於 Min，不會低於。</summary>
+    public void ReduceRoomMessLevel(int delta)
+    {
+        if (delta <= 0) return;
+        AddRoomMessLevel(-delta);
+    }
+
+    /// <summary>直接設定髒亂度，會夾在 Min~Max。</summary>
+    public void SetRoomMessLevel(int value)
+    {
+        int prev = RoomMessLevel;
+        RoomMessLevel = ClampRoomMessLevel(value);
+        if (RoomMessLevel != prev) OnRoomMessLevelChanged?.Invoke(RoomMessLevel - prev);
+    }
+
     // ───── 分級查詢 ─────
     public StatusGrade GetStressGrade()
     {
@@ -457,6 +500,13 @@ public class ProtagonistStatusModel
     {
         if (value < MIN_STATUS_VALUE) return MIN_STATUS_VALUE;
         if (value > MAX_STATUS_VALUE) return MAX_STATUS_VALUE;
+        return value;
+    }
+
+    private static int ClampRoomMessLevel(int value)
+    {
+        if (value < ROOM_MESS_LEVEL_MIN) return ROOM_MESS_LEVEL_MIN;
+        if (value > ROOM_MESS_LEVEL_MAX) return ROOM_MESS_LEVEL_MAX;
         return value;
     }
 }

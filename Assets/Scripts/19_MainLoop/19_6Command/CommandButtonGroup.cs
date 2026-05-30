@@ -5,6 +5,7 @@ using UnityEngine.Events;
 using UnityEngine.UI;
 using TMPro;
 using PixelCrushers.DialogueSystem;
+using DG.Tweening;
 
 /// <summary>
 /// 機率性觸發結果按鈕群組。
@@ -41,14 +42,9 @@ public class CommandButtonGroup : MonoBehaviour
     [Tooltip("思考氣泡的父物件。跑條時自動顯示，結束後自動隱藏。若未指定則不控制。")]
     public GameObject thinkingRoot;
 
-    [Tooltip("思考氣泡的 Animator。使用 'Play' trigger 開始播放、'Stop' trigger 停止。")]
-    public Animator thinkingAnimator;
-
-    [Tooltip("Animator 開始播放的 Trigger 名稱。")]
-    public string thinkingPlayTrigger = "Play";
-
-    [Tooltip("Animator 停止播放的 Trigger 名稱。")]
-    public string thinkingStopTrigger = "Stop";
+    [Tooltip("AnimatorEmotionController 的 ID。會透過 AnimatorEmotionController.Get() 查找，" +
+             "並呼叫 Think() / Stop() 控制動畫。")]
+    public string thinkingControllerId = "MiniGame";
 
     [Header("結果文字")]
     [Tooltip("顯示成功或失敗文字的 TMP 元件。")]
@@ -76,6 +72,18 @@ public class CommandButtonGroup : MonoBehaviour
     [Tooltip("設定群組中需要依照 Flag 條件顯示/隱藏的按鈕。" +
              "此列表獨立於按鈕的自動註冊機制，確保被隱藏的按鈕不會丟失參考。")]
     public List<ConditionalButton> conditionalButtons;
+
+    [Header("跑條時半透明")]
+    [Tooltip("時間條跑條期間要變半透明的 CanvasGroup。若未指定則不控制。")]
+    public CanvasGroup dimCanvasGroup;
+
+    [Tooltip("跑條期間的透明度。")]
+    [Range(0f, 1f)]
+    public float dimAlpha = 0.4f;
+
+    [Tooltip("透明度漸變的秒數。")]
+    [Min(0f)]
+    public float dimFadeDuration = 0.3f;
 
     [Header("Debug")]
     [SerializeField] private bool isLocked;
@@ -172,14 +180,18 @@ public class CommandButtonGroup : MonoBehaviour
         // 鎖定群組
         SetLocked(true);
 
-        // 顯示時間條與思考動畫
+        float duration = button.GetCurrentBarDuration();
+        button.AdvanceClickCount();
+        bool useThinking = duration >= 1f;
+
+        // 顯示時間條，條件性顯示思考動畫
         SetProgressBarVisible(true);
-        SetThinkingVisible(true);
+        if (useThinking) SetThinkingVisible(true);
         SetProgressValue(0f);
+        SetDim(true);
 
         onBarStarted?.Invoke();
 
-        float duration = button.barDuration;
         float elapsed = 0f;
 
         while (elapsed < duration)
@@ -193,7 +205,7 @@ public class CommandButtonGroup : MonoBehaviour
         SetProgressValue(1f);
 
         // 時間條結束，停止思考動畫
-        SetThinkingVisible(false);
+        if (useThinking) SetThinkingVisible(false);
 
         // 判定成功 / 失敗
         float chance = button.chanceProvider.CalculateSuccessChance();
@@ -220,6 +232,7 @@ public class CommandButtonGroup : MonoBehaviour
         // 隱藏時間條與結果文字
         SetProgressBarVisible(false);
         HideResultText();
+        SetDim(false);
 
         // 解鎖群組
         SetLocked(false);
@@ -263,12 +276,13 @@ public class CommandButtonGroup : MonoBehaviour
         if (thinkingRoot != null)
             thinkingRoot.SetActive(visible);
 
-        if (thinkingAnimator != null)
+        var controller = AnimatorEmotionController.Get(thinkingControllerId);
+        if (controller != null)
         {
             if (visible)
-                thinkingAnimator.SetTrigger(thinkingPlayTrigger);
+                controller.Think();
             else
-                thinkingAnimator.SetTrigger(thinkingStopTrigger);
+                controller.Stop();
         }
     }
 
@@ -298,6 +312,25 @@ public class CommandButtonGroup : MonoBehaviour
     }
 
     // ─────────────────────────────────────────────
+    // 半透明控制
+    // ─────────────────────────────────────────────
+
+    private void SetDim(bool dim, bool instant = false)
+    {
+        if (dimCanvasGroup == null) return;
+
+        // 中斷前一次的漸變
+        dimCanvasGroup.DOKill();
+
+        float target = dim ? dimAlpha : 1f;
+
+        if (!instant && dimFadeDuration > 0f)
+            dimCanvasGroup.DOFade(target, dimFadeDuration).SetEase(Ease.OutQuad);
+        else
+            dimCanvasGroup.alpha = target;
+    }
+
+    // ─────────────────────────────────────────────
     // 公共工具
     // ─────────────────────────────────────────────
 
@@ -316,6 +349,7 @@ public class CommandButtonGroup : MonoBehaviour
         SetProgressBarVisible(false);
         SetThinkingVisible(false);
         HideResultText();
+        SetDim(false, instant: true);
         SetLocked(false);
     }
 

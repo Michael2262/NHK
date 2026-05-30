@@ -19,4 +19,7 @@ public class ProtagonistSaveData
 
     // ───── 射精次數 ─────
     public int ShootTimes;
+
+    // ───── 房間髒亂度 ─────
+    public int RoomMessLevel;
 }
