@@ -13,7 +13,29 @@ MonoBehaviour:
   m_Name: sister Heroine Schedule
   m_EditorClassIdentifier: Assembly-CSharp::HeroineScheduleConfig
   heroineID: sister
-  dailyChains: []
+  dailyChains:
+  - chainName: Day3
+    dayType: 0
+    requiredFlag: {fileID: 11400000, guid: da16a3c69f349f14c93e20c5168eaf1f, type: 2}
+    forbiddenFlag: {fileID: 0}
+    probabilityWeight: 100
+    blocks:
+    - timeName: P2S3
+      phaseIndex: 2
+      slotIndex: 3
+      possibleScenarios:
+      - locationID: Room
+        activityState: Sister_HomeworkSleep
+        probabilityWeight: 100
+        requiredFlag: {fileID: 11400000, guid: da16a3c69f349f14c93e20c5168eaf1f, type: 2}
+    - timeName: P2S2
+      phaseIndex: 2
+      slotIndex: 2
+      possibleScenarios:
+      - locationID: Room
+        activityState: Sister_Homework
+        probabilityWeight: 100
+        requiredFlag: {fileID: 11400000, guid: da16a3c69f349f14c93e20c5168eaf1f, type: 2}
   schedule:
   - timeName: P2S2
     phaseIndex: 2
