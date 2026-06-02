@@ -16,11 +16,16 @@ public enum FlagLifetime
 public class ProgressFlagModel
 {
     // ───── 儲存容器 ─────
-    private readonly HashSet<string> _persistentFlags = new HashSet<string>();
-    private readonly HashSet<string> _sceneFlags = new HashSet<string>();
-    private readonly HashSet<string> _slotFlags = new HashSet<string>();
-    private readonly HashSet<string> _phaseFlags = new HashSet<string>();
-    private readonly HashSet<string> _dayFlags = new HashSet<string>();
+    // 以生命週期為 key 的旗標桶。新增一種生命週期時，只要在此字典加一行即可。
+    private readonly Dictionary<FlagLifetime, HashSet<string>> _buckets =
+        new Dictionary<FlagLifetime, HashSet<string>>
+    {
+        { FlagLifetime.Persistent,     new HashSet<string>() },
+        { FlagLifetime.Scene,          new HashSet<string>() },
+        { FlagLifetime.UntilNextSlot,  new HashSet<string>() },
+        { FlagLifetime.UntilNextPhase, new HashSet<string>() },
+        { FlagLifetime.UntilNextDay,   new HashSet<string>() },
+    };
     private readonly Dictionary<string, int> _variables = new Dictionary<string, int>();
 
     // ───── 事件 ─────
@@ -52,17 +57,8 @@ public class ProgressFlagModel
     {
         if (string.IsNullOrEmpty(flag)) return;
 
-        bool changed = lifetime switch
-        {
-            FlagLifetime.Persistent => _persistentFlags.Add(flag),
-            FlagLifetime.Scene => _sceneFlags.Add(flag),
-            FlagLifetime.UntilNextSlot => _slotFlags.Add(flag),
-            FlagLifetime.UntilNextPhase => _phaseFlags.Add(flag),
-            FlagLifetime.UntilNextDay => _dayFlags.Add(flag),
-            _ => false
-        };
-
-        if (changed) OnFlagChanged?.Invoke(flag, true);
+        if (_buckets.TryGetValue(lifetime, out var bucket) && bucket.Add(flag))
+            OnFlagChanged?.Invoke(flag, true);
     }
 
     /// <summary> 移除標記 (包含布林與數值) </summary>
@@ -70,9 +66,12 @@ public class ProgressFlagModel
     {
         if (string.IsNullOrEmpty(flag)) return;
 
-        // 移除所有桶子中的布林標記
-        bool removedFromSets = _persistentFlags.Remove(flag) || _sceneFlags.Remove(flag) ||
-                               _slotFlags.Remove(flag) || _phaseFlags.Remove(flag) || _dayFlags.Remove(flag);
+        // 從所有桶子中移除布林標記。
+        // 注意：刻意「不」短路，因為同一個 flag 有可能被以不同生命週期加進多個桶子，
+        // 必須全部清乾淨。
+        bool removedFromSets = false;
+        foreach (var bucket in _buckets.Values)
+            removedFromSets |= bucket.Remove(flag);
 
         // ★ 補齊：也移除數值字典中的記錄
         bool removedFromVars = _variables.Remove(flag);
@@ -92,8 +91,10 @@ public class ProgressFlagModel
         // 數值 > 0 也視為包含此 Flag (為了舊腳本相容)
         if (_variables.TryGetValue(flag, out int val) && val > 0) return true;
 
-        return _persistentFlags.Contains(flag) || _sceneFlags.Contains(flag) ||
-               _slotFlags.Contains(flag) || _phaseFlags.Contains(flag) || _dayFlags.Contains(flag);
+        foreach (var bucket in _buckets.Values)
+            if (bucket.Contains(flag)) return true;
+
+        return false;
     }
 
     // ───── 語法糖 ─────
@@ -121,7 +122,7 @@ public class ProgressFlagModel
 
         // 3. 對每個被清掉的 flag,檢查是否還存在於其他地方
         //    若不存在了 → 發 false 事件
-        //    (Contains 會掃 variables + 其他 4 個桶子)
+        //    (Contains 會掃 variables + 其他桶子)
         foreach (var flag in snapshot)
         {
             if (!Contains(flag))
@@ -129,10 +130,12 @@ public class ProgressFlagModel
         }
     }
 
-    public void ClearSceneFlags() => ClearBucketWithEvents(_sceneFlags);
-    public void ClearSlotFlags() => ClearBucketWithEvents(_slotFlags);
-    public void ClearPhaseFlags() => ClearBucketWithEvents(_phaseFlags);
-    public void ClearDayFlags() => ClearBucketWithEvents(_dayFlags);
+    private void ClearLifetime(FlagLifetime lifetime) => ClearBucketWithEvents(_buckets[lifetime]);
+
+    public void ClearSceneFlags() => ClearLifetime(FlagLifetime.Scene);
+    public void ClearSlotFlags() => ClearLifetime(FlagLifetime.UntilNextSlot);
+    public void ClearPhaseFlags() => ClearLifetime(FlagLifetime.UntilNextPhase);
+    public void ClearDayFlags() => ClearLifetime(FlagLifetime.UntilNextDay);
 
     public void OnSceneChanged() => ClearSceneFlags();
 
@@ -144,17 +147,15 @@ public class ProgressFlagModel
     {
         // 1. 先蒐集所有目前存在的 flag 和 variable key(用 HashSet 去重)
         var allFlags = new HashSet<string>();
-        allFlags.UnionWith(_persistentFlags);
-        allFlags.UnionWith(_sceneFlags);
-        allFlags.UnionWith(_slotFlags);
-        allFlags.UnionWith(_phaseFlags);
-        allFlags.UnionWith(_dayFlags);
+        foreach (var bucket in _buckets.Values)
+            allFlags.UnionWith(bucket);
 
         var allVarKeys = new List<string>(_variables.Keys);
 
         // 2. 實際清空
-        _persistentFlags.Clear(); _sceneFlags.Clear(); _slotFlags.Clear();
-        _phaseFlags.Clear(); _dayFlags.Clear(); _variables.Clear();
+        foreach (var bucket in _buckets.Values)
+            bucket.Clear();
+        _variables.Clear();
 
         // 3. 廣播消失事件
         foreach (var flag in allFlags)
@@ -175,12 +176,13 @@ public class ProgressFlagModel
     public ProgressFlagSaveData ToSaveData()
     {
         // 建立存檔物件並填充資料
+        // 注意:Scene 桶刻意不存檔(切場景即逝,無保存意義)。
         var data = new ProgressFlagSaveData
         {
-            ActiveFlags = new HashSet<string>(_persistentFlags),
-            SlotFlags = new HashSet<string>(_slotFlags),    // 保存時段標記
-            PhaseFlags = new HashSet<string>(_phaseFlags),  // 保存階段標記
-            DayFlags = new HashSet<string>(_dayFlags)       // 保存每日標記
+            ActiveFlags = new HashSet<string>(_buckets[FlagLifetime.Persistent]),
+            SlotFlags = new HashSet<string>(_buckets[FlagLifetime.UntilNextSlot]),    // 保存時段標記
+            PhaseFlags = new HashSet<string>(_buckets[FlagLifetime.UntilNextPhase]),  // 保存階段標記
+            DayFlags = new HashSet<string>(_buckets[FlagLifetime.UntilNextDay])       // 保存每日標記
         };
 
         foreach (var kv in _variables)
@@ -199,12 +201,12 @@ public class ProgressFlagModel
         //      讓各系統整批 refresh。中途逐項廣播會導致訂閱者看到「半殘的世界狀態」。
 
         // 還原永久標記
-        if (data.ActiveFlags != null) _persistentFlags.UnionWith(data.ActiveFlags);
+        if (data.ActiveFlags != null) _buckets[FlagLifetime.Persistent].UnionWith(data.ActiveFlags);
 
         // 還原時效性標記
-        if (data.SlotFlags != null) _slotFlags.UnionWith(data.SlotFlags);
-        if (data.PhaseFlags != null) _phaseFlags.UnionWith(data.PhaseFlags);
-        if (data.DayFlags != null) _dayFlags.UnionWith(data.DayFlags);
+        if (data.SlotFlags != null) _buckets[FlagLifetime.UntilNextSlot].UnionWith(data.SlotFlags);
+        if (data.PhaseFlags != null) _buckets[FlagLifetime.UntilNextPhase].UnionWith(data.PhaseFlags);
+        if (data.DayFlags != null) _buckets[FlagLifetime.UntilNextDay].UnionWith(data.DayFlags);
 
         // 還原數值變數
         if (data.ActiveVariables != null)
