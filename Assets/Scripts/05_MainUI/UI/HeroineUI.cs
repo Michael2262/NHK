@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
-using DG.Tweening;
 using PixelCrushers;
 
 /// <summary>
@@ -50,14 +49,17 @@ public class HeroineUI : MonoBehaviour
 
     [Header("=== 主導情緒 ===")]
     [SerializeField] private TextMeshProUGUI textCurrentEmotion;
+    [Tooltip("情緒卡池新增情緒時，冒出『情緒名稱 ↑』的飄字。")]
+    [SerializeField] private TextMeshProUGUI textEmotionAddedPreview;
+    [Tooltip("CurrentEmotion 變化時閃一下的提示。文字固定（在此元件上自行填好），只做開關、不改內容。")]
+    [SerializeField] private TextMeshProUGUI textCurrentEmotionChangedPreview;
 
     [Header("=== 情緒查表 ===")]
     [Tooltip("EmotionCardCatalog ScriptableObject，用於查詢情緒對應的 TextTable Key。")]
     [SerializeField] private EmotionCardCatalog emotionCatalog;
 
     [Header("=== Preview 顯示設定 ===")]
-    [SerializeField] private float previewHoldSeconds = 1.0f;
-    [SerializeField] private float previewFadeSeconds = 0.35f;
+    [Tooltip("正/負變動是否顯示飄字；播放間隔與淡入淡出時間改由 StatusPreviewSequencer 控制。")]
     [SerializeField] private bool showPositivePreview = true;
     [SerializeField] private bool showNegativePreview = true;
 
@@ -74,8 +76,6 @@ public class HeroineUI : MonoBehaviour
     // 用於計算 Preview delta（OnLibidoChanged / OnTrustChanged 傳入的是 newValue）
     private int _cachedTrust;
     private int _cachedLibido;
-
-    private readonly Dictionary<TextMeshProUGUI, Tween> _previewTweens = new Dictionary<TextMeshProUGUI, Tween>();
 
     // ==========================================================
     //  生命週期
@@ -99,7 +99,7 @@ public class HeroineUI : MonoBehaviour
     private void OnDestroy()
     {
         UnsubscribeFromModel();
-        KillAllTweens();
+        StatusPreviewSequencer.CancelAllIfExists();
         if (Instance == this) Instance = null;
     }
 
@@ -145,7 +145,7 @@ public class HeroineUI : MonoBehaviour
     {
         SetCanvasGroupVisible(false);
         UnsubscribeFromModel();
-        KillAllTweens();
+        StatusPreviewSequencer.CancelAllIfExists();
         HideAllPreviewTexts();
         _currentModel = null;
     }
@@ -168,7 +168,7 @@ public class HeroineUI : MonoBehaviour
     private void ApplyHeroineData(string heroineID)
     {
         UnsubscribeFromModel();
-        KillAllTweens();
+        StatusPreviewSequencer.CancelAllIfExists();
         HideAllPreviewTexts();
 
         var service = GameStatusService.Instance;
@@ -204,6 +204,7 @@ public class HeroineUI : MonoBehaviour
         _currentModel.OnTrustChanged += HandleTrustChanged;
         _currentModel.OnLibidoChanged += HandleLibidoChanged;
         _currentModel.OnCurrentEmotionChanged += HandleCurrentEmotionChanged;
+        _currentModel.OnEmotionCardAdded += HandleEmotionCardAdded;
     }
 
     private void UnsubscribeFromModel()
@@ -212,6 +213,7 @@ public class HeroineUI : MonoBehaviour
         _currentModel.OnTrustChanged -= HandleTrustChanged;
         _currentModel.OnLibidoChanged -= HandleLibidoChanged;
         _currentModel.OnCurrentEmotionChanged -= HandleCurrentEmotionChanged;
+        _currentModel.OnEmotionCardAdded -= HandleEmotionCardAdded;
     }
 
     // ==========================================================
@@ -223,21 +225,41 @@ public class HeroineUI : MonoBehaviour
     {
         int delta = newValue - _cachedTrust;
         _cachedTrust = newValue;
-        UpdateTrustUI();
-        ShowDeltaPreview(textTrustPreview, delta);
+        StatusPreviewSequencer.Instance.Enqueue(
+            StatusPreviewSequencer.OrderHeroineTrust,
+            () => SetText(textTrust, newValue),
+            PreviewIfAllowed(textTrustPreview, delta),
+            delta);
     }
 
     private void HandleLibidoChanged(int newValue)
     {
         int delta = newValue - _cachedLibido;
         _cachedLibido = newValue;
-        UpdateLibidoUI();
-        ShowDeltaPreview(textLibidoPreview, delta);
+        StatusPreviewSequencer.Instance.Enqueue(
+            StatusPreviewSequencer.OrderHeroineLibido,
+            () => SetText(textLibido, newValue),
+            PreviewIfAllowed(textLibidoPreview, delta),
+            delta);
     }
 
     private void HandleCurrentEmotionChanged(HeroineEmotionCardType emotion)
     {
-        UpdateCurrentEmotionUI();
+        // 標籤本體在輪到它的 step 才更新；同時閃一下「情緒轉變」提示（文字固定、只開關）。
+        StatusPreviewSequencer.Instance.EnqueueToggle(
+            StatusPreviewSequencer.OrderHeroineCurrentEmotion,
+            textCurrentEmotionChangedPreview,
+            applyValue: UpdateCurrentEmotionUI);
+    }
+
+    private void HandleEmotionCardAdded(HeroineEmotionCardType emotion)
+    {
+        // 新增情緒卡：冒出「情緒名稱 ↑」飄字（名稱同樣走 EmotionCardCatalog 查表本地化）。
+        string label = ResolveEmotionDisplayText(emotion);
+        StatusPreviewSequencer.Instance.EnqueueText(
+            StatusPreviewSequencer.OrderHeroineEmotionAdded,
+            textEmotionAddedPreview,
+            label + "↑ ");
     }
 
     // ==========================================================
@@ -308,6 +330,9 @@ public class HeroineUI : MonoBehaviour
     {
         HidePreviewText(textTrustPreview);
         HidePreviewText(textLibidoPreview);
+        HidePreviewText(textEmotionAddedPreview);
+        // 情緒轉變提示文字是固定的，只歸零 alpha、不清字。
+        HidePreviewKeepText(textCurrentEmotionChangedPreview);
     }
 
     private void HidePreviewText(TextMeshProUGUI target)
@@ -319,37 +344,26 @@ public class HeroineUI : MonoBehaviour
         target.color = c;
     }
 
-    private void ShowDeltaPreview(TextMeshProUGUI target, int delta)
+    // 只把 alpha 歸零、保留原本文字（給「純開關」型 preview 用）。
+    private void HidePreviewKeepText(TextMeshProUGUI target)
     {
-        if (target == null || delta == 0) return;
-        if (delta > 0 && !showPositivePreview) return;
-        if (delta < 0 && !showNegativePreview) return;
-
-        if (_previewTweens.TryGetValue(target, out var oldTween) && oldTween != null)
-            oldTween.Kill();
-
-        target.text = delta > 0 ? $"+{delta}" : delta.ToString();
+        if (target == null) return;
         var c = target.color;
-        c.a = 1f;
+        c.a = 0f;
         target.color = c;
-        target.gameObject.SetActive(true);
-
-        Tween tween = DOTween.Sequence()
-            .AppendInterval(previewHoldSeconds)
-            .Append(target.DOFade(0f, previewFadeSeconds))
-            .OnComplete(() =>
-            {
-                if (target != null) target.text = "";
-            });
-
-        _previewTweens[target] = tween;
     }
 
-    private void KillAllTweens()
+    private static void SetText(TextMeshProUGUI target, int value)
     {
-        foreach (var kv in _previewTweens)
-            kv.Value?.Kill();
-        _previewTweens.Clear();
+        if (target != null) target.text = value.ToString();
+    }
+
+    // 依正/負顯示設定決定是否要冒飄字；不允許時回傳 null（數字仍會跳）。
+    private TextMeshProUGUI PreviewIfAllowed(TextMeshProUGUI target, int delta)
+    {
+        if (delta > 0 && !showPositivePreview) return null;
+        if (delta < 0 && !showNegativePreview) return null;
+        return target;
     }
 
     // ==========================================================

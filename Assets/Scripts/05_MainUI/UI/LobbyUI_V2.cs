@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
-using DG.Tweening;
 using PixelCrushers;
 
 // 職責：Lobby 場景的 Presenter/View (NHK 版)
@@ -44,11 +43,10 @@ public class LobbyUI_V2 : MonoBehaviour
     [SerializeField] private TextMeshProUGUI textDependencyPreview;
 
     [Header("=== Preview 顯示設定 ===")]
-    [SerializeField] private float previewHoldSeconds = 1.0f;
-    [SerializeField] private float previewFadeSeconds = 0.35f;
+    [Tooltip("正/負變動是否顯示飄字；播放間隔與淡入淡出時間改由 StatusPreviewSequencer 控制。")]
     [SerializeField] private bool showPositivePreview = true;
     [SerializeField] private bool showNegativePreview = true;
-    // 主數值本體不做彈跳/縮放；只更新數字，變動量由 Preview 欄位顯示。
+    // 數字本體與飄字皆透過 StatusPreviewSequencer 依序播放（每隔固定秒數逐一跳）。
 
     // ==================================================
     // 舊欄位相容：如果 Inspector 還接在舊 Suspicion 欄位，會拿來顯示 Stress。
@@ -80,7 +78,6 @@ public class LobbyUI_V2 : MonoBehaviour
     private ProtagonistStatusModel _protagonistModel;
     private TimeSystemModel _timeModel;
     private int _lastPhaseIndex = -1;
-    private readonly Dictionary<TextMeshProUGUI, Tween> _previewTweens = new Dictionary<TextMeshProUGUI, Tween>();
 
     private void Awake()
     {
@@ -105,7 +102,7 @@ public class LobbyUI_V2 : MonoBehaviour
     private void OnDisable()
     {
         UnsubscribeEvents();
-        KillAllTweens();
+        StatusPreviewSequencer.CancelAllIfExists();
     }
 
     private void OnDestroy()
@@ -197,26 +194,42 @@ public class LobbyUI_V2 : MonoBehaviour
 
     private void HandleStressChanged(int delta)
     {
-        UpdateStressUI();
-        ShowDeltaPreview(textStressPreview, delta);
+        int v = _protagonistModel != null ? _protagonistModel.Stress : 0;
+        StatusPreviewSequencer.Instance.Enqueue(
+            StatusPreviewSequencer.OrderStress,
+            () => SetText(textStress, v),
+            PreviewIfAllowed(textStressPreview, delta),
+            delta);
     }
 
     private void HandleLifePowerChanged(int delta)
     {
-        UpdateLifePowerUI();
-        ShowDeltaPreview(textLifePowerPreview, delta);
+        int v = _protagonistModel != null ? _protagonistModel.LifePower : 0;
+        StatusPreviewSequencer.Instance.Enqueue(
+            StatusPreviewSequencer.OrderLifePower,
+            () => SetText(textLifePower, v),
+            PreviewIfAllowed(textLifePowerPreview, delta),
+            delta);
     }
 
     private void HandleSocialityChanged(int delta)
     {
-        UpdateSocialityUI();
-        ShowDeltaPreview(textSocialityPreview, delta);
+        int v = _protagonistModel != null ? _protagonistModel.Sociality : 0;
+        StatusPreviewSequencer.Instance.Enqueue(
+            StatusPreviewSequencer.OrderSociality,
+            () => SetText(textSociality, v),
+            PreviewIfAllowed(textSocialityPreview, delta),
+            delta);
     }
 
     private void HandleDependencyChanged(int delta)
     {
-        UpdateDependencyUI();
-        ShowDeltaPreview(textDependencyPreview, delta);
+        int v = _protagonistModel != null ? _protagonistModel.Dependency : 0;
+        StatusPreviewSequencer.Instance.Enqueue(
+            StatusPreviewSequencer.OrderDependency,
+            () => SetText(textDependency, v),
+            PreviewIfAllowed(textDependencyPreview, delta),
+            delta);
     }
 
     private void HandleMoneyChanged(int delta)
@@ -297,39 +310,17 @@ public class LobbyUI_V2 : MonoBehaviour
         target.color = c;
     }
 
-    private void ShowDeltaPreview(TextMeshProUGUI target, int delta)
+    private static void SetText(TextMeshProUGUI target, int value)
     {
-        if (target == null || delta == 0) return;
-        if (delta > 0 && !showPositivePreview) return;
-        if (delta < 0 && !showNegativePreview) return;
-
-        if (_previewTweens.TryGetValue(target, out var oldTween) && oldTween != null)
-            oldTween.Kill();
-
-        target.text = delta > 0 ? $"+{delta}" : delta.ToString();
-        var c = target.color;
-        c.a = 1f;
-        target.color = c;
-        target.gameObject.SetActive(true);
-
-        Tween tween = DOTween.Sequence()
-            .AppendInterval(previewHoldSeconds)
-            .Append(target.DOFade(0f, previewFadeSeconds))
-            .OnComplete(() =>
-            {
-                if (target != null) target.text = "";
-            });
-
-        _previewTweens[target] = tween;
+        if (target != null) target.text = value.ToString();
     }
 
-    private void KillAllTweens()
+    // 依正/負顯示設定決定是否要冒飄字；不允許時回傳 null（數字仍會跳）。
+    private TextMeshProUGUI PreviewIfAllowed(TextMeshProUGUI target, int delta)
     {
-        foreach (var kv in _previewTweens)
-        {
-            kv.Value?.Kill();
-        }
-        _previewTweens.Clear();
+        if (delta > 0 && !showPositivePreview) return null;
+        if (delta < 0 && !showNegativePreview) return null;
+        return target;
     }
 
     // ==================================================
