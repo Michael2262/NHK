@@ -2353,7 +2353,10 @@ MonoBehaviour:
           ProgressFlag(Add,
           Flag_IntroTalk);
 
-          ProgressFlag(SetInt, Value_IntroMood, 1);'
+          ProgressFlag(SetInt, Value_IntroMood, 1);
+
+
+          ProgressFlag(Add,Flag_Music_Off_All);'
         type: 0
         typeString: CustomFieldType_Text
       - title: zh-TW
@@ -2652,8 +2655,8 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 209
-        y: 999
+        x: 193.40366
+        y: 1006.3395
         width: 160
         height: 30
     - id: 6
@@ -4024,11 +4027,13 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Dialogue Text
-        value: "\uFF08\u9580\u9234\u9023\u6309\uFF09"
+        value: "\u7A81\u7136\u50B3\u4F86\u9580\u9234\u8072"
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: 
+        value: 'PlaySound(doorbell);
+
+          Delay({{end}});'
         type: 0
         typeString: CustomFieldType_Text
       - title: zh-TW
@@ -4436,11 +4441,15 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Dialogue Text
-        value: "\uFF08\u9580\u9234\u9023\u6309\uFF09"
+        value: "\u7A81\u7136\u50B3\u4F86\u9580\u9234\u8072"
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: 
+        value: 'PlaySound(doorbell);
+
+          Delay({{end}});
+
+'
         type: 0
         typeString: CustomFieldType_Text
       - title: zh-TW
@@ -4517,7 +4526,7 @@ MonoBehaviour:
         width: 160
         height: 30
     entryGroups: []
-    canvasScrollPosition: {x: 0, y: 94.49542}
+    canvasScrollPosition: {x: 0.91744995, y: 33.027527}
     canvasZoom: 1.0899999
   - id: 94
     fields:
@@ -4808,19 +4817,27 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: 'TachieControl(Show, Sister, 0.5);
+        value: '
 
-          TachieControl(Expression,
-          Sister, Sad1);
+          TachieControl(Expression, Sister, Sad1);
 
-          TachieControl(Body, Sister, Casual);
+          TachieControl(Body,
+          Sister, Casual);
 
-          TachieControl(Brow,
-          Sister, Angry1);
+          TachieControl(Brow, Sister, Angry1);
 
-          TachieControl(Other, Sister, None);
+          TachieControl(Other,
+          Sister, None);
 
 
+          required TachieControl(Show, Sister, 0.7)@0.3;
+
+
+          PlaySound(door);
+
+
+          required
+          ProgressFlag(Remove, Flag_Music_Off_All)@0.2;
 
 
           Delay({{end}});
@@ -4897,7 +4914,7 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 157
+        x: 158
         y: 122
         width: 160
         height: 30
@@ -4928,7 +4945,11 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: 
+        value: '
+
+
+
+          Delay({{end}});'
         type: 0
         typeString: CustomFieldType_Text
       - title: zh-TW
