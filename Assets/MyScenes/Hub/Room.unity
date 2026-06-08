@@ -5527,7 +5527,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5028076934472659530, guid: ebb0911a63b51c4428ebcf8e42a79d78, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5205404571681645426, guid: ebb0911a63b51c4428ebcf8e42a79d78, type: 3}
       propertyPath: m_AnchoredPosition.x
@@ -5536,6 +5536,14 @@ PrefabInstance:
     - target: {fileID: 5205404571681645426, guid: ebb0911a63b51c4428ebcf8e42a79d78, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: 485
+      objectReference: {fileID: 0}
+    - target: {fileID: 6074400328766278820, guid: ebb0911a63b51c4428ebcf8e42a79d78, type: 3}
+      propertyPath: conditionalButtons.Array.data[2].isDefault
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6074400328766278820, guid: ebb0911a63b51c4428ebcf8e42a79d78, type: 3}
+      propertyPath: conditionalButtons.Array.data[3].isDefault
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6074400328766278820, guid: ebb0911a63b51c4428ebcf8e42a79d78, type: 3}
       propertyPath: conditionalButtons.Array.data[5].buttonObject
@@ -6084,6 +6092,38 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 602077367}
   m_CullTransparentMesh: 1
+--- !u!1 &613840490
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 613840491}
+  m_Layer: 0
+  m_Name: HelpFunctionFSM
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &613840491
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 613840490}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1370138993}
+  m_Father: {fileID: 1283080550}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &659995567
 GameObject:
   m_ObjectHideFlags: 0
@@ -7671,6 +7711,56 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 1444016909}
   m_SourcePrefab: {fileID: 100100000, guid: ebb0911a63b51c4428ebcf8e42a79d78, type: 3}
+--- !u!1 &848037979
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 848037980}
+  - component: {fileID: 848037981}
+  m_Layer: 0
+  m_Name: '#Fsm_Value_Manager'
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &848037980
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 848037979}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1283080550}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &848037981
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 848037979}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d35380d8ca5a7f043a54751b21d5ac73, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::FsmValueManager
+  registeredFSMs:
+  - id: FSM_HelpClean
+    group: 
+    targetObject: {fileID: 1370138989}
+    fsmName: FSM
+    resolvedFsm: {fileID: 0}
 --- !u!1 &869419531
 GameObject:
   m_ObjectHideFlags: 0
@@ -9723,6 +9813,7 @@ GameObject:
   - component: {fileID: 1051075459}
   - component: {fileID: 1051075458}
   - component: {fileID: 1051075457}
+  - component: {fileID: 1051075460}
   m_Layer: 0
   m_Name: EventSystem
   m_TagString: Untagged
@@ -9791,6 +9882,20 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1051075460
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1051075456}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e8b12bee42e8aa45bc35d52f71819e1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::FsmTrigge
+  fsmName: 
+  eventName: TRIGGER
 --- !u!1001 &1064710461
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -10991,6 +11096,8 @@ Transform:
   - {fileID: 1984944474}
   - {fileID: 533239860}
   - {fileID: 2133637976}
+  - {fileID: 613840491}
+  - {fileID: 848037980}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1291963412
@@ -11818,6 +11925,489 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!1 &1370138989
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1370138993}
+  - component: {fileID: 1370138992}
+  - component: {fileID: 1370138991}
+  - component: {fileID: 1370138990}
+  m_Layer: 0
+  m_Name: FSM_HelpClean
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1370138990
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1370138989}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d433608591abaa040976be631d9c6e80, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ValueChangeResult
+  sourceRouter: {fileID: 0}
+  manualDeductions: []
+  resourceGains:
+  - resourceType: 0
+    baseAmount: 5
+    randomEffect:
+      enabled: 0
+      enableGood: 0
+      goodChance: 0
+      goodMultiplier: 0
+      enableBad: 0
+      badChance: 0
+      badMultiplier: 0
+  deductTime: 1
+  manualTimeAmount: 1
+  targetHeroineID: sister
+  heroineResourceChanges:
+  - resourceType: 1
+    amount: 1
+    randomEffect:
+      enabled: 0
+      enableGood: 0
+      goodChance: 0
+      goodMultiplier: 0
+      enableBad: 0
+      badChance: 0
+      badMultiplier: 0
+  flagChanges: []
+  autoReport: 0
+  onGoodEffect:
+    m_PersistentCalls:
+      m_Calls: []
+  onBadEffect:
+    m_PersistentCalls:
+      m_Calls: []
+  onComplete:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &1370138991
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1370138989}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2a852015ed21d2642859a85240362c08, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ActionOverlayTrigger
+  duration: 2
+  actionSprite: {fileID: 0}
+  localizationKey: 
+  enableOutcomeResult: 0
+  successChance: 0.5
+  chanceProvider: {fileID: 0}
+  autoApplyChanceProviderOnExecute: 1
+  successLocalizationKey: Result.Success
+  failureLocalizationKey: Result.Failure
+  resultHoldSeconds: 2
+  onCompleteEvents:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 1370138990}
+        m_TargetAssemblyTypeName: ValueChangeResult, Assembly-CSharp
+        m_MethodName: Execute
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+  onSuccessEvents:
+    m_PersistentCalls:
+      m_Calls: []
+  onFailureEvents:
+    m_PersistentCalls:
+      m_Calls: []
+  onStartEvents:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &1370138992
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1370138989}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 1384774831, guid: e743331561ef77147ae48cda9bcb8209, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: PlayMaker.dll::PlayMakerFSM
+  fsm:
+    dataVersion: 2
+    usedInTemplate: {fileID: 0}
+    name: FSM
+    startState: Wait
+    states:
+    - name: Wait
+      description: 
+      colorIndex: 0
+      position:
+        serializedVersion: 2
+        x: 50
+        y: 100
+        width: 100
+        height: 32
+      isBreakpoint: 0
+      isSequence: 0
+      hideUnused: 0
+      transitions:
+      - fsmEvent:
+          name: TRIGGER
+          isSystemEvent: 0
+          isGlobal: 0
+        toState: "\u89F8\u767C\u5C0D\u8A71"
+        linkStyle: 0
+        linkConstraint: 0
+        linkTarget: 0
+        colorIndex: 0
+      actionData:
+        actionNames: []
+        customNames: []
+        actionEnabled: 
+        actionIsOpen: 
+        actionStartIndex: 
+        actionHashCodes: 
+        unityObjectParams: []
+        fsmGameObjectParams: []
+        fsmOwnerDefaultParams: []
+        animationCurveParams: []
+        functionCallParams: []
+        fsmTemplateControlParams: []
+        fsmEventTargetParams: []
+        fsmPropertyParams: []
+        layoutOptionParams: []
+        fsmStringParams: []
+        fsmObjectParams: []
+        fsmVarParams: []
+        fsmArrayParams: []
+        fsmEnumParams: []
+        fsmFloatParams: []
+        fsmIntParams: []
+        fsmBoolParams: []
+        fsmVector2Params: []
+        fsmVector3Params: []
+        fsmColorParams: []
+        fsmRectParams: []
+        fsmQuaternionParams: []
+        stringParams: []
+        byteData: 
+        arrayParamSizes: 
+        arrayParamTypes: []
+        customTypeSizes: 
+        customTypeNames: []
+        paramDataType: 
+        paramName: []
+        paramDataPos: 
+        paramByteDataSize: 
+    - name: "\u89F8\u767C\u5C0D\u8A71"
+      description: 
+      colorIndex: 0
+      position:
+        serializedVersion: 2
+        x: 55
+        y: 190
+        width: 100
+        height: 32
+      isBreakpoint: 0
+      isSequence: 0
+      hideUnused: 0
+      transitions:
+      - fsmEvent:
+          name: NextAction
+          isSystemEvent: 0
+          isGlobal: 0
+        toState: "\u89F8\u767C\u98C4\u6846"
+        linkStyle: 0
+        linkConstraint: 0
+        linkTarget: 0
+        colorIndex: 0
+      actionData:
+        actionNames:
+        - PlayStoryConversation
+        customNames:
+        - 
+        actionEnabled: 01
+        actionIsOpen: 01
+        actionStartIndex: 00000000
+        actionHashCodes: a4345405
+        unityObjectParams: []
+        fsmGameObjectParams: []
+        fsmOwnerDefaultParams: []
+        animationCurveParams: []
+        functionCallParams: []
+        fsmTemplateControlParams: []
+        fsmEventTargetParams: []
+        fsmPropertyParams: []
+        layoutOptionParams: []
+        fsmStringParams:
+        - useVariable: 0
+          name: 
+          tooltip: 
+          showInInspector: 0
+          networkSync: 0
+          value: DayLoopTalk/HelpClean
+        fsmObjectParams: []
+        fsmVarParams: []
+        fsmArrayParams: []
+        fsmEnumParams: []
+        fsmFloatParams: []
+        fsmIntParams: []
+        fsmBoolParams: []
+        fsmVector2Params: []
+        fsmVector3Params: []
+        fsmColorParams: []
+        fsmRectParams: []
+        fsmQuaternionParams: []
+        stringParams: []
+        byteData: 00000000
+        arrayParamSizes: 
+        arrayParamTypes: []
+        customTypeSizes: 
+        customTypeNames: []
+        paramDataType: 1200000007000000
+        paramName:
+        - title
+        - mode
+        paramDataPos: 0000000000000000
+        paramByteDataSize: 0000000004000000
+    - name: "\u89F8\u767C\u98C4\u6846"
+      description: 
+      colorIndex: 0
+      position:
+        serializedVersion: 2
+        x: 51
+        y: 306
+        width: 100
+        height: 32
+      isBreakpoint: 0
+      isSequence: 0
+      hideUnused: 0
+      transitions:
+      - fsmEvent:
+          name: FINISHED
+          isSystemEvent: 1
+          isGlobal: 0
+        toState: Wait
+        linkStyle: 0
+        linkConstraint: 0
+        linkTarget: 0
+        colorIndex: 0
+      actionData:
+        actionNames:
+        - HutongGames.PlayMaker.Actions.Wait
+        - HutongGames.PlayMaker.Actions.CallMethod
+        customNames:
+        - 
+        - 
+        actionEnabled: 0101
+        actionIsOpen: 0101
+        actionStartIndex: 0000000003000000
+        actionHashCodes: 48c01101ca51e900
+        unityObjectParams: []
+        fsmGameObjectParams: []
+        fsmOwnerDefaultParams: []
+        animationCurveParams: []
+        functionCallParams: []
+        fsmTemplateControlParams: []
+        fsmEventTargetParams: []
+        fsmPropertyParams: []
+        layoutOptionParams: []
+        fsmStringParams:
+        - useVariable: 0
+          name: 
+          tooltip: 
+          showInInspector: 0
+          networkSync: 0
+          value: Execute
+        fsmObjectParams:
+        - useVariable: 1
+          name: ActionOverlay
+          tooltip: 
+          showInInspector: 0
+          networkSync: 0
+          typeName: ActionOverlayTrigger
+          value: {fileID: 1370138991}
+        fsmVarParams:
+        - variableName: 
+          objectType: 
+          useVariable: 0
+          type: -1
+          floatValue: 0
+          intValue: 0
+          boolValue: 0
+          stringValue: 
+          vector4Value: {x: 0, y: 0, z: 0, w: 0}
+          objectReference: {fileID: 0}
+          arrayValue:
+            useVariable: 0
+            name: 
+            tooltip: 
+            showInInspector: 0
+            networkSync: 0
+            type: -1
+            objectTypeName: 
+            floatValues: []
+            intValues: 
+            boolValues: 
+            stringValues: []
+            vector4Values: []
+            objectReferences: []
+        fsmArrayParams: []
+        fsmEnumParams: []
+        fsmFloatParams:
+        - useVariable: 0
+          name: 
+          tooltip: 
+          showInInspector: 0
+          networkSync: 0
+          value: 1
+        fsmIntParams: []
+        fsmBoolParams: []
+        fsmVector2Params: []
+        fsmVector3Params: []
+        fsmColorParams: []
+        fsmRectParams: []
+        fsmQuaternionParams: []
+        stringParams:
+        - FINISHED
+        byteData: 000000
+        arrayParamSizes: 00000000
+        arrayParamTypes:
+        - HutongGames.PlayMaker.FsmVar
+        customTypeSizes: 
+        customTypeNames: []
+        paramDataType: 0f000000170000000100000018000000120000000c000000270000000100000001000000
+        paramName:
+        - time
+        - finishEvent
+        - realTime
+        - behaviour
+        - methodName
+        - parameters
+        - storeResult
+        - everyFrame
+        - manualUI
+        paramDataPos: 000000000000000000000000000000000000000000000000000000000100000002000000
+        paramByteDataSize: 000000000000000001000000000000000000000000000000000000000100000001000000
+    events:
+    - name: TRIGGER
+      isSystemEvent: 0
+      isGlobal: 0
+    - name: NextAction
+      isSystemEvent: 0
+      isGlobal: 0
+    - name: FINISHED
+      isSystemEvent: 1
+      isGlobal: 0
+    globalTransitions: []
+    variables:
+      floatVariables: []
+      intVariables: []
+      boolVariables: []
+      stringVariables: []
+      vector2Variables: []
+      vector3Variables: []
+      colorVariables: []
+      rectVariables: []
+      quaternionVariables: []
+      gameObjectVariables: []
+      objectVariables:
+      - useVariable: 1
+        name: ActionOverlay
+        tooltip: 
+        showInInspector: 0
+        networkSync: 0
+        typeName: ActionOverlayTrigger
+        value: {fileID: 1370138991}
+      materialVariables: []
+      textureVariables: []
+      arrayVariables: []
+      enumVariables: []
+      categories:
+      - 
+      variableCategoryIDs: 00000000
+    description: 
+    docUrl: 
+    showStateLabel: 0
+    maxLoopCount: 0
+    watermark: 
+    password: 
+    locked: 0
+    manualUpdate: 0
+    outVariableIndices: 
+    keepDelayedEventsOnStateExit: 0
+    preprocessed: 0
+    ExposedEvents: []
+    OutputEvents: []
+    RestartOnEnable: 1
+    ResetVariablesOnEnable: 0
+    EnableDebugFlow: 0
+    EnableBreakpoints: 1
+    editorFlags: 225
+    activeStateName: 
+    mouseEvents: 0
+    handleLevelLoaded: 0
+    handleTriggerEnter2D: 0
+    handleTriggerExit2D: 0
+    handleTriggerStay2D: 0
+    handleCollisionEnter2D: 0
+    handleCollisionExit2D: 0
+    handleCollisionStay2D: 0
+    handleTriggerEnter: 0
+    handleTriggerExit: 0
+    handleTriggerStay: 0
+    handleCollisionEnter: 0
+    handleCollisionExit: 0
+    handleCollisionStay: 0
+    handleParticleCollision: 0
+    handleControllerColliderHit: 0
+    handleJointBreak: 0
+    handleJointBreak2D: 0
+    handleOnGUI: 0
+    handleFixedUpdate: 0
+    handleLateUpdate: 0
+    handleApplicationEvents: 0
+    handleUiEvents: 0
+    handleLegacyNetworking: 0
+    handleAnimatorMove: 0
+    handleAnimatorIK: 0
+  fsmTemplate: {fileID: 0}
+  eventHandlerComponentsAdded: 0
+--- !u!4 &1370138993
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1370138989}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 613840491}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1396655912
 GameObject:
   m_ObjectHideFlags: 0

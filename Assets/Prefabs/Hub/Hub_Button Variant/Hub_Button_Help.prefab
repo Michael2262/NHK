@@ -23,14 +23,14 @@ PrefabInstance:
     - target: {fileID: 2865881838498405525, guid: 47cdc5d225a30fb4283d91ebadf36f29, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
-      objectReference: {fileID: 6445869983160712187}
+      objectReference: {fileID: 4299982954734293570}
     - target: {fileID: 2865881838498405525, guid: 47cdc5d225a30fb4283d91ebadf36f29, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
-      value: TriggerStory
+      value: Trigger
       objectReference: {fileID: 0}
     - target: {fileID: 2865881838498405525, guid: 47cdc5d225a30fb4283d91ebadf36f29, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
-      value: ConditionalStoryTrigger, Assembly-CSharp
+      value: FsmValueIDTrigger, Assembly-CSharp
       objectReference: {fileID: 0}
     - target: {fileID: 2865881838498405525, guid: 47cdc5d225a30fb4283d91ebadf36f29, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
@@ -146,14 +146,14 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 1525115703803297967, guid: 47cdc5d225a30fb4283d91ebadf36f29, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 6445869983160712187}
+      addedObject: {fileID: 4299982954734293570}
   m_SourcePrefab: {fileID: 100100000, guid: 47cdc5d225a30fb4283d91ebadf36f29, type: 3}
 --- !u!1 &7457797593668237778 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 1525115703803297967, guid: 47cdc5d225a30fb4283d91ebadf36f29, type: 3}
   m_PrefabInstance: {fileID: 8238534812081289597}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &6445869983160712187
+--- !u!114 &4299982954734293570
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -162,11 +162,8 @@ MonoBehaviour:
   m_GameObject: {fileID: 7457797593668237778}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3ee194feba9fd7045a88481deeb2f354, type: 3}
+  m_Script: {fileID: 11500000, guid: ce3d57f28cc651444bae0e7762f4840a, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ConditionalStoryTrigger
-  storyConditions:
-  - conversationTitle: Begining/LivingRoom
-    mode: 0
-    isDefault: 0
-    requiredFlag: {fileID: 11400000, guid: d1130ab0204cee14ab7e950459c9e595, type: 2}
+  m_EditorClassIdentifier: Assembly-CSharp::FsmValueIDTrigger
+  targetId: FSM_HelpClean
+  eventName: TRIGGER

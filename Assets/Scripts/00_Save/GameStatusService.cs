@@ -28,6 +28,7 @@ public class GameStatusService : MonoBehaviour
     [SerializeField] private LocationDatabase locationDatabase; //  ScenarioManager 需要的地點資料庫
     [SerializeField] private DailyScheduleConfig dailyScheduleConfig; //
     [SerializeField] private DayTriggerConfig dayTriggerConfig; //
+    [SerializeField] private StatChangePackageDatabase statChangePackageDatabase; // 數值變化套組資料庫
 
 
 
@@ -96,6 +97,7 @@ public class GameStatusService : MonoBehaviour
     public SkillSystemManager SkillManager { get; private set; }
     public ShopService ShopService { get; private set; } // ShopService 的實例
     public ItemUseService ItemUseService { get; private set; }
+    public StatChangeService StatChangeService { get; private set; } // 數值變化套組執行核心
     public SaveGameManager SaveManager { get; private set; } // 存檔管理器
 
     private DailyScheduleProcessor _scheduleProcessor;
@@ -165,6 +167,9 @@ public class GameStatusService : MonoBehaviour
         ItemUseService = new ItemUseService(itemDatabase, this);
         // 實例化 ShopService，將所有它需要的依賴項從上面已經創建好的實例中傳入
         ShopService = new ShopService(Protagonist, Inventory, ShopStatus, PendingDelivery, itemDatabase, () => Time.DayIndex);
+        // 數值變化套組服務（套用時透過 Instance 取 Protagonist / Heroines）
+        StatChangeService = new StatChangeService(statChangePackageDatabase);
+
         // 啟動觸發系統
         TriggerManager = new HeroineStatTriggerManager(ProgressFlags, Heroines, heroineTriggerContainers);
 

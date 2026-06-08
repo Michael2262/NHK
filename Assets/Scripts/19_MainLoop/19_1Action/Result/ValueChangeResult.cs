@@ -28,7 +28,8 @@ public class ValueChangeResult : MonoBehaviour
     // ==================================================
     public enum HeroineResourceType
     {
-        Libido
+        Libido,
+        Trust
     }
 
     [Serializable]
@@ -125,6 +126,10 @@ public class ValueChangeResult : MonoBehaviour
     [SerializeField] private string targetHeroineID = "";
     [SerializeField] private List<HeroineResourceChangeItem> heroineResourceChanges = new List<HeroineResourceChangeItem>();
 
+    [Header("5.5 數值變化套組 (StatChangePackageDatabase)")]
+    [Tooltip("以 ID 套用集中設定的數值變化套組（主角 + 女主角）。套組中的女主角項會套到上方的 targetHeroineID。可填多個，依序執行。")]
+    [SerializeField] private List<string> statPackageIDs = new List<string>();
+
     [Header("6. Flag 開關（隱性，不報告）")]
     [SerializeField] private List<FlagChangeItem> flagChanges = new List<FlagChangeItem>();
 
@@ -164,6 +169,7 @@ public class ValueChangeResult : MonoBehaviour
         ExecuteTimeDeduction(t);
         ExecuteGains(p);
         ExecuteHeroineChanges();
+        ExecuteStatPackages();
         ExecuteFlagChanges();
 
         if (autoReport)
@@ -291,6 +297,31 @@ public class ValueChangeResult : MonoBehaviour
         }
     }
 
+    private void ExecuteStatPackages()
+    {
+        if (statPackageIDs == null || statPackageIDs.Count == 0) return;
+
+        var statService = GameStatusService.Instance?.StatChangeService;
+        if (statService == null)
+        {
+            Debug.LogWarning("[ValueChangeResult] StatChangeService 尚未初始化，跳過數值變化套組。");
+            return;
+        }
+
+        foreach (var id in statPackageIDs)
+        {
+            if (string.IsNullOrWhiteSpace(id)) continue;
+
+            // 套組中的女主角項會套到 targetHeroineID；回傳的記錄已內含 heroineNameKey。
+            var records = statService.Apply(id, targetHeroineID);
+            if (records != null && records.Count > 0)
+            {
+                _changeRecords.AddRange(records);
+            }
+            Debug.Log($"[ValueChangeResult] 套用數值變化套組: {id} (記錄數: {records?.Count ?? 0})");
+        }
+    }
+
     private void ExecuteFlagChanges()
     {
         if (flagChanges == null || flagChanges.Count == 0) return;
@@ -340,6 +371,9 @@ public class ValueChangeResult : MonoBehaviour
         {
             case HeroineResourceType.Libido:
                 heroine.AddLibido(amount);
+                break;
+            case HeroineResourceType.Trust:
+                heroine.AddTrust(amount);
                 break;
         }
     }
@@ -520,6 +554,14 @@ public class ValueChangeResult : MonoBehaviour
     }
 
     public void ClearHeroineChangeItems() => heroineResourceChanges.Clear();
+
+    public void AddStatPackageID(string packageID)
+    {
+        if (string.IsNullOrWhiteSpace(packageID)) return;
+        statPackageIDs.Add(packageID);
+    }
+
+    public void ClearStatPackageIDs() => statPackageIDs.Clear();
 
     public void AddFlagChangeItem(ProgressFlagDefinition definition, FlagOperation operation, FlagLifetime lifetime = FlagLifetime.Persistent)
     {
