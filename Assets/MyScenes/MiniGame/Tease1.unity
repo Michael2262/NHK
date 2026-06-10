@@ -386,6 +386,7 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1938493317}
+  - {fileID: 188797573}
   m_Father: {fileID: 2102085558}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -718,6 +719,152 @@ Transform:
   - {fileID: 1044646963}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &188797572
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 188797573}
+  - component: {fileID: 188797577}
+  - component: {fileID: 188797576}
+  - component: {fileID: 188797575}
+  - component: {fileID: 188797574}
+  m_Layer: 0
+  m_Name: Button
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &188797573
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 188797572}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1618747003}
+  m_Father: {fileID: 91705802}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 160, y: 30}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &188797574
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 188797572}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9beeaa3613465e643a5e9ad13325a07b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::StoryBridge
+--- !u!114 &188797575
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 188797572}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
+  m_Navigation:
+    m_Mode: 3
+    m_WrapAround: 0
+    m_SelectOnUp: {fileID: 0}
+    m_SelectOnDown: {fileID: 0}
+    m_SelectOnLeft: {fileID: 0}
+    m_SelectOnRight: {fileID: 0}
+  m_Transition: 1
+  m_Colors:
+    m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
+    m_HighlightedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
+    m_PressedColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 1}
+    m_SelectedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
+    m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
+    m_ColorMultiplier: 1
+    m_FadeDuration: 0.1
+  m_SpriteState:
+    m_HighlightedSprite: {fileID: 0}
+    m_PressedSprite: {fileID: 0}
+    m_SelectedSprite: {fileID: 0}
+    m_DisabledSprite: {fileID: 0}
+  m_AnimationTriggers:
+    m_NormalTrigger: Normal
+    m_HighlightedTrigger: Highlighted
+    m_PressedTrigger: Pressed
+    m_SelectedTrigger: Selected
+    m_DisabledTrigger: Disabled
+  m_Interactable: 1
+  m_TargetGraphic: {fileID: 188797576}
+  m_OnClick:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 1915912873}
+        m_TargetAssemblyTypeName: FsmTrigge, Assembly-CSharp
+        m_MethodName: Trigger
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+--- !u!114 &188797576
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 188797572}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+  m_Type: 1
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!222 &188797577
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 188797572}
+  m_CullTransparentMesh: 1
 --- !u!1 &201873330
 GameObject:
   m_ObjectHideFlags: 0
@@ -3394,6 +3541,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   sceneTasks:
   - {fileID: 1324304711}
+  autoRunWhenPlayedDirectly: 0
 --- !u!4 &616557966
 Transform:
   m_ObjectHideFlags: 0
@@ -6358,8 +6506,6 @@ MeshRenderer:
   - {fileID: 2100000, guid: 43ac2185ab319ef47ba707fb377c2ad9, type: 2}
   - {fileID: 2100000, guid: b4a5ec8bf6e40c241b847f800dbe80d5, type: 2}
   - {fileID: 2100000, guid: 43ac2185ab319ef47ba707fb377c2ad9, type: 2}
-  - {fileID: 2100000, guid: b4a5ec8bf6e40c241b847f800dbe80d5, type: 2}
-  - {fileID: 2100000, guid: 43ac2185ab319ef47ba707fb377c2ad9, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -8868,6 +9014,142 @@ MonoBehaviour:
   minRemoteCount: 2
   maxRemoteCount: 18
   playbackMode: 0
+--- !u!1 &1618747002
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1618747003}
+  - component: {fileID: 1618747005}
+  - component: {fileID: 1618747004}
+  m_Layer: 0
+  m_Name: Text (TMP)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &1618747003
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1618747002}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 188797573}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1618747004
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1618747002}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_text: 'OpeningSetup '
+  m_isRightToLeft: 0
+  m_fontAsset: {fileID: 11400000, guid: f86d8b1a89647a54eb7049575e8b9553, type: 2}
+  m_sharedMaterial: {fileID: -4147588894626420378, guid: f86d8b1a89647a54eb7049575e8b9553, type: 2}
+  m_fontSharedMaterials: []
+  m_fontMaterial: {fileID: 0}
+  m_fontMaterials: []
+  m_fontColor32:
+    serializedVersion: 2
+    rgba: 4281479730
+  m_fontColor: {r: 0.19607843, g: 0.19607843, b: 0.19607843, a: 1}
+  m_enableVertexGradient: 0
+  m_colorMode: 3
+  m_fontColorGradient:
+    topLeft: {r: 1, g: 1, b: 1, a: 1}
+    topRight: {r: 1, g: 1, b: 1, a: 1}
+    bottomLeft: {r: 1, g: 1, b: 1, a: 1}
+    bottomRight: {r: 1, g: 1, b: 1, a: 1}
+  m_fontColorGradientPreset: {fileID: 0}
+  m_spriteAsset: {fileID: 0}
+  m_tintAllSprites: 0
+  m_StyleSheet: {fileID: 0}
+  m_TextStyleHashCode: -1183493901
+  m_overrideHtmlColors: 0
+  m_faceColor:
+    serializedVersion: 2
+    rgba: 4294967295
+  m_fontSize: 20.7
+  m_fontSizeBase: 24
+  m_fontWeight: 400
+  m_enableAutoSizing: 1
+  m_fontSizeMin: 18
+  m_fontSizeMax: 72
+  m_fontStyle: 0
+  m_HorizontalAlignment: 2
+  m_VerticalAlignment: 512
+  m_textAlignment: 65535
+  m_characterSpacing: 0
+  m_wordSpacing: 0
+  m_lineSpacing: 0
+  m_lineSpacingMax: 0
+  m_paragraphSpacing: 0
+  m_charWidthMaxAdj: 0
+  m_TextWrappingMode: 1
+  m_wordWrappingRatios: 0.4
+  m_overflowMode: 0
+  m_linkedTextComponent: {fileID: 0}
+  parentLinkedComponent: {fileID: 0}
+  m_enableKerning: 0
+  m_ActiveFontFeatures: 6e72656b
+  m_enableExtraPadding: 0
+  checkPaddingRequired: 0
+  m_isRichText: 1
+  m_EmojiFallbackSupport: 1
+  m_parseCtrlCharacters: 1
+  m_isOrthographic: 1
+  m_isCullingEnabled: 0
+  m_horizontalMapping: 0
+  m_verticalMapping: 0
+  m_uvLineOffset: 0
+  m_geometrySortingOrder: 0
+  m_IsTextObjectScaleStatic: 0
+  m_VertexBufferAutoSizeReduction: 0
+  m_useMaxVisibleDescender: 1
+  m_pageToDisplay: 1
+  m_margin: {x: 0, y: 0, z: 0, w: 0}
+  m_isUsingLegacyAnimationComponent: 0
+  m_isVolumetricText: 0
+  m_hasFontAssetChanged: 0
+  m_baseMaterial: {fileID: 0}
+  m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!222 &1618747005
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1618747002}
+  m_CullTransparentMesh: 1
 --- !u!1001 &1631664168
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -9061,6 +9343,10 @@ PrefabInstance:
     - target: {fileID: 7219228850298269607, guid: 1c1d493b97a02f8429e5155bf529d119, type: 3}
       propertyPath: m_Name
       value: CommandButton_TouchBoods
+      objectReference: {fileID: 0}
+    - target: {fileID: 7219228850298269607, guid: 1c1d493b97a02f8429e5155bf529d119, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7680690706142868274, guid: 1c1d493b97a02f8429e5155bf529d119, type: 3}
       propertyPath: m_Pivot.x
@@ -12841,6 +13127,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1915912871}
   - component: {fileID: 1915912872}
+  - component: {fileID: 1915912873}
   m_Layer: 0
   m_Name: 'FSM_OpeningSetup '
   m_TagString: Untagged
@@ -12887,7 +13174,7 @@ MonoBehaviour:
       position:
         serializedVersion: 2
         x: 705.3125
-        y: 79.34375
+        y: 95.34375
         width: 102.47
         height: 48
       isBreakpoint: 0
@@ -12972,8 +13259,8 @@ MonoBehaviour:
       colorIndex: 0
       position:
         serializedVersion: 2
-        x: 184
-        y: 102
+        x: 185
+        y: 112
         width: 107.05
         height: 32
       isBreakpoint: 0
@@ -13034,7 +13321,7 @@ MonoBehaviour:
       position:
         serializedVersion: 2
         x: 190
-        y: 182
+        y: 198
         width: 100
         height: 64
       isBreakpoint: 0
@@ -13183,7 +13470,7 @@ MonoBehaviour:
       position:
         serializedVersion: 2
         x: 200
-        y: 351
+        y: 367
         width: 100
         height: 32
       isBreakpoint: 0
@@ -13261,7 +13548,7 @@ MonoBehaviour:
       position:
         serializedVersion: 2
         x: 198
-        y: 422
+        y: 438
         width: 100
         height: 32
       isBreakpoint: 0
@@ -13339,7 +13626,7 @@ MonoBehaviour:
       position:
         serializedVersion: 2
         x: 618.34375
-        y: 157.28906
+        y: 173.28906
         width: 100
         height: 32
       isBreakpoint: 0
@@ -13357,13 +13644,15 @@ MonoBehaviour:
         colorIndex: 0
       actionData:
         actionNames:
+        - HutongGames.PlayMaker.Actions.Wait
         - MySpineSystem.PlayMaker.PlaySpineAnimationByID
         customNames:
         - 
-        actionEnabled: 01
-        actionIsOpen: 01
-        actionStartIndex: 00000000
-        actionHashCodes: a1cb4a04
+        - 
+        actionEnabled: 0101
+        actionIsOpen: 0101
+        actionStartIndex: 0000000003000000
+        actionHashCodes: 48c01101a1cb4a04
         unityObjectParams: []
         fsmGameObjectParams: []
         fsmOwnerDefaultParams: []
@@ -13410,6 +13699,12 @@ MonoBehaviour:
           tooltip: 
           showInInspector: 0
           networkSync: 0
+          value: 1
+        - useVariable: 0
+          name: 
+          tooltip: 
+          showInInspector: 0
+          networkSync: 0
           value: -1
         fsmIntParams: []
         fsmBoolParams: []
@@ -13420,28 +13715,32 @@ MonoBehaviour:
         fsmQuaternionParams: []
         stringParams:
         - 
-        byteData: 
+        - 
+        byteData: 00
         arrayParamSizes: 
         arrayParamTypes: []
         customTypeSizes: 
         customTypeNames: []
-        paramDataType: 120000002a000000120000002a0000000f00000017000000
+        paramDataType: 0f0000001700000001000000120000002a000000120000002a0000000f00000017000000
         paramName:
+        - time
+        - finishEvent
+        - realTime
         - controllerID
         - track
         - animationName
         - clearMode
         - delaySeconds
         - finishEvent
-        paramDataPos: 000000000000000001000000010000000000000000000000
-        paramByteDataSize: 000000000000000000000000000000000000000000000000
+        paramDataPos: 000000000000000000000000000000000000000001000000010000000100000001000000
+        paramByteDataSize: 000000000000000001000000000000000000000000000000000000000000000000000000
     - name: "\u666E\u901A"
       description: 
       colorIndex: 0
       position:
         serializedVersion: 2
         x: 787.14844
-        y: 158.41406
+        y: 174.41406
         width: 100
         height: 32
       isBreakpoint: 0
@@ -13543,13 +13842,22 @@ MonoBehaviour:
       position:
         serializedVersion: 2
         x: 698.6094
-        y: 352.4375
+        y: 368.4375
         width: 136.51001
-        height: 16
+        height: 32
       isBreakpoint: 0
       isSequence: 0
       hideUnused: 0
-      transitions: []
+      transitions:
+      - fsmEvent:
+          name: TRIGGER
+          isSystemEvent: 0
+          isGlobal: 0
+        toState: "\u4E09\u5927\u6578\u503C\u8A2D\u7F6E"
+        linkStyle: 0
+        linkConstraint: 0
+        linkTarget: 0
+        colorIndex: 0
       actionData:
         actionNames:
         - FsmManagerSendEvent
@@ -13613,7 +13921,7 @@ MonoBehaviour:
       position:
         serializedVersion: 2
         x: 55
-        y: 284
+        y: 300
         width: 100
         height: 32
       isBreakpoint: 0
@@ -13691,7 +13999,7 @@ MonoBehaviour:
       position:
         serializedVersion: 2
         x: 195
-        y: 284
+        y: 300
         width: 100
         height: 32
       isBreakpoint: 0
@@ -13769,7 +14077,7 @@ MonoBehaviour:
       position:
         serializedVersion: 2
         x: 344
-        y: 288
+        y: 304
         width: 100
         height: 32
       isBreakpoint: 0
@@ -13847,7 +14155,7 @@ MonoBehaviour:
       position:
         serializedVersion: 2
         x: 170.9375
-        y: 492.65625
+        y: 508.65625
         width: 166.52
         height: 32
       isBreakpoint: 0
@@ -14066,7 +14374,7 @@ MonoBehaviour:
       position:
         serializedVersion: 2
         x: 618.5547
-        y: 245.35938
+        y: 257.35938
         width: 100
         height: 32
       isBreakpoint: 0
@@ -14083,12 +14391,14 @@ MonoBehaviour:
         linkTarget: 0
         colorIndex: 0
       actionData:
-        actionNames: []
-        customNames: []
-        actionEnabled: 
-        actionIsOpen: 
-        actionStartIndex: 
-        actionHashCodes: 
+        actionNames:
+        - PlayStoryConversation
+        customNames:
+        - 
+        actionEnabled: 01
+        actionIsOpen: 01
+        actionStartIndex: 00000000
+        actionHashCodes: a4345405
         unityObjectParams: []
         fsmGameObjectParams: []
         fsmOwnerDefaultParams: []
@@ -14098,7 +14408,13 @@ MonoBehaviour:
         fsmEventTargetParams: []
         fsmPropertyParams: []
         layoutOptionParams: []
-        fsmStringParams: []
+        fsmStringParams:
+        - useVariable: 0
+          name: 
+          tooltip: 
+          showInInspector: 0
+          networkSync: 0
+          value: Minigame/Sister/Tease1/FirstIntro
         fsmObjectParams: []
         fsmVarParams: []
         fsmArrayParams: []
@@ -14112,22 +14428,24 @@ MonoBehaviour:
         fsmRectParams: []
         fsmQuaternionParams: []
         stringParams: []
-        byteData: 
+        byteData: 02000000
         arrayParamSizes: 
         arrayParamTypes: []
         customTypeSizes: 
         customTypeNames: []
-        paramDataType: 
-        paramName: []
-        paramDataPos: 
-        paramByteDataSize: 
+        paramDataType: 1200000007000000
+        paramName:
+        - title
+        - mode
+        paramDataPos: 0000000000000000
+        paramByteDataSize: 0000000004000000
     - name: "\u666E\u901A\u5C0D\u8A71"
       description: 
       colorIndex: 0
       position:
         serializedVersion: 2
         x: 798.96875
-        y: 236.08594
+        y: 252.08594
         width: 100
         height: 32
       isBreakpoint: 0
@@ -14199,6 +14517,9 @@ MonoBehaviour:
       isSystemEvent: 0
       isGlobal: 0
     - name: Normal
+      isSystemEvent: 0
+      isGlobal: 0
+    - name: TRIGGER
       isSystemEvent: 0
       isGlobal: 0
     globalTransitions: []
@@ -14292,6 +14613,20 @@ MonoBehaviour:
     handleAnimatorIK: 0
   fsmTemplate: {fileID: 0}
   eventHandlerComponentsAdded: 0
+--- !u!114 &1915912873
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1915912870}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e8b12bee42e8aa45bc35d52f71819e1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::FsmTrigge
+  fsmName: FSM
+  eventName: TRIGGER
 --- !u!1001 &1917973633
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -16522,7 +16857,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 42e17fc95f8fd3148a7023cd99e3c0c6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ProgressFlagDebugger
-  targetFlags: []
+  targetFlags:
+  - {fileID: 11400000, guid: c67e80f8388c6cb4b988d0d18b3aac1f, type: 2}
   defaultAsTemporary: 0
 --- !u!1001 &2134295278
 PrefabInstance:

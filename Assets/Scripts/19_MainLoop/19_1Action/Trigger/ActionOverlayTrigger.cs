@@ -45,6 +45,12 @@ public class ActionOverlayTrigger : MonoBehaviour
     [Tooltip("成功/失敗文字顯示秒數。")]
     public float resultHoldSeconds = 2.0f;
 
+    [Tooltip("成功時播放的音效 Key（對應 AudioManager 設定）。留空則不播放。")]
+    public string successSoundKey = "action_success";
+
+    [Tooltip("失敗時播放的音效 Key（對應 AudioManager 設定）。留空則不播放。")]
+    public string failureSoundKey = "action_failure";
+
     [Header("完成後觸發")]
     [Tooltip("無成功/失敗判定時，跑條完成後觸發。若有成功/失敗判定，則在成功/失敗事件後也會觸發。")]
     public UnityEvent onCompleteEvents;
@@ -106,7 +112,9 @@ public class ActionOverlayTrigger : MonoBehaviour
 
                 onCompleteEvents?.Invoke();
             },
-            () => onStartEvents?.Invoke());
+            () => onStartEvents?.Invoke(),
+            successSoundKey,
+            failureSoundKey);
     }
 
     /// <summary>
@@ -137,7 +145,9 @@ public class ActionOverlayTrigger : MonoBehaviour
 
                 onCompleteEvents?.Invoke();
             },
-            () => onStartEvents?.Invoke());
+            () => onStartEvents?.Invoke(),
+            successSoundKey,
+            failureSoundKey);
     }
 
     public void SetSuccessChance(float chance)

@@ -497,6 +497,8 @@ MonoBehaviour:
   successLocalizationKey: Result.Success
   failureLocalizationKey: Result.Failure
   resultHoldSeconds: 2
+  successSoundKey: action_success
+  failureSoundKey: action_failure
   onCompleteEvents:
     m_PersistentCalls:
       m_Calls:
@@ -540,6 +542,7 @@ MonoBehaviour:
   manualTimeAmount: 0
   targetHeroineID: 
   heroineResourceChanges: []
+  statPackageIDs: []
   flagChanges: []
   autoReport: 1
   onGoodEffect:
@@ -565,6 +568,7 @@ GameObject:
   - component: {fileID: 6374196943994827700}
   - component: {fileID: 4241055633935974769}
   - component: {fileID: 4181213242230060316}
+  - component: {fileID: 4508186669953064930}
   m_Layer: 0
   m_Name: Hub_Button_ActionName(WorldSpace)
   m_TagString: Untagged
@@ -762,6 +766,20 @@ MonoBehaviour:
   TypeText: {fileID: 8945844953392057260}
   LevelFormat: LV.{0}
   AutoRefresh: 0
+--- !u!114 &4508186669953064930
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2768162558774822466}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eacfba7abd76bb34e94e3a0dabeb5cf1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UIButtonSound
+  soundKey: ui_button_click
+  hoverSoundKey: 
 --- !u!1 &3277203460410727543
 GameObject:
   m_ObjectHideFlags: 0

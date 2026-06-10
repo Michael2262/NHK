@@ -82,7 +82,9 @@ public class ActionOverlayManager : MonoBehaviour
         string failureTextKey,
         float resultHoldSeconds,
         UnityAction<bool> onResult,
-        UnityAction onStarted = null)
+        UnityAction onStarted = null,
+        string successSoundKey = "action_success",
+        string failureSoundKey = "action_failure")
     {
         StopCurrent();
         _runningCoroutine = StartCoroutine(ProcessActionWithResult(
@@ -94,7 +96,9 @@ public class ActionOverlayManager : MonoBehaviour
             failureTextKey,
             resultHoldSeconds,
             onStarted,
-            onResult));
+            onResult,
+            successSoundKey,
+            failureSoundKey));
     }
 
     public void StopCurrent()
@@ -127,7 +131,9 @@ public class ActionOverlayManager : MonoBehaviour
         string failureTextKey,
         float resultHoldSeconds,
         UnityAction onStarted,
-        UnityAction<bool> onResult)
+        UnityAction<bool> onResult,
+        string successSoundKey,
+        string failureSoundKey)
     {
         SetupActionView(sprite, textKey);
         onStarted?.Invoke();
@@ -136,6 +142,7 @@ public class ActionOverlayManager : MonoBehaviour
 
         string resultKey = isSuccess ? successTextKey : failureTextKey;
         ShowResultText(resultKey);
+        PlayResultSound(isSuccess ? successSoundKey : failureSoundKey);
 
         if (resultHoldSeconds > 0f)
         {
@@ -222,6 +229,23 @@ public class ActionOverlayManager : MonoBehaviour
         if (localization != null)
         {
             localization.UpdateText();
+        }
+    }
+
+    /// <summary>
+    /// 在結果顯示時播放對應音效（成功/失敗）。透過 AudioManager 單例播放。
+    /// </summary>
+    private void PlayResultSound(string soundKey)
+    {
+        if (string.IsNullOrEmpty(soundKey)) return;
+
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlaySound(soundKey);
+        }
+        else
+        {
+            Debug.LogWarning("AudioManager.Instance 未找到，無法播放行動結果音效！");
         }
     }
 

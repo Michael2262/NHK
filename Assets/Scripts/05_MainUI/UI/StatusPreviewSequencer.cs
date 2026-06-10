@@ -39,6 +39,10 @@ public class StatusPreviewSequencer : MonoBehaviour
     [Tooltip("飄字淡出秒數。")]
     [SerializeField] private float fadeSeconds = 0.35f;
 
+    [Header("=== 音效 ===")]
+    [Tooltip("每次飄字彈出時播放的音效 Key（對應 AudioManager）。留空則不播。")]
+    [SerializeField] private string previewSoundKey = "preview";
+
     private struct Req
     {
         public int order;
@@ -193,6 +197,10 @@ public class StatusPreviewSequencer : MonoBehaviour
     private void PlayFloaty(TextMeshProUGUI target, string floatyText)
     {
         if (target == null) return;
+
+        // 每次飄字彈出時播放音效（純跳數字、無飄字的 step 不會進到這裡）。
+        if (AudioManager.Instance != null && !string.IsNullOrEmpty(previewSoundKey))
+            AudioManager.Instance.PlaySound(previewSoundKey);
 
         if (_tweens.TryGetValue(target, out var old) && old != null) old.Kill();
 
