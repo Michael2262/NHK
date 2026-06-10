@@ -31,18 +31,25 @@ public class FsmValueManager : MonoBehaviour
 
     private void Awake()
     {
-        if (Instance == null)
-        {
-            Instance = this;
-            InitializeFSMs();
+        // 每個場景各有一份 FsmValueManager（registeredFSMs 指向本場景物件），
+        // 因此本場景這一份一律接管 Instance，不再「搶不到就自殺」——
+        // 否則跨場景並存載入時，新場景這份會誤把自己 Destroy 掉，
+        // 等舊場景卸載後 Instance 變 null，造成 SendEvent 全部失效。
+        Instance = this;
+        InitializeFSMs();
 
-            // 註冊給 Lua (對話系統)
-            PixelCrushers.DialogueSystem.Lua.RegisterFunction("GetIdInt", this, SymbolExtensions.GetMethodInfo(() => GetIntById(string.Empty, string.Empty)));
-            PixelCrushers.DialogueSystem.Lua.RegisterFunction("GetIdFloat", this, SymbolExtensions.GetMethodInfo(() => GetFloatById(string.Empty, string.Empty)));
-            PixelCrushers.DialogueSystem.Lua.RegisterFunction("GetIdBool", this, SymbolExtensions.GetMethodInfo(() => GetBoolById(string.Empty, string.Empty)));
-            PixelCrushers.DialogueSystem.Lua.RegisterFunction("GetIdString", this, SymbolExtensions.GetMethodInfo(() => GetStringById(string.Empty, string.Empty)));
-        }
-        else { Destroy(gameObject); }
+        // 註冊給 Lua (對話系統)：每場景重新註冊到目前這份 instance 是正確的
+        PixelCrushers.DialogueSystem.Lua.RegisterFunction("GetIdInt", this, SymbolExtensions.GetMethodInfo(() => GetIntById(string.Empty, string.Empty)));
+        PixelCrushers.DialogueSystem.Lua.RegisterFunction("GetIdFloat", this, SymbolExtensions.GetMethodInfo(() => GetFloatById(string.Empty, string.Empty)));
+        PixelCrushers.DialogueSystem.Lua.RegisterFunction("GetIdBool", this, SymbolExtensions.GetMethodInfo(() => GetBoolById(string.Empty, string.Empty)));
+        PixelCrushers.DialogueSystem.Lua.RegisterFunction("GetIdString", this, SymbolExtensions.GetMethodInfo(() => GetStringById(string.Empty, string.Empty)));
+    }
+
+    private void OnDestroy()
+    {
+        // 只有當「目前 Instance 仍是自己」時才清空，
+        // 避免在新舊場景交疊時，舊場景這份被銷毀時誤清掉新場景已接管的 Instance。
+        if (Instance == this) Instance = null;
     }
 
     private void InitializeFSMs()
@@ -186,11 +193,12 @@ public class FsmValueManager : MonoBehaviour
         var entry = registeredFSMs.FirstOrDefault(e => e.id == id);
         if (entry != null && entry.resolvedFsm != null)
         {
+            Debug.Log($"[診斷] 對 ID={id} 送出「{eventName}」，FSM={entry.resolvedFsm.FsmName}，目前狀態={entry.resolvedFsm.ActiveStateName}，Active={entry.resolvedFsm.gameObject.activeInHierarchy}");
             entry.resolvedFsm.SendEvent(eventName);
         }
         else
         {
-            Debug.LogWarning($"[FsmValueManager] 無法發送事件 {eventName}，找不到 ID: {id}");
+            Debug.LogWarning($"[FsmValueManager] 無法發送事件 {eventName}，找不到 ID: {id}（entry={(entry == null ? "null" : "found")}, resolvedFsm={(entry?.resolvedFsm == null ? "null" : "ok")}）");
         }
     }
 

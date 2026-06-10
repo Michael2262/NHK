@@ -33,8 +33,16 @@ public class FsmManagerSendEvent : FsmStateAction
 
     void DoSendEvent()
     {
-        if (FsmValueManager.Instance == null) return;
-        if (string.IsNullOrEmpty(targetIdentifier.Value) || string.IsNullOrEmpty(eventName.Value)) return;
+        if (FsmValueManager.Instance == null)
+        {
+            Debug.LogWarning($"[診斷] FsmValueManager.Instance==null，event「{eventName.Value}」未送出（target={targetIdentifier.Value}）");
+            return;
+        }
+        if (string.IsNullOrEmpty(targetIdentifier.Value) || string.IsNullOrEmpty(eventName.Value))
+        {
+            Debug.LogWarning($"[診斷] target 或 eventName 為空（target={targetIdentifier.Value}, event={eventName.Value}），未送出");
+            return;
+        }
 
         if (useGroupMode)
             FsmValueManager.Instance.SendEventByGroup(targetIdentifier.Value, eventName.Value);
