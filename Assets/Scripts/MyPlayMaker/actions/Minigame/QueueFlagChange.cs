@@ -4,7 +4,8 @@ using HutongGames.PlayMaker;
 namespace HutongGames.PlayMaker.Actions
 {
     [ActionCategory("Minigame")]
-    [Tooltip("佇列旗標變更。此動作會在小遊戲結束後、時間推進後、場景淡入前執行。")]
+    [Tooltip("佇列旗標變更（存入 SceneActionQueue）。於下一個場景淡入前執行；" +
+             "小遊戲中則等小遊戲結束、時間推進後，由返回場景執行。")]
     public class QueueFlagChange : FsmStateAction
     {
         [RequiredField]
@@ -49,9 +50,9 @@ namespace HutongGames.PlayMaker.Actions
 
         private void DoQueueFlagChange()
         {
-            if (MinigameManager.Instance == null)
+            if (GameStatusService.Instance == null)
             {
-                Debug.LogWarning("[QueueFlagChange] MinigameManager.Instance 不存在！");
+                Debug.LogWarning("[QueueFlagChange] GameStatusService.Instance 不存在！");
                 return;
             }
 
@@ -63,7 +64,7 @@ namespace HutongGames.PlayMaker.Actions
 
             FlagLifetime flagLifetime = (FlagLifetime)lifetime.Value;
 
-            MinigameManager.Instance.QueueFlagChange(
+            GameStatusService.Instance.SceneActionQueue.EnqueueFlagChange(
                 flagID.Value,
                 shouldAdd.Value,
                 flagLifetime

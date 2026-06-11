@@ -11558,7 +11558,7 @@ MonoBehaviour:
 
 
           TachieControl(Expression,
-          Sister, Angry1);
+          Sister, Normal1);
 
 
           Delay({{end}});'
@@ -11664,7 +11664,13 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: "Anim(Stop);  \n\nDelay({{end}});"
+        value: 'TachieControl(Eye, Sister, Normal);
+
+          TachieControl(Mouth,
+          Sister, Small1);
+
+
+          Delay({{end}});'
         type: 0
         typeString: CustomFieldType_Text
       - title: zh-TW
@@ -11870,7 +11876,10 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: 
+        value: 'TachieControl(Expression, Sister, Angry2);
+
+
+          Delay({{end}});'
         type: 0
         typeString: CustomFieldType_Text
       - title: zh-TW
@@ -11942,8 +11951,8 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 161
-        y: 285
+        x: 164
+        y: 286
         width: 160
         height: 30
     - id: 5
@@ -12072,11 +12081,16 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Dialogue Text
-        value: "\u5982\u679C\u56DE\u53BB\u518D\u8B80\u6703\u592A\u665A\u3002"
+        value: "\u5982\u679C\u56DE\u53BB\u518D\u8B80\u6703\u6709\u9EDE\u592A\u665A\u3002"
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: 
+        value: 'TachieControl(Expression, Sister, Normal1);
+
+
+
+
+          Delay({{end}});'
         type: 0
         typeString: CustomFieldType_Text
       - title: zh-TW
@@ -12175,7 +12189,7 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Dialogue Text
-        value: "\u9019\u6A23\u59B3\u9084\u7279\u5730\u904E\u4F86\uFF0C\u6C92\u554F\u984C\u55CE\uFF1F"
+        value: "\u9019\u6A23\u59B3\u9084\u904E\u4F86\uFF0C\u6C92\u554F\u984C\u55CE\uFF1F"
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
@@ -12282,7 +12296,14 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: 
+        value: 'TachieControl(Mouth, Sister, Open3);
+
+
+          TachieControl(Eye,
+          Sister, Half);
+
+
+          Delay({{end}});'
         type: 0
         typeString: CustomFieldType_Text
       - title: zh-TW
@@ -12381,7 +12402,7 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Dialogue Text
-        value: "\u597D\u5427\uFF0C\u70BA\u4E86\u4E0D\u6253\u64FE\u59B3\uFF0C\u6211\u56DE\u53BB\u5E8A\u4E0A\u7761\u89BA\u4E86\uFF01"
+        value: "\u2026\u2026\u597D\u5427\uFF0C\u70BA\u4E86\u4E0D\u6253\u64FE\u59B3\uFF0C\u6211\u56DE\u53BB\u5E8A\u4E0A\u7761\u89BA\u4E86\uFF01"
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
@@ -12488,7 +12509,21 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: 
+        value: 'TachieControl(Mouth, Sister, Loathe1);
+
+
+          TachieControl(Eye,
+          Sister, Half);
+
+
+          TachieControl(Brow, Sister, Angry1);
+
+
+          TachieControl(Body,
+          Sister, Angry2);
+
+
+          Delay({{end}});'
         type: 0
         typeString: CustomFieldType_Text
       - title: zh-TW
@@ -12694,7 +12729,15 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: "Anim(Think);  \n\n\n\nDelay({{end}});"
+        value: '
+
+          TachieControl(Eye, Sister, Normal_Lookaway);
+
+          TachieControl(Mouth,
+          Sister, Close1);
+
+
+          Delay({{end}});'
         type: 0
         typeString: CustomFieldType_Text
       - title: zh-TW
@@ -52589,7 +52632,7 @@ MonoBehaviour:
         width: 160
         height: 30
     entryGroups: []
-    canvasScrollPosition: {x: 0, y: 97.24768}
+    canvasScrollPosition: {x: 0, y: 68.80731}
     canvasZoom: 1.0899999
   - id: 58
     fields:
@@ -73584,6 +73627,10 @@ MonoBehaviour:
         typeString: CustomFieldType_Text
       - title: Sequence
         value: 'TachieControl(Show, Sister, 0.5);
+
+
+          TachieControl(Expression,
+          Sister, Angry1);
 
 
           Delay({{end}});'

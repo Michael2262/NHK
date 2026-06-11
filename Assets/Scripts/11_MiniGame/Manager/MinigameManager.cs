@@ -13,86 +13,14 @@ public class MinigameManager : MonoBehaviour
     private Dictionary<string, int> _pendingLewdnessExp = new Dictionary<string, int>();
 
     // ============================================================================
-    // 【內嵌資料結構】結束後動作系統 (Post-Game Actions)
+    // 【v4 改動】結束後動作系統 (Post-Game Actions) 已遷移至 SceneActionQueueModel
     // ============================================================================
-    // 使用說明：
-    // - 此區塊讓 MinigameManager 可以獨立運作，不依賴外部檔案
-    // - 若你想使用獨立的 MinigameResultActions.cs 檔案，請刪除此 #region 區塊
-    // - 兩種方式功能完全相同，選擇你偏好的組織方式即可
+    // - 佇列改存於 GameStatusService.SceneActionQueue（跨場景常駐）
+    // - 執行改由各場景 SceneReadyCoordinator 的 Task_ExecuteSceneActionQueue 負責
+    // - MinigameManager 只負責在小遊戲期間 Suspend / 結束時 Resume，
+    //   確保佇列命令等到「小遊戲結束、時間推進後」才由返回場景執行（保留舊語意，
+    //   串關切換場景時不會提早消費）
     // ============================================================================
-    #region 內嵌資料結構 (若使用獨立檔案請刪除此區塊)
-
-    [System.Serializable]
-    public class MinigameResultActions
-    {
-        public List<ForceMoveHeroineAction> heroineMoves = new List<ForceMoveHeroineAction>();
-        public List<ForceMoveRiskAction> riskMoves = new List<ForceMoveRiskAction>();
-        public List<FlagAction> flagChanges = new List<FlagAction>();
-
-        public bool HasAnyAction()
-        {
-            return (heroineMoves != null && heroineMoves.Count > 0) ||
-                   (riskMoves != null && riskMoves.Count > 0) ||
-                   (flagChanges != null && flagChanges.Count > 0);
-        }
-
-        public void Clear()
-        {
-            heroineMoves?.Clear();
-            riskMoves?.Clear();
-            flagChanges?.Clear();
-        }
-    }
-
-    [System.Serializable]
-    public struct ForceMoveHeroineAction
-    {
-        public string heroineID;
-        public string targetLocationID;
-        public string newActivity;
-
-        public ForceMoveHeroineAction(string heroineID, string targetLocationID, string newActivity)
-        {
-            this.heroineID = heroineID;
-            this.targetLocationID = targetLocationID;
-            this.newActivity = newActivity;
-        }
-    }
-
-    [System.Serializable]
-    public struct ForceMoveRiskAction
-    {
-        public string agentID;
-        public string targetLocationID;
-        public string inspectionTypeID;
-
-        public ForceMoveRiskAction(string agentID, string targetLocationID, string inspectionTypeID)
-        {
-            this.agentID = agentID;
-            this.targetLocationID = targetLocationID;
-            this.inspectionTypeID = inspectionTypeID;
-        }
-    }
-
-    [System.Serializable]
-    public struct FlagAction
-    {
-        public string flagID;
-        public bool shouldAdd;
-        public FlagLifetime lifetime; // 新增：指定 Flag 的生命週期
-
-        public FlagAction(string flagID, bool shouldAdd, FlagLifetime lifetime = FlagLifetime.Persistent)
-        {
-            this.flagID = flagID;
-            this.shouldAdd = shouldAdd;
-            this.lifetime = lifetime;
-        }
-    }
-
-    #endregion
-
-    // 待執行的結束動作 (可為 null，不影響核心流程)
-    private MinigameResultActions _pendingActions;
 
     private GameStatusService _gss;
 
@@ -140,6 +68,10 @@ public class MinigameManager : MonoBehaviour
         // 儲存跨場景資料
         _targetHeroineIDs = targetHeroineIDs;
         _originSceneName = SceneManager.GetActiveScene().name;
+
+        // 暫停場景動作佇列的消費：小遊戲期間（含串關）佇列的命令
+        // 要等 HandleMinigameFinished 恢復後，才由返回場景執行
+        GameStatusService.Instance?.SceneActionQueue?.Suspend();
 
         // 整合：使用現有的 GameDataManager
         GameDataManager.Instance.SetNextSceneEntry(MINIGAME_ENTRY_ID);
@@ -200,90 +132,6 @@ public class MinigameManager : MonoBehaviour
         // 把背包交給小遊戲
         _currentMinigame.Initialize(context);
         _currentMinigame.StartGame();
-    }
-
-    #endregion
-
-    #region 結束後動作佇列 API
-
-    /// <summary>
-    /// 【新增】註冊完整的結束後動作集合
-    /// </summary>
-    public void RegisterPostGameActions(MinigameResultActions actions)
-    {
-        if (actions == null) return;
-
-        if (_pendingActions == null)
-        {
-            _pendingActions = actions;
-        }
-        else
-        {
-            // 合併到現有的動作中
-            if (actions.heroineMoves != null)
-                _pendingActions.heroineMoves.AddRange(actions.heroineMoves);
-            if (actions.riskMoves != null)
-                _pendingActions.riskMoves.AddRange(actions.riskMoves);
-            if (actions.flagChanges != null)
-                _pendingActions.flagChanges.AddRange(actions.flagChanges);
-        }
-
-        Debug.Log($"[MGM] 已註冊結束後動作 (女主角移動:{actions.heroineMoves?.Count ?? 0}, 風險移動:{actions.riskMoves?.Count ?? 0}, Flag變更:{actions.flagChanges?.Count ?? 0})");
-    }
-
-    /// <summary>
-    /// 【新增】佇列單一女主角強制移動
-    /// </summary>
-    public void QueueHeroineMove(string heroineID, string locationID, string activity)
-    {
-        if (string.IsNullOrEmpty(heroineID)) return;
-
-        if (_pendingActions == null)
-            _pendingActions = new MinigameResultActions();
-
-        _pendingActions.heroineMoves.Add(new ForceMoveHeroineAction(heroineID, locationID, activity));
-        Debug.Log($"[MGM] 佇列女主角移動: {heroineID} → {locationID} ({activity})");
-    }
-
-    /// <summary>
-    /// 【新增】佇列單一風險/家人強制移動
-    /// </summary>
-    public void QueueRiskMove(string agentID, string locationID, string inspectionTypeID)
-    {
-        if (string.IsNullOrEmpty(agentID)) return;
-
-        if (_pendingActions == null)
-            _pendingActions = new MinigameResultActions();
-
-        _pendingActions.riskMoves.Add(new ForceMoveRiskAction(agentID, locationID, inspectionTypeID));
-        Debug.Log($"[MGM] 佇列風險移動: {agentID} → {locationID} ({inspectionTypeID})");
-    }
-
-    /// <summary>
-    /// 【新增】佇列旗標變更
-    /// </summary>
-    /// <param name="flagID">旗標 ID</param>
-    /// <param name="shouldAdd">true = 新增, false = 移除</param>
-    /// <param name="lifetime">Flag 生命週期 (預設為 Persistent 永久)</param>
-    public void QueueFlagChange(string flagID, bool shouldAdd, FlagLifetime lifetime = FlagLifetime.Persistent)
-    {
-        if (string.IsNullOrEmpty(flagID)) return;
-
-        if (_pendingActions == null)
-            _pendingActions = new MinigameResultActions();
-
-        _pendingActions.flagChanges.Add(new FlagAction(flagID, shouldAdd, lifetime));
-        Debug.Log($"[MGM] 佇列 Flag 變更: {flagID} ({(shouldAdd ? "新增" : "移除")}, 生命週期: {lifetime})");
-    }
-
-    /// <summary>
-    /// 【新增】清除所有待執行動作
-    /// </summary>
-    public void ClearPendingActions()
-    {
-        _pendingActions?.Clear();
-        _pendingActions = null;
-        Debug.Log("[MGM] 已清除所有待執行動作");
     }
 
     #endregion
@@ -361,10 +209,11 @@ public class MinigameManager : MonoBehaviour
         }
 
         // ============================================
-        // 步驟 2: 執行自定義動作 (在時間推進之後)
-        // 這樣不會被 RecalculateWorldState 覆蓋
+        // 步驟 2: 恢復場景動作佇列的消費 (在時間推進之後)
+        // 佇列命令將由返回場景的 Task_ExecuteSceneActionQueue 在淡入前執行；
+        // 時間已於步驟 1 推進完畢，強制移動不會被 RecalculateWorldState 覆蓋
         // ============================================
-        ExecutePendingActions();
+        GameStatusService.Instance?.SceneActionQueue?.Resume();
 
         // ============================================
         // 步驟 3: 取消訂閱
@@ -405,71 +254,6 @@ public class MinigameManager : MonoBehaviour
         // ============================================
         _targetHeroineIDs?.Clear();
         _activeHeroineModels?.Clear();
-    }
-
-    /// <summary>
-    /// 【新增】執行所有累積的結束動作
-    /// </summary>
-    private void ExecutePendingActions()
-    {
-        if (_pendingActions == null || !_pendingActions.HasAnyAction())
-        {
-            Debug.Log("[MGM] 無待執行的結束動作。");
-            return;
-        }
-
-        Debug.Log($"[MGM] 開始執行結束後動作...");
-
-        // 取得 ScenarioManager
-        var scenarioMgr = ScenarioManager.Instance;
-        if (scenarioMgr == null)
-        {
-            Debug.LogWarning("[MGM] 找不到 ScenarioManager，無法執行位置變更動作！");
-        }
-
-        // --- 執行女主角強制移動 ---
-        if (_pendingActions.heroineMoves != null && scenarioMgr != null)
-        {
-            foreach (var move in _pendingActions.heroineMoves)
-            {
-                Debug.Log($"[MGM] 執行女主角強制移動: {move.heroineID} → {move.targetLocationID} ({move.newActivity})");
-                scenarioMgr.ForceMoveHeroine(move.heroineID, move.targetLocationID, move.newActivity);
-            }
-        }
-
-        // --- 執行風險/家人強制移動 ---
-        if (_pendingActions.riskMoves != null && scenarioMgr != null)
-        {
-            foreach (var move in _pendingActions.riskMoves)
-            {
-                Debug.Log($"[MGM] 執行風險強制移動: {move.agentID} → {move.targetLocationID} ({move.inspectionTypeID})");
-                scenarioMgr.ForceMoveRisk(move.agentID, move.targetLocationID, move.inspectionTypeID);
-            }
-        }
-
-        // --- 執行 Flag 變更 ---
-        if (_pendingActions.flagChanges != null && _gss?.ProgressFlags != null)
-        {
-            foreach (var flag in _pendingActions.flagChanges)
-            {
-                if (flag.shouldAdd)
-                {
-                    Debug.Log($"[MGM] 新增 Flag: {flag.flagID} (生命週期: {flag.lifetime})");
-                    _gss.ProgressFlags.AddFlag(flag.flagID, flag.lifetime);
-                }
-                else
-                {
-                    Debug.Log($"[MGM] 移除 Flag: {flag.flagID}");
-                    _gss.ProgressFlags.RemoveFlag(flag.flagID);
-                }
-            }
-        }
-
-        // --- 清空待執行動作 ---
-        _pendingActions.Clear();
-        _pendingActions = null;
-
-        Debug.Log("[MGM] 結束後動作執行完畢。");
     }
 
     #endregion

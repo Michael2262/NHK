@@ -59,6 +59,7 @@ public class GameStatusService : MonoBehaviour
     public ProtagonistInventoryModel Inventory { get; private set; }
     public ProtagonistSkillModel Skills { get; private set; }
     public TimeSystemModel Time { get; private set; }
+    public SceneActionQueueModel SceneActionQueue { get; private set; }
     public ShopStatusModel ShopStatus { get; private set; }
     public PendingDeliveryModel PendingDelivery { get; private set; }
     public ProgressFlagModel ProgressFlags { get; private set; }// 進度開關模型
@@ -149,6 +150,13 @@ public class GameStatusService : MonoBehaviour
 
         // TimeSystemModel: 注入 TimeConfig
         Time = new TimeSystemModel(timeConfig);
+
+        // 場景動作佇列：跨轉場暫存「時間推進 / 強制移動 / Flag 變更」，
+        // 由下個場景 SceneReadyCoordinator 的 Task_ExecuteSceneActionQueue 消費
+        SceneActionQueue = new SceneActionQueueModel(Time, timeConfig, ProgressFlags);
+
+        // 佇列為一次性轉場資料，不存檔；新遊戲 / 讀檔完成時清空殘留命令並重置暫停狀態
+        OnGameStatusLoaded += () => SceneActionQueue.ResetForNewSession();
 
         // 呼叫獨立方法來初始化女主角
         InitializeHeroineModels();
@@ -480,6 +488,9 @@ public class GameStatusService : MonoBehaviour
         // 通知 ProgressFlags 清除所有標記為 "Temporary" 的 Flag
         // (前提是你的 ProgressFlagModel 已經照著上一步驟加了 OnSceneChanged 方法)
         ProgressFlags.OnSceneChanged();
+
+        // 場景動作佇列：過期保險（撐過一次完整轉場仍未被消費的命令會被丟棄並警告）
+        SceneActionQueue.HandleSceneChanged();
     }
 
     private void OnDestroy()
