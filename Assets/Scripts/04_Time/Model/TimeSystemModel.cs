@@ -15,6 +15,9 @@ public class TimeSystemModel
     // Game Date (日曆日期)
     public DateTime GameDate { get; private set; }     // 從 7 月 1 日開始
 
+    // 今天星期幾：由 DayIndex + Config 的 StartDayOfWeek 推導，不另外存檔。
+    public DayOfWeek CurrentDayOfWeek => GetDayOfWeekForDay(DayIndex);
+
     // Time Slots
     public int CurrentPhaseIndex { get; private set; } // 0=Day, 1=Dusk, 2=Night, 3=LateNight
     public int CurrentSlotInPhase { get; private set; } = 1; // 目前時段是當前階段的第幾格 (從 1 開始)
@@ -187,6 +190,18 @@ public class TimeSystemModel
         GameDate = GameDate.AddDays(1);
         UpdateWeekendStatus();
         OnDayPassed?.Invoke();
+    }
+
+    /// <summary>
+    /// 計算指定遊戲天數（DayIndex）是星期幾。
+    /// 以 Config 的 StartDayOfWeek 為 StartDayIndex 那天的星期，往後逐日推算。
+    /// UI 顯示「隔天」時可直接傳 DayIndex + 1。
+    /// </summary>
+    public DayOfWeek GetDayOfWeekForDay(int dayIndex)
+    {
+        int offset = ((int)_cfg.StartDayOfWeek + (dayIndex - _cfg.StartDayIndex)) % 7;
+        if (offset < 0) offset += 7;
+        return (DayOfWeek)offset;
     }
 
     private void UpdateWeekendStatus()

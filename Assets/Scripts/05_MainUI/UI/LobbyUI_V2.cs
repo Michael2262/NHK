@@ -332,19 +332,17 @@ public class LobbyUI_V2 : MonoBehaviour
         if (_timeModel == null) return;
 
         int displayDay = _timeModel.DayIndex;
-        DateTime displayDate = _timeModel.GameDate;
 
         if (timeMapping != null && timeMapping.ShouldShowNextDay(_timeModel.CurrentPhaseIndex, _timeModel.CurrentSlotInPhase))
         {
             displayDay += 1;
-            displayDate = displayDate.AddDays(1);
         }
 
         if (textDayNumber != null)
             textDayNumber.text = $"DAY {displayDay}";
 
         if (textDayOfWeek != null)
-            textDayOfWeek.text = GetDayOfWeekAbbreviation(displayDate.DayOfWeek);
+            textDayOfWeek.text = GetDayOfWeekAbbreviation(_timeModel.GetDayOfWeekForDay(displayDay));
 
         if (textDebugDayPhaseSlot != null)
             textDebugDayPhaseSlot.text = $"D: {_timeModel.DayIndex} / P: {_timeModel.CurrentPhaseIndex} / S: {_timeModel.CurrentSlotInPhase}";

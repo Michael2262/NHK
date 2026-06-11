@@ -33,6 +33,8 @@ public class TimeConfig : ScriptableObject
     public int DaysPerWeek = 7;
     [Tooltip("每週的假日天數 (例如 2 天是週末)")]
     public int WeekendDays = 2;
+    [Tooltip("新遊戲 Day 1（StartDayIndex 那天）是星期幾，預設星期一")]
+    public System.DayOfWeek StartDayOfWeek = System.DayOfWeek.Monday;
 
     // ============================================================
     // 新遊戲初始時間
