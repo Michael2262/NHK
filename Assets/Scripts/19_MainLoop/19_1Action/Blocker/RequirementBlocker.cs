@@ -8,8 +8,8 @@ using UnityEngine;
 /// 當條件「不符合」時顯示遮擋 GameObject。
 ///
 /// 兩種使用方式 (二選一，不互相影響)：
-/// 1. 引用 RuleAsset：拖入一個 HeroineUnlockRuleAsset，Blocker 會自動用該 rule 的條件與提示文字。
-///    這是推薦做法，能與 HeroineUnlockConfig 共用同一份條件來源，改一處全部同步。
+/// 1. 引用 RuleAsset：拖入一個 ProgressUnlockRuleAsset，Blocker 會自動用該 rule 的條件與提示文字。
+///    這是推薦做法，能與 ProgressUnlockConfig 共用同一份條件來源，改一處全部同步。
 /// 2. 自填 Conditions：手動填入 RequirementCondition 列表，支援 All/Any 邏輯。
 ///    若同時有 RuleAsset 和 Conditions，優先走 RuleAsset。
 /// </summary>
@@ -26,7 +26,7 @@ public class RequirementBlocker : MonoBehaviour
         "若指定此 Rule Asset，Blocker 會完全使用該 rule 的條件與 UI 提示。\n" +
         "留空則使用下方的 Conditions 列表 (舊行為)。"
     )]
-    public HeroineUnlockRuleAsset RuleAsset;
+    public ProgressUnlockRuleAsset RuleAsset;
 
     [Header("[備案] 手動條件 (RuleAsset 為空時使用)")]
     [Tooltip("All = 全部條件符合才解鎖；Any = 任一條件符合即解鎖")]
@@ -131,19 +131,18 @@ public class RequirementBlocker : MonoBehaviour
     private void RefreshFromRuleAsset()
     {
         var svc = GameStatusService.Instance;
-        if (svc == null || svc.Heroines == null)
+        if (svc == null)
         {
             if (BlockerObject != null) BlockerObject.SetActive(true);
             return;
         }
 
-        bool passed = false;
-        if (!string.IsNullOrEmpty(RuleAsset.heroineID)
-            && svc.Heroines.TryGetValue(RuleAsset.heroineID, out var heroine)
-            && heroine != null)
-        {
-            passed = RuleAsset.IsConditionMet(heroine);
-        }
+        // 含女主角條件時才需要解析 heroine；純主角條件的規則 heroine 為 null 也能評估
+        HeroineStatusModel heroine = null;
+        if (!string.IsNullOrEmpty(RuleAsset.heroineID) && svc.Heroines != null)
+            svc.Heroines.TryGetValue(RuleAsset.heroineID, out heroine);
+
+        bool passed = RuleAsset.IsConditionMet(heroine, svc.Protagonist);
 
         if (BlockerObject != null)
             BlockerObject.SetActive(!passed);
@@ -263,14 +262,24 @@ public class RequirementBlocker : MonoBehaviour
         var svc = GameStatusService.Instance;
         if (svc == null) return;
 
-        // RuleAsset 路徑：只需訂閱該 rule 對應女主角的等級事件
+        // RuleAsset 路徑：依條件來源訂閱對應的數值事件
         if (RuleAsset != null)
         {
-            if (svc.Heroines != null && !string.IsNullOrEmpty(RuleAsset.heroineID)
+            if (RuleAsset.HasHeroineCondition
+                && svc.Heroines != null && !string.IsNullOrEmpty(RuleAsset.heroineID)
                 && svc.Heroines.TryGetValue(RuleAsset.heroineID, out var h) && h != null)
             {
-                h.OnAffinityChanged += OnAnyChanged;
-                h.OnLewdnessChanged += OnAnyChanged;
+                h.OnLibidoChanged += OnAnyChanged;
+                h.OnTrustChanged += OnAnyChanged;
+                h.OnHCountChanged += OnAnyChanged;
+            }
+
+            if (RuleAsset.HasProtagonistCondition && svc.Protagonist != null)
+            {
+                svc.Protagonist.OnStressChanged += OnAnyChanged;
+                svc.Protagonist.OnLifePowerChanged += OnAnyChanged;
+                svc.Protagonist.OnSocialityChanged += OnAnyChanged;
+                svc.Protagonist.OnDependencyChanged += OnAnyChanged;
             }
         }
         else if (svc.Heroines != null && Conditions != null)
@@ -302,11 +311,21 @@ public class RequirementBlocker : MonoBehaviour
 
         if (RuleAsset != null)
         {
-            if (svc.Heroines != null && !string.IsNullOrEmpty(RuleAsset.heroineID)
+            if (RuleAsset.HasHeroineCondition
+                && svc.Heroines != null && !string.IsNullOrEmpty(RuleAsset.heroineID)
                 && svc.Heroines.TryGetValue(RuleAsset.heroineID, out var h) && h != null)
             {
-                h.OnAffinityChanged -= OnAnyChanged;
-                h.OnLewdnessChanged -= OnAnyChanged;
+                h.OnLibidoChanged -= OnAnyChanged;
+                h.OnTrustChanged -= OnAnyChanged;
+                h.OnHCountChanged -= OnAnyChanged;
+            }
+
+            if (RuleAsset.HasProtagonistCondition && svc.Protagonist != null)
+            {
+                svc.Protagonist.OnStressChanged -= OnAnyChanged;
+                svc.Protagonist.OnLifePowerChanged -= OnAnyChanged;
+                svc.Protagonist.OnSocialityChanged -= OnAnyChanged;
+                svc.Protagonist.OnDependencyChanged -= OnAnyChanged;
             }
         }
         else if (svc.Heroines != null && Conditions != null)

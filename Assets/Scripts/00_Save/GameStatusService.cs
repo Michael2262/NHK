@@ -48,9 +48,10 @@ public class GameStatusService : MonoBehaviour
     public ValueTriggerManager ValueTriggerManager { get; private set; }
 
     [Header("進度解鎖系統")]
-    [SerializeField] private List<HeroineUnlockConfig> heroineUnlockConfigs = new List<HeroineUnlockConfig>();
+    [UnityEngine.Serialization.FormerlySerializedAs("heroineUnlockConfigs")]
+    [SerializeField] private List<ProgressUnlockConfig> progressUnlockConfigs = new List<ProgressUnlockConfig>();
 
-    public HeroineUnlockManager HeroineUnlockManager { get; private set; }
+    public ProgressUnlockManager ProgressUnlockManager { get; private set; }
 
     // ==========================================================
     // Model 實例 (數據層) - 可供外部查詢
@@ -203,12 +204,12 @@ public class GameStatusService : MonoBehaviour
         // 訂閱讀檔事件，刷新所有規則
         OnGameStatusLoaded += () => ValueTriggerManager.RefreshAll();
 
-        // 啟動女主角解鎖系統
-        RebuildHeroineUnlockManager();
+        // 啟動進度解鎖系統
+        RebuildProgressUnlockManager();
         OnGameStatusLoaded += () =>
         {
-            RebuildHeroineUnlockManager();      // 讀檔後 Heroines 被重建，重新訂閱
-            HeroineUnlockManager.RefreshAllRules();
+            RebuildProgressUnlockManager();     // 讀檔後 Heroines 被重建，重新訂閱
+            ProgressUnlockManager.RefreshAllRules();
         };
 
         // NHK 版不使用主角 SuspicionGateManager。
@@ -324,7 +325,7 @@ public class GameStatusService : MonoBehaviour
 
         InitializeHeroineModels();// 呼叫獨立方法來初始化女主角
 
-        RebuildHeroineUnlockManager();  // Heroines 已重建，重新訂閱解鎖規則
+        RebuildProgressUnlockManager(); // Heroines 已重建，重新訂閱解鎖規則
 
         InitializeRiskAgentModels();// 也呼叫獨立方法來重置家人
 
@@ -498,7 +499,7 @@ public class GameStatusService : MonoBehaviour
         SceneController.OnSceneChanged -= HandleSceneChanged;
 
         // 解除解鎖系統的事件訂閱
-        HeroineUnlockManager?.UnsubscribeFromHeroines();
+        ProgressUnlockManager?.UnsubscribeAll();
         //_scheduleProcessor?.Dispose();
     }
 
@@ -556,15 +557,15 @@ public class GameStatusService : MonoBehaviour
 
 
     // ==========================================================
-    // HeroineUnlockManager
+    // ProgressUnlockManager
     // ==========================================================
-    private void RebuildHeroineUnlockManager()
+    private void RebuildProgressUnlockManager()
     {
         // 解除舊的事件訂閱，避免記憶體洩漏或重複觸發
-        HeroineUnlockManager?.UnsubscribeFromHeroines();
+        ProgressUnlockManager?.UnsubscribeAll();
 
-        // 重新建立，對新的 Heroines 實例訂閱
-        HeroineUnlockManager = new HeroineUnlockManager(ProgressFlags, Heroines, heroineUnlockConfigs);
+        // 重新建立，對新的 Heroines 實例與主角訂閱
+        ProgressUnlockManager = new ProgressUnlockManager(ProgressFlags, Heroines, Protagonist, progressUnlockConfigs);
     }
     // ==========================================================
     // 開啟初始flag、value設定

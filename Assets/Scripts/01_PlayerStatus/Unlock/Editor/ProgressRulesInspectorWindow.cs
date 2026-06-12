@@ -9,10 +9,10 @@ using UnityEngine;
 /// 選單位置：Tools → Progress → Rules Inspector
 ///
 /// 功能：
-/// - 一個表格列出專案內所有 HeroineUnlockRuleAsset
-/// - 基礎欄位直接在表格編輯（改完自動存檔）
-/// - 可展開每行看/改細節 (revertWhenConditionFails / UI 提示覆蓋)
-/// - 批次調整工具 (全部 Lewd 閾值 +1 等)
+/// - 一個表格列出專案內所有 ProgressUnlockRuleAsset
+/// - 基礎欄位直接在表格編輯（改完自動存檔），條件列表在展開區增刪改
+/// - 排序支援「依女主角」與「依指定數值的閾值」
+/// - 批次調整工具（指定數值類型的閾值整批 +1 等）
 /// - 一鍵建立新 Rule 到指定資料夾
 ///
 /// 注意：這是純編輯器工具，放在 Editor/ 資料夾，不進 build。
@@ -20,40 +20,35 @@ using UnityEngine;
 public class ProgressRulesInspectorWindow : EditorWindow
 {
     // ───── 資料 ─────
-    private List<HeroineUnlockRuleAsset> _allRules = new List<HeroineUnlockRuleAsset>();
-    private Dictionary<HeroineUnlockRuleAsset, bool> _foldouts
-        = new Dictionary<HeroineUnlockRuleAsset, bool>();
+    private List<ProgressUnlockRuleAsset> _allRules = new List<ProgressUnlockRuleAsset>();
+    private Dictionary<ProgressUnlockRuleAsset, bool> _foldouts
+        = new Dictionary<ProgressUnlockRuleAsset, bool>();
     private Vector2 _scroll;
 
     // ───── 排序模式 ─────
     private enum SortMode
     {
-        ByHeroine,          // 依女主角分組 (預設)
-        LewdAscending,      // Lewd 閾值：低 → 高
-        LewdDescending,     // Lewd 閾值：高 → 低
-        AffinityAscending,  // Affinity 閾值：低 → 高
-        AffinityDescending, // Affinity 閾值：高 → 低
+        ByHeroine,      // 依女主角分組 (預設)
+        StatAscending,  // 指定數值的閾值：低 → 高
+        StatDescending, // 指定數值的閾值：高 → 低
     }
     private SortMode _sortMode = SortMode.ByHeroine;
+    private UnlockStatType _sortStat = UnlockStatType.Libido; // 閾值排序時看哪個數值
 
     // ───── 批次調整工具 ─────
-    private HeroineUnlockConditionType _batchFilterType = HeroineUnlockConditionType.LewdnessOnly;
-    private bool _batchFilterByType = false;
-    private string _batchFilterHeroineID = "";
     private bool _batchFilterByHeroine = false;
-    private int _batchLewdDelta = 0;
-    private int _batchAffinityDelta = 0;
+    private string _batchFilterHeroineID = "";
+    private UnlockStatType _batchStat = UnlockStatType.Libido;
+    private int _batchDelta = 0;
 
     // ───── 新增 Rule ─────
-    private string _newRuleFolder = "Assets/GameData/UnlockRules";
+    private string _newRuleFolder = "Assets/Resources/UnlockRules";
 
     // 欄位寬度
     private const float COL_FOLDOUT = 16f;
     private const float COL_NAME = 180f;
     private const float COL_HEROINE = 80f;
-    private const float COL_CONDTYPE = 100f;
-    private const float COL_LEWD = 45f;
-    private const float COL_AFFINITY = 45f;
+    private const float COL_CONDITIONS = 240f;
     private const float COL_ACTION = 110f;
     private const float COL_TARGET = 160f;
 
@@ -81,42 +76,59 @@ public class ProgressRulesInspectorWindow : EditorWindow
     private void RefreshRuleList()
     {
         _allRules.Clear();
-        var guids = AssetDatabase.FindAssets("t:HeroineUnlockRuleAsset");
+        var guids = AssetDatabase.FindAssets("t:ProgressUnlockRuleAsset");
         foreach (var guid in guids)
         {
             var path = AssetDatabase.GUIDToAssetPath(guid);
-            var asset = AssetDatabase.LoadAssetAtPath<HeroineUnlockRuleAsset>(path);
+            var asset = AssetDatabase.LoadAssetAtPath<ProgressUnlockRuleAsset>(path);
             if (asset != null) _allRules.Add(asset);
         }
         ApplySort();
     }
 
     /// <summary>
+    /// 取得規則中指定數值類型的最小閾值；該規則沒有此數值的條件時 found = false。
+    /// </summary>
+    private static int GetStatThreshold(ProgressUnlockRuleAsset rule, UnlockStatType stat, out bool found)
+    {
+        found = false;
+        int min = int.MaxValue;
+        if (rule.conditions == null) return 0;
+
+        foreach (var c in rule.conditions)
+        {
+            if (c == null || c.stat != stat) continue;
+            found = true;
+            if (c.threshold < min) min = c.threshold;
+        }
+        return found ? min : 0;
+    }
+
+    /// <summary>
     /// 依目前的 _sortMode 重新排序 _allRules。
+    /// 閾值排序時，沒有該數值條件的規則排在最後。
     /// </summary>
     private void ApplySort()
     {
         switch (_sortMode)
         {
-            case SortMode.LewdAscending:
-                _allRules = _allRules.OrderBy(r => r.requiredLewdnessLevel)
-                                     .ThenBy(r => r.name).ToList();
+            case SortMode.StatAscending:
+                _allRules = _allRules
+                    .OrderBy(r => { GetStatThreshold(r, _sortStat, out bool has); return !has; })
+                    .ThenBy(r => { int t = GetStatThreshold(r, _sortStat, out _); return t; })
+                    .ThenBy(r => r.name)
+                    .ToList();
                 break;
-            case SortMode.LewdDescending:
-                _allRules = _allRules.OrderByDescending(r => r.requiredLewdnessLevel)
-                                     .ThenBy(r => r.name).ToList();
-                break;
-            case SortMode.AffinityAscending:
-                _allRules = _allRules.OrderBy(r => r.requiredAffinityLevel)
-                                     .ThenBy(r => r.name).ToList();
-                break;
-            case SortMode.AffinityDescending:
-                _allRules = _allRules.OrderByDescending(r => r.requiredAffinityLevel)
-                                     .ThenBy(r => r.name).ToList();
+            case SortMode.StatDescending:
+                _allRules = _allRules
+                    .OrderBy(r => { GetStatThreshold(r, _sortStat, out bool has); return !has; })
+                    .ThenByDescending(r => { int t = GetStatThreshold(r, _sortStat, out _); return t; })
+                    .ThenBy(r => r.name)
+                    .ToList();
                 break;
             case SortMode.ByHeroine:
             default:
-                // 依 heroineID 再依 ruleName 排序
+                // 依 heroineID 再依名稱排序 (純主角條件的規則 heroineID 為空，排最後)
                 _allRules = _allRules
                     .OrderBy(r => string.IsNullOrEmpty(r.heroineID) ? "zzz" : r.heroineID)
                     .ThenBy(r => r.name)
@@ -150,10 +162,20 @@ public class ProgressRulesInspectorWindow : EditorWindow
             // 排序模式
             GUILayout.Label("排序:", GUILayout.Width(36));
             SortMode newSort = (SortMode)EditorGUILayout.EnumPopup(
-                _sortMode, EditorStyles.toolbarDropDown, GUILayout.Width(140));
-            if (newSort != _sortMode)
+                _sortMode, EditorStyles.toolbarDropDown, GUILayout.Width(120));
+
+            // 閾值排序時多一個「看哪個數值」的下拉
+            UnlockStatType newSortStat = _sortStat;
+            if (newSort != SortMode.ByHeroine)
+            {
+                newSortStat = (UnlockStatType)EditorGUILayout.EnumPopup(
+                    _sortStat, EditorStyles.toolbarDropDown, GUILayout.Width(100));
+            }
+
+            if (newSort != _sortMode || newSortStat != _sortStat)
             {
                 _sortMode = newSort;
+                _sortStat = newSortStat;
                 ApplySort();
             }
 
@@ -185,9 +207,7 @@ public class ProgressRulesInspectorWindow : EditorWindow
             GUILayout.Label("", GUILayout.Width(COL_FOLDOUT));
             GUILayout.Label("規則名稱", EditorStyles.toolbarButton, GUILayout.Width(COL_NAME));
             GUILayout.Label("女主角 ID", EditorStyles.toolbarButton, GUILayout.Width(COL_HEROINE));
-            GUILayout.Label("條件類型", EditorStyles.toolbarButton, GUILayout.Width(COL_CONDTYPE));
-            GUILayout.Label("Lewd", EditorStyles.toolbarButton, GUILayout.Width(COL_LEWD));
-            GUILayout.Label("Affi", EditorStyles.toolbarButton, GUILayout.Width(COL_AFFINITY));
+            GUILayout.Label("條件 (展開列編輯)", EditorStyles.toolbarButton, GUILayout.Width(COL_CONDITIONS));
             GUILayout.Label("動作", EditorStyles.toolbarButton, GUILayout.Width(COL_ACTION));
             GUILayout.Label("目標 Flag/Value", EditorStyles.toolbarButton, GUILayout.Width(COL_TARGET));
             GUILayout.FlexibleSpace();
@@ -209,7 +229,7 @@ public class ProgressRulesInspectorWindow : EditorWindow
             // 只在依女主角排序時顯示分隔列 (其他排序模式顯示分隔會很錯亂)
             if (showHeroineDividers)
             {
-                string thisHeroine = string.IsNullOrEmpty(rule.heroineID) ? "(未指定)" : rule.heroineID;
+                string thisHeroine = string.IsNullOrEmpty(rule.heroineID) ? "(主角/未指定)" : rule.heroineID;
                 if (thisHeroine != lastHeroine)
                 {
                     lastHeroine = thisHeroine;
@@ -232,7 +252,7 @@ public class ProgressRulesInspectorWindow : EditorWindow
         EditorGUILayout.EndScrollView();
     }
 
-    private void DrawRuleRow(HeroineUnlockRuleAsset rule)
+    private void DrawRuleRow(ProgressUnlockRuleAsset rule)
     {
         EditorGUI.BeginChangeCheck();
 
@@ -262,28 +282,18 @@ public class ProgressRulesInspectorWindow : EditorWindow
                 Selection.activeObject = rule;
             }
 
-            // 女主角 ID (可編輯)
+            // 女主角 ID (可編輯)。含女主角條件卻沒填 ID 時標紅提醒
+            bool missingHeroineID = rule.HasHeroineCondition && string.IsNullOrEmpty(rule.heroineID);
+            if (missingHeroineID) GUI.color = new Color(1f, 0.5f, 0.5f);
             rule.heroineID = EditorGUILayout.TextField(rule.heroineID, GUILayout.Width(COL_HEROINE));
+            if (missingHeroineID) GUI.color = Color.white;
 
-            // 條件類型
-            rule.conditionType = (HeroineUnlockConditionType)EditorGUILayout.EnumPopup(
-                rule.conditionType, GUILayout.Width(COL_CONDTYPE));
-
-            // Lewd 閾值（只在用得到時亮起）
-            using (new EditorGUI.DisabledScope(
-                rule.conditionType == HeroineUnlockConditionType.AffinityOnly))
-            {
-                rule.requiredLewdnessLevel = EditorGUILayout.IntField(
-                    rule.requiredLewdnessLevel, GUILayout.Width(COL_LEWD));
-            }
-
-            // Affinity 閾值
-            using (new EditorGUI.DisabledScope(
-                rule.conditionType == HeroineUnlockConditionType.LewdnessOnly))
-            {
-                rule.requiredAffinityLevel = EditorGUILayout.IntField(
-                    rule.requiredAffinityLevel, GUILayout.Width(COL_AFFINITY));
-            }
+            // 條件摘要 (唯讀；編輯請展開該列)
+            int condCount = rule.conditions != null ? rule.conditions.Count : 0;
+            string summary = rule.GetConditionsSummary();
+            EditorGUILayout.LabelField(
+                new GUIContent(summary, $"{condCount} 個條件，全部達成才算符合。點左側箭頭展開編輯。"),
+                EditorStyles.miniLabel, GUILayout.Width(COL_CONDITIONS));
 
             // 動作
             rule.action = (ProgressActionType)EditorGUILayout.EnumPopup(
@@ -321,12 +331,65 @@ public class ProgressRulesInspectorWindow : EditorWindow
         }
     }
 
-    private void DrawRuleDetails(HeroineUnlockRuleAsset rule)
+    private void DrawRuleDetails(ProgressUnlockRuleAsset rule)
     {
         EditorGUI.BeginChangeCheck();
 
         using (new EditorGUILayout.VerticalScope(GUI.skin.box))
         {
+            EditorGUILayout.LabelField("── 條件 (全部達成才算符合) ──", EditorStyles.miniBoldLabel);
+
+            if (rule.conditions == null)
+                rule.conditions = new List<UnlockStatCondition>();
+
+            int removeIndex = -1;
+            for (int i = 0; i < rule.conditions.Count; i++)
+            {
+                var cond = rule.conditions[i];
+                if (cond == null)
+                {
+                    cond = new UnlockStatCondition();
+                    rule.conditions[i] = cond;
+                }
+
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    GUILayout.Space(16);
+
+                    cond.stat = (UnlockStatType)EditorGUILayout.EnumPopup(cond.stat, GUILayout.Width(100));
+                    cond.op = (ComparisonOp)EditorGUILayout.EnumPopup(cond.op, GUILayout.Width(110));
+                    cond.threshold = EditorGUILayout.IntField(cond.threshold, GUILayout.Width(60));
+
+                    GUILayout.Label(
+                        cond.IsHeroineStat ? "(女主角)" : "(主角)",
+                        EditorStyles.miniLabel, GUILayout.Width(50));
+
+                    if (GUILayout.Button("✕", EditorStyles.miniButton, GUILayout.Width(22)))
+                        removeIndex = i;
+
+                    GUILayout.FlexibleSpace();
+                }
+            }
+
+            if (removeIndex >= 0)
+                rule.conditions.RemoveAt(removeIndex);
+
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                GUILayout.Space(16);
+                if (GUILayout.Button("+ 新增條件", GUILayout.Width(100)))
+                    rule.conditions.Add(new UnlockStatCondition());
+                GUILayout.FlexibleSpace();
+            }
+
+            if (rule.HasHeroineCondition && string.IsNullOrEmpty(rule.heroineID))
+            {
+                EditorGUILayout.HelpBox(
+                    "含女主角條件 (Libido / Trust / HCount) 但未填 heroineID，此規則會被 Manager 跳過。",
+                    MessageType.Warning);
+            }
+
+            EditorGUILayout.Space(2);
             EditorGUILayout.LabelField("── 進階設定 ──", EditorStyles.miniBoldLabel);
 
             rule.ruleName = EditorGUILayout.TextField("備註名稱", rule.ruleName);
@@ -347,11 +410,11 @@ public class ProgressRulesInspectorWindow : EditorWindow
             EditorGUILayout.LabelField("── UI 提示覆蓋 ──", EditorStyles.miniBoldLabel);
 
             rule.uiHintTypeKeyOverride = EditorGUILayout.TextField(
-                new GUIContent("類型 Key 覆蓋", "留空則依 conditionType 自動推斷 (Lewdness / Affinity)"),
+                new GUIContent("類型 Key 覆蓋", "留空則自動用第一個條件的數值名稱 (Libido / Trust / Stress …)"),
                 rule.uiHintTypeKeyOverride);
 
             rule.uiHintLevelOverride = EditorGUILayout.IntField(
-                new GUIContent("顯示等級覆蓋", "留 0 則自動取條件閾值"),
+                new GUIContent("顯示等級覆蓋", "留 0 則自動用第一個條件的閾值"),
                 rule.uiHintLevelOverride);
 
             EditorGUILayout.HelpBox(
@@ -376,8 +439,8 @@ public class ProgressRulesInspectorWindow : EditorWindow
             EditorGUILayout.LabelField("批次調整工具", EditorStyles.boldLabel);
 
             EditorGUILayout.HelpBox(
-                "勾選篩選條件 → 設定 delta 值 → 按套用。\n" +
-                "例如：勾「限定條件類型=LewdnessOnly」+ Lewd delta=1 → 所有 LewdnessOnly 規則的 Lewd 閾值 +1",
+                "選擇要調整的數值類型 → 設定 delta 值 → 按套用。\n" +
+                "例如：數值類型=Libido + delta=1 → 所有規則中 Libido 條件的閾值 +1",
                 MessageType.Info);
 
             using (new EditorGUILayout.HorizontalScope())
@@ -388,41 +451,30 @@ public class ProgressRulesInspectorWindow : EditorWindow
                 {
                     _batchFilterHeroineID = EditorGUILayout.TextField(_batchFilterHeroineID, GUILayout.Width(150));
                 }
-
-                GUILayout.Space(20);
-
-                _batchFilterByType = EditorGUILayout.ToggleLeft(
-                    "限定條件類型:", _batchFilterByType, GUILayout.Width(110));
-                using (new EditorGUI.DisabledScope(!_batchFilterByType))
-                {
-                    _batchFilterType = (HeroineUnlockConditionType)EditorGUILayout.EnumPopup(
-                        _batchFilterType, GUILayout.Width(120));
-                }
             }
 
             using (new EditorGUILayout.HorizontalScope())
             {
-                GUILayout.Label("Lewd 閾值 delta:", GUILayout.Width(110));
-                _batchLewdDelta = EditorGUILayout.IntField(_batchLewdDelta, GUILayout.Width(60));
+                GUILayout.Label("數值類型:", GUILayout.Width(70));
+                _batchStat = (UnlockStatType)EditorGUILayout.EnumPopup(_batchStat, GUILayout.Width(110));
 
                 GUILayout.Space(20);
 
-                GUILayout.Label("Affi 閾值 delta:", GUILayout.Width(110));
-                _batchAffinityDelta = EditorGUILayout.IntField(_batchAffinityDelta, GUILayout.Width(60));
+                GUILayout.Label("閾值 delta:", GUILayout.Width(70));
+                _batchDelta = EditorGUILayout.IntField(_batchDelta, GUILayout.Width(60));
 
                 GUILayout.FlexibleSpace();
 
                 int affected = CountBatchAffected();
                 GUILayout.Label($"將影響 {affected} 條規則", EditorStyles.miniLabel);
 
-                using (new EditorGUI.DisabledScope(affected == 0 || (_batchLewdDelta == 0 && _batchAffinityDelta == 0)))
+                using (new EditorGUI.DisabledScope(affected == 0 || _batchDelta == 0))
                 {
                     if (GUILayout.Button("套用", GUILayout.Width(60)))
                     {
                         if (EditorUtility.DisplayDialog("批次調整",
                             $"將對 {affected} 條規則套用：\n" +
-                            $"  Lewd 閾值 {(_batchLewdDelta >= 0 ? "+" : "")}{_batchLewdDelta}\n" +
-                            $"  Affinity 閾值 {(_batchAffinityDelta >= 0 ? "+" : "")}{_batchAffinityDelta}\n\n" +
+                            $"  {_batchStat} 條件的閾值 {(_batchDelta >= 0 ? "+" : "")}{_batchDelta}\n\n" +
                             "確定套用？（可用 Ctrl+Z 復原）",
                             "套用", "取消"))
                         {
@@ -434,13 +486,19 @@ public class ProgressRulesInspectorWindow : EditorWindow
         }
     }
 
-    private IEnumerable<HeroineUnlockRuleAsset> GetBatchAffectedRules()
+    /// <summary>
+    /// 取出批次調整會影響的規則：通過女主角篩選、且含有 _batchStat 條件的規則。
+    /// </summary>
+    private IEnumerable<ProgressUnlockRuleAsset> GetBatchAffectedRules()
     {
         foreach (var rule in _allRules)
         {
             if (rule == null) continue;
             if (_batchFilterByHeroine && rule.heroineID != _batchFilterHeroineID) continue;
-            if (_batchFilterByType && rule.conditionType != _batchFilterType) continue;
+
+            GetStatThreshold(rule, _batchStat, out bool has);
+            if (!has) continue;
+
             yield return rule;
         }
     }
@@ -454,26 +512,22 @@ public class ProgressRulesInspectorWindow : EditorWindow
 
         foreach (var rule in affected)
         {
-            // 依條件類型決定要不要動該欄位（避免動到無意義的值）
-            if (rule.conditionType != HeroineUnlockConditionType.AffinityOnly && _batchLewdDelta != 0)
+            foreach (var cond in rule.conditions)
             {
-                rule.requiredLewdnessLevel = Mathf.Max(0, rule.requiredLewdnessLevel + _batchLewdDelta);
-            }
-            if (rule.conditionType != HeroineUnlockConditionType.LewdnessOnly && _batchAffinityDelta != 0)
-            {
-                rule.requiredAffinityLevel = Mathf.Max(0, rule.requiredAffinityLevel + _batchAffinityDelta);
+                if (cond == null || cond.stat != _batchStat) continue;
+                cond.threshold = Mathf.Max(0, cond.threshold + _batchDelta);
             }
             EditorUtility.SetDirty(rule);
         }
 
         AssetDatabase.SaveAssets();
-        Debug.Log($"[Rules Inspector] 已套用批次調整到 {affected.Count} 條規則。");
+        Debug.Log($"[Rules Inspector] 已對 {affected.Count} 條規則的 {_batchStat} 條件套用批次調整。");
     }
 
     // ==========================================================
     // 重新命名 Rule Asset
     // ==========================================================
-    private void RenameRuleAsset(HeroineUnlockRuleAsset rule, string newName)
+    private void RenameRuleAsset(ProgressUnlockRuleAsset rule, string newName)
     {
         if (rule == null || string.IsNullOrWhiteSpace(newName)) return;
 
@@ -522,8 +576,8 @@ public class ProgressRulesInspectorWindow : EditorWindow
             else return;
         }
 
-        var newRule = CreateInstance<HeroineUnlockRuleAsset>();
-        var path = AssetDatabase.GenerateUniqueAssetPath($"{_newRuleFolder}/Rule_NewHeroineRule.asset");
+        var newRule = CreateInstance<ProgressUnlockRuleAsset>();
+        var path = AssetDatabase.GenerateUniqueAssetPath($"{_newRuleFolder}/Rule_NewUnlockRule.asset");
         AssetDatabase.CreateAsset(newRule, path);
         AssetDatabase.SaveAssets();
 
