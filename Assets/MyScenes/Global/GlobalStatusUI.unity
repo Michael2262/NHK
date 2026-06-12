@@ -484,6 +484,41 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 12673821}
   m_CullTransparentMesh: 1
+--- !u!1 &16368545
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 16368546}
+  m_Layer: 5
+  m_Name: ActionOverlay_Pos_Right
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &16368546
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 16368545}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1779532295}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 449, y: 0}
+  m_SizeDelta: {x: 100, y: 100}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &18114024 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 6471468576788849127, guid: 4ab60724fc1c57e4d872d76e402e5433, type: 3}
@@ -762,6 +797,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   soundKey: ui_button_click
+  hoverSoundKey: ui_button_hover
 --- !u!1 &27769875
 GameObject:
   m_ObjectHideFlags: 0
@@ -2075,6 +2111,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UIButtonSound
   soundKey: ui_button_click
+  hoverSoundKey: ui_button_hover
 --- !u!222 &81868131
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -3200,6 +3237,12 @@ MonoBehaviour:
   actionText: {fileID: 7976112004077297194}
   localizeUI: {fileID: 2283707082626293811}
   progressSlider: {fileID: 2283707082626293812}
+  overlayPanel: {fileID: 3860077940404273569}
+  positionMarkers:
+  - position: 0
+    marker: {fileID: 16368546}
+  - position: 1
+    marker: {fileID: 811761741}
   hideSliderWhenShowingResult: 1
   resultText: {fileID: 2283707082626293814}
   resultLocalizeUI: {fileID: 2283707082626293813}
@@ -12115,6 +12158,41 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 808868298}
   m_CullTransparentMesh: 1
+--- !u!1 &811761740
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 811761741}
+  m_Layer: 5
+  m_Name: ActionOverlay_Pos_Center
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &811761741
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 811761740}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1779532295}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 100, y: 100}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &812052206
 GameObject:
   m_ObjectHideFlags: 0
@@ -27492,6 +27570,8 @@ RectTransform:
   - {fileID: 908984338}
   - {fileID: 2144587328}
   - {fileID: 418310518}
+  - {fileID: 811761741}
+  - {fileID: 16368546}
   - {fileID: 3860077940404273569}
   - {fileID: 1409288202}
   - {fileID: 1553700313}
@@ -29242,6 +29322,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   soundKey: ui_button_click
+  hoverSoundKey: ui_button_hover
 --- !u!1001 &1845456056
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -31260,6 +31341,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UIButtonSound
   soundKey: ui_button_click
+  hoverSoundKey: ui_button_hover
 --- !u!114 &1987342878
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -33279,6 +33361,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UIButtonSound
   soundKey: ui_button_click
+  hoverSoundKey: ui_button_hover
 --- !u!114 &2088687412
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -34334,6 +34417,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UIButtonSound
   soundKey: ui_button_click
+  hoverSoundKey: ui_button_hover
 --- !u!114 &2121908954
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -35847,11 +35931,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6572615487326562332, guid: 71ea2b5537655fd42aed0fe34e96cece, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.063
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6572615487326562332, guid: 71ea2b5537655fd42aed0fe34e96cece, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6903610471355022681, guid: 71ea2b5537655fd42aed0fe34e96cece, type: 3}
       propertyPath: m_Name
@@ -35859,7 +35943,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6903610471355022681, guid: 71ea2b5537655fd42aed0fe34e96cece, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

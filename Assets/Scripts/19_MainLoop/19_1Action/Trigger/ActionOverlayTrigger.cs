@@ -23,6 +23,9 @@ public class ActionOverlayTrigger : MonoBehaviour
     [Tooltip("在地化文本的 Key，例如：Action_Cooking")]
     public string localizationKey;
 
+    [Tooltip("此行動的遮罩出現位置。預設偏右，需要置中的行動改選 Center。")]
+    public ActionOverlayPosition overlayPosition = ActionOverlayPosition.Right;
+
     [Header("結果判定設定")]
     [Tooltip("是否在跑條結束後判定成功/失敗?")]
     public bool enableOutcomeResult = false;
@@ -88,7 +91,8 @@ public class ActionOverlayTrigger : MonoBehaviour
                 actionSprite,
                 localizationKey,
                 () => onCompleteEvents?.Invoke(),
-                () => onStartEvents?.Invoke());
+                () => onStartEvents?.Invoke(),
+                overlayPosition);
             return;
         }
 
@@ -114,7 +118,8 @@ public class ActionOverlayTrigger : MonoBehaviour
             },
             () => onStartEvents?.Invoke(),
             successSoundKey,
-            failureSoundKey);
+            failureSoundKey,
+            overlayPosition);
     }
 
     /// <summary>
@@ -147,7 +152,8 @@ public class ActionOverlayTrigger : MonoBehaviour
             },
             () => onStartEvents?.Invoke(),
             successSoundKey,
-            failureSoundKey);
+            failureSoundKey,
+            overlayPosition);
     }
 
     public void SetSuccessChance(float chance)

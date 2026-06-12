@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Events;
 using System.Collections;
+using System.Collections.Generic;
 using TMPro;
 using PixelCrushers.Wrappers;
 
@@ -21,6 +22,21 @@ public class ActionOverlayManager : MonoBehaviour
     public TextMeshProUGUI actionText;
     public LocalizeUI localizeUI;
     public Slider progressSlider;
+
+    [Header("Position Settings")]
+    [Tooltip("實際要移動的面板（通常是 overlayRoot 底下的 Panel）。未指定時不做位置移動。")]
+    public RectTransform overlayPanel;
+
+    [Tooltip("各出現位置的標記。新增位置時在此加一筆即可。")]
+    public List<OverlayPositionEntry> positionMarkers = new List<OverlayPositionEntry>();
+
+    [System.Serializable]
+    public class OverlayPositionEntry
+    {
+        public ActionOverlayPosition position;
+        [Tooltip("空的 RectTransform 標記，面板顯示時會對齊它的 anchor / pivot / anchoredPosition。")]
+        public RectTransform marker;
+    }
 
     [Header("Result Display")]
     [Tooltip("是否在結果顯示階段隱藏進度條。")]
@@ -63,9 +79,11 @@ public class ActionOverlayManager : MonoBehaviour
     /// <summary>
     /// 只跑行動條，結束後執行 onComplete。
     /// </summary>
-    public void TriggerAction(float duration, Sprite sprite, string textKey, UnityAction onComplete, UnityAction onStarted)
+    public void TriggerAction(float duration, Sprite sprite, string textKey, UnityAction onComplete, UnityAction onStarted,
+        ActionOverlayPosition position = ActionOverlayPosition.Right)
     {
         StopCurrent();
+        ApplyOverlayPosition(position);
         _runningCoroutine = StartCoroutine(ProcessActionOnly(duration, sprite, textKey, onStarted, onComplete));
     }
 
@@ -84,9 +102,11 @@ public class ActionOverlayManager : MonoBehaviour
         UnityAction<bool> onResult,
         UnityAction onStarted = null,
         string successSoundKey = "action_success",
-        string failureSoundKey = "action_failure")
+        string failureSoundKey = "action_failure",
+        ActionOverlayPosition position = ActionOverlayPosition.Right)
     {
         StopCurrent();
+        ApplyOverlayPosition(position);
         _runningCoroutine = StartCoroutine(ProcessActionWithResult(
             duration,
             sprite,
@@ -152,6 +172,27 @@ public class ActionOverlayManager : MonoBehaviour
         HideOverlay();
         onResult?.Invoke(isSuccess);
         _runningCoroutine = null;
+    }
+
+    /// <summary>
+    /// 把面板對齊指定位置的 marker。任一參照沒填則不移動（維持場景中原本的位置）。
+    /// </summary>
+    private void ApplyOverlayPosition(ActionOverlayPosition position)
+    {
+        if (overlayPanel == null) return;
+
+        OverlayPositionEntry entry = positionMarkers.Find(e => e != null && e.position == position);
+        if (entry == null || entry.marker == null)
+        {
+            Debug.LogWarning($"ActionOverlayManager：positionMarkers 中找不到位置 {position} 的標記，面板位置不變。", this);
+            return;
+        }
+
+        RectTransform marker = entry.marker;
+        overlayPanel.anchorMin = marker.anchorMin;
+        overlayPanel.anchorMax = marker.anchorMax;
+        overlayPanel.pivot = marker.pivot;
+        overlayPanel.anchoredPosition = marker.anchoredPosition;
     }
 
     private void SetupActionView(Sprite sprite, string textKey)
@@ -228,6 +269,9 @@ public class ActionOverlayManager : MonoBehaviour
 
         if (localization != null)
         {
+            // LocalizeUI 會鎖定第一次抓到的 fieldName，之後 UpdateText() 都查同一個 key，
+            // 必須先改 fieldName 再刷新，否則永遠顯示原始 key 字串。
+            localization.fieldName = keyOrText;
             localization.UpdateText();
         }
     }
