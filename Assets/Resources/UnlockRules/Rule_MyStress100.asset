@@ -10,14 +10,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1453e559ef5f67b4ab9452ece4540b45, type: 3}
-  m_Name: Rule_NewUnlockRule
+  m_Name: Rule_MyStress100
   m_EditorClassIdentifier: Assembly-CSharp::ProgressUnlockRuleAsset
   ruleName: 
   heroineID: 
-  conditions: []
+  conditions:
+  - stat: 3
+    op: 0
+    threshold: 100
   action: 0
-  target: {fileID: 0}
+  target: {fileID: 11400000, guid: e33e13f9cd9f37948a7ed70a3640e811, type: 2}
   valueToSet: 1
-  revertWhenConditionFails: 0
+  revertWhenConditionFails: 1
   uiHintTypeKeyOverride: 
   uiHintLevelOverride: 0
