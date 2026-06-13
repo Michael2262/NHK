@@ -206,8 +206,9 @@ public class TimeSystemModel
 
     private void UpdateWeekendStatus()
     {
-        int dayOfWeek = (DayIndex - 1) % _cfg.DaysPerWeek;
-        IsWeekend = dayOfWeek >= (_cfg.DaysPerWeek - _cfg.WeekendDays);
+        // 假日綁定真正的星期：星期六、星期日為假日。
+        DayOfWeek today = CurrentDayOfWeek;
+        IsWeekend = today == DayOfWeek.Saturday || today == DayOfWeek.Sunday;
     }
 
     /// <summary>
