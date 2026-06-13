@@ -23,6 +23,8 @@ public class StoryManager : MonoBehaviour
     [Header("Alert 設定")]
     [SerializeField] private float alertCharsPerSecond = 20f; // 每秒讀幾個字
     [SerializeField] private float minAlertDuration = 1.5f;   // 公告最少顯示多久
+    [Tooltip("顯示公告時一併播放的音效 Key（留空則不播放）")]
+    [SerializeField] private string alertSoundKey = "alert_show"; // 顯示公告時的音效
 
     public static StoryManager Instance
     {
@@ -355,7 +357,7 @@ public class StoryManager : MonoBehaviour
     public void ShowSystemMessage(string message, float duration = -1)
     {
         float finalDuration = CalculateDuration(message, duration);
-        DialogueManager.ShowAlert(message, finalDuration);
+        ShowAlertInternal(message, finalDuration);
     }
 
     /// <summary>
@@ -372,7 +374,7 @@ public class StoryManager : MonoBehaviour
         }
 
         float finalDuration = CalculateDuration(localizedText, duration);
-        DialogueManager.ShowAlert(localizedText, finalDuration);
+        ShowAlertInternal(localizedText, finalDuration);
     }
 
     // --- 特殊事件公告 ---
@@ -437,7 +439,20 @@ public class StoryManager : MonoBehaviour
         }
 
         float finalDuration = CalculateDuration(localizedText, duration);
-        DialogueManager.ShowAlert(localizedText, finalDuration);
+        ShowAlertInternal(localizedText, finalDuration);
+    }
+
+    /// <summary>
+    /// 所有公告的統一出口：先播放公告音效，再呼叫 DialogueManager 顯示
+    /// </summary>
+    private void ShowAlertInternal(string message, float duration)
+    {
+        if (!string.IsNullOrEmpty(alertSoundKey) && AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlaySound(alertSoundKey);
+        }
+
+        DialogueManager.ShowAlert(message, duration);
     }
 
     /// <summary>計算顯示時間</summary>
