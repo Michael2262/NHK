@@ -231,6 +231,11 @@ public class GameStatusService : MonoBehaviour
         if (dayTriggerConfig != null)
             _dayTriggerProcessor = new DayTriggerProcessor(Time, ProgressFlags, dayTriggerConfig);
 
+        // 套用 Flag / Value 預設值。
+        // 這樣即使「直接 Play 進場景」(未走開新遊戲 / 讀檔流程) 也能看到預設旗標生效。
+        // 正式流程 (StartNewGame / LoadGame) 會先清空 ProgressFlags 再重套，故此處不會殘留或衝突。
+        ApplyAllDefaults();
+
         Debug.Log("GameStatusService: All core systems initialized.");
 
 

@@ -1,15 +1,29 @@
+using System;
+using System.Linq;
 using UnityEngine;
 
 /// <summary>
 /// 職責：提供給 Unity Events (如按鈕、動畫事件) 呼叫的女主角狀態除錯接口，
 /// 並將請求安全地轉發給 HeroineStatusModel 執行。
 /// 女主角 ID 直接在 Inspector 中指定。
+///
+/// 已對齊 NHK 版 HeroineStatusModel：操作情緒卡池、主導情緒（CurrentEmotion）、
+/// 性慾（Libido）、信賴（Trust）、H 次數（HCount）。
+/// 不再使用舊專案遺留的 Lewdness / Affinity stub。
+///
+/// 為了讓 Button.onClick / UnityEvent 能無參數呼叫，多數操作同時提供：
+/// - 帶 int 參數的版本（int 為 HeroineEmotionCardType 列舉索引）
+/// - 無參數的 "Default" 版本（使用 Inspector 上的 defaultEmotion 欄位）
 /// </summary>
 public class HeroineStatusDebugBridge : MonoBehaviour
 {
     [Header("目標女主角設定")]
     [Tooltip("要操作的女主角唯一 ID (例如 \"Sayo\"、\"Mika\")")]
     [SerializeField] private string heroineID = "";
+
+    [Header("情緒卡預設值")]
+    [Tooltip("無參數的 Default 版方法（AddEmotionCardDefault 等）會使用此情緒。")]
+    [SerializeField] private HeroineEmotionCardType defaultEmotion = HeroineEmotionCardType.Angry;
 
     // 輔助屬性：安全地獲取目標女主角的 Model 實例
     private HeroineStatusModel Model
@@ -38,156 +52,216 @@ public class HeroineStatusDebugBridge : MonoBehaviour
         }
     }
 
-    // ==========================================================
-    // 開發度等級 (LewdnessLevel)
-    // ==========================================================
-
-    /// <summary>
-    /// 直接設定開發度等級與經驗值。
-    /// </summary>
-    public void SetLewdnessLevel(int level)
+    /// <summary>把 int 轉成合法的 HeroineEmotionCardType；非法值回傳 defaultEmotion。</summary>
+    private HeroineEmotionCardType ToEmotion(int emotionIndex)
     {
-        var m = Model;
-        if (m == null) return;
-        m.SetLewdness(level, 0);
-        Debug.Log($"[HeroineStatusDebugBridge] ({heroineID}) 設定 LewdnessLevel = {level}");
-    }
+        if (Enum.IsDefined(typeof(HeroineEmotionCardType), emotionIndex))
+            return (HeroineEmotionCardType)emotionIndex;
 
-    /// <summary>
-    /// 設定開發度等級與經驗值（同時指定）。
-    /// </summary>
-    public void SetLewdnessLevelAndExp(int level, int exp)
-    {
-        var m = Model;
-        if (m == null) return;
-        m.SetLewdness(level, exp);
-        Debug.Log($"[HeroineStatusDebugBridge] ({heroineID}) 設定 LewdnessLevel = {level}, LewdnessExp = {exp}");
+        Debug.LogWarning($"[HeroineStatusDebugBridge] 無效的情緒索引 {emotionIndex}，改用 {defaultEmotion}。");
+        return defaultEmotion;
     }
 
     // ==========================================================
-    // 開發度經驗值 (LewdnessExp)
+    // 情緒卡池 (Emotion Deck)
     // ==========================================================
 
-    /// <summary>
-    /// 增加開發度經驗值（可觸發升級）。
-    /// </summary>
-    public void AddLewdnessExp(int amount)
+    /// <summary>新增一張指定情緒卡（依規則自動替換最舊的對立卡）。int = 列舉索引。</summary>
+    public void AddEmotionCard(int emotionIndex)
     {
         var m = Model;
         if (m == null) return;
-        m.AddLewdnessExp(amount);
-        Debug.Log($"[HeroineStatusDebugBridge] ({heroineID}) 增加 LewdnessExp: +{amount} → 當前 Lv.{m.LewdnessLevel} Exp.{m.LewdnessExp}");
+        var type = ToEmotion(emotionIndex);
+        m.ReplaceEmotionCard(type);
+        Debug.Log($"[HeroineStatusDebugBridge] ({heroineID}) 新增情緒卡 {type} → 目前 {type} x{m.GetCardCount(type)}");
     }
 
-    /// <summary>
-    /// 減少開發度經驗值。
-    /// </summary>
-    public void ReduceLewdnessExp(int amount)
+    /// <summary>新增一張 defaultEmotion 情緒卡（無參數，供按鈕呼叫）。</summary>
+    public void AddEmotionCardDefault() => AddEmotionCard((int)defaultEmotion);
+
+    /// <summary>移除一張指定情緒卡。卡池沒有該情緒則不變。int = 列舉索引。</summary>
+    public void RemoveEmotionCard(int emotionIndex)
     {
         var m = Model;
         if (m == null) return;
-        m.ReduceLewdnessExp(amount);
-        Debug.Log($"[HeroineStatusDebugBridge] ({heroineID}) 減少 LewdnessExp: -{amount} → 當前 Lv.{m.LewdnessLevel} Exp.{m.LewdnessExp}");
+        var type = ToEmotion(emotionIndex);
+        bool ok = m.RemoveOneCardOfType(type);
+        Debug.Log($"[HeroineStatusDebugBridge] ({heroineID}) 移除情緒卡 {type} {(ok ? "成功" : "失敗（卡池無此卡）")} → 目前 {type} x{m.GetCardCount(type)}");
     }
 
-    /// <summary>
-    /// 輸出目前的開發度等級與經驗值到 Console。
-    /// </summary>
-    public void LogLewdnessStatus()
+    /// <summary>移除一張 defaultEmotion 情緒卡（無參數，供按鈕呼叫）。</summary>
+    public void RemoveEmotionCardDefault() => RemoveEmotionCard((int)defaultEmotion);
+
+    /// <summary>移除卡池中最舊的一張卡（不指定情緒）。</summary>
+    public void RemoveOldestCard()
     {
         var m = Model;
         if (m == null) return;
-        Debug.Log($"[HeroineStatusDebugBridge] ({heroineID}) LewdnessLevel = {m.LewdnessLevel}, LewdnessExp = {m.LewdnessExp}");
+        m.RemoveOldestCard();
+        Debug.Log($"[HeroineStatusDebugBridge] ({heroineID}) 移除最舊情緒卡 → DominantEmotion = {m.DominantEmotion}");
     }
 
-    // ==========================================================
-    // 親密度等級 (BaseAffinityLevel)
-    // ==========================================================
-
-    /// <summary>
-    /// 直接設定親密度等級（經驗值重置為 0）。
-    /// </summary>
-    public void SetAffinityLevel(int level)
+    /// <summary>把情緒卡池重置回預設初始牌組。</summary>
+    public void ResetEmotionDeck()
     {
         var m = Model;
         if (m == null) return;
-        m.SetAffinity(level, 0);
-        Debug.Log($"[HeroineStatusDebugBridge] ({heroineID}) 設定 AffinityLevel = {level}");
+        m.InitializeDefaultEmotionDeck();
+        Debug.Log($"[HeroineStatusDebugBridge] ({heroineID}) 情緒卡池已重置為預設牌組。");
     }
 
-    /// <summary>
-    /// 設定親密度等級與經驗值（同時指定）。
-    /// </summary>
-    public void SetAffinityLevelAndExp(int level, int exp)
+    /// <summary>輸出情緒卡池內容（各情緒數量 + 大宗情緒）到 Console。</summary>
+    public void LogEmotionDeck()
     {
         var m = Model;
         if (m == null) return;
-        m.SetAffinity(level, exp);
-        Debug.Log($"[HeroineStatusDebugBridge] ({heroineID}) 設定 AffinityLevel = {level}, AffinityExp = {exp}");
-    }
 
-    /// <summary>
-    /// 鎖定或解鎖指定親密度等級（鎖定後無法靠 Exp 自動升級）。
-    /// </summary>
-    public void SetAffinityLevelLock(int level, bool isLocked)
-    {
-        var m = Model;
-        if (m == null) return;
-        m.SetAffinityLevelLock(level, isLocked);
-        Debug.Log($"[HeroineStatusDebugBridge] ({heroineID}) AffinityLevel {level} 鎖定狀態設為 {isLocked}");
+        var lines = Enum.GetValues(typeof(HeroineEmotionCardType))
+            .Cast<HeroineEmotionCardType>()
+            .Where(t => t != HeroineEmotionCardType.Normal)
+            .Select(t => $"  {t,-13}: {m.GetCardCount(t)}");
+
+        Debug.Log(
+            $"[HeroineStatusDebugBridge] ({heroineID}) 情緒卡池（{m.GetEmotionDeckCount()}/{m.EmotionDeckMaxCount}）\n" +
+            string.Join("\n", lines) + "\n" +
+            $"  DominantEmotion : {m.DominantEmotion}\n" +
+            $"  CurrentEmotion  : {m.CurrentEmotion}"
+        );
     }
 
     // ==========================================================
-    // 親密度經驗值 (BaseAffinityExp)
+    // 主導情緒 (CurrentEmotion)
     // ==========================================================
 
-    /// <summary>
-    /// 增加親密度經驗值（可觸發升級）。
-    /// </summary>
-    public void AddAffinityExp(int amount)
+    /// <summary>設定主導情緒（CurrentEmotion）。int = 列舉索引。</summary>
+    public void SetCurrentEmotion(int emotionIndex)
     {
         var m = Model;
         if (m == null) return;
-        m.AddAffinityExp(amount);
-        Debug.Log($"[HeroineStatusDebugBridge] ({heroineID}) 增加 AffinityExp: +{amount} → 當前 Lv.{m.BaseAffinityLevel} Exp.{m.BaseAffinityExp}");
+        var type = ToEmotion(emotionIndex);
+        m.SetCurrentEmotion(type);
+        Debug.Log($"[HeroineStatusDebugBridge] ({heroineID}) 設定 CurrentEmotion = {type}");
     }
 
-    /// <summary>
-    /// 減少親密度經驗值（不降級，最低降至當前等級 Exp = 0）。
-    /// </summary>
-    public void ReduceAffinityExp(int amount)
+    /// <summary>把主導情緒設為 defaultEmotion（無參數，供按鈕呼叫）。</summary>
+    public void SetCurrentEmotionDefault() => SetCurrentEmotion((int)defaultEmotion);
+
+    // ==========================================================
+    // 性慾 (Libido)
+    // ==========================================================
+
+    /// <summary>增減性慾值（正增負減，自動 Clamp 0~150）。</summary>
+    public void AddLibido(int amount)
     {
         var m = Model;
         if (m == null) return;
-        m.ReduceAffinityExp(amount);
-        Debug.Log($"[HeroineStatusDebugBridge] ({heroineID}) 減少 AffinityExp: -{amount} → 當前 Lv.{m.BaseAffinityLevel} Exp.{m.BaseAffinityExp}");
+        m.AddLibido(amount);
+        Debug.Log($"[HeroineStatusDebugBridge] ({heroineID}) Libido {(amount >= 0 ? "+" : "")}{amount} → {m.Libido}");
     }
 
-    /// <summary>
-    /// 輸出目前的親密度等級與經驗值到 Console。
-    /// </summary>
-    public void LogAffinityStatus()
+    /// <summary>直接設定性慾值（自動 Clamp 0~150）。</summary>
+    public void SetLibido(int value)
     {
         var m = Model;
         if (m == null) return;
-        Debug.Log($"[HeroineStatusDebugBridge] ({heroineID}) AffinityLevel = {m.BaseAffinityLevel}, AffinityExp = {m.BaseAffinityExp}");
+        m.SetLibido(value);
+        Debug.Log($"[HeroineStatusDebugBridge] ({heroineID}) 設定 Libido = {m.Libido}");
+    }
+
+    /// <summary>套用一次每日性慾衰減。</summary>
+    public void ApplyLibidoDecay()
+    {
+        var m = Model;
+        if (m == null) return;
+        m.ApplyLibidoDecay();
+        Debug.Log($"[HeroineStatusDebugBridge] ({heroineID}) 套用每日衰減 → Libido = {m.Libido}");
+    }
+
+    /// <summary>輸出目前性慾值到 Console。</summary>
+    public void LogLibido()
+    {
+        var m = Model;
+        if (m == null) return;
+        Debug.Log($"[HeroineStatusDebugBridge] ({heroineID}) Libido = {m.Libido} / {HeroineStatusModel.LibidoMax}");
+    }
+
+    // ==========================================================
+    // 信賴 (Trust)
+    // ==========================================================
+
+    /// <summary>增減信賴值（正增負減，自動 Clamp 0~150）。</summary>
+    public void AddTrust(int amount)
+    {
+        var m = Model;
+        if (m == null) return;
+        m.AddTrust(amount);
+        Debug.Log($"[HeroineStatusDebugBridge] ({heroineID}) Trust {(amount >= 0 ? "+" : "")}{amount} → {m.Trust}");
+    }
+
+    /// <summary>直接設定信賴值（自動 Clamp 0~150）。</summary>
+    public void SetTrust(int value)
+    {
+        var m = Model;
+        if (m == null) return;
+        m.SetTrust(value);
+        Debug.Log($"[HeroineStatusDebugBridge] ({heroineID}) 設定 Trust = {m.Trust}");
+    }
+
+    /// <summary>輸出目前信賴值到 Console。</summary>
+    public void LogTrust()
+    {
+        var m = Model;
+        if (m == null) return;
+        Debug.Log($"[HeroineStatusDebugBridge] ({heroineID}) Trust = {m.Trust} / {HeroineStatusModel.TrustMax}");
+    }
+
+    // ==========================================================
+    // H 次數 (HCount)
+    // ==========================================================
+
+    /// <summary>增加 H 次數（預設 +1，可傳負值）。</summary>
+    public void AddHCount(int amount = 1)
+    {
+        var m = Model;
+        if (m == null) return;
+        m.AddHCount(amount);
+        Debug.Log($"[HeroineStatusDebugBridge] ({heroineID}) HCount {(amount >= 0 ? "+" : "")}{amount} → {m.HCount}");
+    }
+
+    /// <summary>直接設定 H 次數。</summary>
+    public void SetHCount(int value)
+    {
+        var m = Model;
+        if (m == null) return;
+        m.SetHCount(value);
+        Debug.Log($"[HeroineStatusDebugBridge] ({heroineID}) 設定 HCount = {m.HCount}");
+    }
+
+    /// <summary>輸出目前 H 次數到 Console。</summary>
+    public void LogHCount()
+    {
+        var m = Model;
+        if (m == null) return;
+        Debug.Log($"[HeroineStatusDebugBridge] ({heroineID}) HCount = {m.HCount}");
     }
 
     // ==========================================================
     // 一鍵輸出全部狀態 (Debug Summary)
     // ==========================================================
 
-    /// <summary>
-    /// 輸出目前四項數值的完整摘要到 Console。
-    /// </summary>
+    /// <summary>輸出目前所有現役數值的完整摘要到 Console。</summary>
     public void LogAllStatus()
     {
         var m = Model;
         if (m == null) return;
         Debug.Log(
             $"[HeroineStatusDebugBridge] ===== {heroineID} 狀態摘要 =====\n" +
-            $"  LewdnessLevel  : {m.LewdnessLevel}  (Exp: {m.LewdnessExp})\n" +
-            $"  AffinityLevel  : {m.BaseAffinityLevel}  (Exp: {m.BaseAffinityExp})"
+            $"  DominantEmotion : {m.DominantEmotion}\n" +
+            $"  CurrentEmotion  : {m.CurrentEmotion}\n" +
+            $"  EmotionDeck     : {m.GetEmotionDeckCount()} / {m.EmotionDeckMaxCount}\n" +
+            $"  Libido          : {m.Libido} / {HeroineStatusModel.LibidoMax}\n" +
+            $"  Trust           : {m.Trust} / {HeroineStatusModel.TrustMax}\n" +
+            $"  HCount          : {m.HCount}"
         );
     }
 }

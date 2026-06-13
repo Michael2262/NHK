@@ -3839,7 +3839,7 @@ MonoBehaviour:
           name: FINISHED
           isSystemEvent: 1
           isGlobal: 0
-        toState: ChangeMusic?
+        toState: ChangeMusic?Add Flag
         linkStyle: 0
         linkConstraint: 0
         linkTarget: 0
@@ -3984,14 +3984,14 @@ MonoBehaviour:
         - everyFrame
         paramDataPos: 000000000100000000000000
         paramByteDataSize: 000000000000000001000000
-    - name: ChangeMusic?
+    - name: ChangeMusic?Add Flag
       description: 
       colorIndex: 0
       position:
         serializedVersion: 2
         x: 85
         y: 508
-        width: 116.46
+        width: 166.85
         height: 32
       isBreakpoint: 0
       isSequence: 0
@@ -4010,14 +4010,17 @@ MonoBehaviour:
         actionNames:
         - HutongGames.PlayMaker.Actions.IntCompare
         - MyGame.Actions.PlayMusic
+        - MyGame.Actions.AddProgressFlag
         customNames:
         - 
         - 
-        actionEnabled: 0101
-        actionIsOpen: 0101
-        actionStartIndex: 0000000006000000
-        actionHashCodes: 09faa10220e88a02
-        unityObjectParams: []
+        - 
+        actionEnabled: 010101
+        actionIsOpen: 010101
+        actionStartIndex: 000000000600000008000000
+        actionHashCodes: 09faa10220e88a021d5a0103
+        unityObjectParams:
+        - {fileID: 11400000, guid: ef5ab91529ec65c4b809db7b083cde85, type: 2}
         fsmGameObjectParams: []
         fsmOwnerDefaultParams: []
         animationCurveParams: []
@@ -4036,7 +4039,14 @@ MonoBehaviour:
         fsmObjectParams: []
         fsmVarParams: []
         fsmArrayParams: []
-        fsmEnumParams: []
+        fsmEnumParams:
+        - useVariable: 0
+          name: 
+          tooltip: 
+          showInInspector: 0
+          networkSync: 0
+          enumName: FlagLifetime
+          intValue: 4
         fsmFloatParams:
         - useVariable: 0
           name: 
@@ -4072,7 +4082,7 @@ MonoBehaviour:
         arrayParamTypes: []
         customTypeSizes: 
         customTypeNames: []
-        paramDataType: 100000001000000017000000170000001700000001000000120000000f000000
+        paramDataType: 100000001000000017000000170000001700000001000000120000000f000000050000002a000000
         paramName:
         - integer1
         - integer2
@@ -4082,8 +4092,10 @@ MonoBehaviour:
         - everyFrame
         - musicKey
         - fadeDuration
-        paramDataPos: 0000000001000000000000000100000002000000000000000000000000000000
-        paramByteDataSize: 0000000000000000000000000000000000000000010000000000000000000000
+        - flagDef
+        - lifetime
+        paramDataPos: 00000000010000000000000001000000020000000000000000000000000000000000000000000000
+        paramByteDataSize: 00000000000000000000000000000000000000000100000000000000000000000000000000000000
     events:
     - name: FINISHED
       isSystemEvent: 1
