@@ -9,8 +9,8 @@ namespace HutongGames.PlayMaker.Actions
     public class QueueFlagChange : FsmStateAction
     {
         [RequiredField]
-        [Tooltip("旗標的唯一識別 ID")]
-        public FsmString flagID;
+        [Tooltip("拖入旗標定義（asset 檔名即 FlagID）")]
+        public ProgressFlagDefinition flagDef;
 
         [Tooltip("true = 新增旗標, false = 移除旗標")]
         public FsmBool shouldAdd;
@@ -24,7 +24,7 @@ namespace HutongGames.PlayMaker.Actions
 
         public override void Reset()
         {
-            flagID = null;
+            flagDef = null;
             shouldAdd = true;
             lifetime = new FsmEnum { Value = FlagLifetime.Persistent };
             everyFrame = false;
@@ -56,16 +56,16 @@ namespace HutongGames.PlayMaker.Actions
                 return;
             }
 
-            if (string.IsNullOrEmpty(flagID.Value))
+            if (flagDef == null)
             {
-                Debug.LogWarning("[QueueFlagChange] flagID 為空！");
+                Debug.LogWarning("[QueueFlagChange] flagDef 未指定！");
                 return;
             }
 
             FlagLifetime flagLifetime = (FlagLifetime)lifetime.Value;
 
             GameStatusService.Instance.SceneActionQueue.EnqueueFlagChange(
-                flagID.Value,
+                flagDef.FlagID,
                 shouldAdd.Value,
                 flagLifetime
             );

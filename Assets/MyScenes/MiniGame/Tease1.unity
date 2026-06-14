@@ -2651,6 +2651,14 @@ PrefabInstance:
       value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 324185575484516672, guid: 1c1d493b97a02f8429e5155bf529d119, type: 3}
+      propertyPath: 'fsm.states.Array.data[1].actionData.actionIsOpen.Array.data[2]'
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 324185575484516672, guid: 1c1d493b97a02f8429e5155bf529d119, type: 3}
+      propertyPath: 'fsm.states.Array.data[1].actionData.actionEnabled.Array.data[2]'
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 324185575484516672, guid: 1c1d493b97a02f8429e5155bf529d119, type: 3}
       propertyPath: 'fsm.states.Array.data[8].actionData.actionEnabled.Array.data[0]'
       value: 1
       objectReference: {fileID: 0}
@@ -2672,11 +2680,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 324185575484516672, guid: 1c1d493b97a02f8429e5155bf529d119, type: 3}
       propertyPath: fsm.states.Array.data[9].actionData.fsmVarParams.Array.data[1].intValue
-      value: 10
+      value: 20
       objectReference: {fileID: 0}
     - target: {fileID: 324185575484516672, guid: 1c1d493b97a02f8429e5155bf529d119, type: 3}
       propertyPath: fsm.states.Array.data[10].actionData.fsmVarParams.Array.data[1].intValue
-      value: 10
+      value: 20
       objectReference: {fileID: 0}
     - target: {fileID: 338969879565150610, guid: 1c1d493b97a02f8429e5155bf529d119, type: 3}
       propertyPath: group
@@ -9657,8 +9665,8 @@ MonoBehaviour:
       colorIndex: 0
       position:
         serializedVersion: 2
-        x: 63
-        y: 266
+        x: 72
+        y: 328
         width: 150.22
         height: 16
       isBreakpoint: 0
@@ -9755,8 +9763,8 @@ MonoBehaviour:
       colorIndex: 0
       position:
         serializedVersion: 2
-        x: 87
-        y: 176
+        x: 93
+        y: 168
         width: 100
         height: 32
       isBreakpoint: 0
@@ -9767,7 +9775,7 @@ MonoBehaviour:
           name: FINISHED
           isSystemEvent: 1
           isGlobal: 0
-        toState: SceneChangeButton
+        toState: "Queue\uFF1AFlagFirstPass=true"
         linkStyle: 0
         linkConstraint: 0
         linkTarget: 0
@@ -9821,6 +9829,87 @@ MonoBehaviour:
         - slots
         paramDataPos: 0000000000000000
         paramByteDataSize: 0400000000000000
+    - name: "Queue\uFF1AFlagFirstPass=true"
+      description: 
+      colorIndex: 0
+      position:
+        serializedVersion: 2
+        x: 59
+        y: 247
+        width: 191.21
+        height: 32
+      isBreakpoint: 0
+      isSequence: 0
+      hideUnused: 0
+      transitions:
+      - fsmEvent:
+          name: FINISHED
+          isSystemEvent: 1
+          isGlobal: 0
+        toState: SceneChangeButton
+        linkStyle: 0
+        linkConstraint: 0
+        linkTarget: 0
+        colorIndex: 0
+      actionData:
+        actionNames:
+        - HutongGames.PlayMaker.Actions.QueueFlagChange
+        customNames:
+        - 
+        actionEnabled: 01
+        actionIsOpen: 01
+        actionStartIndex: 00000000
+        actionHashCodes: b5dfa201
+        unityObjectParams:
+        - {fileID: 11400000, guid: d3efee5c28d3a844a9d1201746a4c83a, type: 2}
+        fsmGameObjectParams: []
+        fsmOwnerDefaultParams: []
+        animationCurveParams: []
+        functionCallParams: []
+        fsmTemplateControlParams: []
+        fsmEventTargetParams: []
+        fsmPropertyParams: []
+        layoutOptionParams: []
+        fsmStringParams: []
+        fsmObjectParams: []
+        fsmVarParams: []
+        fsmArrayParams: []
+        fsmEnumParams:
+        - useVariable: 0
+          name: 
+          tooltip: 
+          showInInspector: 0
+          networkSync: 0
+          enumName: FlagLifetime
+          intValue: 0
+        fsmFloatParams: []
+        fsmIntParams: []
+        fsmBoolParams:
+        - useVariable: 0
+          name: 
+          tooltip: 
+          showInInspector: 0
+          networkSync: 0
+          value: 1
+        fsmVector2Params: []
+        fsmVector3Params: []
+        fsmColorParams: []
+        fsmRectParams: []
+        fsmQuaternionParams: []
+        stringParams: []
+        byteData: 00
+        arrayParamSizes: 
+        arrayParamTypes: []
+        customTypeSizes: 
+        customTypeNames: []
+        paramDataType: 05000000110000002a00000001000000
+        paramName:
+        - flagDef
+        - shouldAdd
+        - lifetime
+        - everyFrame
+        paramDataPos: 00000000000000000000000000000000
+        paramByteDataSize: 00000000000000000000000001000000
     events:
     - name: EVENT_MANUAL_RETREAT
       isSystemEvent: 0
@@ -16392,12 +16481,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TimeVisualController
   timeVisualRules:
   - phaseIndex: 0
+    dayType: 0
     objectToActivate: {fileID: 1893224101}
   - phaseIndex: 1
+    dayType: 0
     objectToActivate: {fileID: 412243331}
   - phaseIndex: 2
+    dayType: 0
     objectToActivate: {fileID: 122745262}
   - phaseIndex: 3
+    dayType: 0
     objectToActivate: {fileID: 910296647}
 --- !u!4 &1952971120 stripped
 Transform:
@@ -20448,15 +20541,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 324185575484516672, guid: 1c1d493b97a02f8429e5155bf529d119, type: 3}
       propertyPath: fsm.states.Array.data[6].actionData.fsmVarParams.Array.data[1].intValue
-      value: 10
+      value: 20
       objectReference: {fileID: 0}
     - target: {fileID: 324185575484516672, guid: 1c1d493b97a02f8429e5155bf529d119, type: 3}
       propertyPath: fsm.states.Array.data[9].actionData.fsmVarParams.Array.data[1].intValue
-      value: 10
+      value: 20
       objectReference: {fileID: 0}
     - target: {fileID: 324185575484516672, guid: 1c1d493b97a02f8429e5155bf529d119, type: 3}
       propertyPath: fsm.states.Array.data[10].actionData.fsmVarParams.Array.data[1].intValue
-      value: 10
+      value: 20
       objectReference: {fileID: 0}
     - target: {fileID: 338969879565150610, guid: 1c1d493b97a02f8429e5155bf529d119, type: 3}
       propertyPath: group

@@ -885,13 +885,16 @@ public class ProgressInspectorWindow : EditorWindow
 
         var model = svc.ProgressFlags;
 
-        // 用反射拿到內部的 5 個 HashSet 和 Dictionary。
+        // 用反射拿到內部的 Flag 分桶字典與 Variable 字典。
         // 這裡為了不動到你的 Model，用反射做唯讀窺視；寫入則走公開 API。
-        var persistentFlags = GetPrivateField<HashSet<string>>(model, "_persistentFlags");
-        var sceneFlags = GetPrivateField<HashSet<string>>(model, "_sceneFlags");
-        var slotFlags = GetPrivateField<HashSet<string>>(model, "_slotFlags");
-        var phaseFlags = GetPrivateField<HashSet<string>>(model, "_phaseFlags");
-        var dayFlags = GetPrivateField<HashSet<string>>(model, "_dayFlags");
+        // 註：Model 已改用單一 _buckets（Dictionary<FlagLifetime, HashSet<string>>），
+        //     不再是 5 個獨立的 HashSet 欄位。
+        var buckets = GetPrivateField<Dictionary<FlagLifetime, HashSet<string>>>(model, "_buckets");
+        var persistentFlags = GetBucket(buckets, FlagLifetime.Persistent);
+        var sceneFlags = GetBucket(buckets, FlagLifetime.Scene);
+        var slotFlags = GetBucket(buckets, FlagLifetime.UntilNextSlot);
+        var phaseFlags = GetBucket(buckets, FlagLifetime.UntilNextPhase);
+        var dayFlags = GetBucket(buckets, FlagLifetime.UntilNextDay);
         var variables = GetPrivateField<Dictionary<string, int>>(model, "_variables");
 
         DrawRuntimeToolbar(model);
@@ -1153,13 +1156,14 @@ public class ProgressInspectorWindow : EditorWindow
         var sb = new StringBuilder();
         sb.AppendLine("========== Progress Runtime Dump ==========");
 
+        var bucketDict = GetPrivateField<Dictionary<FlagLifetime, HashSet<string>>>(model, "_buckets");
         var buckets = new (string name, HashSet<string> set)[]
         {
-            ("Persistent", GetPrivateField<HashSet<string>>(model, "_persistentFlags")),
-            ("Scene",      GetPrivateField<HashSet<string>>(model, "_sceneFlags")),
-            ("Slot",       GetPrivateField<HashSet<string>>(model, "_slotFlags")),
-            ("Phase",      GetPrivateField<HashSet<string>>(model, "_phaseFlags")),
-            ("Day",        GetPrivateField<HashSet<string>>(model, "_dayFlags")),
+            ("Persistent", GetBucket(bucketDict, FlagLifetime.Persistent)),
+            ("Scene",      GetBucket(bucketDict, FlagLifetime.Scene)),
+            ("Slot",       GetBucket(bucketDict, FlagLifetime.UntilNextSlot)),
+            ("Phase",      GetBucket(bucketDict, FlagLifetime.UntilNextPhase)),
+            ("Day",        GetBucket(bucketDict, FlagLifetime.UntilNextDay)),
         };
 
         foreach (var (name, set) in buckets)
@@ -1188,6 +1192,14 @@ public class ProgressInspectorWindow : EditorWindow
         var field = obj.GetType().GetField(fieldName,
             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
         return field?.GetValue(obj) as T;
+    }
+
+    // 從 Model 的 _buckets 字典取出指定 Lifetime 的 HashSet（取不到回 null）。
+    private static HashSet<string> GetBucket(
+        Dictionary<FlagLifetime, HashSet<string>> buckets, FlagLifetime lifetime)
+    {
+        if (buckets == null) return null;
+        return buckets.TryGetValue(lifetime, out var set) ? set : null;
     }
 }
 #endif
