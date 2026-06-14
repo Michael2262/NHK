@@ -23,6 +23,9 @@ public class RiskSpawnRule
 public class TimePhaseVisual
 {
     public int phaseIndex;
+    [Tooltip("此視覺在哪種日期生效。EveryDay=平日假日皆套用；WeekdayOnly/WeekendOnly=僅平日/僅假日。\n" +
+             "同一 phase 可同時放 EveryDay 與假日專屬版，系統會優先挑專屬版，沒有才 fallback 到 EveryDay。")]
+    public ScheduleDayType dayType = ScheduleDayType.EveryDay;
     public GameObject objectToActivate;
     public List<CanvasGroup> canvasGroupsToActivate;
 }
@@ -232,7 +235,15 @@ public class HubController : MonoBehaviour
 
     private void UpdateEnvironmentVisuals(int currentPhaseIndex)
     {
-        TimePhaseVisual activeRule = timeVisualRules.Find(r => r.phaseIndex == currentPhaseIndex);
+        // 依今天是平日/假日挑選對應視覺：先找專屬版，沒有才 fallback 到 EveryDay。
+        ScheduleDayType specific = _service.Time.IsWeekend
+            ? ScheduleDayType.WeekendOnly
+            : ScheduleDayType.WeekdayOnly;
+
+        TimePhaseVisual activeRule =
+            timeVisualRules.Find(r => r.phaseIndex == currentPhaseIndex && r.dayType == specific)
+            ?? timeVisualRules.Find(r => r.phaseIndex == currentPhaseIndex && r.dayType == ScheduleDayType.EveryDay);
+
         if (activeRule != null)
         {
             if (activeRule.objectToActivate != null)

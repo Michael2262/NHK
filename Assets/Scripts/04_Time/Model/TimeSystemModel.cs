@@ -84,6 +84,48 @@ public class TimeSystemModel
     }
 
     /// <summary>
+    /// 一般動作使用：以「階段(Phase)」為單位推進時間。
+    /// 推進 1 個 phase = 跳到下一個 phase 的第一格；推進 N 個則連跳 N 個 phase。
+    /// 內部換算成所需時段數後沿用 TryAdvanceTime 流程，
+    /// 因此同樣遵守「不允許自動跨日」規則（不足以跳完時回傳 false 且不執行）。
+    /// </summary>
+    public bool TryAdvancePhases(int phases)
+    {
+        if (phases < 0) return false;
+        if (phases == 0) return true;
+
+        int slots = GetSlotsForPhaseAdvance(phases);
+        return TryAdvanceTime(slots);
+    }
+
+    /// <summary>
+    /// 計算「往後推進 phases 個階段、停在該階段第一格」所需的時段數。
+    /// 會考慮各階段時段數不同，並在跨日後從第 0 階段重新計算。
+    /// </summary>
+    private int GetSlotsForPhaseAdvance(int phases)
+    {
+        int phaseCount = _cfg.PhaseNames.Count;
+        if (phaseCount <= 0) return 0;
+
+        int slots = 0;
+        int phaseIndex = CurrentPhaseIndex;
+        int slotInPhase = CurrentSlotInPhase;
+
+        for (int i = 0; i < phases; i++)
+        {
+            int totalInPhase = _cfg.GetTotalSlots(phaseIndex);
+            // 從目前格數推進到「下一階段的第一格」所需的時段數。
+            slots += (totalInPhase - slotInPhase) + 1;
+
+            // 模擬已落在下一階段第一格（跨過最後階段時回到第 0 階段＝跨日）。
+            phaseIndex = (phaseIndex + 1) % phaseCount;
+            slotInPhase = 1;
+        }
+
+        return slots;
+    }
+
+    /// <summary>
     /// 【修改】特殊觸發（睡覺）：請求隔天轉場演出。
     /// 實際的日期推進會在演出完成後才執行。
     /// </summary>

@@ -6,6 +6,9 @@ using UnityEngine;
 public class TimePhaseVisualRule
 {
     public int phaseIndex;
+    [Tooltip("此視覺在哪種日期生效。EveryDay=平日假日皆套用；WeekdayOnly/WeekendOnly=僅平日/僅假日。\n" +
+             "同一 phase 可同時放 EveryDay 與假日專屬版，系統會優先挑專屬版，沒有才 fallback 到 EveryDay。")]
+    public ScheduleDayType dayType = ScheduleDayType.EveryDay;
     public GameObject objectToActivate;
 }
 
@@ -51,9 +54,16 @@ public class TimeVisualController : MonoBehaviour, ISceneReadyHandler
         foreach (var rule in timeVisualRules)
             if (rule.objectToActivate != null) rule.objectToActivate.SetActive(false);
 
-        // 開啟當前 phase 對應的物件
+        // 依今天是平日/假日挑選對應視覺：先找專屬版，沒有才 fallback 到 EveryDay。
         int currentPhase = _service.Time.CurrentPhaseIndex;
-        TimePhaseVisualRule activeRule = timeVisualRules.Find(r => r.phaseIndex == currentPhase);
+        ScheduleDayType specific = _service.Time.IsWeekend
+            ? ScheduleDayType.WeekendOnly
+            : ScheduleDayType.WeekdayOnly;
+
+        TimePhaseVisualRule activeRule =
+            timeVisualRules.Find(r => r.phaseIndex == currentPhase && r.dayType == specific)
+            ?? timeVisualRules.Find(r => r.phaseIndex == currentPhase && r.dayType == ScheduleDayType.EveryDay);
+
         if (activeRule?.objectToActivate != null)
             activeRule.objectToActivate.SetActive(true);
     }

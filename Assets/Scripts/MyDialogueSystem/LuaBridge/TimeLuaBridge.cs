@@ -6,8 +6,8 @@ using PixelCrushers.DialogueSystem;
 /// 將 TimeSystemModel 的「星期幾 / 假日平日」橋接到 Dialogue System 的 Lua 環境，
 /// 供對話條件式判斷使用。掛載於 GameStatusService 同一個 GameObject 上。
 ///
-/// 註：「假日 / 平日」沿用遊戲既有定義（TimeSystemModel.IsWeekend，依 TimeConfig 的
-/// DaysPerWeek / WeekendDays 計算），而非單純以週六日判斷。
+/// 註：「假日 / 平日」沿用遊戲既有定義（TimeSystemModel.IsWeekend），
+/// 目前定義為星期六、星期日是假日。
 /// </summary>
 public class TimeLuaBridge : MonoBehaviour
 {
@@ -88,7 +88,7 @@ public class TimeLuaBridge : MonoBehaviour
     }
 
     /// <summary>
-    /// 今天是否為假日（依 TimeConfig 的 WeekendDays 設定）。
+    /// 今天是否為假日（星期六、星期日）。
     /// Lua 用法: IsWeekend()
     /// </summary>
     public bool IsWeekend()

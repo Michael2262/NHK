@@ -29,11 +29,10 @@ public class TimeConfig : ScriptableObject
     // 週系統配置
     // ============================================================
     [Header("週系統配置")]
-    [Tooltip("每週的總天數 (例如 7)")]
+    [Tooltip("每週的總天數 (例如 7)，供 WeekIndex 計算用")]
     public int DaysPerWeek = 7;
-    [Tooltip("每週的假日天數 (例如 2 天是週末)")]
-    public int WeekendDays = 2;
-    [Tooltip("新遊戲 Day 1（StartDayIndex 那天）是星期幾，預設星期一")]
+    [Tooltip("新遊戲 Day 1（StartDayIndex 那天）是星期幾，預設星期一。\n" +
+             "假日(IsWeekend)直接綁定星期六、星期日，不再使用獨立的假日天數設定。")]
     public System.DayOfWeek StartDayOfWeek = System.DayOfWeek.Monday;
 
     // ============================================================

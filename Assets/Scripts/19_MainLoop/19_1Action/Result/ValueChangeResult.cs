@@ -118,8 +118,19 @@ public class ValueChangeResult : MonoBehaviour
     [Header("3. 資源 / 狀態增加 - 主動設定")]
     [SerializeField] private List<ResourceGainItem> resourceGains = new List<ResourceGainItem>();
 
+    // ==================================================
+    // 時間扣除單位
+    // ==================================================
+    public enum TimeDeductUnit
+    {
+        Slot,   // 以時段(Slot)為單位（原本的行為）
+        Phase   // 以階段(Phase)為單位：填 1 = 跳至下一 Phase
+    }
+
     [Header("4. 時間扣除")]
     [SerializeField] private bool deductTime = false;
+    [Tooltip("扣除單位：Slot=逐格扣；Phase=以階段為單位，填 1 即跳至下一 Phase。\n注意：此單位僅作用於下方「手動時間量」；由 Router 帶入的時間一律以 Slot 計。")]
+    [SerializeField] private TimeDeductUnit timeUnit = TimeDeductUnit.Slot;
     [SerializeField] private int manualTimeAmount = 0;
 
     [Header("5. 女主角資源變動")]
@@ -251,22 +262,38 @@ public class ValueChangeResult : MonoBehaviour
 
     private void ExecuteTimeDeduction(TimeSystemModel t)
     {
-        int timeToDeduct = 0;
-
+        // Router 帶入的時間一律以 Slot 計，優先處理。
         if (sourceRouter != null && sourceRouter.checkTime)
         {
-            timeToDeduct = sourceRouter.timeAmount;
-        }
-        else if (deductTime && manualTimeAmount > 0)
-        {
-            timeToDeduct = manualTimeAmount;
+            int routerSlots = sourceRouter.timeAmount;
+            if (routerSlots > 0)
+            {
+                if (t != null) t.TryAdvanceTime(routerSlots);
+                else Debug.LogWarning("[ValueChangeResult] TimeSystemModel 尚未初始化，無法扣除時間。");
+                Debug.Log($"[ValueChangeResult] 時間扣除(Slot, Router): {routerSlots}");
+            }
+            return;
         }
 
-        if (timeToDeduct > 0)
+        // 手動時間扣除：依 timeUnit 決定以 Slot 或 Phase 為單位。
+        if (deductTime && manualTimeAmount > 0)
         {
-            if (t != null) t.TryAdvanceTime(timeToDeduct);
-            else Debug.LogWarning("[ValueChangeResult] TimeSystemModel 尚未初始化，無法扣除時間。");
-            Debug.Log($"[ValueChangeResult] 時間扣除: {timeToDeduct}");
+            if (t == null)
+            {
+                Debug.LogWarning("[ValueChangeResult] TimeSystemModel 尚未初始化，無法扣除時間。");
+                return;
+            }
+
+            if (timeUnit == TimeDeductUnit.Phase)
+            {
+                t.TryAdvancePhases(manualTimeAmount);
+                Debug.Log($"[ValueChangeResult] 時間扣除(Phase): {manualTimeAmount}");
+            }
+            else
+            {
+                t.TryAdvanceTime(manualTimeAmount);
+                Debug.Log($"[ValueChangeResult] 時間扣除(Slot): {manualTimeAmount}");
+            }
         }
     }
 
