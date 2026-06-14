@@ -37,11 +37,35 @@ public class HeroineDebugUI : MonoBehaviour
     /// <summary>
     /// 若 Inspector 有填 heroineID，自動從 GameStatusService 取得對應 Model。
     /// 也可由外部呼叫 Initialize() 手動指定。
+    ///
+    /// 同時訂閱 OnGameStatusLoaded：女主角 Model 會在新遊戲 / 重置時被
+    /// InitializeHeroineModels() 整批 new 出新實例，舊實例變成孤兒。
+    /// 收到事件後依 heroineID 重新抓取新實例並重綁，避免一直顯示舊資料。
     /// </summary>
     private void Start()
     {
+        var service = GameStatusService.Instance;
+        if (service != null)
+            service.OnGameStatusLoaded += HandleGameStatusLoaded;
+
         if (_model != null) return; // 已經由外部 Initialize 過了
 
+        BindFromService();
+    }
+
+    /// <summary>
+    /// Model 被整批重建後（OnGameStatusLoaded），依 heroineID 重新綁定到新實例。
+    /// 由外部 Initialize() 指定（未填 heroineID）的情況不自動重綁，交由外部負責。
+    /// </summary>
+    private void HandleGameStatusLoaded()
+    {
+        if (string.IsNullOrEmpty(heroineID)) return;
+        BindFromService();
+    }
+
+    /// <summary>依 heroineID 從 GameStatusService 取得對應 Model 並 Initialize。</summary>
+    private void BindFromService()
+    {
         if (string.IsNullOrEmpty(heroineID))
         {
             Debug.LogWarning($"[HeroineDebugUI] heroineID 未填寫，無法自動初始化。", this);
@@ -145,6 +169,10 @@ public class HeroineDebugUI : MonoBehaviour
 
     private void OnDestroy()
     {
+        var service = GameStatusService.Instance;
+        if (service != null)
+            service.OnGameStatusLoaded -= HandleGameStatusLoaded;
+
         Unsubscribe();
     }
 }
