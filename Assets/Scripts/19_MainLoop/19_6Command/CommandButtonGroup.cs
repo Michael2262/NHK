@@ -56,8 +56,16 @@ public class CommandButtonGroup : MonoBehaviour
     [Tooltip("失敗時的多語系 Key。")]
     public string failLocalizationKey = "System.Failed";
 
+    [Header("結果音效")]
+    [Tooltip("成功時播放的音效 Key（對應 AudioManager 設定）。留空則不播放。")]
+    public string successSoundKey = "action_success";
+
+    [Tooltip("失敗時播放的音效 Key（對應 AudioManager 設定）。留空則不播放。")]
+    public string failureSoundKey = "action_failure";
+
     [Header("結果停留")]
-    [Tooltip("時間條跑完後，結果文字與時間條一起停留的秒數，之後才消失並解鎖。")]
+    [Tooltip("時間條跑完後，先播放音效並顯示成功/失敗文字，停留這個秒數後，" +
+             "才執行按鈕的成功/失敗事件（FSM + UnityEvent），接著消失並解鎖。")]
     [Min(0f)]
     public float delayAfterBar = 1.5f;
 
@@ -212,22 +220,25 @@ public class CommandButtonGroup : MonoBehaviour
         float roll = Random.value; // 0~1
         bool success = roll <= chance;
 
-        Debug.Log($"[CommandButtonGroup] {button.gameObject.name}: " +
-                  $"chance={chance:P1}, roll={roll:F3}, result={(success ? "SUCCESS" : "FAIL")}");
+        Debug.Log($"<color=#C71585>[CommandButtonGroup] {button.gameObject.name}：" +
+                  $"這次成功率 {chance:P1}，骰到 {roll:F3}，結果是「{(success ? "成功" : "失敗")}」！</color>");
 
-        // 顯示結果文字（多語系查表）
+        // 先播放結果音效 + 顯示成功/失敗文字，讓玩家先看到、聽到結果
+        PlayResultSound(success);
         ShowResultText(success);
 
+        // 結果停留一段時間，讓玩家看到結果。
+        // 此期間還不執行成功/失敗事件。
+        if (delayAfterBar > 0f)
+            yield return new WaitForSeconds(delayAfterBar);
+
+        // 停留秒數結束後，才執行按鈕的成功/失敗事件（FSM + UnityEvent）
         if (success)
             button.FireSuccessEvents();
         else
             button.FireFailEvents();
 
         onBarFinished?.Invoke();
-
-        // 結果停留一段時間，讓玩家看到結果
-        if (delayAfterBar > 0f)
-            yield return new WaitForSeconds(delayAfterBar);
 
         // 隱藏時間條與結果文字
         SetProgressBarVisible(false);
@@ -309,6 +320,24 @@ public class CommandButtonGroup : MonoBehaviour
     {
         if (resultText == null) return;
         resultText.gameObject.SetActive(false);
+    }
+
+    // ─────────────────────────────────────────────
+    // 結果音效
+    // ─────────────────────────────────────────────
+
+    /// <summary>
+    /// 依成功 / 失敗播放對應音效。透過 AudioManager 單例播放，Key 留空則不播放。
+    /// </summary>
+    private void PlayResultSound(bool success)
+    {
+        string key = success ? successSoundKey : failureSoundKey;
+        if (string.IsNullOrEmpty(key)) return;
+
+        if (AudioManager.Instance != null)
+            AudioManager.Instance.PlaySound(key);
+        else
+            Debug.LogWarning("[CommandButtonGroup] 找不到 AudioManager.Instance，無法播放結果音效。");
     }
 
     // ─────────────────────────────────────────────

@@ -43,6 +43,13 @@ public abstract class ActionChanceProvider : MonoBehaviour
     {
         SubscribeToStatusChanges();
 
+        // 訂閱「遊戲數據載入 / 重置完畢」事件。
+        // 進場時 OnEnable 先跑（此時模型多半還是載入前的舊值），
+        // 之後讀檔管線才套用存檔並觸發 OnGameStatusLoaded，
+        // 屆時再重新計算一次，確保第一次進場顯示正確。
+        if (GameStatusService.Instance != null)
+            GameStatusService.Instance.OnGameStatusLoaded += OnGameStatusLoaded;
+
         if (refreshOnEnable && chanceDisplay != null)
         {
             CalculateSuccessChance();
@@ -52,6 +59,18 @@ public abstract class ActionChanceProvider : MonoBehaviour
     protected virtual void OnDisable()
     {
         UnsubscribeFromStatusChanges();
+
+        if (GameStatusService.Instance != null)
+            GameStatusService.Instance.OnGameStatusLoaded -= OnGameStatusLoaded;
+    }
+
+    /// <summary>
+    /// 遊戲數據載入 / 重置完畢後重新計算並刷新顯示。
+    /// </summary>
+    private void OnGameStatusLoaded()
+    {
+        if (chanceDisplay == null) return;
+        CalculateSuccessChance();
     }
 
     private void SubscribeToStatusChanges()
