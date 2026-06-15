@@ -220,7 +220,7 @@ public class CommandButtonGroup : MonoBehaviour
         float roll = Random.value; // 0~1
         bool success = roll <= chance;
 
-        Debug.Log($"<color=#C71585>[CommandButtonGroup] {button.gameObject.name}：" +
+        Debug.Log($"<color=#FF1493>[CommandButtonGroup] {button.gameObject.name}：" +
                   $"這次成功率 {chance:P1}，骰到 {roll:F3}，結果是「{(success ? "成功" : "失敗")}」！</color>");
 
         // 先播放結果音效 + 顯示成功/失敗文字，讓玩家先看到、聽到結果
