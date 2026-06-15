@@ -11,6 +11,21 @@ public struct TachieSpriteData
     public Sprite sprite;
 }
 
+/// <summary>
+/// 身體模式 (mode)：同一套 body ID 在不同模式下對應不同的圖片。
+/// 例如「制服」「假日便服」兩個 mode，各自有一份對齊的身體圖片清單，
+/// 讓對話腳本用同一個 body ID 也能切換不同服裝。
+/// 清單第一筆 = 該 mode 的「第一順位」，找不到對應 ID 時的退路。
+/// </summary>
+[System.Serializable]
+public class TachieBodyMode
+{
+    [Tooltip("模式名稱，例如 Default / Weekend，切 mode 時用這個比對")]
+    public string modeName;
+    [Tooltip("此模式下的身體圖片清單，第一筆為第一順位 (fallback)")]
+    public List<TachieSpriteData> bodyDataList = new List<TachieSpriteData>();
+}
+
 public class TachieActor : MonoBehaviour
 {
     public string characterID;
@@ -26,7 +41,6 @@ public class TachieActor : MonoBehaviour
     public Image aboveImage;
 
     [Header("圖片資料表")]
-    public List<TachieSpriteData> bodyDataList;
     public List<TachieSpriteData> eyebrowDataList;
     public List<TachieSpriteData> eyeDataList;
     public List<TachieSpriteData> mouthDataList;
@@ -34,9 +48,117 @@ public class TachieActor : MonoBehaviour
     public List<TachieSpriteData> otherDataList;
     public List<TachieSpriteData> aboveDataList;
 
+    [Header("身體模式 (Mode) 設定")]
+    [Tooltip("每個 mode 一個區塊，內含模式名稱 + 一份身體圖片清單。第一個 mode 視為預設。切 mode 只影響 body 圖層。")]
+    public List<TachieBodyMode> bodyModes = new List<TachieBodyMode>();
+
     [Header("表情預設配置")]
     [Tooltip("可多個角色共用同一份 config")]
     public TachieExpressionConfig expressionConfig;
+
+    // ===== 身體模式 (Mode) 執行期狀態 =====
+    // 模式查詢表：Key = modeName, Value = 該模式的身體圖片清單
+    private Dictionary<string, List<TachieSpriteData>> bodyModeDict;
+    // 模式順序（第一個 = 預設 mode）
+    private List<string> bodyModeOrder;
+
+    private string currentModeName;          // 目前所在的 mode
+    private string currentBodyName;          // 目前顯示中的 body ID（尚未呼叫 ChangeBody 前為 null）
+
+    private void Awake()
+    {
+        BuildBodyModes();
+    }
+
+    /// <summary>
+    /// 建立 mode 查詢表。可重複呼叫（idempotent）。
+    /// </summary>
+    private void BuildBodyModes()
+    {
+        bodyModeDict = new Dictionary<string, List<TachieSpriteData>>(System.StringComparer.OrdinalIgnoreCase);
+        bodyModeOrder = new List<string>();
+
+        if (bodyModes != null)
+        {
+            foreach (var mode in bodyModes)
+            {
+                if (mode == null || string.IsNullOrEmpty(mode.modeName)) continue;
+
+                if (bodyModeDict.ContainsKey(mode.modeName))
+                {
+                    Debug.LogWarning($"[TachieActor] {characterID} 有重複的 mode 名稱: {mode.modeName}");
+                    continue;
+                }
+
+                bodyModeDict.Add(mode.modeName, mode.bodyDataList ?? new List<TachieSpriteData>());
+                bodyModeOrder.Add(mode.modeName);
+            }
+        }
+
+        // 預設 mode = 第一個
+        currentModeName = bodyModeOrder.Count > 0 ? bodyModeOrder[0] : null;
+    }
+
+    // 取得目前 mode 的身體圖片清單；找不到目前 mode 時退回第一個 mode
+    private List<TachieSpriteData> GetCurrentBodyList()
+    {
+        if (bodyModeDict == null) BuildBodyModes();
+
+        if (currentModeName != null && bodyModeDict.TryGetValue(currentModeName, out var list))
+            return list;
+
+        return bodyModeOrder.Count > 0 ? bodyModeDict[bodyModeOrder[0]] : null;
+    }
+
+    /// <summary>
+    /// 依目前 currentModeName + currentBodyName 重新套用身體圖片（即「立刻做一次判定」）。
+    /// 找不到對應 ID（或尚未指定過 body）時，退回該 mode 的第一順位圖片。
+    /// 明確指定 None/空字串時則隱藏，不做 fallback。
+    /// </summary>
+    private void ApplyCurrentBody()
+    {
+        var list = GetCurrentBodyList();
+        if (list == null || list.Count == 0)
+        {
+            Debug.LogWarning($"[TachieActor] {characterID} 的 mode '{currentModeName}' 沒有任何身體圖片可用");
+            return;
+        }
+
+        // 明確要求隱藏 → 不退第一順位
+        if (!string.IsNullOrEmpty(currentBodyName) && currentBodyName.ToLower() == "none")
+        {
+            UpdateLayerSprite(list, bodyImage, currentBodyName);
+            return;
+        }
+
+        bool found = !string.IsNullOrEmpty(currentBodyName) && list.Any(d => d.name == currentBodyName);
+        if (!found)
+        {
+            string fallback = list[0].name;
+            if (!string.IsNullOrEmpty(currentBodyName))
+                Debug.Log($"[TachieActor] {characterID} 在 mode '{currentModeName}' 找不到 body '{currentBodyName}'，改用第一順位 '{fallback}'");
+            currentBodyName = fallback;
+        }
+
+        UpdateLayerSprite(list, bodyImage, currentBodyName);
+    }
+
+    /// <summary>
+    /// 切換身體 mode，並立刻用目前的 body ID 在新 mode 重新判定一次圖片。
+    /// </summary>
+    public void SetMode(string modeName)
+    {
+        if (bodyModeDict == null) BuildBodyModes();
+
+        if (string.IsNullOrEmpty(modeName) || !bodyModeDict.ContainsKey(modeName))
+        {
+            Debug.LogWarning($"[TachieActor] {characterID} 沒有 mode '{modeName}'，維持原 mode '{currentModeName}'");
+            return;
+        }
+
+        currentModeName = modeName;
+        ApplyCurrentBody(); // 立刻判定
+    }
 
     // 通用的更換圖片邏輯
     private void UpdateLayerSprite(List<TachieSpriteData> dataList, Image targetImage, string spriteName)
@@ -63,7 +185,12 @@ public class TachieActor : MonoBehaviour
         }
     }
 
-    public void ChangeBody(string name) => UpdateLayerSprite(bodyDataList, bodyImage, name);
+    // 換身體：在目前 mode 的清單中查圖，找不到則退第一順位（None/空 則隱藏）
+    public void ChangeBody(string name)
+    {
+        currentBodyName = name;
+        ApplyCurrentBody();
+    }
     public void ChangeEyebrow(string name) => UpdateLayerSprite(eyebrowDataList, eyebrowImage, name);
     public void ChangeEye(string name) => UpdateLayerSprite(eyeDataList, eyeImage, name);
     public void ChangeMouth(string name) => UpdateLayerSprite(mouthDataList, mouthImage, name);

@@ -20,6 +20,8 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
     /// 8. Move: TachieControl(Move, Sister, 500, 0.5)
     /// 9. Left/Right/Center: TachieControl(Left, Sister, 0.5)
     /// 10. Clear: TachieControl(Clear, 0.5)
+    /// 11. Mode (切身體 mode，會立刻判定): TachieControl(Mode, Sister, Weekend)
+    /// 12. ModeAll (所有角色一起切): TachieControl(ModeAll, Weekend)
     /// </summary>
 
 
@@ -86,6 +88,12 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
             // --- 4. 身體與表情預設控制 ---
             else if (IsAction(action, "Body")) TachieController.Instance.ChangeBody(actorID, GetParameter(2));
             else if (IsAction(action, "Expression", "Expr")) TachieController.Instance.ChangeExpression(actorID, GetParameter(2));
+
+            // --- 4.5 身體 mode 切換 ---
+            // Mode: TachieControl(Mode, 角色ID或群組, 模式名) -> 切該對象的 mode（連動群組一起）
+            else if (IsAction(action, "Mode")) TachieController.Instance.SetMode(actorID, GetParameter(2));
+            // ModeAll: TachieControl(ModeAll, 模式名) -> 所有角色一起切，模式名在參數1
+            else if (IsAction(action, "ModeAll")) TachieController.Instance.SetModeAll(GetParameter(1));
             else if (IsAction(action, "Move"))
             {
                 float xValue = GetParameterAsFloat(2);

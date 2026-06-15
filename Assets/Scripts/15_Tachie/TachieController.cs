@@ -214,6 +214,21 @@ public class TachieController : MonoBehaviour
         ExecuteAppearance(id, linkId => GetActor(linkId)?.ChangeBody(bodyName));
     }
 
+    // --- 3.2 切換身體 mode (有連動) ---
+    // 切 mode 後會立刻用目前 body ID 在新 mode 重新判定圖片；
+    // 新 mode 沒有對應 ID → 退回該 mode 第一順位圖片。
+    public void SetMode(string id, string modeName)
+    {
+        ExecuteAppearance(id, linkId => GetActor(linkId)?.SetMode(modeName));
+    }
+
+    // 一次把所有角色切到同一個 mode（沒有該 mode 的角色會自行略過並警告）
+    public void SetModeAll(string modeName)
+    {
+        foreach (var actor in actorDict.Values)
+            actor.SetMode(modeName);
+    }
+
     // --- 3.5 套用表情預設 (有連動) ---
     public void ChangeExpression(string id, string presetName)
     {
