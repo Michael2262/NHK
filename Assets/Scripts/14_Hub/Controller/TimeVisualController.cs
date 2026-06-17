@@ -5,6 +5,10 @@ using UnityEngine;
 [System.Serializable]
 public class TimePhaseVisualRule
 {
+    [Header("Editor (易讀性)")]
+    [Tooltip("此視覺的描述名稱，純粹為了 Inspector 易讀性。例如：「白天-室內」、「假日-夜晚」")]
+    public string visualName;
+
     public int phaseIndex;
     [Tooltip("此視覺在哪種日期生效。EveryDay=平日假日皆套用；WeekdayOnly/WeekendOnly=僅平日/僅假日。\n" +
              "同一 phase 可同時放 EveryDay 與假日專屬版，系統會優先挑專屬版，沒有才 fallback 到 EveryDay。")]
