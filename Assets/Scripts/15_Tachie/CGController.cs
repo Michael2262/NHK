@@ -26,11 +26,32 @@ public class CGController : MonoBehaviour
     private bool isCGActive = false;
 
     [Header("自動載入設定")]
-    [Tooltip("Resources 下的資料夾路徑，例如 BGCG")]
+    [Tooltip("Resources 下的資料夾路徑，例如 BGCG（其下需有 BG / CG 子資料夾）")]
     public string resourceFolderPath = "BGCG";
 
-    private Dictionary<string, Sprite> bgSpriteDict = new Dictionary<string, Sprite>();
-    private Dictionary<string, Sprite> cgSpriteDict = new Dictionary<string, Sprite>();
+    [Header("Mode（服裝 / 變體）設定")]
+    [Tooltip("BG 的額外 mode 子資料夾名（放在 BGCG/BG/<mode>/ 下）。根目錄檔案自動視為 Default，不需填。")]
+    public List<string> bgModes = new List<string>();
+    [Tooltip("CG 的額外 mode 子資料夾名（放在 BGCG/CG/<mode>/ 下）。根目錄檔案自動視為 Default，不需填。")]
+    public List<string> cgModes = new List<string>();
+
+    public const string DEFAULT_MODE = "Default";
+
+    // 子資料夾名（BGCG/BG、BGCG/CG）
+    private const string BG_SUBFOLDER = "BG";
+    private const string CG_SUBFOLDER = "CG";
+
+    // mode -> (去前綴後的 key -> Sprite)
+    private Dictionary<string, Dictionary<string, Sprite>> bgModeDict;
+    private Dictionary<string, Dictionary<string, Sprite>> cgModeDict;
+
+    // 目前所在 mode（換衣服時用 SetCGMode / SetBGMode 切換）
+    public string CurrentBGMode { get; private set; } = DEFAULT_MODE;
+    public string CurrentCGMode { get; private set; } = DEFAULT_MODE;
+
+    // 目前畫面上顯示中的 id（供切 mode 時用同一個 id 重抓圖）
+    private string currentBGName;
+    private string currentCGName;
 
     [Header("全域設定")]
     public float defaultFadeDuration = 0.2f;
@@ -52,51 +73,100 @@ public class CGController : MonoBehaviour
     }
 
     /// <summary>
-    /// 從 Resources/{resourceFolderPath} 自動載入所有 Sprite。
-    /// 檔名以 BG_ 開頭 → 註冊為背景，去除 "BG_" 前綴作為 key。
-    /// 檔名以 CG_ 開頭 → 註冊為插圖，去除 "CG_" 前綴作為 key。
-    /// 其餘檔案忽略。Resources.LoadAll 會自動遞迴掃描子資料夾。
+    /// 從 Resources/{resourceFolderPath}/BG、/CG 自動載入所有 Sprite，並依 mode（子資料夾）分桶。
+    /// 檔名以 BG_ 開頭 → 背景，去除 "BG_" 前綴作為 key。
+    /// 檔名以 CG_ 開頭 → 插圖，去除 "CG_" 前綴作為 key。
+    /// 子資料夾名（cgModes / bgModes 所列）= mode 名；直接放在 BG/、CG/ 根目錄的檔案視為 Default mode。
+    /// 因此同一個 id 可在不同 mode 子資料夾各放一張，對話腳本用同一個 id 也能依目前 mode 換圖。
     /// </summary>
     private void LoadSpritesFromResources()
     {
-        bgSpriteDict.Clear();
-        cgSpriteDict.Clear();
+        bgModeDict = new Dictionary<string, Dictionary<string, Sprite>>(System.StringComparer.OrdinalIgnoreCase);
+        cgModeDict = new Dictionary<string, Dictionary<string, Sprite>>(System.StringComparer.OrdinalIgnoreCase);
 
-        // Resources.LoadAll 會遞迴載入所有子資料夾中的 Sprite
-        Sprite[] allSprites = Resources.LoadAll<Sprite>(resourceFolderPath);
+        LoadScope(BG_SUBFOLDER, "BG_", bgModes, bgModeDict);
+        LoadScope(CG_SUBFOLDER, "CG_", cgModes, cgModeDict);
 
-        foreach (Sprite sprite in allSprites)
+        Debug.Log($"[CGController] 自動載入完成 — " +
+                  $"BG: {CountSprites(bgModeDict)} 張 / {bgModeDict.Count} mode；" +
+                  $"CG: {CountSprites(cgModeDict)} 張 / {cgModeDict.Count} mode");
+    }
+
+    /// <summary>
+    /// 載入單一範圍（BG 或 CG）的所有 mode。
+    /// 先載入各宣告的 mode 子資料夾，記下其 Sprite；剩下沒被任何 mode 收走的（= 根目錄檔案）歸 Default。
+    /// （Resources.LoadAll 會回傳相同的 Sprite 實例，故可用參照比對來扣除 mode 檔案。）
+    /// </summary>
+    private void LoadScope(string subFolder, string prefix, List<string> modes,
+                           Dictionary<string, Dictionary<string, Sprite>> modeDict)
+    {
+        string basePath = $"{resourceFolderPath}/{subFolder}";
+        var claimed = new HashSet<Sprite>();
+
+        // 1. 各 mode 子資料夾
+        if (modes != null)
         {
-            string fileName = sprite.name; // Unity 自動去除副檔名
+            foreach (string mode in modes)
+            {
+                if (string.IsNullOrEmpty(mode)) continue;
+                if (string.Equals(mode, DEFAULT_MODE, System.StringComparison.OrdinalIgnoreCase))
+                {
+                    Debug.LogWarning($"[CGController] '{DEFAULT_MODE}' 為保留 mode（根目錄自動歸入），不需列在 {subFolder}Modes。");
+                    continue;
+                }
 
-            if (fileName.StartsWith("BG_"))
-            {
-                string key = fileName.Substring(3); // 去除 "BG_"
-                if (!bgSpriteDict.ContainsKey(key))
+                Sprite[] sprites = Resources.LoadAll<Sprite>($"{basePath}/{mode}");
+                if (sprites.Length == 0)
+                    Debug.LogWarning($"[CGController] mode 子資料夾 '{basePath}/{mode}' 沒有任何 Sprite。");
+
+                var dict = GetOrCreateModeDict(modeDict, mode);
+                foreach (Sprite s in sprites)
                 {
-                    bgSpriteDict[key] = sprite;
-                }
-                else
-                {
-                    Debug.LogWarning($"[CGController] 重複的BG名稱: {key} (來自 {fileName})");
-                }
-            }
-            else if (fileName.StartsWith("CG_"))
-            {
-                string key = fileName.Substring(3); // 去除 "CG_"
-                if (!cgSpriteDict.ContainsKey(key))
-                {
-                    cgSpriteDict[key] = sprite;
-                }
-                else
-                {
-                    Debug.LogWarning($"[CGController] 重複的CG名稱: {key} (來自 {fileName})");
+                    claimed.Add(s);
+                    RegisterSprite(dict, s, prefix, mode);
                 }
             }
-            // 不是 BG_ 或 CG_ 開頭的檔案自動忽略
         }
 
-        Debug.Log($"[CGController] 自動載入完成 — BG: {bgSpriteDict.Count} 張, CG: {cgSpriteDict.Count} 張");
+        // 2. Default = 整個範圍遞迴載入後，扣掉已被 mode 收走的
+        var defaultDict = GetOrCreateModeDict(modeDict, DEFAULT_MODE);
+        foreach (Sprite s in Resources.LoadAll<Sprite>(basePath))
+        {
+            if (claimed.Contains(s)) continue;
+            RegisterSprite(defaultDict, s, prefix, DEFAULT_MODE);
+        }
+    }
+
+    private void RegisterSprite(Dictionary<string, Sprite> dict, Sprite sprite, string prefix, string mode)
+    {
+        string fileName = sprite.name; // Unity 自動去除副檔名
+        if (!fileName.StartsWith(prefix)) return; // 不是該前綴 → 忽略
+
+        string key = fileName.Substring(prefix.Length);
+        if (dict.ContainsKey(key))
+        {
+            Debug.LogWarning($"[CGController] mode '{mode}' 重複的名稱: {key} (來自 {fileName})");
+            return;
+        }
+        dict[key] = sprite;
+    }
+
+    private Dictionary<string, Sprite> GetOrCreateModeDict(
+        Dictionary<string, Dictionary<string, Sprite>> modeDict, string mode)
+    {
+        if (!modeDict.TryGetValue(mode, out var dict))
+        {
+            dict = new Dictionary<string, Sprite>(System.StringComparer.OrdinalIgnoreCase);
+            modeDict[mode] = dict;
+        }
+        return dict;
+    }
+
+    private int CountSprites(Dictionary<string, Dictionary<string, Sprite>> modeDict)
+    {
+        int total = 0;
+        foreach (var dict in modeDict.Values) total += dict.Count;
+        return total;
     }
 
     private void InitState()
@@ -128,6 +198,7 @@ public class CGController : MonoBehaviour
 
         isUsingBGA = true;
         isBGActive = true;
+        currentBGName = bgName;
     }
 
     public void HideBG(float duration = -1)
@@ -138,6 +209,7 @@ public class CGController : MonoBehaviour
         bgGroupA.DOFade(0, dur);
         bgGroupB.DOFade(0, dur);
         isBGActive = false;
+        currentBGName = null;
     }
 
     public void SwitchBG(string bgName, float targetAlpha = 1f, float duration = -1)
@@ -164,6 +236,26 @@ public class CGController : MonoBehaviour
         next.DOFade(targetAlpha, dur);
 
         isUsingBGA = !isUsingBGA;
+        currentBGName = bgName;
+    }
+
+    /// <summary>
+    /// 切換背景 mode（例如日／夜）。若目前有背景，立刻用同一個 id 在新 mode 重抓圖。
+    /// 新 mode 找不到該 id 時，GetBGSprite 會自動退回 Default 的同名圖。
+    /// </summary>
+    public void SetBGMode(string mode, float duration = -1)
+    {
+        if (string.IsNullOrEmpty(mode)) return;
+        if (bgModeDict == null || !bgModeDict.ContainsKey(mode))
+        {
+            Debug.LogWarning($"[CGController] 沒有 BG mode '{mode}'，維持 '{CurrentBGMode}'。");
+            return;
+        }
+        if (string.Equals(mode, CurrentBGMode, System.StringComparison.OrdinalIgnoreCase)) return;
+
+        CurrentBGMode = mode;
+        if (isBGActive && !string.IsNullOrEmpty(currentBGName))
+            SwitchBG(currentBGName, 1f, duration);
     }
 
     public void FadeBGAlpha(float targetAlpha, float duration = 0.5f)
@@ -189,6 +281,7 @@ public class CGController : MonoBehaviour
 
         isUsingCGA = true;
         isCGActive = true;
+        currentCGName = cgName;
     }
 
     public void HideCG(float duration = -1)
@@ -199,6 +292,7 @@ public class CGController : MonoBehaviour
         cgGroupA.DOFade(0, dur);
         cgGroupB.DOFade(0, dur).OnComplete(() => ResetZoom(0));
         isCGActive = false;
+        currentCGName = null;
     }
 
     public void SwitchCG(string cgName, float targetAlpha = 1f, float duration = -1)
@@ -225,6 +319,26 @@ public class CGController : MonoBehaviour
         next.DOFade(targetAlpha, dur);
 
         isUsingCGA = !isUsingCGA;
+        currentCGName = cgName;
+    }
+
+    /// <summary>
+    /// 切換插圖 mode（例如換衣服）。若目前有插圖，立刻用同一個 id 在新 mode 重抓圖，
+    /// 對話腳本不必重寫 ShowCG/SwitchCG。新 mode 找不到該 id 時自動退回 Default 的同名圖。
+    /// </summary>
+    public void SetCGMode(string mode, float duration = -1)
+    {
+        if (string.IsNullOrEmpty(mode)) return;
+        if (cgModeDict == null || !cgModeDict.ContainsKey(mode))
+        {
+            Debug.LogWarning($"[CGController] 沒有 CG mode '{mode}'，維持 '{CurrentCGMode}'。");
+            return;
+        }
+        if (string.Equals(mode, CurrentCGMode, System.StringComparison.OrdinalIgnoreCase)) return;
+
+        CurrentCGMode = mode;
+        if (isCGActive && !string.IsNullOrEmpty(currentCGName))
+            SwitchCG(currentCGName, 1f, duration);
     }
 
     public void FadeCGAlpha(float targetAlpha, float duration = 0.5f)
@@ -333,19 +447,41 @@ public class CGController : MonoBehaviour
 
     private Sprite GetBGSprite(string name)
     {
-        if (bgSpriteDict.TryGetValue(name, out Sprite sprite))
-            return sprite;
-
-        Debug.LogWarning($"[CGController] 找不到背景圖片: {name} (已註冊: {string.Join(", ", bgSpriteDict.Keys)})");
-        return null;
+        return ResolveSprite(bgModeDict, CurrentBGMode, name, "背景");
     }
 
     private Sprite GetCGSprite(string name)
     {
-        if (cgSpriteDict.TryGetValue(name, out Sprite sprite))
+        return ResolveSprite(cgModeDict, CurrentCGMode, name, "插圖");
+    }
+
+    /// <summary>
+    /// 依 mode 解析 Sprite：先找目前 mode；找不到退回 Default 的同名圖；都沒有才警告。
+    /// （某個 mode 沒幫某張圖畫變體很正常，這時顯示 Default 原版即可。）
+    /// </summary>
+    private Sprite ResolveSprite(Dictionary<string, Dictionary<string, Sprite>> modeDict,
+                                 string mode, string name, string label)
+    {
+        if (modeDict == null)
+        {
+            Debug.LogWarning($"[CGController] {label}尚未載入，無法取得: {name}");
+            return null;
+        }
+
+        // 1. 目前 mode
+        if (modeDict.TryGetValue(mode, out var dict) && dict.TryGetValue(name, out Sprite sprite))
             return sprite;
 
-        Debug.LogWarning($"[CGController] 找不到插圖圖片: {name} (已註冊: {string.Join(", ", cgSpriteDict.Keys)})");
+        // 2. 退回 Default 的同名圖
+        if (!string.Equals(mode, DEFAULT_MODE, System.StringComparison.OrdinalIgnoreCase) &&
+            modeDict.TryGetValue(DEFAULT_MODE, out var defaultDict) &&
+            defaultDict.TryGetValue(name, out Sprite defaultSprite))
+        {
+            return defaultSprite;
+        }
+
+        string registered = modeDict.TryGetValue(mode, out var d) ? string.Join(", ", d.Keys) : "(無)";
+        Debug.LogWarning($"[CGController] 找不到{label}圖片: {name} (mode: {mode}，該 mode 已註冊: {registered})");
         return null;
     }
 }

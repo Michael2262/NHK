@@ -934,6 +934,20 @@ MonoBehaviour:
       value: "\u51FA\u9580\u5931\u6557\u6B21\u6578"
       type: 0
       typeString: CustomFieldType_Text
+  - id: 26
+    fields:
+    - title: Name
+      value: Request.StayLate
+      type: 0
+      typeString: CustomFieldType_Text
+    - title: Initial Value
+      value: False
+      type: 2
+      typeString: CustomFieldType_Boolean
+    - title: Description
+      value: "\u555F\u52D5\u8B93\u59B9\u59B9\u7559\u665A\u4E00\u9EDE\u7684\u8ACB\u6C42"
+      type: 0
+      typeString: CustomFieldType_Text
   conversations:
   - id: 109
     fields:
@@ -25090,7 +25104,7 @@ MonoBehaviour:
       - title: Sequence
         value: 'required SetMenuPanel(Player, 0);
 
-          PlayStory(Chat/Sister/Option_HCasual1/OptionB);'
+          PlayStory(Chat/Sister/Option_Request/StayLate);'
         type: 0
         typeString: CustomFieldType_Text
       - title: zh-TW
@@ -25531,7 +25545,7 @@ MonoBehaviour:
         destinationDialogueID: 45
         isConnector: 0
         priority: 2
-      conditionsString: Variable["Test.Empty"] == 99
+      conditionsString: Variable["Request.StayLate"] == true
       userScript: 
       onExecute:
         m_PersistentCalls:
@@ -195405,10 +195419,8 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: 'SetPanel(Sister, 2); SetPanel(Brother, 2);SetPanel(Empty, 2);
-
-
-          Continue();'
+        value: "SetPanel(Sister, 2); SetPanel(Brother, 2);SetPanel(Empty, 2);\nAnim(Stop); 
+          \nContinue();"
         type: 0
         typeString: CustomFieldType_Text
       - title: zh-TW
@@ -196725,7 +196737,7 @@ MonoBehaviour:
       conditionPriority: 2
       outgoingLinks: []
       conditionsString: 
-      userScript: 
+      userScript: Variable["Request.StayLate"] = true
       onExecute:
         m_PersistentCalls:
           m_Calls: []

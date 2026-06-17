@@ -18,6 +18,8 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
     /// 9. ResetZoom:CGControl(ResetZoom, 時間[1.0])
     /// 10. Focus:   CGControl(Focus, 目標物件名稱, 時間[1.0])
     /// 11.震動
+    /// 12. CGMode:  CGControl(CGMode, 模式名稱, 時間[預設]) — 換衣服/變體，畫面上的 CG 自動換成該 mode 的版本
+    /// 13. BGMode:  CGControl(BGMode, 模式名稱, 時間[預設]) — 背景變體（日/夜…），自動換成該 mode 的版本
     /// </summary>
     public class SequencerCommandCGControl : SequencerCommand
     {
@@ -112,6 +114,20 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
                 float duration = GetParameterAsFloat(1, 0.5f);
                 float strength = GetParameterAsFloat(2, -1f);
                 CGController.Instance.ShakeCG(duration, strength);
+            }
+
+            // --- Mode 切換（換衣服 / 變體） ---
+            else if (IsAction(action, "CGMode", "SetCGMode"))
+            {
+                string mode = GetParameter(1);
+                float duration = GetParameterAsFloat(2, -1f);
+                CGController.Instance.SetCGMode(mode, duration);
+            }
+            else if (IsAction(action, "BGMode", "SetBGMode"))
+            {
+                string mode = GetParameter(1);
+                float duration = GetParameterAsFloat(2, -1f);
+                CGController.Instance.SetBGMode(mode, duration);
             }
             else
             {
