@@ -166,6 +166,64 @@ public class TimeSystemModel
     }
 
     // ==========================================================
+    // 批次推進（Bridge / 腳本用：允許跨日，不觸發睡覺演出）
+    // ==========================================================
+    // 與上方 TryAdvanceXxx 系列不同：本區方法「不檢查跨日」、一律強制執行，
+    // 供事件腳本 / Debug 直接快轉時間使用。跨日時每天都會觸發 OnDayPassed，
+    // 讓各系統（清旗標、重抽遭遇等）能逐日正確結算。
+
+    /// <summary>
+    /// 直接推進指定「階段(Phase)」數，允許跨日。
+    /// 推進 1 個 phase = 跳到下一個 phase 的第一格；N 個則連跳 N 個。
+    /// </summary>
+    public void AdvancePhases(int phases)
+    {
+        if (phases <= 0) return;
+        int slots = GetSlotsForPhaseAdvance(phases);
+        AdvanceTime(slots);
+    }
+
+    /// <summary>
+    /// 直接推進指定「天數」，落在第 N 天後的第一階段、第一格（等同連睡 N 天，但無演出）。
+    /// </summary>
+    public void AdvanceDays(int days)
+    {
+        if (days <= 0) return;
+
+        // 先回到當天的第一階段第一格，再逐日 +1，讓最終停在目標日的開頭。
+        CurrentPhaseIndex = 0;
+        CurrentSlotInPhase = 1;
+
+        for (int i = 0; i < days; i++)
+        {
+            AdvanceDay();   // 內含 OnDayPassed，逐日結算
+        }
+
+        OnPhaseChanged?.Invoke();
+        OnTimeSlotAdvanced?.Invoke(0);
+    }
+
+    /// <summary>
+    /// 推進到「下一個指定星期幾」（今日不算），落在該日的第一階段、第一格。
+    /// 例：今天星期三、target=星期三 → 跳到下週三（+7 天）。
+    /// </summary>
+    public void AdvanceToNextDayOfWeek(DayOfWeek target)
+    {
+        int delta = ((int)target - (int)CurrentDayOfWeek + 7) % 7;
+        if (delta == 0) delta = 7;   // 今日不算，落在下週的同一天
+        AdvanceDays(delta);
+    }
+
+    /// <summary>
+    /// 推進到「下一個週末」（今日不算）。週末以星期六為起點。
+    /// 今天若已是星期六 → 跳到下週六；其餘日 → 跳到本週／下週最近的星期六。
+    /// </summary>
+    public void AdvanceToNextWeekend()
+    {
+        AdvanceToNextDayOfWeek(DayOfWeek.Saturday);
+    }
+
+    // ==========================================================
     // 核心邏輯：推進時間 (由 TimeSystemManager 呼叫)
     // ==========================================================
 

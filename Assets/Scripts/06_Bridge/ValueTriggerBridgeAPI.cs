@@ -112,6 +112,50 @@ public class ValueTriggerBridgeAPI : MonoBehaviour
         ExecuteAdvanceTime(timeSlots);
     }
 
+    // ---- 批次推進（允許跨日，不觸發睡覺演出）----
+
+    /// <summary>推進多個階段(Phase)，允許跨日。</summary>
+    public void ExecuteAdvancePhases(int phases)
+    {
+        var t = GameStatusService.Instance.Time;
+        t.AdvancePhases(phases);
+        Debug.Log($"[BridgeAPI] 執行階段推進 {phases} 個 Phase");
+    }
+
+    /// <summary>推進多個 Day，落在目標日的第一階段第一格。</summary>
+    public void ExecuteAdvanceDays(int days)
+    {
+        var t = GameStatusService.Instance.Time;
+        t.AdvanceDays(days);
+        Debug.Log($"[BridgeAPI] 執行日期推進 {days} 天");
+    }
+
+    /// <summary>推進到下一個週末（星期六，今日不算）。</summary>
+    public void ExecuteAdvanceToNextWeekend()
+    {
+        var t = GameStatusService.Instance.Time;
+        t.AdvanceToNextWeekend();
+        Debug.Log("[BridgeAPI] 推進到下一個週末（星期六）");
+    }
+
+    /// <summary>
+    /// 推進到下一個指定星期幾（今日不算）。
+    /// dayOfWeek：0=星期日, 1=星期一, ... 6=星期六（對應 System.DayOfWeek）。
+    /// </summary>
+    public void ExecuteAdvanceToNextDayOfWeek(int dayOfWeek)
+    {
+        if (dayOfWeek < 0 || dayOfWeek > 6)
+        {
+            Debug.LogWarning($"[BridgeAPI] 無效的星期值 {dayOfWeek}（應為 0~6）");
+            return;
+        }
+
+        var t = GameStatusService.Instance.Time;
+        var target = (System.DayOfWeek)dayOfWeek;
+        t.AdvanceToNextDayOfWeek(target);
+        Debug.Log($"[BridgeAPI] 推進到下一個星期 {target}");
+    }
+
     // ==========================================
     // Legacy compatibility
     // ==========================================
