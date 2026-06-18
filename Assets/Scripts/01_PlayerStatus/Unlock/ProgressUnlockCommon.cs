@@ -101,6 +101,33 @@ public class UnlockStatCondition
 }
 
 /// <summary>
+/// 數值映射 (Sync / 鏡像)：讓某個 Progress Value 變數「永遠等於」某個數值的當下值。
+/// 與門檻規則不同 —— 不判斷大小、不寫固定值，數值一變就把當前值忠實寫入 target。
+///
+/// 來源數值是女主角 (Libido / Trust / HCount) 時需填 heroineID；
+/// 來源是主角數值 (Stress / LifePower / …) 時 heroineID 留空。
+/// </summary>
+[Serializable]
+public class StatMirror
+{
+    [Tooltip("來源數值。女主角數值需搭配下方 heroineID；主角數值則忽略 heroineID。")]
+    public UnlockStatType stat = UnlockStatType.Libido;
+
+    [Tooltip("來源為女主角數值 (Libido / Trust / HCount) 時必填；主角數值留空。")]
+    public string heroineID;
+
+    [Tooltip("要忠實寫入當前值的 Progress Value 變數。")]
+    public ProgressValueDefinition target;
+
+    /// <summary> 此映射來源是否為女主角數值 (需要 heroineID) </summary>
+    public bool IsHeroineStat => ProgressUnlockUtility.IsHeroineStat(stat);
+
+    /// <summary> 映射的文字摘要，例如 "Libido → SisterLibido" (Debug 用) </summary>
+    public string ToSummary()
+        => $"{stat} → {(target != null ? target.FlagID : "(未設定)")}";
+}
+
+/// <summary>
 /// 解鎖系統的共用小工具：數值取得 / 比較 / 顯示符號
 /// </summary>
 public static class ProgressUnlockUtility

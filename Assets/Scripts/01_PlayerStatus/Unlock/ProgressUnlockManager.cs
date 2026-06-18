@@ -29,6 +29,12 @@ public class ProgressUnlockManager
     private readonly List<ProgressUnlockRuleAsset> _protagonistRules
         = new List<ProgressUnlockRuleAsset>();
 
+    // 數值映射 (Sync)：女主角數值映射依 heroineID 分組，主角數值映射另存一份
+    private readonly Dictionary<string, List<StatMirror>> _mirrorsByHeroine
+        = new Dictionary<string, List<StatMirror>>();
+    private readonly List<StatMirror> _protagonistMirrors
+        = new List<StatMirror>();
+
     // 紀錄每條 Rule「目前是否已套用」(用 Rule 本身為 key；Rule 是 ScriptableObject，引用即唯一)
     private readonly Dictionary<ProgressUnlockRuleAsset, bool> _ruleApplied
         = new Dictionary<ProgressUnlockRuleAsset, bool>();
@@ -62,7 +68,11 @@ public class ProgressUnlockManager
 
         foreach (var cfg in configs)
         {
-            if (cfg == null || cfg.rules == null) continue;
+            if (cfg == null) continue;
+
+            CollectMirrors(cfg);
+
+            if (cfg.rules == null) continue;
 
             foreach (var rule in cfg.rules)
             {
@@ -116,6 +126,50 @@ public class ProgressUnlockManager
         SubscribeAll();
     }
 
+    /// <summary>
+    /// 收集一個 Config 內的數值映射，依來源 (女主角 / 主角) 分流索引。
+    /// </summary>
+    private void CollectMirrors(ProgressUnlockConfig cfg)
+    {
+        if (cfg.mirrors == null) return;
+
+        foreach (var mirror in cfg.mirrors)
+        {
+            if (mirror == null) continue;
+
+            if (mirror.target == null)
+            {
+                Debug.LogWarning(
+                    $"[ProgressUnlockManager] Config '{cfg.name}' 有一筆映射未設定 target，已跳過。"
+                );
+                continue;
+            }
+
+            if (mirror.IsHeroineStat)
+            {
+                if (string.IsNullOrEmpty(mirror.heroineID))
+                {
+                    Debug.LogWarning(
+                        $"[ProgressUnlockManager] Config '{cfg.name}' 的映射 '{mirror.ToSummary()}' " +
+                        "是女主角數值卻未填 heroineID，已跳過。"
+                    );
+                    continue;
+                }
+
+                if (!_mirrorsByHeroine.TryGetValue(mirror.heroineID, out var list))
+                {
+                    list = new List<StatMirror>();
+                    _mirrorsByHeroine[mirror.heroineID] = list;
+                }
+                list.Add(mirror);
+            }
+            else
+            {
+                _protagonistMirrors.Add(mirror);
+            }
+        }
+    }
+
     // ==========================================================
     // 訂閱數值變化事件
     // ==========================================================
@@ -127,10 +181,14 @@ public class ProgressUnlockManager
             string id = kv.Key;
             HeroineStatusModel model = kv.Value;
 
-            // 沒有任何 Rule 對應此女主角的話，不用訂閱
-            if (!_rulesByHeroine.ContainsKey(id)) continue;
+            // 沒有任何 Rule 或映射對應此女主角的話，不用訂閱
+            if (!_rulesByHeroine.ContainsKey(id) && !_mirrorsByHeroine.ContainsKey(id)) continue;
 
-            Action<int> handler = (_) => EvaluateRulesForHeroine(id);
+            Action<int> handler = (_) =>
+            {
+                EvaluateRulesForHeroine(id);
+                ApplyMirrorsForHeroine(id);
+            };
 
             model.OnLibidoChanged += handler;
             model.OnTrustChanged += handler;
@@ -139,10 +197,14 @@ public class ProgressUnlockManager
             _heroineHandlers[id] = handler;
         }
 
-        // ── 主角：Stress / LifePower / Sociality / Dependency ──
-        if (_protagonistRules.Count > 0 && _protagonist != null)
+        // ── 主角：Stress / LifePower / Sociality / Dependency / RoomMessLevel ──
+        if ((_protagonistRules.Count > 0 || _protagonistMirrors.Count > 0) && _protagonist != null)
         {
-            _protagonistHandler = (_) => EvaluateProtagonistRules();
+            _protagonistHandler = (_) =>
+            {
+                EvaluateProtagonistRules();
+                ApplyProtagonistMirrors();
+            };
 
             _protagonist.OnStressChanged += _protagonistHandler;
             _protagonist.OnLifePowerChanged += _protagonistHandler;
@@ -193,6 +255,20 @@ public class ProgressUnlockManager
 
         foreach (var rule in keys)
             EvaluateRule(rule);
+
+        // 數值映射也一併做一次初始同步
+        RefreshAllMirrors();
+    }
+
+    /// <summary>
+    /// 重新把所有映射的來源數值忠實寫入對應的 Progress Value。
+    /// </summary>
+    private void RefreshAllMirrors()
+    {
+        foreach (var id in _mirrorsByHeroine.Keys)
+            ApplyMirrorsForHeroine(id);
+
+        ApplyProtagonistMirrors();
     }
 
     // ==========================================================
@@ -211,6 +287,35 @@ public class ProgressUnlockManager
     {
         foreach (var rule in _protagonistRules)
             EvaluateRule(rule);
+    }
+
+    // ==========================================================
+    // 數值映射 (Sync)：把來源數值忠實寫入 Progress Value
+    // ==========================================================
+
+    private void ApplyMirrorsForHeroine(string heroineID)
+    {
+        if (!_mirrorsByHeroine.TryGetValue(heroineID, out var list)) return;
+
+        // 女主角數值映射一定要拿得到該女主角實例
+        _heroines.TryGetValue(heroineID, out var heroine);
+
+        foreach (var mirror in list)
+            ApplyMirror(mirror, heroine);
+    }
+
+    private void ApplyProtagonistMirrors()
+    {
+        foreach (var mirror in _protagonistMirrors)
+            ApplyMirror(mirror, null);
+    }
+
+    private void ApplyMirror(StatMirror mirror, HeroineStatusModel heroine)
+    {
+        if (mirror == null || mirror.target == null) return;
+
+        if (ProgressUnlockUtility.TryGetStatValue(mirror.stat, heroine, _protagonist, out int value))
+            _progress.SetValue(mirror.target.FlagID, value);
     }
 
     private void EvaluateRule(ProgressUnlockRuleAsset rule)

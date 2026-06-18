@@ -43,7 +43,7 @@ public class ProtagonistStatusModel
     // ───── RoomMessLevel（房間髒亂度） ─────
     public const int ROOM_MESS_LEVEL_MAX = 10;
     public const int ROOM_MESS_LEVEL_MIN = 0;
-    public const int INITIAL_ROOM_MESS_LEVEL = ROOM_MESS_LEVEL_MIN;
+    public const int INITIAL_ROOM_MESS_LEVEL = ROOM_MESS_LEVEL_MAX;
 
     // ───── 數值範圍 ─────
     public const int MIN_STATUS_VALUE = 0;

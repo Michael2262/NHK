@@ -39,9 +39,8 @@ public class GameStatusService : MonoBehaviour
     public static event Action OnAutoSaveCompleted;
     public static event Action OnManualSaveCompleted;
 
-    [Header("數值觸發配置")]
-    [SerializeField] private List<HeroineTriggerContainer> heroineTriggerContainers = new List<HeroineTriggerContainer>();
-    public HeroineStatTriggerManager TriggerManager { get; private set; }
+    // 註：女主角數值觸發 / 映射已退役，改由 ProgressUnlockManager 統一處理
+    // (門檻規則 → Rule Asset；忠實映射 → Config 的 mirrors)。
 
     [Header("通用數值觸發設定")]
     [SerializeField] private List<ValueTriggerContainer> valueTriggerContainers = new List<ValueTriggerContainer>();
@@ -179,10 +178,6 @@ public class GameStatusService : MonoBehaviour
         // 數值變化套組服務（套用時透過 Instance 取 Protagonist / Heroines）
         StatChangeService = new StatChangeService(statChangePackageDatabase);
 
-        // 啟動觸發系統
-        TriggerManager = new HeroineStatTriggerManager(ProgressFlags, Heroines, heroineTriggerContainers);
-
-
         // --- 執行依賴注入與事件訂閱 ---
         // NHK 版 ProtagonistStatusModel 不再使用 Attack / Defense / RecalculateTotalStats。
 
@@ -194,9 +189,6 @@ public class GameStatusService : MonoBehaviour
         var globalData = SaveManager.LoadGlobalProgress();
         GlobalProgress.LoadFromSaveData(globalData);
         Debug.Log("GlobalProgress initialized from file.");
-
-        // --- 傳入 Heroines 字典作為參數 ---
-        OnGameStatusLoaded += () => TriggerManager.RefreshAllRules(Heroines);
 
         // 啟動通用數值觸發系統
         ValueTriggerManager = new ValueTriggerManager(ProgressFlags, valueTriggerContainers);
@@ -235,6 +227,10 @@ public class GameStatusService : MonoBehaviour
         // 這樣即使「直接 Play 進場景」(未走開新遊戲 / 讀檔流程) 也能看到預設旗標生效。
         // 正式流程 (StartNewGame / LoadGame) 會先清空 ProgressFlags 再重套，故此處不會殘留或衝突。
         ApplyAllDefaults();
+
+        // 直接 Play 進場景時也做一次初始刷新，讓 mirror / 規則一開場就正確。
+        // (正式流程 StartNewGame / LoadGame 之後仍會再經 OnGameStatusLoaded 刷新一次，idempotent)
+        ProgressUnlockManager.RefreshAllRules();
 
         Debug.Log("GameStatusService: All core systems initialized.");
 

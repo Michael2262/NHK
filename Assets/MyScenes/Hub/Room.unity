@@ -2403,6 +2403,7 @@ Transform:
   m_Children:
   - {fileID: 1784852818}
   - {fileID: 1677808320}
+  - {fileID: 1286862564}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &356646186
@@ -12794,6 +12795,54 @@ Transform:
   - {fileID: 848037980}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1286862563
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1286862564}
+  - component: {fileID: 1286862565}
+  m_Layer: 0
+  m_Name: 'ProgressValueSetter (RoomMess) '
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1286862564
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1286862563}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 350774505}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1286862565
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1286862563}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7a13706020f825c44a67c9a670c5ac69, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ProgressValueSetter
+  targetValues:
+  - {fileID: 11400000, guid: b76eae3ca8c86884cbc0b471a9bed419, type: 2}
+  valueToSet: 10
+  amountToAdd: 1
 --- !u!1 &1295869489
 GameObject:
   m_ObjectHideFlags: 0
@@ -15218,7 +15267,7 @@ GameObject:
   - component: {fileID: 1677808320}
   - component: {fileID: 1677808321}
   m_Layer: 0
-  m_Name: ProgressFlagSetter (1)
+  m_Name: ProgressFlagSetter (Tease)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -16615,6 +16664,7 @@ MonoBehaviour:
     - {fileID: 728273899}
     ToDeactivate:
     - {fileID: 1724634830}
+    - {fileID: 2124716637}
   - StateName: "\u958B\u5834\u6232\u72C0\u614B"
     Priority: 1
     Logic: 0
@@ -16627,6 +16677,17 @@ MonoBehaviour:
     - {fileID: 1724634830}
     ToDeactivate:
     - {fileID: 728273899}
+  - StateName: RoomMessLevel=10
+    Priority: 1
+    Logic: 0
+    Conditions:
+    - Definition: {fileID: 11400000, guid: b76eae3ca8c86884cbc0b471a9bed419, type: 2}
+      RequiredState: 0
+      Comparison: 0
+      TargetValue: 10
+    ToActivate:
+    - {fileID: 2124716637}
+    ToDeactivate: []
 --- !u!1 &1805022242
 GameObject:
   m_ObjectHideFlags: 0

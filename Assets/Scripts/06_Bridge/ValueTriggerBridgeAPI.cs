@@ -95,8 +95,22 @@ public class ValueTriggerBridgeAPI : MonoBehaviour
         Debug.Log($"[BridgeAPI] 執行降低依賴度 {amount}");
     }
 
+    public void ExecuteAddRoomMessLevel(int amount)
+    {
+        var p = GameStatusService.Instance.Protagonist;
+        p.AddRoomMessLevel(amount);
+        Debug.Log($"[BridgeAPI] 執行增加房間髒亂度 {amount}");
+    }
+
+    public void ExecuteReduceRoomMessLevel(int amount)
+    {
+        var p = GameStatusService.Instance.Protagonist;
+        p.ReduceRoomMessLevel(amount);
+        Debug.Log($"[BridgeAPI] 執行降低房間髒亂度 {amount}");
+    }
+
     // ==========================================
-    // Time
+    //
     // ==========================================
 
     public void ExecuteAdvanceTime(int slots)

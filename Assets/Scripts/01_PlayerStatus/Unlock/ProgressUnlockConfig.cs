@@ -26,4 +26,12 @@ public class ProgressUnlockConfig : ScriptableObject
         "OnlyCondition 類型的規則會被 Manager 跳過 (它們只用來當 UI 條件)。"
     )]
     public List<ProgressUnlockRuleAsset> rules = new List<ProgressUnlockRuleAsset>();
+
+    [Header("數值映射 (Sync / 鏡像)")]
+    [Tooltip(
+        "把某個數值忠實同步到 Progress Value 變數 (數值一變就跟著變)。\n" +
+        "女主角數值 (Libido / Trust / HCount) 需填 heroineID；主角數值留空。\n" +
+        "與門檻規則不同：這裡不判斷大小，只是讓 Value 永遠等於來源的當下值。"
+    )]
+    public List<StatMirror> mirrors = new List<StatMirror>();
 }
