@@ -2707,6 +2707,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 324185575484516672, guid: 1c1d493b97a02f8429e5155bf529d119, type: 3}
       propertyPath: fsm.variables.intVariables.Array.data[3].value
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 324185575484516672, guid: 1c1d493b97a02f8429e5155bf529d119, type: 3}
+      propertyPath: fsm.variables.intVariables.Array.data[5].value
       value: 20
       objectReference: {fileID: 0}
     - target: {fileID: 324185575484516672, guid: 1c1d493b97a02f8429e5155bf529d119, type: 3}
@@ -2743,15 +2747,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 324185575484516672, guid: 1c1d493b97a02f8429e5155bf529d119, type: 3}
       propertyPath: fsm.states.Array.data[6].actionData.fsmVarParams.Array.data[1].intValue
-      value: 20
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 324185575484516672, guid: 1c1d493b97a02f8429e5155bf529d119, type: 3}
       propertyPath: fsm.states.Array.data[9].actionData.fsmVarParams.Array.data[1].intValue
-      value: 20
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 324185575484516672, guid: 1c1d493b97a02f8429e5155bf529d119, type: 3}
       propertyPath: fsm.states.Array.data[10].actionData.fsmVarParams.Array.data[1].intValue
-      value: 20
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 338969879565150610, guid: 1c1d493b97a02f8429e5155bf529d119, type: 3}
       propertyPath: group
@@ -7951,7 +7955,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 324185575484516672, guid: 1c1d493b97a02f8429e5155bf529d119, type: 3}
       propertyPath: fsm.variables.intVariables.Array.data[1].value
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 324185575484516672, guid: 1c1d493b97a02f8429e5155bf529d119, type: 3}
       propertyPath: fsm.variables.intVariables.Array.data[2].value
@@ -7959,7 +7963,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 324185575484516672, guid: 1c1d493b97a02f8429e5155bf529d119, type: 3}
       propertyPath: fsm.variables.intVariables.Array.data[4].value
-      value: 10
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 324185575484516672, guid: 1c1d493b97a02f8429e5155bf529d119, type: 3}
+      propertyPath: fsm.variables.intVariables.Array.data[5].value
+      value: 20
       objectReference: {fileID: 0}
     - target: {fileID: 324185575484516672, guid: 1c1d493b97a02f8429e5155bf529d119, type: 3}
       propertyPath: 'fsm.states.Array.data[9].actionData.actionEnabled.Array.data[2]'
@@ -7979,7 +7987,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 324185575484516672, guid: 1c1d493b97a02f8429e5155bf529d119, type: 3}
       propertyPath: fsm.states.Array.data[6].actionData.fsmVarParams.Array.data[0].intValue
-      value: 10
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 324185575484516672, guid: 1c1d493b97a02f8429e5155bf529d119, type: 3}
       propertyPath: fsm.states.Array.data[6].actionData.fsmVarParams.Array.data[1].intValue
@@ -7987,7 +7995,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 324185575484516672, guid: 1c1d493b97a02f8429e5155bf529d119, type: 3}
       propertyPath: fsm.states.Array.data[9].actionData.fsmVarParams.Array.data[0].intValue
-      value: 10
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 324185575484516672, guid: 1c1d493b97a02f8429e5155bf529d119, type: 3}
       propertyPath: fsm.states.Array.data[9].actionData.fsmVarParams.Array.data[1].intValue
@@ -7995,7 +8003,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 324185575484516672, guid: 1c1d493b97a02f8429e5155bf529d119, type: 3}
       propertyPath: fsm.states.Array.data[10].actionData.fsmVarParams.Array.data[0].intValue
-      value: 10
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 324185575484516672, guid: 1c1d493b97a02f8429e5155bf529d119, type: 3}
       propertyPath: fsm.states.Array.data[10].actionData.fsmVarParams.Array.data[1].intValue
@@ -9054,6 +9062,8 @@ MonoBehaviour:
   resultText: {fileID: 55746251}
   successLocalizationKey: System.Succese
   failLocalizationKey: System.Failed
+  successSoundKey: action_success
+  failureSoundKey: action_failure
   delayAfterBar: 1
   onBarStarted:
     m_PersistentCalls:
@@ -10781,15 +10791,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 324185575484516672, guid: 1c1d493b97a02f8429e5155bf529d119, type: 3}
       propertyPath: fsm.states.Array.data[6].actionData.fsmVarParams.Array.data[0].intValue
-      value: 15
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 324185575484516672, guid: 1c1d493b97a02f8429e5155bf529d119, type: 3}
       propertyPath: fsm.states.Array.data[9].actionData.fsmVarParams.Array.data[0].intValue
-      value: 15
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 324185575484516672, guid: 1c1d493b97a02f8429e5155bf529d119, type: 3}
       propertyPath: fsm.states.Array.data[10].actionData.fsmVarParams.Array.data[0].intValue
-      value: 15
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 338969879565150610, guid: 1c1d493b97a02f8429e5155bf529d119, type: 3}
       propertyPath: group
@@ -16406,16 +16416,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TimeVisualController
   timeVisualRules:
-  - phaseIndex: 0
+  - visualName: 
+    phaseIndex: 0
     dayType: 0
     objectToActivate: {fileID: 1893224101}
-  - phaseIndex: 1
+  - visualName: 
+    phaseIndex: 1
     dayType: 0
     objectToActivate: {fileID: 412243331}
-  - phaseIndex: 2
+  - visualName: 
+    phaseIndex: 2
     dayType: 0
     objectToActivate: {fileID: 122745262}
-  - phaseIndex: 3
+  - visualName: 
+    phaseIndex: 3
     dayType: 0
     objectToActivate: {fileID: 910296647}
 --- !u!4 &1952971120 stripped
@@ -20524,6 +20538,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 324185575484516672, guid: 1c1d493b97a02f8429e5155bf529d119, type: 3}
       propertyPath: fsm.variables.intVariables.Array.data[3].value
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 324185575484516672, guid: 1c1d493b97a02f8429e5155bf529d119, type: 3}
+      propertyPath: fsm.variables.intVariables.Array.data[5].value
       value: 20
       objectReference: {fileID: 0}
     - target: {fileID: 324185575484516672, guid: 1c1d493b97a02f8429e5155bf529d119, type: 3}
@@ -20548,15 +20566,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 324185575484516672, guid: 1c1d493b97a02f8429e5155bf529d119, type: 3}
       propertyPath: fsm.states.Array.data[6].actionData.fsmVarParams.Array.data[1].intValue
-      value: 20
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 324185575484516672, guid: 1c1d493b97a02f8429e5155bf529d119, type: 3}
       propertyPath: fsm.states.Array.data[9].actionData.fsmVarParams.Array.data[1].intValue
-      value: 20
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 324185575484516672, guid: 1c1d493b97a02f8429e5155bf529d119, type: 3}
       propertyPath: fsm.states.Array.data[10].actionData.fsmVarParams.Array.data[1].intValue
-      value: 20
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 338969879565150610, guid: 1c1d493b97a02f8429e5155bf529d119, type: 3}
       propertyPath: group
