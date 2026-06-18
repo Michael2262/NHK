@@ -204,6 +204,26 @@ public class TimeSystemModel
     }
 
     /// <summary>
+    /// 推進到「下一個指定階段(Phase)」（當前不算），落在該階段的第一格，允許跨日。
+    /// 例：現在在 Phase 2、target=1 → 跨日到隔天的 Phase 1；target=現在階段 → 跳到下一輪同階段。
+    /// </summary>
+    public void AdvanceToNextPhase(int targetPhaseIndex)
+    {
+        int phaseCount = _cfg.PhaseNames.Count;
+        if (phaseCount <= 0) return;
+
+        if (targetPhaseIndex < 0 || targetPhaseIndex >= phaseCount)
+        {
+            Debug.LogWarning($"[TimeSystem] 無效的 Phase 索引 {targetPhaseIndex}（應為 0~{phaseCount - 1}）。");
+            return;
+        }
+
+        int steps = (targetPhaseIndex - CurrentPhaseIndex + phaseCount) % phaseCount;
+        if (steps == 0) steps = phaseCount;   // 已在該階段 → 跳到下一輪（通常為隔天同階段）
+        AdvancePhases(steps);
+    }
+
+    /// <summary>
     /// 推進到「下一個指定星期幾」（今日不算），落在該日的第一階段、第一格。
     /// 例：今天星期三、target=星期三 → 跳到下週三（+7 天）。
     /// </summary>

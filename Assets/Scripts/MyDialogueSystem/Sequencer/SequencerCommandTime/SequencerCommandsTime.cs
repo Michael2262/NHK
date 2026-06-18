@@ -422,4 +422,127 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
             Stop();
         }
     }
+
+    // ╔════════════════════════════════════════════════════════════════════╗
+    // ║  5. AdvanceToPhase — 到達下一個「指定階段」                        ║
+    // ╠════════════════════════════════════════════════════════════════════╣
+    // ║  語法：AdvanceToPhase(階段索引)                                     ║
+    // ║                                                                    ║
+    // ║  參數：                                                            ║
+    // ║  - 階段索引 (必填)  0=白天, 1=黃昏, 2=晚上, 3=深夜                 ║
+    // ║                                                                    ║
+    // ║  行為：                                                            ║
+    // ║  跳到「下一個」該階段的第一格，允許跨日（不做隔天演出）。           ║
+    // ║  若目前已在該階段 → 跳到下一輪（通常為隔天同階段）。                ║
+    // ║                                                                    ║
+    // ║  範例：                                                            ║
+    // ║  AdvanceToPhase(2)   → 跳到下一個「晚上」開頭                      ║
+    // ╚════════════════════════════════════════════════════════════════════╝
+    public class SequencerCommandAdvanceToPhase : SequencerCommand
+    {
+        public void Awake()
+        {
+            int targetPhase = GetParameterAsInt(0, -1);
+
+            var service = GameStatusService.Instance;
+            if (service == null)
+            {
+                Debug.LogError("[AdvanceToPhase] 找不到 GameStatusService！");
+                Stop();
+                return;
+            }
+
+            service.Time.AdvanceToNextPhase(targetPhase);
+            Debug.Log($"[AdvanceToPhase] 已推進到下一個 Phase {targetPhase}。");
+            Stop();
+        }
+    }
+
+    // ╔════════════════════════════════════════════════════════════════════╗
+    // ║  6. AdvanceToWeekday — 到達下一個「指定星期幾」                    ║
+    // ╠════════════════════════════════════════════════════════════════════╣
+    // ║  語法：AdvanceToWeekday(星期)                                       ║
+    // ║                                                                    ║
+    // ║  參數：                                                            ║
+    // ║  - 星期 (必填)  英文名（Monday）或數字（0=週日 … 6=週六）         ║
+    // ║                                                                    ║
+    // ║  行為：                                                            ║
+    // ║  跳到「下一個」該星期，今日不算，落在該日第一階段第一格。           ║
+    // ║  （直接跳日，不做隔天演出）                                        ║
+    // ║                                                                    ║
+    // ║  範例：                                                            ║
+    // ║  AdvanceToWeekday(Monday)  → 跳到下一個星期一                      ║
+    // ║  AdvanceToWeekday(1)       → 同上                                  ║
+    // ╚════════════════════════════════════════════════════════════════════╝
+    public class SequencerCommandAdvanceToWeekday : SequencerCommand
+    {
+        public void Awake()
+        {
+            string dayArg = GetParameter(0);
+
+            var service = GameStatusService.Instance;
+            if (service == null)
+            {
+                Debug.LogError("[AdvanceToWeekday] 找不到 GameStatusService！");
+                Stop();
+                return;
+            }
+
+            if (!TryParseDayOfWeek(dayArg, out DayOfWeek target))
+            {
+                Debug.LogWarning($"[AdvanceToWeekday] 無法解析星期參數 \"{dayArg}\"。可用：Sunday~Saturday 或 0~6。");
+                Stop();
+                return;
+            }
+
+            service.Time.AdvanceToNextDayOfWeek(target);
+            Debug.Log($"[AdvanceToWeekday] 已推進到下一個 {target}。");
+            Stop();
+        }
+
+        private bool TryParseDayOfWeek(string arg, out DayOfWeek result)
+        {
+            result = DayOfWeek.Sunday;
+            if (string.IsNullOrEmpty(arg)) return false;
+
+            if (int.TryParse(arg, out int num))
+            {
+                if (num < 0 || num > 6) return false;
+                result = (DayOfWeek)num;
+                return true;
+            }
+
+            return Enum.TryParse(arg, true, out result);
+        }
+    }
+
+    // ╔════════════════════════════════════════════════════════════════════╗
+    // ║  7. AdvanceToWeekend — 到達下一個「週末」                          ║
+    // ╠════════════════════════════════════════════════════════════════════╣
+    // ║  語法：AdvanceToWeekend()                                           ║
+    // ║                                                                    ║
+    // ║  行為：                                                            ║
+    // ║  跳到「下一個」週末（以星期六為起點，今日不算），                   ║
+    // ║  落在該日第一階段第一格。（直接跳日，不做隔天演出）                 ║
+    // ║                                                                    ║
+    // ║  範例：                                                            ║
+    // ║  AdvanceToWeekend()  → 跳到下一個星期六                            ║
+    // ╚════════════════════════════════════════════════════════════════════╝
+    public class SequencerCommandAdvanceToWeekend : SequencerCommand
+    {
+        public void Awake()
+        {
+            var service = GameStatusService.Instance;
+            if (service == null)
+            {
+                Debug.LogError("[AdvanceToWeekend] 找不到 GameStatusService！");
+                Stop();
+                return;
+            }
+
+            service.Time.AdvanceToNextWeekend();
+            Debug.Log("[AdvanceToWeekend] 已推進到下一個週末（星期六）。");
+            Stop();
+        }
+    }
 }

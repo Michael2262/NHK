@@ -58,7 +58,8 @@ public enum UnlockStatType
     Stress,
     LifePower,
     Sociality,
-    Dependency
+    Dependency,
+    RoomMessLevel
 }
 
 /// <summary>
@@ -153,6 +154,10 @@ public static class ProgressUnlockUtility
             case UnlockStatType.Dependency:
                 if (protagonist == null) return false;
                 value = protagonist.Dependency;
+                return true;
+            case UnlockStatType.RoomMessLevel:
+                if (protagonist == null) return false;
+                value = protagonist.RoomMessLevel;
                 return true;
 
             default:

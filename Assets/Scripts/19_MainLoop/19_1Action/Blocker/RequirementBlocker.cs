@@ -280,6 +280,7 @@ public class RequirementBlocker : MonoBehaviour
                 svc.Protagonist.OnLifePowerChanged += OnAnyChanged;
                 svc.Protagonist.OnSocialityChanged += OnAnyChanged;
                 svc.Protagonist.OnDependencyChanged += OnAnyChanged;
+                svc.Protagonist.OnRoomMessLevelChanged += OnAnyChanged;
             }
         }
         else if (svc.Heroines != null && Conditions != null)
@@ -326,6 +327,7 @@ public class RequirementBlocker : MonoBehaviour
                 svc.Protagonist.OnLifePowerChanged -= OnAnyChanged;
                 svc.Protagonist.OnSocialityChanged -= OnAnyChanged;
                 svc.Protagonist.OnDependencyChanged -= OnAnyChanged;
+                svc.Protagonist.OnRoomMessLevelChanged -= OnAnyChanged;
             }
         }
         else if (svc.Heroines != null && Conditions != null)

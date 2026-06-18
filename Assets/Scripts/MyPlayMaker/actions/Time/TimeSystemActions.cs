@@ -303,4 +303,140 @@ namespace MyGame.Actions
             _waiting = false;
         }
     }
+
+    // ╔════════════════════════════════════════════════════════════════════╗
+    // ║  AdvanceToPhase — 到達下一個「指定階段」                           ║
+    // ║  對應 Sequencer 指令：AdvanceToPhase(階段索引)                      ║
+    // ╚════════════════════════════════════════════════════════════════════╝
+    [ActionCategory("Time")]
+    [Tooltip("跳到下一個指定 Phase 的第一格（允許跨日，不做隔天演出）。0=白天,1=黃昏,2=晚上,3=深夜。")]
+    public class AdvanceToPhase : FsmStateAction
+    {
+        [RequiredField]
+        [Tooltip("目標階段索引：0=白天, 1=黃昏, 2=晚上, 3=深夜")]
+        public FsmInt targetPhase;
+
+        [Tooltip("推進完成時送出的事件（選填）")]
+        public FsmEvent finishedEvent;
+
+        [Tooltip("索引無效或系統未就緒時送出的事件（選填）")]
+        public FsmEvent failedEvent;
+
+        public override void Reset()
+        {
+            targetPhase = 0;
+            finishedEvent = null;
+            failedEvent = null;
+        }
+
+        public override void OnEnter()
+        {
+            var service = GameStatusService.Instance;
+            if (service == null)
+            {
+                Debug.LogError("[AdvanceToPhase] 找不到 GameStatusService！");
+                Fsm.Event(failedEvent);
+                Finish();
+                return;
+            }
+
+            int phaseCount = service.TimeConfig.PhaseNames.Count;
+            int target = targetPhase.Value;
+            if (target < 0 || target >= phaseCount)
+            {
+                Debug.LogWarning($"[AdvanceToPhase] 無效的 Phase 索引 {target}（應為 0~{phaseCount - 1}）。");
+                Fsm.Event(failedEvent);
+                Finish();
+                return;
+            }
+
+            service.Time.AdvanceToNextPhase(target);
+            Debug.Log($"[AdvanceToPhase] 已推進到下一個 Phase {target}。");
+            Fsm.Event(finishedEvent);
+            Finish();
+        }
+    }
+
+    // ╔════════════════════════════════════════════════════════════════════╗
+    // ║  AdvanceToWeekday — 到達下一個「指定星期幾」                       ║
+    // ║  對應 Sequencer 指令：AdvanceToWeekday(星期)                        ║
+    // ╚════════════════════════════════════════════════════════════════════╝
+    [ActionCategory("Time")]
+    [Tooltip("跳到下一個指定星期幾（今日不算，落在該日第一階段第一格，不做隔天演出）。")]
+    public class AdvanceToWeekday : FsmStateAction
+    {
+        [RequiredField]
+        [ObjectType(typeof(DayOfWeek))]
+        [Tooltip("目標星期幾")]
+        public FsmEnum targetDay;
+
+        [Tooltip("推進完成時送出的事件（選填）")]
+        public FsmEvent finishedEvent;
+
+        [Tooltip("系統未就緒時送出的事件（選填）")]
+        public FsmEvent failedEvent;
+
+        public override void Reset()
+        {
+            targetDay = DayOfWeek.Monday;
+            finishedEvent = null;
+            failedEvent = null;
+        }
+
+        public override void OnEnter()
+        {
+            var service = GameStatusService.Instance;
+            if (service == null)
+            {
+                Debug.LogError("[AdvanceToWeekday] 找不到 GameStatusService！");
+                Fsm.Event(failedEvent);
+                Finish();
+                return;
+            }
+
+            var target = (DayOfWeek)targetDay.Value;
+            service.Time.AdvanceToNextDayOfWeek(target);
+            Debug.Log($"[AdvanceToWeekday] 已推進到下一個 {target}。");
+            Fsm.Event(finishedEvent);
+            Finish();
+        }
+    }
+
+    // ╔════════════════════════════════════════════════════════════════════╗
+    // ║  AdvanceToWeekend — 到達下一個「週末」                             ║
+    // ║  對應 Sequencer 指令：AdvanceToWeekend()                            ║
+    // ╚════════════════════════════════════════════════════════════════════╝
+    [ActionCategory("Time")]
+    [Tooltip("跳到下一個週末（以星期六為起點，今日不算，落在該日第一階段第一格，不做隔天演出）。")]
+    public class AdvanceToWeekend : FsmStateAction
+    {
+        [Tooltip("推進完成時送出的事件（選填）")]
+        public FsmEvent finishedEvent;
+
+        [Tooltip("系統未就緒時送出的事件（選填）")]
+        public FsmEvent failedEvent;
+
+        public override void Reset()
+        {
+            finishedEvent = null;
+            failedEvent = null;
+        }
+
+        public override void OnEnter()
+        {
+            var service = GameStatusService.Instance;
+            if (service == null)
+            {
+                Debug.LogError("[AdvanceToWeekend] 找不到 GameStatusService！");
+                Fsm.Event(failedEvent);
+                Finish();
+                return;
+            }
+
+            service.Time.AdvanceToNextWeekend();
+            Debug.Log("[AdvanceToWeekend] 已推進到下一個週末（星期六）。");
+            Fsm.Event(finishedEvent);
+            Finish();
+        }
+    }
 }
