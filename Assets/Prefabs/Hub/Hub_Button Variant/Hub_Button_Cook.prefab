@@ -23,14 +23,14 @@ PrefabInstance:
     - target: {fileID: 2865881838498405525, guid: 47cdc5d225a30fb4283d91ebadf36f29, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
-      objectReference: {fileID: 4299982954734293570}
+      objectReference: {fileID: 6843414152347832844}
     - target: {fileID: 2865881838498405525, guid: 47cdc5d225a30fb4283d91ebadf36f29, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
-      value: Trigger
+      value: TriggerStory
       objectReference: {fileID: 0}
     - target: {fileID: 2865881838498405525, guid: 47cdc5d225a30fb4283d91ebadf36f29, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
-      value: FsmValueIDTrigger, Assembly-CSharp
+      value: ConditionalStoryTrigger, Assembly-CSharp
       objectReference: {fileID: 0}
     - target: {fileID: 2865881838498405525, guid: 47cdc5d225a30fb4283d91ebadf36f29, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
@@ -153,6 +153,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 1525115703803297967, guid: 47cdc5d225a30fb4283d91ebadf36f29, type: 3}
       insertIndex: -1
       addedObject: {fileID: 4299982954734293570}
+    - targetCorrespondingSourceObject: {fileID: 1525115703803297967, guid: 47cdc5d225a30fb4283d91ebadf36f29, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6843414152347832844}
   m_SourcePrefab: {fileID: 100100000, guid: 47cdc5d225a30fb4283d91ebadf36f29, type: 3}
 --- !u!1 &7457797593668237778 stripped
 GameObject:
@@ -173,3 +176,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::FsmValueIDTrigger
   targetId: FSM_HelpClean
   eventName: TRIGGER
+--- !u!114 &6843414152347832844
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7457797593668237778}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3ee194feba9fd7045a88481deeb2f354, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ConditionalStoryTrigger
+  storyConditions:
+  - conversationTitle: Weekend/Cook/AskCook
+    mode: 2
+    isDefault: 1
+    requiredFlag: {fileID: 0}
