@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Events;
@@ -50,6 +51,12 @@ public class ActionOverlayManager : MonoBehaviour
 
     private Coroutine _runningCoroutine;
 
+    // === Trigger 註冊表 ===
+    // ActionOverlayManager 在不卸載場景，ActionOverlayTrigger 在會卸載的一般場景，
+    // 兩者無法用 Inspector 跨場景拖拉參照，因此改由 Trigger 在 OnEnable/OnDisable
+    // 自我註冊 / 反註冊（key = actionId）。Sequencer 端再透過 ExecuteById 觸發。
+    private readonly Dictionary<string, ActionOverlayTrigger> _triggerRegistry = new Dictionary<string, ActionOverlayTrigger>();
+
     private void Awake()
     {
         if (Instance == null)
@@ -66,6 +73,73 @@ public class ActionOverlayManager : MonoBehaviour
         {
             overlayRoot.SetActive(false);
         }
+
+        // 載入順序保險：若有 Trigger 早於本 Manager 就緒（OnEnable 時 Instance 還是 null 而錯過註冊），
+        // 在此主動補掃一次場上已啟用的 Trigger 並註冊。晚於 Manager 才啟用的 Trigger 則照常走自己的 OnEnable。
+        RegisterExistingTriggers();
+    }
+
+    /// <summary>
+    /// 補掃場上目前已啟用的 ActionOverlayTrigger 並註冊，避免因場景載入順序不固定而漏註冊。
+    /// </summary>
+    private void RegisterExistingTriggers()
+    {
+        var triggers = FindObjectsByType<ActionOverlayTrigger>(FindObjectsSortMode.None);
+        foreach (var trigger in triggers)
+        {
+            if (trigger == null || string.IsNullOrEmpty(trigger.actionId)) continue;
+            RegisterTrigger(trigger.actionId, trigger);
+        }
+    }
+
+    // === Trigger 註冊 / 觸發 API ===
+
+    /// <summary>
+    /// 由 ActionOverlayTrigger 在 OnEnable 呼叫，將自己以 actionId 註冊進來。
+    /// actionId 留空者不會被註冊，自然就無法被 Sequencer 以 ID 觸發。
+    /// </summary>
+    public void RegisterTrigger(string actionId, ActionOverlayTrigger trigger)
+    {
+        if (string.IsNullOrEmpty(actionId) || trigger == null) return;
+
+        if (_triggerRegistry.TryGetValue(actionId, out var existing) && existing != null && existing != trigger)
+        {
+            Debug.LogWarning($"ActionOverlayManager：actionId「{actionId}」重複註冊，後者會覆蓋前者。請確認場上沒有同 ID 的 Trigger。", trigger);
+        }
+
+        _triggerRegistry[actionId] = trigger;
+    }
+
+    /// <summary>
+    /// 由 ActionOverlayTrigger 在 OnDisable 呼叫。只有當登記的仍是自己時才移除，
+    /// 避免把後來覆蓋上去的另一顆 Trigger 誤刪。
+    /// </summary>
+    public void UnregisterTrigger(string actionId, ActionOverlayTrigger trigger)
+    {
+        if (string.IsNullOrEmpty(actionId)) return;
+
+        if (_triggerRegistry.TryGetValue(actionId, out var existing) && existing == trigger)
+        {
+            _triggerRegistry.Remove(actionId);
+        }
+    }
+
+    /// <summary>
+    /// 以 actionId 觸發已註冊的 Trigger。
+    /// onComplete(hasOutcome, isSuccess) 會在整段演出結束後被呼叫（供呼叫端做 blocking 與讀結果）；不需要可傳 null。
+    /// 找得到並觸發成功回傳 true；找不到回傳 false（此時不會呼叫 onComplete）。
+    /// </summary>
+    public bool ExecuteById(string actionId, Action<bool, bool> onComplete = null)
+    {
+        if (string.IsNullOrEmpty(actionId)) return false;
+
+        if (_triggerRegistry.TryGetValue(actionId, out var trigger) && trigger != null)
+        {
+            trigger.Execute(onComplete);
+            return true;
+        }
+
+        return false;
     }
 
     /// <summary>

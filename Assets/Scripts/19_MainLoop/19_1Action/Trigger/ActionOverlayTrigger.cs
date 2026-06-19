@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -14,6 +15,9 @@ using UnityEngine.Events;
 public class ActionOverlayTrigger : MonoBehaviour
 {
     [Header("行動設定")]
+    [Tooltip("供 Sequencer 以 ID 觸發用。留空 = 不註冊到 ActionOverlayManager = 無法被對話腳本以 ID 調用。")]
+    public string actionId;
+
     [Tooltip("此動作需要花費的演出時間")]
     public float duration = 2.0f;
 
@@ -73,14 +77,48 @@ public class ActionOverlayTrigger : MonoBehaviour
         chanceProvider = GetComponent<ActionChanceProvider>();
     }
 
+    // ActionOverlayManager 在不卸載場景、本元件在會卸載的一般場景，無法用 Inspector 跨場景拖拉，
+    // 故改由此處於執行期自我註冊。actionId 留空者不註冊，自然就不會被 Sequencer 以 ID 觸發。
+    private void OnEnable()
+    {
+        if (string.IsNullOrEmpty(actionId)) return;
+        if (ActionOverlayManager.Instance != null)
+        {
+            ActionOverlayManager.Instance.RegisterTrigger(actionId, this);
+        }
+    }
+
+    private void OnDisable()
+    {
+        if (string.IsNullOrEmpty(actionId)) return;
+        if (ActionOverlayManager.Instance != null)
+        {
+            ActionOverlayManager.Instance.UnregisterTrigger(actionId, this);
+        }
+    }
+
     /// <summary>
     /// 公開方法：呼叫此方法來啟動過場。
     /// </summary>
     public void Execute()
     {
+        Execute(null);
+    }
+
+    /// <summary>
+    /// 進階：傳入 externalOnComplete，會在整段演出（含成功/失敗判定與自身 UnityEvent）全部結束後再呼叫。
+    /// 回呼參數 (hasOutcome, isSuccess)：
+    ///   - hasOutcome = 此行動是否有做成功/失敗判定（= enableOutcomeResult）。
+    ///   - isSuccess  = 判定結果；hasOutcome 為 false 時無意義，固定回 false。
+    /// 供 SequencerCommandActionOverlay 等需要「等演出跑完並讀結果」的呼叫端做 blocking 與條件分支用。
+    /// 若場上沒有 ActionOverlayManager（無法演出），仍會呼叫 externalOnComplete(false, false)，避免呼叫端永久卡住。
+    /// </summary>
+    public void Execute(Action<bool, bool> externalOnComplete)
+    {
         if (ActionOverlayManager.Instance == null)
         {
             Debug.LogError("場景中找不到 ActionOverlayManager！");
+            externalOnComplete?.Invoke(false, false);
             return;
         }
 
@@ -90,7 +128,11 @@ public class ActionOverlayTrigger : MonoBehaviour
                 duration,
                 actionSprite,
                 localizationKey,
-                () => onCompleteEvents?.Invoke(),
+                () =>
+                {
+                    onCompleteEvents?.Invoke();
+                    externalOnComplete?.Invoke(false, false);
+                },
                 () => onStartEvents?.Invoke(),
                 overlayPosition);
             return;
@@ -115,6 +157,7 @@ public class ActionOverlayTrigger : MonoBehaviour
                 else onFailureEvents?.Invoke();
 
                 onCompleteEvents?.Invoke();
+                externalOnComplete?.Invoke(true, success);
             },
             () => onStartEvents?.Invoke(),
             successSoundKey,
@@ -174,7 +217,7 @@ public class ActionOverlayTrigger : MonoBehaviour
 
     private bool RollSuccess()
     {
-        return Random.value <= successChance;
+        return UnityEngine.Random.value <= successChance;
     }
 
     [ContextMenu("測試觸發動作")]
