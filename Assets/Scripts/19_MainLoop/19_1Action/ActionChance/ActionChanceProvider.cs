@@ -1,5 +1,6 @@
 using UnityEngine;
 using TMPro;
+using PixelCrushers.DialogueSystem;
 
 /// <summary>
 /// 行動成功率計算器（抽象基底類別）。
@@ -30,6 +31,13 @@ public abstract class ActionChanceProvider : MonoBehaviour
     [Range(0f, 1f)] public float minChance = 0.1f;
     [Range(0f, 1f)] public float maxChance = 0.9f;
 
+    [Header("同步到 Dialogue System 變數")]
+    [Tooltip("啟用後，每次成功率重算（含進場、數值異動、讀檔）都會把整數百分比 (0~100) 寫進 Dialogue System 變數，供對話腳本顯示。")]
+    public bool writeToDialogueVariable = false;
+
+    [Tooltip("要寫入的 Dialogue System 變數名稱（即 ActionID）。留空則用本物件的 GameObject 名稱。")]
+    public string dialogueVariableName;
+
     [Header("Debug")]
     [SerializeField, Range(0f, 1f)] protected float lastCalculatedChance;
     [SerializeField] protected string lastDebugSummary;
@@ -50,7 +58,7 @@ public abstract class ActionChanceProvider : MonoBehaviour
         if (GameStatusService.Instance != null)
             GameStatusService.Instance.OnGameStatusLoaded += OnGameStatusLoaded;
 
-        if (refreshOnEnable && chanceDisplay != null)
+        if (refreshOnEnable && (chanceDisplay != null || writeToDialogueVariable))
         {
             CalculateSuccessChance();
         }
@@ -69,7 +77,7 @@ public abstract class ActionChanceProvider : MonoBehaviour
     /// </summary>
     private void OnGameStatusLoaded()
     {
-        if (chanceDisplay == null) return;
+        if (chanceDisplay == null && !writeToDialogueVariable) return;
         CalculateSuccessChance();
     }
 
@@ -97,7 +105,7 @@ public abstract class ActionChanceProvider : MonoBehaviour
 
     private void OnStatusValueChanged(int delta)
     {
-        if (chanceDisplay == null) return;
+        if (chanceDisplay == null && !writeToDialogueVariable) return;
         CalculateSuccessChance();
     }
 
@@ -113,6 +121,7 @@ public abstract class ActionChanceProvider : MonoBehaviour
             lastCalculatedChance = Mathf.Clamp(GetFallbackChance(), minChance, maxChance);
             lastDebugSummary = "Fallback: No protagonist model.";
             UpdateChanceDisplay(lastCalculatedChance);
+            WriteChanceToDialogueVariable(lastCalculatedChance);
             return lastCalculatedChance;
         }
 
@@ -122,7 +131,21 @@ public abstract class ActionChanceProvider : MonoBehaviour
         lastCalculatedChance = chance;
         lastDebugSummary = BuildDebugSummary(protagonist, chance);
         UpdateChanceDisplay(chance);
+        WriteChanceToDialogueVariable(chance);
         return chance;
+    }
+
+    /// <summary>
+    /// 將目前成功率以整數百分比 (0~100) 寫入 Dialogue System 變數。
+    /// 變數名稱取 dialogueVariableName，留空則用 GameObject 名稱。
+    /// 與 chanceDisplay 的顯示換算一致（×100 再四捨五入）。
+    /// </summary>
+    private void WriteChanceToDialogueVariable(float chance)
+    {
+        if (!writeToDialogueVariable) return;
+
+        string varName = string.IsNullOrEmpty(dialogueVariableName) ? gameObject.name : dialogueVariableName;
+        DialogueLua.SetVariable(varName, Mathf.RoundToInt(chance * 100f));
     }
 
     /// <summary>
