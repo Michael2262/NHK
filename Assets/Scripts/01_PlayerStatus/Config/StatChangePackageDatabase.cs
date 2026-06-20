@@ -28,6 +28,7 @@ public enum StatKind
     LifePower,
     Sociality,
     Dependency,
+    RoomMessLevel,
     // ── 女主角 ──
     Libido,
     Trust

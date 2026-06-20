@@ -41,7 +41,7 @@ public class ProtagonistStatusModel
     public const int INITIAL_SHOOT_TIMES = SHOOT_TIMES_MAX;
 
     // ───── RoomMessLevel（房間髒亂度） ─────
-    public const int ROOM_MESS_LEVEL_MAX = 10;
+    public const int ROOM_MESS_LEVEL_MAX = 30;
     public const int ROOM_MESS_LEVEL_MIN = 0;
     public const int INITIAL_ROOM_MESS_LEVEL = ROOM_MESS_LEVEL_MAX;
 

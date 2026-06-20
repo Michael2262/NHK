@@ -20,7 +20,8 @@ public class ValueChangeResult : MonoBehaviour
         Sociality,
         Dependency,
         Money,
-        SkillPoints
+        SkillPoints,
+        RoomMessLevel
     }
 
     // ==================================================
@@ -471,6 +472,9 @@ public class ValueChangeResult : MonoBehaviour
             case ResourceType.SkillPoints:
                 p.TryReduceSkillPoints(amount);
                 break;
+            case ResourceType.RoomMessLevel:
+                p.ReduceRoomMessLevel(amount);
+                break;
         }
     }
 
@@ -497,6 +501,9 @@ public class ValueChangeResult : MonoBehaviour
                 break;
             case ResourceType.SkillPoints:
                 p.AddSkillPoints(amount);
+                break;
+            case ResourceType.RoomMessLevel:
+                p.AddRoomMessLevel(amount);
                 break;
         }
     }

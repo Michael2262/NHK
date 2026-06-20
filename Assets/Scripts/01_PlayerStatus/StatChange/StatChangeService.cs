@@ -122,6 +122,9 @@ public class StatChangeService
             case StatKind.Dependency:
                 if (op.op == StatOp.Set) p.SetDependency(op.amount); else p.AddDependency(op.amount);
                 break;
+            case StatKind.RoomMessLevel:
+                if (op.op == StatOp.Set) p.SetRoomMessLevel(op.amount); else p.AddRoomMessLevel(op.amount);
+                break;
             default:
                 Debug.LogWarning($"[StatChangeService] ApplyProtagonistOp 收到非主角數值：{op.kind}");
                 return 0;
@@ -158,6 +161,7 @@ public class StatChangeService
             case StatKind.LifePower: return p.LifePower;
             case StatKind.Sociality: return p.Sociality;
             case StatKind.Dependency: return p.Dependency;
+            case StatKind.RoomMessLevel: return p.RoomMessLevel;
             default: return 0;
         }
     }
