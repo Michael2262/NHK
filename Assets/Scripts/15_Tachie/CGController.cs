@@ -70,6 +70,32 @@ public class CGController : MonoBehaviour
 
         LoadSpritesFromResources();
         InitState();
+
+        // 從 Model 套用 BG/CG mode（處理一般場景切換：此時 Model 已是最新）
+        ApplyModesFromModel();
+
+        // 訂閱讀檔事件：讀檔時 Model 會在場景載入「之後」才被填好，需在事件中重套一次
+        if (GameStatusService.Instance != null)
+            GameStatusService.Instance.OnGameStatusLoaded += ApplyModesFromModel;
+    }
+
+    private void OnDestroy()
+    {
+        if (GameStatusService.Instance != null)
+            GameStatusService.Instance.OnGameStatusLoaded -= ApplyModesFromModel;
+    }
+
+    /// <summary>
+    /// 從 VisualModeModel 讀回全域 BG/CG mode 並套用（場景初始化 / 讀檔後呼叫）。
+    /// 以 0 秒套用（讀檔當下通常還沒有畫面，僅設定 mode 供之後 Show/Switch 使用）。
+    /// </summary>
+    private void ApplyModesFromModel()
+    {
+        var svc = GameStatusService.Instance;
+        if (svc == null || svc.VisualMode == null) return;
+
+        SetBGMode(svc.VisualMode.BgMode, 0f);
+        SetCGMode(svc.VisualMode.CgMode, 0f);
     }
 
     /// <summary>
@@ -254,6 +280,7 @@ public class CGController : MonoBehaviour
         if (string.Equals(mode, CurrentBGMode, System.StringComparison.OrdinalIgnoreCase)) return;
 
         CurrentBGMode = mode;
+        GameStatusService.Instance?.VisualMode.SetBgMode(mode); // 寫回 Model，供跨場景維持與存檔
         if (isBGActive && !string.IsNullOrEmpty(currentBGName))
             SwitchBG(currentBGName, 1f, duration);
     }
@@ -337,6 +364,7 @@ public class CGController : MonoBehaviour
         if (string.Equals(mode, CurrentCGMode, System.StringComparison.OrdinalIgnoreCase)) return;
 
         CurrentCGMode = mode;
+        GameStatusService.Instance?.VisualMode.SetCgMode(mode); // 寫回 Model，供跨場景維持與存檔
         if (isCGActive && !string.IsNullOrEmpty(currentCGName))
             SwitchCG(currentCGName, 1f, duration);
     }

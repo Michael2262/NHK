@@ -60,6 +60,36 @@ public class TachieController : MonoBehaviour
         // DontDestroyOnLoad(gameObject);
 
         InitActors();
+
+        // 從 Model 套用各角色 body mode（處理一般場景切換：此時 Model 已是最新）
+        ApplyModesFromModel();
+
+        // 訂閱讀檔事件：讀檔時 Model 會在場景載入「之後」才被填好，需在事件中重套一次
+        if (GameStatusService.Instance != null)
+            GameStatusService.Instance.OnGameStatusLoaded += ApplyModesFromModel;
+    }
+
+    private void OnDestroy()
+    {
+        if (GameStatusService.Instance != null)
+            GameStatusService.Instance.OnGameStatusLoaded -= ApplyModesFromModel;
+    }
+
+    /// <summary>
+    /// 從 VisualModeModel 讀回各角色的 body mode 並套用。
+    /// 只有「被明確設定過」的角色會有 entry；其餘維持各自 prefab 的預設 mode。
+    /// </summary>
+    private void ApplyModesFromModel()
+    {
+        var svc = GameStatusService.Instance;
+        if (svc == null || svc.VisualMode == null) return;
+
+        foreach (var actor in actorList)
+        {
+            if (actor == null) continue;
+            if (svc.VisualMode.TryGetBodyMode(actor.characterID, out string mode))
+                actor.SetMode(mode);
+        }
     }
 
     private void InitActors()
@@ -217,16 +247,26 @@ public class TachieController : MonoBehaviour
     // --- 3.2 切換身體 mode (有連動) ---
     // 切 mode 後會立刻用目前 body ID 在新 mode 重新判定圖片；
     // 新 mode 沒有對應 ID → 退回該 mode 第一順位圖片。
+    // 同時寫回 VisualModeModel，讓 mode 能跨場景維持並被存檔保存。
     public void SetMode(string id, string modeName)
     {
-        ExecuteAppearance(id, linkId => GetActor(linkId)?.SetMode(modeName));
+        ExecuteAppearance(id, linkId =>
+        {
+            GetActor(linkId)?.SetMode(modeName);
+            // 即使該角色不在目前場景 (GetActor 為 null)，仍寫進 Model，
+            // 之後該角色所在場景載入時會自動套用。
+            GameStatusService.Instance?.VisualMode.SetBodyMode(linkId, modeName);
+        });
     }
 
     // 一次把所有角色切到同一個 mode（沒有該 mode 的角色會自行略過並警告）
     public void SetModeAll(string modeName)
     {
         foreach (var actor in actorDict.Values)
+        {
             actor.SetMode(modeName);
+            GameStatusService.Instance?.VisualMode.SetBodyMode(actor.characterID, modeName);
+        }
     }
 
     // --- 3.5 套用表情預設 (有連動) ---

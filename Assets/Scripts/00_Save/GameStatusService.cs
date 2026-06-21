@@ -74,6 +74,7 @@ public class GameStatusService : MonoBehaviour
     public ProtagonistStatusEffectModel StatusEffectModel { get; private set; }
     public CurrentScenarioModel Scenario { get; private set; } // 當前情境 Model
     public GlobalProgressModel GlobalProgress { get; private set; } // 全域進度（跨存檔）
+    public VisualModeModel VisualMode { get; private set; } // 視覺 mode（Tachie body mode + 全域 BG/CG mode）
 
 
 
@@ -147,6 +148,7 @@ public class GameStatusService : MonoBehaviour
         ShopStatus = new ShopStatusModel();
         PendingDelivery = new PendingDeliveryModel();
         StatusEffectModel = new ProtagonistStatusEffectModel();
+        VisualMode = new VisualModeModel(); // 視覺 mode（無依賴）
 
         // TimeSystemModel: 注入 TimeConfig
         Time = new TimeSystemModel(timeConfig);
@@ -331,6 +333,8 @@ public class GameStatusService : MonoBehaviour
         InitializeRiskAgentModels();// 也呼叫獨立方法來重置家人
 
         Scenario.NewGame();// 重設情境 Model
+
+        VisualMode.NewGame();// 視覺 mode 回歸預設
 
         NotifyGameStatusLoaded();//通知所有系統，數據已重置完畢
 

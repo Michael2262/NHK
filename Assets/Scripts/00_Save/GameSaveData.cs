@@ -58,6 +58,8 @@ public class GameSaveData
 
     public CurrentScenarioSaveData ScenarioData;//當前情境數據 (解決中途存檔問題)
 
+    public VisualModeSaveData VisualModeData;// 視覺 mode（Tachie body mode + 全域 BG/CG mode）
+
     //建構函式,確保新欄位被初始化
     public GameSaveData()
     {
@@ -73,6 +75,7 @@ public class GameSaveData
 
         // 初始化新增的欄位
         ScenarioData = new CurrentScenarioSaveData();
+        VisualModeData = new VisualModeSaveData();
         // List 欄位會自動被 new List<>() 初始化
     }
 

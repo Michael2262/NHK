@@ -3,56 +3,18 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// Tachie 表情預設組。
-/// 對應 TachieController 的各部位切換：Eye, Mouth, Eyebrow, Blush, Other, Above, Body。
-/// 留空的欄位表示「不變更該部位」。
+/// 抽選表演用的一組臉部設定：表情一欄、身體一欄。
+/// - ExpressionID：TachieExpressionConfig 的 preset 名稱（ID），留空 = 不變更表情。
+/// - Body：TachieActor 的身體圖片名稱，留空 = 不變更身體。
 /// </summary>
 [Serializable]
-public class TachieFacePreset
+public class EmotionDrawFace
 {
-    [Tooltip("眼睛。留空 = 不變更。")]
-    public string Eye = "";
+    [Tooltip("表情：TachieExpressionConfig 的 preset 名稱（ID）。留空 = 不變更表情。")]
+    public string ExpressionID = "";
 
-    [Tooltip("嘴巴。留空 = 不變更。")]
-    public string Mouth = "";
-
-    [Tooltip("眉毛。留空 = 不變更。")]
-    public string Eyebrow = "";
-
-    [Tooltip("腮紅。留空 = 不變更。")]
-    public string Blush = "";
-
-    [Tooltip("其他 (Other)。留空 = 不變更。")]
-    public string Other = "";
-
-    [Tooltip("最上層 (Above)。留空 = 不變更。")]
-    public string Above = "";
-
-    [Tooltip("身體。留空 = 不變更。")]
+    [Tooltip("身體：TachieActor 的身體圖片名稱。留空 = 不變更身體。")]
     public string Body = "";
-
-    /// <summary>
-    /// 透過 TachieController 套用此預設組到指定 groupID。
-    /// 只會變更有填值的欄位。
-    /// </summary>
-    public void ApplyTo(string groupID)
-    {
-        if (string.IsNullOrEmpty(groupID)) return;
-        var tc = TachieController.Instance;
-        if (tc == null)
-        {
-            Debug.LogWarning("[TachieFacePreset] TachieController.Instance is null.");
-            return;
-        }
-
-        if (!string.IsNullOrEmpty(Eye)) tc.ChangeEye(groupID, Eye);
-        if (!string.IsNullOrEmpty(Mouth)) tc.ChangeMouth(groupID, Mouth);
-        if (!string.IsNullOrEmpty(Eyebrow)) tc.ChangeEyebrow(groupID, Eyebrow);
-        if (!string.IsNullOrEmpty(Blush)) tc.ChangeBlush(groupID, Blush);
-        if (!string.IsNullOrEmpty(Other)) tc.ChangeOther(groupID, Other);
-        if (!string.IsNullOrEmpty(Above)) tc.ChangeAbove(groupID, Above);
-        if (!string.IsNullOrEmpty(Body)) tc.ChangeBody(groupID, Body);
-    }
 }
 
 /// <summary>
@@ -61,8 +23,13 @@ public class TachieFacePreset
 /// 每種 HeroineEmotionCardType 對應：
 /// 1. EmotionCard prefab（保留向下相容）
 /// 2. EmotionNameTextKey（情緒名稱的 TextTable Key，用於 Emotion.Change 的 {1}）
-/// 3. SmallDrawFace — 小/中抽選用的考慮表情預設組（完整 Tachie 各部位）
-/// 4. BigDrawFace — 大抽選第二段用的猶豫表情預設組（完整 Tachie 各部位）
+/// 3. SmallDrawFace — 小/中抽選用的考慮臉（表情 ID + 身體）
+/// 4. BigDrawFace — 大抽選第二段用的猶豫臉（表情 ID + 身體）
+///
+/// ★ 表情一律以 TachieExpressionConfig 的 preset 名稱（ID）填寫，
+///   實際各部位內容定義在各 TachieActor 掛載的 TachieExpressionConfig 上，
+///   套用時透過 TachieController.ChangeExpression(groupID, id) 完成（支援連動群組）。
+///   身體則透過 TachieController.ChangeBody(groupID, body) 套用。
 ///
 /// ★ Normal 不需要在 entries 中配置。Catalog 的查詢方法會安全處理 Normal，
 ///   回傳 null / 預設值而不報錯。
@@ -81,11 +48,11 @@ public class EmotionCardCatalog : ScriptableObject
         [Tooltip("該情緒的 TextTable Key，例如 Emotion.Angry。用於 Emotion.Change 的 {1}。")]
         public string EmotionNameTextKey;
 
-        [Tooltip("小/中抽選表演時套用的 Tachie 表情。")]
-        public TachieFacePreset SmallDrawFace;
+        [Tooltip("小/中抽選表演時套用的臉：表情 ID + 身體。")]
+        public EmotionDrawFace SmallDrawFace = new EmotionDrawFace();
 
-        [Tooltip("大抽選第二段表演時套用的 Tachie 表情。")]
-        public TachieFacePreset BigDrawFace;
+        [Tooltip("大抽選第二段表演時套用的臉：表情 ID + 身體。")]
+        public EmotionDrawFace BigDrawFace = new EmotionDrawFace();
     }
 
     [Header("Tachie Group ID")]
@@ -139,20 +106,20 @@ public class EmotionCardCatalog : ScriptableObject
     }
 
     /// <summary>
-    /// 取得小/中抽選用的 Tachie 表情預設組。
+    /// 取得小/中抽選用的臉（表情 ID + 身體）。
     /// Normal 回傳 null（不需要抽選表情）。
     /// </summary>
-    public TachieFacePreset GetSmallDrawFace(HeroineEmotionCardType type)
+    public EmotionDrawFace GetSmallDrawFace(HeroineEmotionCardType type)
     {
         var entry = GetEntry(type);
         return entry?.SmallDrawFace;
     }
 
     /// <summary>
-    /// 取得大抽選第二段用的 Tachie 表情預設組。
+    /// 取得大抽選第二段用的臉（表情 ID + 身體）。
     /// Normal 回傳 null（不需要抽選表情）。
     /// </summary>
-    public TachieFacePreset GetBigDrawFace(HeroineEmotionCardType type)
+    public EmotionDrawFace GetBigDrawFace(HeroineEmotionCardType type)
     {
         var entry = GetEntry(type);
         return entry?.BigDrawFace;

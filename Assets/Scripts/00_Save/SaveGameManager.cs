@@ -253,6 +253,9 @@ public class SaveGameManager
 
         _gameStatusService.Scenario.LoadFromSaveData(data.ScenarioData);
 
+        // --- 視覺 mode（null 防呆在 Model 內處理，舊存檔視為全預設） ---
+        _gameStatusService.VisualMode.LoadFromSaveData(data.VisualModeData);
+
         Debug.Log($"<color=lime>已成功將自定義遊戲數據應用到所有系統中。</color>");
     }
 
@@ -290,6 +293,8 @@ public class SaveGameManager
         }
 
         data.ScenarioData = _gameStatusService.Scenario.ToSaveData();
+
+        data.VisualModeData = _gameStatusService.VisualMode.ToSaveData();
 
         return data;
     }

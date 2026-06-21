@@ -55,8 +55,22 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
 
         private void RunNew(string heroineID, string resultModeText, string showModeText)
         {
-            EmotionResultMode resultMode = ParseResultMode(resultModeText);
-            EmotionShowMode showMode = ParseShowMode(showModeText);
+            if (!TryParseResultMode(resultModeText, out EmotionResultMode resultMode))
+            {
+                Debug.LogError($"[HeroineEmotionDraw] 無法解析 resultMode: '{resultModeText}'" +
+                               "（有效值：current/bulk/random/fake/mock/adjacent）。指令中止。", this);
+                Stop();
+                return;
+            }
+
+            if (!TryParseShowMode(showModeText, out EmotionShowMode showMode))
+            {
+                Debug.LogError($"[HeroineEmotionDraw] 無法解析 showMode: '{showModeText}'" +
+                               "（有效值：none/small/medium/big）。指令中止。", this);
+                Stop();
+                return;
+            }
+
             string resultLuaVariable = GetParameter(3, "LastEmotionDraw").Trim();
 
             bool needsEmotion = resultMode == EmotionResultMode.Fake || resultMode == EmotionResultMode.Mock;
@@ -128,33 +142,29 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
         // Helpers
         // ─────────────────────────────────────────────────────────
 
-        private static EmotionResultMode ParseResultMode(string text)
+        private static bool TryParseResultMode(string text, out EmotionResultMode mode)
         {
             switch (text)
             {
-                case "current": case "主導": case "cur": case "now": return EmotionResultMode.Current;
-                case "bulk": case "大宗": case "blk": return EmotionResultMode.Bulk;
-                case "random": case "隨機": case "rand": case "rng": return EmotionResultMode.Random;
-                case "fake": case "造假": return EmotionResultMode.Fake;
-                case "mock": case "強制": case "指定": return EmotionResultMode.Mock;
-                case "adjacent": case "鄰近": case "adj": case "near": return EmotionResultMode.Adjacent;
-                default:
-                    Debug.LogWarning($"[HeroineEmotionDraw] 無法解析 resultMode: {text}，使用 Current");
-                    return EmotionResultMode.Current;
+                case "current": case "主導": case "cur": case "now": mode = EmotionResultMode.Current; return true;
+                case "bulk": case "大宗": case "blk": mode = EmotionResultMode.Bulk; return true;
+                case "random": case "隨機": case "rand": case "rng": mode = EmotionResultMode.Random; return true;
+                case "fake": case "造假": mode = EmotionResultMode.Fake; return true;
+                case "mock": case "強制": case "指定": mode = EmotionResultMode.Mock; return true;
+                case "adjacent": case "鄰近": case "adj": case "near": mode = EmotionResultMode.Adjacent; return true;
+                default: mode = EmotionResultMode.Current; return false;
             }
         }
 
-        private static EmotionShowMode ParseShowMode(string text)
+        private static bool TryParseShowMode(string text, out EmotionShowMode mode)
         {
             switch (text)
             {
-                case "none": case "無": case "n": case "hide": return EmotionShowMode.None;
-                case "small": case "小": case "s": return EmotionShowMode.Small;
-                case "medium": case "中": case "m": case "mid": return EmotionShowMode.Medium;
-                case "big": case "大": case "b": return EmotionShowMode.Big;
-                default:
-                    Debug.LogWarning($"[HeroineEmotionDraw] 無法解析 showMode: {text}，使用 Small");
-                    return EmotionShowMode.Small;
+                case "none": case "無": case "n": case "hide": mode = EmotionShowMode.None; return true;
+                case "small": case "小": case "s": mode = EmotionShowMode.Small; return true;
+                case "medium": case "中": case "m": case "mid": mode = EmotionShowMode.Medium; return true;
+                case "big": case "大": case "b": mode = EmotionShowMode.Big; return true;
+                default: mode = EmotionShowMode.Small; return false;
             }
         }
 

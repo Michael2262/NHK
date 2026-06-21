@@ -5,10 +5,11 @@ using UnityEngine;
 /// <summary>
 /// 情緒卡抽選表演 View（精簡版：僅等待時間 + Tachie 立繪變化）。
 ///
-/// - 小/中抽選：套用 SmallDrawFace → 等待 → 完成。
+/// 表情一律以 Catalog 內填的 TachieExpressionConfig preset 名稱（ID）套用。
+/// - 小/中抽選：套用 SmallDrawExpressionID → 等待 → 完成。
 /// - 大抽選兩段：
-///   第一段：套用 SmallDrawFace（表演用情緒） → 等待。
-///   第二段：套用 BigDrawFace（真正結果） → 等待 → 完成。
+///   第一段：套用 SmallDrawExpressionID（表演用情緒） → 等待。
+///   第二段：套用 BigDrawExpressionID（真正結果） → 等待 → 完成。
 /// </summary>
 public class EmotionCardDrawView : MonoBehaviour
 {
@@ -116,24 +117,49 @@ public class EmotionCardDrawView : MonoBehaviour
 
     private void ApplySmallDrawFace(HeroineEmotionCardType emotion)
     {
-        if (catalog == null) return;
-
-        TachieFacePreset face = catalog.GetSmallDrawFace(emotion);
-        if (face != null)
-            face.ApplyTo(TachieGroupID);
-        else
-            Debug.LogWarning($"[EmotionCardDrawView] SmallDrawFace not found for: {emotion}");
+        ApplyDrawFace(catalog?.GetSmallDrawFace(emotion), emotion, "SmallDraw");
     }
 
     private void ApplyBigDrawFace(HeroineEmotionCardType emotion)
     {
-        if (catalog == null) return;
+        ApplyDrawFace(catalog?.GetBigDrawFace(emotion), emotion, "BigDraw");
+    }
 
-        TachieFacePreset face = catalog.GetBigDrawFace(emotion);
-        if (face != null)
-            face.ApplyTo(TachieGroupID);
-        else
-            Debug.LogWarning($"[EmotionCardDrawView] BigDrawFace not found for: {emotion}");
+    /// <summary>
+    /// 套用一組抽選臉：表情走 TachieController.ChangeExpression（吃 TachieExpressionConfig 的 preset 名稱），
+    /// 身體走 TachieController.ChangeBody。兩者皆留空時不動該部位。皆套到目前 group（支援連動）。
+    /// </summary>
+    private void ApplyDrawFace(EmotionDrawFace face, HeroineEmotionCardType emotion, string label)
+    {
+        if (face == null)
+        {
+            Debug.LogWarning($"[EmotionCardDrawView] {label} face not set for: {emotion}");
+            return;
+        }
+
+        bool hasExpression = !string.IsNullOrEmpty(face.ExpressionID);
+        bool hasBody = !string.IsNullOrEmpty(face.Body);
+        if (!hasExpression && !hasBody) return;
+
+        var tc = TachieController.Instance;
+        if (tc == null)
+        {
+            Debug.LogWarning("[EmotionCardDrawView] TachieController.Instance is null.");
+            return;
+        }
+
+        // ★ 防護：立繪套用失敗（找不到 preset / 圖層 / 例外）只記錄，絕不讓表演協程中斷，
+        //   否則 onComplete 不會被呼叫，EmotionDrawDone 不會發出，對話會永久卡住。
+        try
+        {
+            if (hasExpression) tc.ChangeExpression(TachieGroupID, face.ExpressionID);
+            if (hasBody) tc.ChangeBody(TachieGroupID, face.Body);
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[EmotionCardDrawView] {label} 套用表情/身體失敗（emotion={emotion}, " +
+                           $"expr='{face.ExpressionID}', body='{face.Body}'）: {e}");
+        }
     }
 
     // ─────────────────────────────────────────────────────────────
