@@ -31,6 +31,10 @@ public class SceneMusicController : MonoBehaviour
     [Tooltip("若沒有任何 Flag 符合,預設播放的音樂")]
     public string defaultMusicKey = "Normal_BGM";
 
+    [Tooltip("此場景沒有經過 SceneReadyCoordinator / Task_InitSceneMusic 時(例如第一幕 TitleScene)," +
+             "勾選後會在 Start() 自己觸發一次播放。走正規轉場的場景請保持不勾,改由 Task 觸發。")]
+    [SerializeField] private bool initOnStart = false;
+
     [Header("時段音樂 (優先級:中)")]
     [Tooltip("請依照 TimeConfig 的 Phase 順序填入 Music Key。若該時段為空則使用預設音樂。")]
     [SerializeField] private List<string> phaseMusicKeys = new List<string>();
@@ -76,6 +80,13 @@ public class SceneMusicController : MonoBehaviour
             // 跨午夜(AdvanceTime 跨日分支)只觸發 OnDayPassed 而不觸發 OnPhaseChanged,
             // 週末狀態又是跨日才改變,故需額外訂閱 OnDayPassed 以正確切換週末音樂。
             GameStatusService.Instance.Time.OnDayPassed += RefreshSceneMusic;
+        }
+
+        // 沒有 SceneReadyCoordinator 的場景(例如第一幕 TitleScene)沒有 Task 來觸發初始播放,
+        // 在此自己補一次。這類場景通常沒有讀檔/時間狀態,故無「播到錯誤 phase」的時機問題。
+        if (initOnStart)
+        {
+            RefreshSceneMusic();
         }
     }
 
