@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -13,6 +13,17 @@ public class SceneMusicController : MonoBehaviour
         public string musicKey;
     }
 
+    /// <summary>
+    /// 單一時段的條件式音樂規則組：符合的 Flag 會覆蓋該時段的預設音樂。
+    /// 與 phaseMusicKeys 一樣「依 Phase index 對齊」放在 List 裡。
+    /// </summary>
+    [System.Serializable]
+    public class PhaseFlagRules
+    {
+        [Tooltip("此時段的條件式音樂。符合的 Flag 會覆蓋該時段預設音樂；清單越下方優先級越高。")]
+        public List<FlagMusicMap> rules = new List<FlagMusicMap>();
+    }
+
     [Header("基礎設定")]
     [Tooltip("是否啟用此場景的自動音樂邏輯")]
     public bool playSceneMusic = true;
@@ -23,6 +34,19 @@ public class SceneMusicController : MonoBehaviour
     [Header("時段音樂 (優先級:中)")]
     [Tooltip("請依照 TimeConfig 的 Phase 順序填入 Music Key。若該時段為空則使用預設音樂。")]
     [SerializeField] private List<string> phaseMusicKeys = new List<string>();
+
+    [Tooltip("各時段的條件式音樂(依 Phase 順序對齊)。讓每個時段可以吃不同 Flag 換成不同音樂,會覆蓋該時段的預設 Key。")]
+    [SerializeField] private List<PhaseFlagRules> phaseFlagMusic = new List<PhaseFlagRules>();
+
+    [Header("周末時段音樂 (優先級:中,疊在平日之上)")]
+    [Tooltip("啟用後,週末(星期六/日)會切換成另一組時段音樂。未填寫的時段會自動沿用平日設定。")]
+    [SerializeField] private bool enableWeekendMusic = false;
+
+    [Tooltip("週末的時段預設音樂(依 Phase 順序對齊)。留空的時段沿用平日 phaseMusicKeys。")]
+    [SerializeField] private List<string> weekendPhaseMusicKeys = new List<string>();
+
+    [Tooltip("週末各時段的條件式音樂(依 Phase 順序對齊)。會覆蓋週末的時段預設 Key。")]
+    [SerializeField] private List<PhaseFlagRules> weekendPhaseFlagMusic = new List<PhaseFlagRules>();
 
     [Header("條件式音樂 (優先級:高-清單越下方優先級越高)")]
     [SerializeField] private List<FlagMusicMap> flagMusicPriorities;
@@ -49,6 +73,9 @@ public class SceneMusicController : MonoBehaviour
         if (GameStatusService.Instance != null && GameStatusService.Instance.Time != null)
         {
             GameStatusService.Instance.Time.OnPhaseChanged += RefreshSceneMusic;
+            // 跨午夜(AdvanceTime 跨日分支)只觸發 OnDayPassed 而不觸發 OnPhaseChanged,
+            // 週末狀態又是跨日才改變,故需額外訂閱 OnDayPassed 以正確切換週末音樂。
+            GameStatusService.Instance.Time.OnDayPassed += RefreshSceneMusic;
         }
     }
 
@@ -63,6 +90,7 @@ public class SceneMusicController : MonoBehaviour
         if (GameStatusService.Instance != null && GameStatusService.Instance.Time != null)
         {
             GameStatusService.Instance.Time.OnPhaseChanged -= RefreshSceneMusic;
+            GameStatusService.Instance.Time.OnDayPassed -= RefreshSceneMusic;
         }
     }
 
@@ -87,19 +115,22 @@ public class SceneMusicController : MonoBehaviour
         // --- 優先級 3: 預設音樂 ---
         string targetKey = defaultMusicKey;
 
-        // --- 優先級 2: 時段音樂 ---
+        // --- 優先級 2: 時段音樂 (含時段 Flag 覆蓋 + 週末切換) ---
         if (GameStatusService.Instance != null && GameStatusService.Instance.Time != null)
         {
             int currentPhase = GameStatusService.Instance.Time.CurrentPhaseIndex;
 
-            // 檢查索引是否在清單範圍內,且該索引有填寫 Key
-            if (currentPhase >= 0 && currentPhase < phaseMusicKeys.Count)
+            // 2a. 先算出平日基準音樂(時段預設 → 時段 Flag 覆蓋)
+            string phaseKey = ResolvePhaseKey(phaseMusicKeys, phaseFlagMusic, currentPhase, targetKey);
+
+            // 2b. 若啟用週末音樂且當天為週末,週末設定疊在平日基準之上;
+            //     週末未填寫的時段會自動沿用平日結果。
+            if (enableWeekendMusic && GameStatusService.Instance.Time.IsWeekend)
             {
-                if (!string.IsNullOrEmpty(phaseMusicKeys[currentPhase]))
-                {
-                    targetKey = phaseMusicKeys[currentPhase];
-                }
+                phaseKey = ResolvePhaseKey(weekendPhaseMusicKeys, weekendPhaseFlagMusic, currentPhase, phaseKey);
             }
+
+            targetKey = phaseKey;
         }
 
         // --- 優先級 1: 條件式 Flag 音樂 (最高優先,會覆蓋前面的結果) ---
@@ -128,6 +159,38 @@ public class SceneMusicController : MonoBehaviour
                 MusicManager.Instance.PlayMusic(_currentSceneBgmKey);
             }
         }
+    }
+
+    /// <summary>
+    /// 計算指定時段(phase)的音樂 Key:先套用該時段的預設 Key,再依序套用該時段的 Flag 覆蓋
+    /// (清單越下方優先級越高)。若該時段沒有任何設定,回傳傳入的 fallback。
+    /// </summary>
+    private string ResolvePhaseKey(List<string> keys, List<PhaseFlagRules> flagRules, int phase, string fallback)
+    {
+        string result = fallback;
+        if (phase < 0) return result;
+
+        // 時段預設 Key
+        if (keys != null && phase < keys.Count && !string.IsNullOrEmpty(keys[phase]))
+        {
+            result = keys[phase];
+        }
+
+        // 時段 Flag 覆蓋
+        if (flagRules != null && phase < flagRules.Count && flagRules[phase] != null
+            && GameStatusService.Instance != null && GameStatusService.Instance.ProgressFlags != null)
+        {
+            foreach (var map in flagRules[phase].rules)
+            {
+                if (map != null && map.flag != null
+                    && GameStatusService.Instance.ProgressFlags.Contains(map.flag.FlagID))
+                {
+                    result = map.musicKey;
+                }
+            }
+        }
+
+        return result;
     }
 
     private void HandleFlagChanged(string flagID, bool isAdded)
