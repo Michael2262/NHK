@@ -46,7 +46,7 @@ public class HeroineStatusModel
     /// <summary>性慾值，0~LibidoMax。</summary>
     public int Libido { get; private set; }
     public const int LibidoMax = 150;
-    public const int LibidoDailyDecay = 5;
+    public const int LibidoDailyDecay = 2;
 
     /// <summary>信賴值，0~TrustMax。</summary>
     public int Trust { get; private set; }

@@ -146,6 +146,10 @@ public class MusicManager : MonoBehaviour
         newSource.Play();
         newSource.volume = 0;
 
+        // 先抓住舊曲的起始音量,讓淡出以固定起點線性遞減(否則會變成每幀乘以 (1-progress),
+        // 前段幾乎不衰減、結尾才暴跌,聽起來像被截斷而非交叉淡出)。
+        float oldStartVolume = oldSource.volume;
+
         float timer = 0f;
         while (timer < duration)
         {
@@ -154,7 +158,7 @@ public class MusicManager : MonoBehaviour
 
             // 根據 MasterVolume 來計算當前的音量
             newSource.volume = Mathf.Lerp(0, MasterVolume, progress);
-            oldSource.volume = Mathf.Lerp(oldSource.volume, 0, progress); // 從當前音量開始淡出
+            oldSource.volume = Mathf.Lerp(oldStartVolume, 0, progress); // 從固定起點線性淡出
 
             yield return null;
         }
