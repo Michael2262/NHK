@@ -1680,18 +1680,29 @@ public class HeroineScheduleEditorWindow : EditorWindow
     {
         if (_locationDB != null && _locationDB.allLocations != null && _locationDB.allLocations.Count > 0)
         {
-            var ids = _locationDB.allLocations.Select(l => l.LocationID).ToList();
-            int idx = ids.IndexOf(current);
+            // 第 0 項固定為「(未設定)」佔位:對應空值,避免空 locationID 被誤顯示成清單第一個地點。
+            // options 與 idValues 兩個 List 以相同 index 對齊(options 給人看,idValues 是實際回傳值)。
+            var options = new List<string> { "(未設定)" };
+            var idValues = new List<string> { null };
+            foreach (var l in _locationDB.allLocations)
+            {
+                options.Add(l.LocationID);
+                idValues.Add(l.LocationID);
+            }
+
+            int idx = idValues.IndexOf(current);
             if (idx < 0 && !string.IsNullOrEmpty(current))
             {
-                ids.Add($"{current} (舊值)");
-                idx = ids.Count - 1;
+                // 目前值不在資料庫(舊值/已刪除的地點)→ 補一個顯示項,保留原值
+                options.Add($"{current} (舊值)");
+                idValues.Add(current);
+                idx = options.Count - 1;
             }
-            if (idx < 0) idx = 0;
+            if (idx < 0) idx = 0;  // current 為空 → 落在「(未設定)」,不再偽裝成第一個地點
 
-            int newIdx = EditorGUILayout.Popup(idx, ids.ToArray(), GUILayout.Width(width));
+            int newIdx = EditorGUILayout.Popup(idx, options.ToArray(), GUILayout.Width(width));
             if (newIdx != idx)
-                return _locationDB.allLocations[Mathf.Min(newIdx, _locationDB.allLocations.Count - 1)].LocationID;
+                return idValues[Mathf.Clamp(newIdx, 0, idValues.Count - 1)];  // 可能回傳 null(選了「未設定」)
             return current;
         }
         return EditorGUILayout.TextField(current, GUILayout.Width(width));
