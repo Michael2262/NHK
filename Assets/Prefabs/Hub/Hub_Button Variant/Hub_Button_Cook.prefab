@@ -21,19 +21,47 @@ PrefabInstance:
       value: Hub_Button_Cook
       objectReference: {fileID: 0}
     - target: {fileID: 2865881838498405525, guid: 47cdc5d225a30fb4283d91ebadf36f29, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.size
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 2865881838498405525, guid: 47cdc5d225a30fb4283d91ebadf36f29, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[1].m_Mode
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 2865881838498405525, guid: 47cdc5d225a30fb4283d91ebadf36f29, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
       objectReference: {fileID: 6843414152347832844}
     - target: {fileID: 2865881838498405525, guid: 47cdc5d225a30fb4283d91ebadf36f29, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[1].m_Target
+      value: 
+      objectReference: {fileID: 3513811050419028046}
+    - target: {fileID: 2865881838498405525, guid: 47cdc5d225a30fb4283d91ebadf36f29, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[1].m_CallState
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 2865881838498405525, guid: 47cdc5d225a30fb4283d91ebadf36f29, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
       value: TriggerStory
+      objectReference: {fileID: 0}
+    - target: {fileID: 2865881838498405525, guid: 47cdc5d225a30fb4283d91ebadf36f29, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[1].m_MethodName
+      value: SetFlagsActive
       objectReference: {fileID: 0}
     - target: {fileID: 2865881838498405525, guid: 47cdc5d225a30fb4283d91ebadf36f29, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
       value: ConditionalStoryTrigger, Assembly-CSharp
       objectReference: {fileID: 0}
     - target: {fileID: 2865881838498405525, guid: 47cdc5d225a30fb4283d91ebadf36f29, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[1].m_TargetAssemblyTypeName
+      value: ProgressFlagSetter, Assembly-CSharp
+      objectReference: {fileID: 0}
+    - target: {fileID: 2865881838498405525, guid: 47cdc5d225a30fb4283d91ebadf36f29, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
+      value: UnityEngine.Object, UnityEngine
+      objectReference: {fileID: 0}
+    - target: {fileID: 2865881838498405525, guid: 47cdc5d225a30fb4283d91ebadf36f29, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[1].m_Arguments.m_ObjectArgumentAssemblyTypeName
       value: UnityEngine.Object, UnityEngine
       objectReference: {fileID: 0}
     - target: {fileID: 5701263640569232123, guid: 47cdc5d225a30fb4283d91ebadf36f29, type: 3}
@@ -156,6 +184,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 1525115703803297967, guid: 47cdc5d225a30fb4283d91ebadf36f29, type: 3}
       insertIndex: -1
       addedObject: {fileID: 6843414152347832844}
+    - targetCorrespondingSourceObject: {fileID: 1525115703803297967, guid: 47cdc5d225a30fb4283d91ebadf36f29, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3513811050419028046}
   m_SourcePrefab: {fileID: 100100000, guid: 47cdc5d225a30fb4283d91ebadf36f29, type: 3}
 --- !u!1 &7457797593668237778 stripped
 GameObject:
@@ -193,3 +224,18 @@ MonoBehaviour:
     mode: 2
     isDefault: 1
     requiredFlag: {fileID: 0}
+--- !u!114 &3513811050419028046
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7457797593668237778}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 42e17fc95f8fd3148a7023cd99e3c0c6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ProgressFlagSetter
+  targetFlags:
+  - {fileID: 11400000, guid: 534c7e5e12b38f7489336b52de9bcd27, type: 2}
+  defaultAsTemporary: 0
