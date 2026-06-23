@@ -118,7 +118,7 @@ public abstract class ActionChanceProvider : MonoBehaviour
         if (protagonist == null)
         {
             Debug.LogWarning($"{GetType().Name}: 找不到 GameStatusService.Instance.Protagonist，使用 fallback。", this);
-            lastCalculatedChance = Mathf.Clamp(GetFallbackChance(), minChance, maxChance);
+            lastCalculatedChance = ApplyChanceLimits(GetFallbackChance());
             lastDebugSummary = "Fallback: No protagonist model.";
             UpdateChanceDisplay(lastCalculatedChance);
             WriteChanceToDialogueVariable(lastCalculatedChance);
@@ -126,7 +126,7 @@ public abstract class ActionChanceProvider : MonoBehaviour
         }
 
         float chance = CalculateChance(protagonist);
-        chance = Mathf.Clamp(chance, minChance, maxChance);
+        chance = ApplyChanceLimits(chance);
 
         lastCalculatedChance = chance;
         lastDebugSummary = BuildDebugSummary(protagonist, chance);
@@ -146,6 +146,15 @@ public abstract class ActionChanceProvider : MonoBehaviour
 
         string varName = string.IsNullOrEmpty(dialogueVariableName) ? gameObject.name : dialogueVariableName;
         DialogueLua.SetVariable(varName, Mathf.RoundToInt(chance * 100f));
+    }
+
+    /// <summary>
+    /// 對原始成功率套用上下限。預設夾在 minChance～maxChance 之間。
+    /// 子類別可 override 來做特例（例如「首次必定成功」需要略過上限）。
+    /// </summary>
+    protected virtual float ApplyChanceLimits(float chance)
+    {
+        return Mathf.Clamp(chance, minChance, maxChance);
     }
 
     /// <summary>

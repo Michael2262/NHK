@@ -39,6 +39,15 @@ public class HeroineActionChanceProvider : ActionChanceProvider
     [SerializeField, Range(0f, 100f)]
     private float currentRepeatPenalty = 0f;
 
+    [Header("首次必定成功")]
+    [Tooltip("勾選後，此 Provider 的第一次成功率強制為 100%（略過 min/max 上下限）。" +
+             "收到第一次 NotifySuccess() 後即恢復正常計算。預設關閉。")]
+    public bool guaranteeFirstSuccess = false;
+
+    [SerializeField]
+    [Tooltip("執行期狀態：首次必成功是否仍待觸發。第一次 NotifySuccess() 後變 false。")]
+    private bool firstSuccessPending = true;
+
     /// <summary>
     /// 取得指定的女主角 Model。子類別也能用。
     /// </summary>
@@ -79,6 +88,18 @@ public class HeroineActionChanceProvider : ActionChanceProvider
 
     protected override float GetFallbackChance() => 0.3f;
 
+    /// <summary>
+    /// 首次必定成功：在第一次 NotifySuccess() 之前，強制回傳 100% 並略過 min/max 夾制，
+    /// 確保是真正的 100%（否則會被 maxChance 夾下來）。其餘情況沿用基底的上下限。
+    /// </summary>
+    protected override float ApplyChanceLimits(float chance)
+    {
+        if (guaranteeFirstSuccess && firstSuccessPending)
+            return 1f;
+
+        return base.ApplyChanceLimits(chance);
+    }
+
     protected override string BuildDebugSummary(ProtagonistStatusModel p, float chance)
     {
         HeroineStatusModel heroine = GetHeroine();
@@ -89,7 +110,9 @@ public class HeroineActionChanceProvider : ActionChanceProvider
             ? emotionFailureRateConfig.GetFailureRate(heroine.CurrentEmotion)
             : 0f;
 
-        return $"{GetType().Name}: chance={chance:P0}, " +
+        string firstSuccessTag = (guaranteeFirstSuccess && firstSuccessPending) ? " [首次必成功]" : "";
+
+        return $"{GetType().Name}: chance={chance:P0}{firstSuccessTag}, " +
                $"Heroine={heroineID}, Emotion={heroine.CurrentEmotion}, " +
                $"EmotionFail={emotionFailure}%, OpFail={operationFailureRate}%, " +
                $"RepeatPenalty={currentRepeatPenalty}%, Libido={heroine.Libido}";
@@ -123,6 +146,9 @@ public class HeroineActionChanceProvider : ActionChanceProvider
     /// </summary>
     public void NotifySuccess()
     {
+        // 首次必定成功：消耗掉這次保證，之後恢復正常計算
+        firstSuccessPending = false;
+
         currentRepeatPenalty = Mathf.Min(currentRepeatPenalty + repeatPenaltyPerSuccess, repeatPenaltyMax);
 
         // 成功後立即刷新顯示，讓玩家看到成功率已下降
