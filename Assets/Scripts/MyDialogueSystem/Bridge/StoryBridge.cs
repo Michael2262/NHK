@@ -30,6 +30,18 @@ public class StoryBridge : MonoBehaviour
     }
 
     //--------------------------------------------------------------
+    // {{wait}} 延遲設定橋接方法
+
+    /// <summary>
+    /// 將 {{wait}} 延遲秒數重設為 Inspector 的原始預設值（給 Button.onClick 用）
+    /// </summary>
+    public void ResetWaitDelay()
+    {
+        if (StoryManager.Instance != null)
+            StoryManager.Instance.ResetCustomDelay();
+    }
+
+    //--------------------------------------------------------------
     // 播放對話橋接方法
 
     /// <summary>

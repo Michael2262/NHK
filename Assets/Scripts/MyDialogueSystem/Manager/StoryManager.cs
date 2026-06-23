@@ -42,6 +42,9 @@ public class StoryManager : MonoBehaviour
     // {{wait}} 延遲秒數的設定存檔 Key（與音量等設定一樣走 PlayerPrefs，不進遊戲存檔）
     private const string WAIT_DELAY_KEY = "DialogueWaitDelay";
 
+    // Inspector 上設定的原始預設值（會在 Awake 載入存檔前先記下，供「重設為預設」使用）
+    private float _defaultDelay;
+
     private LinkedList<ConversationRequest> _conversationQueue = new LinkedList<ConversationRequest>();
 
     private void Awake()
@@ -49,7 +52,8 @@ public class StoryManager : MonoBehaviour
         if (_instance == null) _instance = this;
         else if (_instance != this) Destroy(gameObject);
 
-        // 載入上次儲存的延遲秒數（沒存過則用 Inspector 的預設值）
+        // 先記住 Inspector 的原始預設值，再用存檔值覆蓋（沒存過則維持預設）
+        _defaultDelay = customDelay;
         customDelay = PlayerPrefs.GetFloat(WAIT_DELAY_KEY, customDelay);
         SyncWaitWithCustomDelay();
     }
@@ -74,6 +78,13 @@ public class StoryManager : MonoBehaviour
         SyncWaitWithCustomDelay();
         PlayerPrefs.SetFloat(WAIT_DELAY_KEY, customDelay); // 持久化（離開遊戲時自動寫盤）
         OnCustomDelayChanged?.Invoke(customDelay);
+    }
+
+    /// <summary>重設為 Inspector 的原始預設值（清掉存檔並套用），滑桿會透過事件自動同步</summary>
+    public void ResetCustomDelay()
+    {
+        PlayerPrefs.DeleteKey(WAIT_DELAY_KEY);
+        SetCustomDelay(_defaultDelay);
     }
 
     private void SyncWaitWithCustomDelay()

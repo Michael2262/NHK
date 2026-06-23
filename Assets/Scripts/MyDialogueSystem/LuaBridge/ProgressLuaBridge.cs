@@ -26,6 +26,7 @@ public class ProgressLuaBridge : MonoBehaviour
         // Flag 相關
         Lua.RegisterFunction("Flag", this, typeof(ProgressLuaBridge).GetMethod("GetFlag"));
         Lua.RegisterFunction("SetFlag", this, typeof(ProgressLuaBridge).GetMethod("SetFlag"));
+        Lua.RegisterFunction("SetFlagWithLifetime", this, typeof(ProgressLuaBridge).GetMethod("SetFlagWithLifetime"));
         Lua.RegisterFunction("RemoveFlag", this, typeof(ProgressLuaBridge).GetMethod("RemoveFlag"));
 
         // Value 相關
@@ -40,6 +41,7 @@ public class ProgressLuaBridge : MonoBehaviour
     {
         Lua.UnregisterFunction("Flag");
         Lua.UnregisterFunction("SetFlag");
+        Lua.UnregisterFunction("SetFlagWithLifetime");
         Lua.UnregisterFunction("RemoveFlag");
         Lua.UnregisterFunction("Value");
         Lua.UnregisterFunction("SetValue");
@@ -67,11 +69,23 @@ public class ProgressLuaBridge : MonoBehaviour
     }
 
     /// <summary>
-    /// 新增 Flag。
-    /// Lua 用法: SetFlag("QuestStarted") 或 SetFlag("QuestStarted", "Scene")
+    /// 新增 Flag（永久）。
+    /// Lua 用法: SetFlag("QuestStarted")
+    /// 註：Dialogue System 透過反射呼叫，不支援 C# 選擇性參數，
+    /// 故 1 參數與 2 參數版本必須拆成兩個不同名的函式分別註冊。
+    /// 要指定 lifetime 請改用 SetFlagWithLifetime。
+    /// </summary>
+    public void SetFlag(string flagName)
+    {
+        SetFlagWithLifetime(flagName, "Persistent");
+    }
+
+    /// <summary>
+    /// 新增 Flag 並指定生命週期。
+    /// Lua 用法: SetFlagWithLifetime("QuestStarted", "Scene")
     /// 可用的 lifetime: "Persistent", "Scene", "UntilNextSlot", "UntilNextPhase", "UntilNextDay"
     /// </summary>
-    public void SetFlag(string flagName, string lifetime = "Persistent")
+    public void SetFlagWithLifetime(string flagName, string lifetime)
     {
         if (GameStatusService.Instance == null)
         {
