@@ -2780,6 +2780,14 @@ PrefabInstance:
       propertyPath: 'barDurations.Array.data[2]'
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 338969879565150610, guid: 1c1d493b97a02f8429e5155bf529d119, type: 3}
+      propertyPath: onClickEvents.m_PersistentCalls.m_Calls.Array.data[1].m_Target
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 338969879565150610, guid: 1c1d493b97a02f8429e5155bf529d119, type: 3}
+      propertyPath: onSuccessEvents.m_PersistentCalls.m_Calls.Array.data[1].m_Target
+      value: 
+      objectReference: {fileID: 0}
     - target: {fileID: 1049177112759469424, guid: 1c1d493b97a02f8429e5155bf529d119, type: 3}
       propertyPath: 'fsm.states.Array.data[6].actionData.actionEnabled.Array.data[1]'
       value: 0
@@ -2788,6 +2796,10 @@ PrefabInstance:
       propertyPath: fsm.states.Array.data[1].actionData.fsmStringParams.Array.data[1].value
       value: A_TouchHead1
       objectReference: {fileID: 0}
+    - target: {fileID: 2428174387612760904, guid: 1c1d493b97a02f8429e5155bf529d119, type: 3}
+      propertyPath: chanceDisplay
+      value: 
+      objectReference: {fileID: 834312906}
     - target: {fileID: 2428174387612760904, guid: 1c1d493b97a02f8429e5155bf529d119, type: 3}
       propertyPath: repeatPenaltyMax
       value: 0
@@ -2800,13 +2812,25 @@ PrefabInstance:
       propertyPath: emotionFailureRateConfig
       value: 
       objectReference: {fileID: 0}
+    - target: {fileID: 6907464553408848581, guid: 1c1d493b97a02f8429e5155bf529d119, type: 3}
+      propertyPath: chanceDisplay
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 6907464553408848581, guid: 1c1d493b97a02f8429e5155bf529d119, type: 3}
+      propertyPath: repeatPenaltyMax
+      value: 80
+      objectReference: {fileID: 0}
+    - target: {fileID: 6907464553408848581, guid: 1c1d493b97a02f8429e5155bf529d119, type: 3}
+      propertyPath: repeatPenaltyPerSuccess
+      value: 10
+      objectReference: {fileID: 0}
     - target: {fileID: 7219228850298269607, guid: 1c1d493b97a02f8429e5155bf529d119, type: 3}
       propertyPath: m_Name
       value: CommandButton_TouchHead_First
       objectReference: {fileID: 0}
     - target: {fileID: 7219228850298269607, guid: 1c1d493b97a02f8429e5155bf529d119, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7680690706142868274, guid: 1c1d493b97a02f8429e5155bf529d119, type: 3}
       propertyPath: m_Pivot.x
@@ -2893,7 +2917,8 @@ PrefabInstance:
       value: "\u6478\u982D"
       objectReference: {fileID: 0}
     m_RemovedComponents: []
-    m_RemovedGameObjects: []
+    m_RemovedGameObjects:
+    - {fileID: 4357229348655006054, guid: 1c1d493b97a02f8429e5155bf529d119, type: 3}
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 1c1d493b97a02f8429e5155bf529d119, type: 3}
@@ -5582,6 +5607,17 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 6733106727544686121, guid: dbee2ff7e91abca42a734e49bc6ec04b, type: 3}
   m_PrefabInstance: {fileID: 1917973633}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &834312906 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 4393064370084424654, guid: 1c1d493b97a02f8429e5155bf529d119, type: 3}
+  m_PrefabInstance: {fileID: 439786227}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
 --- !u!1 &873327225
 GameObject:
   m_ObjectHideFlags: 0
@@ -8161,7 +8197,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2428174387612760904, guid: 1c1d493b97a02f8429e5155bf529d119, type: 3}
       propertyPath: repeatPenaltyPerSuccess
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 6907464553408848581, guid: 1c1d493b97a02f8429e5155bf529d119, type: 3}
+      propertyPath: operationFailureRate
       value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 6907464553408848581, guid: 1c1d493b97a02f8429e5155bf529d119, type: 3}
+      propertyPath: repeatPenaltyPerSuccess
+      value: 16
       objectReference: {fileID: 0}
     - target: {fileID: 7219228850298269607, guid: 1c1d493b97a02f8429e5155bf529d119, type: 3}
       propertyPath: m_Name
@@ -9824,7 +9868,7 @@ MonoBehaviour:
           name: EVENT_HEROINE_LEAVES
           isSystemEvent: 0
           isGlobal: 1
-        toState: "\u6642\u9593\u63A8\u9032"
+        toState: "\u8A2D\u7F6E\u963B\u64CB\u5668"
         linkStyle: 0
         linkConstraint: 0
         linkTarget: 0
@@ -10118,6 +10162,94 @@ MonoBehaviour:
         - everyFrame
         paramDataPos: 00000000000000000000000000000000
         paramByteDataSize: 00000000000000000000000001000000
+    - name: "\u8A2D\u7F6E\u963B\u64CB\u5668"
+      description: 
+      colorIndex: 0
+      position:
+        serializedVersion: 2
+        x: 273
+        y: 97.5
+        width: 100
+        height: 32
+      isBreakpoint: 0
+      isSequence: 0
+      hideUnused: 0
+      transitions:
+      - fsmEvent:
+          name: FINISHED
+          isSystemEvent: 1
+          isGlobal: 0
+        toState: "\u6642\u9593\u63A8\u9032"
+        linkStyle: 0
+        linkConstraint: 0
+        linkTarget: 0
+        colorIndex: 0
+      actionData:
+        actionNames:
+        - HutongGames.PlayMaker.Actions.ActivateGameObject
+        customNames:
+        - 
+        actionEnabled: 01
+        actionIsOpen: 01
+        actionStartIndex: 00000000
+        actionHashCodes: b2cf1000
+        unityObjectParams: []
+        fsmGameObjectParams: []
+        fsmOwnerDefaultParams:
+        - ownerOption: 1
+          gameObject:
+            useVariable: 0
+            name: 
+            tooltip: 
+            showInInspector: 0
+            networkSync: 0
+            value: {fileID: 114046781}
+        animationCurveParams: []
+        functionCallParams: []
+        fsmTemplateControlParams: []
+        fsmEventTargetParams: []
+        fsmPropertyParams: []
+        layoutOptionParams: []
+        fsmStringParams: []
+        fsmObjectParams: []
+        fsmVarParams: []
+        fsmArrayParams: []
+        fsmEnumParams: []
+        fsmFloatParams: []
+        fsmIntParams: []
+        fsmBoolParams:
+        - useVariable: 0
+          name: 
+          tooltip: 
+          showInInspector: 0
+          networkSync: 0
+          value: 1
+        - useVariable: 0
+          name: 
+          tooltip: 
+          showInInspector: 0
+          networkSync: 0
+          value: 0
+        fsmVector2Params: []
+        fsmVector3Params: []
+        fsmColorParams: []
+        fsmRectParams: []
+        fsmQuaternionParams: []
+        stringParams: []
+        byteData: 0000
+        arrayParamSizes: 
+        arrayParamTypes: []
+        customTypeSizes: 
+        customTypeNames: []
+        paramDataType: 1400000011000000110000000100000001000000
+        paramName:
+        - gameObject
+        - activate
+        - recursive
+        - resetOnExit
+        - everyFrame
+        paramDataPos: 0000000000000000010000000000000001000000
+        paramByteDataSize: 0000000000000000000000000100000001000000
     events:
     - name: EVENT_MANUAL_RETREAT
       isSystemEvent: 0
@@ -20623,9 +20755,21 @@ PrefabInstance:
       propertyPath: 'barDurations.Array.data[2]'
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 338969879565150610, guid: 1c1d493b97a02f8429e5155bf529d119, type: 3}
+      propertyPath: onClickEvents.m_PersistentCalls.m_Calls.Array.size
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 1049177112759469424, guid: 1c1d493b97a02f8429e5155bf529d119, type: 3}
       propertyPath: fsm.states.Array.data[1].actionData.fsmStringParams.Array.data[1].value
       value: A_TouchHead1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2428174387612760904, guid: 1c1d493b97a02f8429e5155bf529d119, type: 3}
+      propertyPath: repeatPenaltyPerSuccess
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6907464553408848581, guid: 1c1d493b97a02f8429e5155bf529d119, type: 3}
+      propertyPath: repeatPenaltyPerSuccess
+      value: 10
       objectReference: {fileID: 0}
     - target: {fileID: 7219228850298269607, guid: 1c1d493b97a02f8429e5155bf529d119, type: 3}
       propertyPath: m_Name
@@ -20633,7 +20777,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7219228850298269607, guid: 1c1d493b97a02f8429e5155bf529d119, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7680690706142868274, guid: 1c1d493b97a02f8429e5155bf529d119, type: 3}
       propertyPath: m_Pivot.x
