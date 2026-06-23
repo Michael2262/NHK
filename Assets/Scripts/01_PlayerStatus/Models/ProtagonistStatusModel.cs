@@ -41,7 +41,7 @@ public class ProtagonistStatusModel
     public const int INITIAL_SHOOT_TIMES = SHOOT_TIMES_MAX;
 
     // ───── RoomMessLevel（房間髒亂度） ─────
-    public const int ROOM_MESS_LEVEL_MAX = 30;
+    public const int ROOM_MESS_LEVEL_MAX = 25;
     public const int ROOM_MESS_LEVEL_MIN = 0;
     public const int INITIAL_ROOM_MESS_LEVEL = ROOM_MESS_LEVEL_MAX;
 
@@ -96,7 +96,7 @@ public class ProtagonistStatusModel
     /// <summary>射精耗盡狀態：ShootTimes <= 0 即為 true。</summary>
     public bool IsOverShoot => ShootTimes <= 0;
 
-    /// <summary>房間髒亂度：0～10。每日結束自動 +1。越高代表房間越亂。</summary>
+    /// <summary>房間髒亂度：0～25。每日結束自動 +1。越高代表房間越亂。</summary>
     public int RoomMessLevel { get; private set; } = INITIAL_ROOM_MESS_LEVEL;
 
     // ───── 事件通知 ─────
