@@ -36,8 +36,11 @@ public class StoryManager : MonoBehaviour
     }
 
     [SerializeField]
-    [Tooltip("全域唯一延遲秒數，對應 {{wait}}")]
+    [Tooltip("全域唯一延遲秒數，對應 {{wait}}（Inspector 值僅作為首次未存檔時的預設）")]
     private float customDelay = 3f;
+
+    // {{wait}} 延遲秒數的設定存檔 Key（與音量等設定一樣走 PlayerPrefs，不進遊戲存檔）
+    private const string WAIT_DELAY_KEY = "DialogueWaitDelay";
 
     private LinkedList<ConversationRequest> _conversationQueue = new LinkedList<ConversationRequest>();
 
@@ -45,21 +48,40 @@ public class StoryManager : MonoBehaviour
     {
         if (_instance == null) _instance = this;
         else if (_instance != this) Destroy(gameObject);
+
+        // 載入上次儲存的延遲秒數（沒存過則用 Inspector 的預設值）
+        customDelay = PlayerPrefs.GetFloat(WAIT_DELAY_KEY, customDelay);
         SyncWaitWithCustomDelay();
     }
 
+    private void OnApplicationQuit()
+    {
+        // 保險：把設定確實寫盤（拖動當下只 SetFloat，不做磁碟 I/O）
+        PlayerPrefs.Save();
+    }
+
     // --- 延遲控制 API ---
+
+    /// <summary>目前 {{wait}} 對應的延遲秒數（供 UI 初始化讀取）</summary>
+    public float CustomDelay => customDelay;
+
+    /// <summary>customDelay 變動時觸發（參數為新值），供 UI 即時同步</summary>
+    public event System.Action<float> OnCustomDelayChanged;
 
     public void SetCustomDelay(float newValue)
     {
         customDelay = newValue;
         SyncWaitWithCustomDelay();
+        PlayerPrefs.SetFloat(WAIT_DELAY_KEY, customDelay); // 持久化（離開遊戲時自動寫盤）
+        OnCustomDelayChanged?.Invoke(customDelay);
     }
 
     private void SyncWaitWithCustomDelay()
     {
         // 強制鎖定 {{wait}} 的行為
-        Sequencer.RegisterShortcut("wait", $"Delay({customDelay})");
+        // 用 InvariantCulture，避免在「逗號當小數點」的地區產生 Delay(1,5) 導致解析失敗
+        string delayStr = customDelay.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        Sequencer.RegisterShortcut("wait", $"Delay({delayStr})");
     }
 
     // --- 核心播放邏輯 (Skip, Interrupt, Queue, Priority) ---

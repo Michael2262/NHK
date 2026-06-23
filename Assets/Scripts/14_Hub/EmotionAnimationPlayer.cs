@@ -207,6 +207,10 @@ public class EmotionAnimationPlayer : MonoBehaviour
     /// </summary>
     public void Resume()
     {
+        // 物件（或腳本）未啟用時無法 StartCoroutine。
+        // 直接略過即可：下次被 SetActive(true) 時 OnEnable 會依當前情緒自動補播。
+        if (!isActiveAndEnabled) return;
+
         if (_heroine != null)
         {
             HandleEmotionChanged(_heroine.CurrentEmotion);

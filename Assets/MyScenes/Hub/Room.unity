@@ -703,6 +703,39 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: b2d23e03f0a6a9544aa359c674881752, type: 3}
+--- !u!1 &16233306
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 16233307}
+  m_Layer: 0
+  m_Name: "\u5047\u65E5only"
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &16233307
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 16233306}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1500157501}
+  - {fileID: 1010226049}
+  m_Father: {fileID: 986548916}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &37779235
 GameObject:
   m_ObjectHideFlags: 0
@@ -983,6 +1016,11 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1656941393}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!224 &47236290 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 7840533614062965497, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
+  m_PrefabInstance: {fileID: 1816400349}
+  m_PrefabAsset: {fileID: 0}
 --- !u!224 &55605808 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 9142738333852747400, guid: b2d23e03f0a6a9544aa359c674881752, type: 3}
@@ -1462,6 +1500,11 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 203842021}
   m_CullTransparentMesh: 1
+--- !u!1 &213059573 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 3537198183688809409, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
+  m_PrefabInstance: {fileID: 1816400349}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &217827764
 GameObject:
   m_ObjectHideFlags: 0
@@ -1530,7 +1573,7 @@ MonoBehaviour:
           name: TRIGGER
           isSystemEvent: 0
           isGlobal: 0
-        toState: P3Open?
+        toState: openBlockAndWait
         linkStyle: 0
         linkConstraint: 0
         linkTarget: 0
@@ -2049,8 +2092,8 @@ MonoBehaviour:
         paramDataPos: 0000000000000000010000000000000001000000
         paramByteDataSize: 0000000000000000000000000100000001000000
     - name: P3Open?
-      description: 
-      colorIndex: 0
+      description: "\u5DE5\u4E8B\u4E2D"
+      colorIndex: 4
       position:
         serializedVersion: 2
         x: 277
@@ -3066,6 +3109,38 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!1 &344300585
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 344300586}
+  m_Layer: 0
+  m_Name: "\u5E73\u65E5only"
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &344300586
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 344300585}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1918198306}
+  m_Father: {fileID: 986548916}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &347633658
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3251,6 +3326,7 @@ Transform:
   m_Children:
   - {fileID: 1784852818}
   - {fileID: 1677808320}
+  - {fileID: 2098287160}
   - {fileID: 904063034}
   - {fileID: 1286862564}
   m_Father: {fileID: 0}
@@ -4413,6 +4489,11 @@ MonoBehaviour:
   enableStressPenalty: 0
   stressThreshold: 80
   stressDivisor: 2
+--- !u!1 &453104105 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 3537198183688809409, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
+  m_PrefabInstance: {fileID: 601635296}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &464319107 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 4169316942726519571, guid: ebb0911a63b51c4428ebcf8e42a79d78, type: 3}
@@ -4680,6 +4761,313 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 1920, y: 1080}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!1 &523499421
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 523499422}
+  - component: {fileID: 523499424}
+  - component: {fileID: 523499423}
+  m_Layer: 0
+  m_Name: TriggerChangeMode
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &523499422
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 523499421}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1918198306}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &523499423
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 523499421}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 1384774831, guid: e743331561ef77147ae48cda9bcb8209, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: PlayMaker.dll::PlayMakerFSM
+  fsm:
+    dataVersion: 2
+    usedInTemplate: {fileID: 0}
+    name: FSM
+    startState: wait
+    states:
+    - name: wait
+      description: 
+      colorIndex: 0
+      position:
+        serializedVersion: 2
+        x: 55
+        y: 111
+        width: 100
+        height: 32
+      isBreakpoint: 0
+      isSequence: 0
+      hideUnused: 0
+      transitions:
+      - fsmEvent:
+          name: TRIGGER
+          isSystemEvent: 0
+          isGlobal: 0
+        toState: "\u63DB\u8863\u670Dmode"
+        linkStyle: 0
+        linkConstraint: 0
+        linkTarget: 0
+        colorIndex: 0
+      actionData:
+        actionNames: []
+        customNames: []
+        actionEnabled: 
+        actionIsOpen: 
+        actionStartIndex: 
+        actionHashCodes: 
+        unityObjectParams: []
+        fsmGameObjectParams: []
+        fsmOwnerDefaultParams: []
+        animationCurveParams: []
+        functionCallParams: []
+        fsmTemplateControlParams: []
+        fsmEventTargetParams: []
+        fsmPropertyParams: []
+        layoutOptionParams: []
+        fsmStringParams: []
+        fsmObjectParams: []
+        fsmVarParams: []
+        fsmArrayParams: []
+        fsmEnumParams: []
+        fsmFloatParams: []
+        fsmIntParams: []
+        fsmBoolParams: []
+        fsmVector2Params: []
+        fsmVector3Params: []
+        fsmColorParams: []
+        fsmRectParams: []
+        fsmQuaternionParams: []
+        stringParams: []
+        byteData: 
+        arrayParamSizes: 
+        arrayParamTypes: []
+        customTypeSizes: 
+        customTypeNames: []
+        paramDataType: 
+        paramName: []
+        paramDataPos: 
+        paramByteDataSize: 
+    - name: "\u63DB\u8863\u670Dmode"
+      description: 
+      colorIndex: 0
+      position:
+        serializedVersion: 2
+        x: 60.25
+        y: 184
+        width: 101.27
+        height: 32
+      isBreakpoint: 0
+      isSequence: 0
+      hideUnused: 0
+      transitions:
+      - fsmEvent:
+          name: FINISHED
+          isSystemEvent: 1
+          isGlobal: 0
+        toState: wait
+        linkStyle: 0
+        linkConstraint: 0
+        linkTarget: 0
+        colorIndex: 0
+      actionData:
+        actionNames:
+        - MyGame.Actions.TachieSetBodyMode
+        customNames:
+        - 
+        actionEnabled: 01
+        actionIsOpen: 01
+        actionStartIndex: 00000000
+        actionHashCodes: a4b08a01
+        unityObjectParams: []
+        fsmGameObjectParams: []
+        fsmOwnerDefaultParams: []
+        animationCurveParams: []
+        functionCallParams: []
+        fsmTemplateControlParams: []
+        fsmEventTargetParams: []
+        fsmPropertyParams: []
+        layoutOptionParams: []
+        fsmStringParams:
+        - useVariable: 0
+          name: 
+          tooltip: 
+          showInInspector: 0
+          networkSync: 0
+          value: sister
+        - useVariable: 0
+          name: 
+          tooltip: 
+          showInInspector: 0
+          networkSync: 0
+          value: Uniform
+        fsmObjectParams: []
+        fsmVarParams: []
+        fsmArrayParams: []
+        fsmEnumParams: []
+        fsmFloatParams: []
+        fsmIntParams: []
+        fsmBoolParams: []
+        fsmVector2Params: []
+        fsmVector3Params: []
+        fsmColorParams: []
+        fsmRectParams: []
+        fsmQuaternionParams: []
+        stringParams: []
+        byteData: 
+        arrayParamSizes: 
+        arrayParamTypes: []
+        customTypeSizes: 
+        customTypeNames: []
+        paramDataType: 1200000012000000
+        paramName:
+        - idOrGroup
+        - modeName
+        paramDataPos: 0000000001000000
+        paramByteDataSize: 0000000000000000
+    events:
+    - name: FINISHED
+      isSystemEvent: 1
+      isGlobal: 0
+    - name: CleanRoom
+      isSystemEvent: 0
+      isGlobal: 0
+    - name: Next
+      isSystemEvent: 0
+      isGlobal: 0
+    - name: Shave
+      isSystemEvent: 0
+      isGlobal: 0
+    - name: Smoke
+      isSystemEvent: 0
+      isGlobal: 0
+    - name: TodayNoComeAction
+      isSystemEvent: 0
+      isGlobal: 0
+    - name: TRIGGER
+      isSystemEvent: 0
+      isGlobal: 0
+    - name: Intro
+      isSystemEvent: 0
+      isGlobal: 0
+    - name: Day7
+      isSystemEvent: 0
+      isGlobal: 0
+    - name: Day3
+      isSystemEvent: 0
+      isGlobal: 0
+    - name: HighPriorityComeAction
+      isSystemEvent: 0
+      isGlobal: 0
+    - name: GoOutFailure
+      isSystemEvent: 0
+      isGlobal: 0
+    globalTransitions: []
+    variables:
+      floatVariables: []
+      intVariables: []
+      boolVariables: []
+      stringVariables: []
+      vector2Variables: []
+      vector3Variables: []
+      colorVariables: []
+      rectVariables: []
+      quaternionVariables: []
+      gameObjectVariables: []
+      objectVariables: []
+      materialVariables: []
+      textureVariables: []
+      arrayVariables: []
+      enumVariables: []
+      categories:
+      - 
+      variableCategoryIDs: 
+    description: 
+    docUrl: 
+    showStateLabel: 0
+    maxLoopCount: 0
+    watermark: 
+    password: 
+    locked: 0
+    manualUpdate: 0
+    outVariableIndices: 
+    keepDelayedEventsOnStateExit: 0
+    preprocessed: 0
+    ExposedEvents: []
+    OutputEvents: []
+    RestartOnEnable: 1
+    ResetVariablesOnEnable: 0
+    EnableDebugFlow: 0
+    EnableBreakpoints: 1
+    editorFlags: 225
+    activeStateName: 
+    mouseEvents: 0
+    handleLevelLoaded: 0
+    handleTriggerEnter2D: 0
+    handleTriggerExit2D: 0
+    handleTriggerStay2D: 0
+    handleCollisionEnter2D: 0
+    handleCollisionExit2D: 0
+    handleCollisionStay2D: 0
+    handleTriggerEnter: 0
+    handleTriggerExit: 0
+    handleTriggerStay: 0
+    handleCollisionEnter: 0
+    handleCollisionExit: 0
+    handleCollisionStay: 0
+    handleParticleCollision: 0
+    handleControllerColliderHit: 0
+    handleJointBreak: 0
+    handleJointBreak2D: 0
+    handleOnGUI: 0
+    handleFixedUpdate: 0
+    handleLateUpdate: 0
+    handleApplicationEvents: 0
+    handleUiEvents: 0
+    handleLegacyNetworking: 0
+    handleAnimatorMove: 0
+    handleAnimatorIK: 0
+  fsmTemplate: {fileID: 0}
+  eventHandlerComponentsAdded: 0
+--- !u!114 &523499424
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 523499421}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e8b12bee42e8aa45bc35d52f71819e1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::FsmTrigge
+  fsmName: FSM
+  eventName: TRIGGER
 --- !u!1 &525376812
 GameObject:
   m_ObjectHideFlags: 0
@@ -7264,6 +7652,7 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 601635297}
+  - {fileID: 47236290}
   m_Father: {fileID: 728273900}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -8285,11 +8674,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2653564038742800066, guid: ebb0911a63b51c4428ebcf8e42a79d78, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -0.2
+      value: -0.549
       objectReference: {fileID: 0}
     - target: {fileID: 2653564038742800066, guid: ebb0911a63b51c4428ebcf8e42a79d78, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 1.66
+      value: 1.415
       objectReference: {fileID: 0}
     - target: {fileID: 2653564038742800066, guid: ebb0911a63b51c4428ebcf8e42a79d78, type: 3}
       propertyPath: m_LocalPosition.z
@@ -8481,7 +8870,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5028076934472659530, guid: ebb0911a63b51c4428ebcf8e42a79d78, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5205404571681645426, guid: ebb0911a63b51c4428ebcf8e42a79d78, type: 3}
       propertyPath: m_AnchoredPosition.x
@@ -8784,7 +9173,7 @@ MonoBehaviour:
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
           m_IntArgument: 0
           m_FloatArgument: 0
-          m_StringArgument: DayLoopTalk/Leave/Friday
+          m_StringArgument: DayLoopTalk/Insomnia
           m_BoolArgument: 0
         m_CallState: 2
 --- !u!114 &864033171
@@ -10792,7 +11181,7 @@ MonoBehaviour:
         paramByteDataSize: 000000000000000004000000
     - name: "\u66AB\u6642\u8D70\u6B64\u8DEF\u7DDA"
       description: 
-      colorIndex: 0
+      colorIndex: 1
       position:
         serializedVersion: 2
         x: 336
@@ -10836,7 +11225,7 @@ MonoBehaviour:
           tooltip: 
           showInInspector: 0
           networkSync: 0
-          value: DayLoopTalk/Come/FirstSaturday
+          value: DayLoopTalk/Come/Weekend
         fsmObjectParams: []
         fsmVarParams: []
         fsmArrayParams: []
@@ -11144,6 +11533,7 @@ GameObject:
   m_Component:
   - component: {fileID: 904063034}
   - component: {fileID: 904063035}
+  - component: {fileID: 904063036}
   m_Layer: 0
   m_Name: ProgressFlagSetter (P3Open)
   m_TagString: Untagged
@@ -11180,6 +11570,21 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ProgressFlagSetter
   targetFlags:
   - {fileID: 11400000, guid: 0ac3b17a9b69cb94086de20430b72c16, type: 2}
+  defaultAsTemporary: 0
+--- !u!114 &904063036
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 904063033}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 42e17fc95f8fd3148a7023cd99e3c0c6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ProgressFlagSetter
+  targetFlags:
+  - {fileID: 11400000, guid: 1e5d1a3ba2e47ab4993e6a09823bff82, type: 2}
   defaultAsTemporary: 0
 --- !u!1 &907826326 stripped
 GameObject:
@@ -12960,7 +13365,7 @@ MonoBehaviour:
           name: BeforeDay3AngryEveryDay
           isSystemEvent: 0
           isGlobal: 0
-        toState: "DAY3\u4E4B\u524D\u6BCF\u5929\u90FD\u751F\u6C23"
+        toState: "\u9396\u5B9A\uFF1ADAY3\u4E4B\u524D\u6BCF\u5929\u90FD\u751F\u6C23"
         linkStyle: 0
         linkConstraint: 0
         linkTarget: 0
@@ -12974,10 +13379,11 @@ MonoBehaviour:
         - 
         actionEnabled: 0101
         actionIsOpen: 0101
-        actionStartIndex: 0000000005000000
+        actionStartIndex: 0000000008000000
         actionHashCodes: 7defeb03a1418002
         unityObjectParams:
         - {fileID: 11400000, guid: ef5ab91529ec65c4b809db7b083cde85, type: 2}
+        - {fileID: 11400000, guid: 495ed9a86a271524baad02def48e9d5e, type: 2}
         - {fileID: 11400000, guid: d3efee5c28d3a844a9d1201746a4c83a, type: 2}
         fsmGameObjectParams: []
         fsmOwnerDefaultParams: []
@@ -13008,19 +13414,24 @@ MonoBehaviour:
         fsmQuaternionParams: []
         stringParams:
         - GoOutFailure
+        - GoOutFailure
         - 
         - FINISHED
         - BeforeDay3AngryEveryDay
         byteData: 00
-        arrayParamSizes: 01000000
+        arrayParamSizes: 02000000
         arrayParamTypes:
         - MyGame.Actions.SwitchProgressFlag+FlagEventEntry
-        customTypeSizes: 02000000
+        customTypeSizes: 0200000002000000
         customTypeNames:
         - MyGame.Actions.SwitchProgressFlag+FlagEventEntry
-        paramDataType: 0c000000280000000500000017000000170000000500000017000000170000001100000001000000
+        - MyGame.Actions.SwitchProgressFlag+FlagEventEntry
+        paramDataType: 0c000000280000000500000017000000280000000500000017000000170000000500000017000000170000001100000001000000
         paramName:
         - entries
+        - 
+        - flagDef
+        - sendEvent
         - 
         - flagDef
         - sendEvent
@@ -13030,8 +13441,8 @@ MonoBehaviour:
         - falseEvent
         - storeResult
         - everyFrame
-        paramDataPos: 00000000000000000000000000000000010000000100000002000000030000000000000000000000
-        paramByteDataSize: 00000000000000000000000000000000000000000000000000000000000000000000000001000000
+        paramDataPos: 00000000000000000000000000000000010000000100000001000000020000000200000003000000040000000000000000000000
+        paramByteDataSize: 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000000
     - name: "\u51FA\u9580\u5931\u6557\u4E8B\u4EF6"
       description: 
       colorIndex: 1
@@ -13057,16 +13468,19 @@ MonoBehaviour:
       actionData:
         actionNames:
         - MyGame.Actions.RemoveProgressFlag
+        - MyGame.Actions.RemoveProgressFlag
         - PlayStoryConversation
         customNames:
         - 
         - 
-        actionEnabled: 0101
-        actionIsOpen: 0101
-        actionStartIndex: 0000000001000000
-        actionHashCodes: c6356f01a4345405
+        - 
+        actionEnabled: 010101
+        actionIsOpen: 010101
+        actionStartIndex: 000000000100000002000000
+        actionHashCodes: c6356f01c6356f01a4345405
         unityObjectParams:
         - {fileID: 11400000, guid: ef5ab91529ec65c4b809db7b083cde85, type: 2}
+        - {fileID: 11400000, guid: 495ed9a86a271524baad02def48e9d5e, type: 2}
         fsmGameObjectParams: []
         fsmOwnerDefaultParams: []
         animationCurveParams: []
@@ -13100,21 +13514,22 @@ MonoBehaviour:
         arrayParamTypes: []
         customTypeSizes: 
         customTypeNames: []
-        paramDataType: 050000001200000007000000
+        paramDataType: 05000000050000001200000007000000
         paramName:
+        - flagDef
         - flagDef
         - title
         - mode
-        paramDataPos: 000000000000000000000000
-        paramByteDataSize: 000000000000000004000000
-    - name: "DAY3\u4E4B\u524D\u6BCF\u5929\u90FD\u751F\u6C23"
+        paramDataPos: 00000000010000000000000000000000
+        paramByteDataSize: 00000000000000000000000004000000
+    - name: "\u9396\u5B9A\uFF1ADAY3\u4E4B\u524D\u6BCF\u5929\u90FD\u751F\u6C23"
       description: 
       colorIndex: 1
       position:
         serializedVersion: 2
-        x: 687
-        y: 522
-        width: 152.23999
+        x: 678
+        y: 523
+        width: 190.76
         height: 32
       isBreakpoint: 0
       isSequence: 0
@@ -13616,7 +14031,8 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 1010226049}
+  - {fileID: 16233307}
+  - {fileID: 344300586}
   - {fileID: 342403356}
   - {fileID: 1540806519}
   - {fileID: 378151159}
@@ -13803,7 +14219,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 889520946}
-  m_Father: {fileID: 986548916}
+  m_Father: {fileID: 16233307}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1010226050
 MonoBehaviour:
@@ -14754,6 +15170,17 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1164577415}
   m_CullTransparentMesh: 1
+--- !u!114 &1165572487 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 8167133423207697615, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
+  m_PrefabInstance: {fileID: 1816400349}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9beeaa3613465e643a5e9ad13325a07b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::StoryBridge
 --- !u!224 &1181719045 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 9142738333852747400, guid: b2d23e03f0a6a9544aa359c674881752, type: 3}
@@ -16252,8 +16679,8 @@ MonoBehaviour:
   actionSprite: {fileID: 0}
   localizationKey: 
   overlayPosition: 1
-  enableOutcomeResult: 0
-  successChance: 0.5
+  enableOutcomeResult: 1
+  successChance: 1
   chanceProvider: {fileID: 0}
   autoApplyChanceProviderOnExecute: 1
   successLocalizationKey: Result.Success
@@ -17244,6 +17671,376 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: b2d23e03f0a6a9544aa359c674881752, type: 3}
+--- !u!1 &1499798930
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1499798931}
+  - component: {fileID: 1499798933}
+  - component: {fileID: 1499798932}
+  m_Layer: 0
+  m_Name: TriggerChangeMode
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1499798931
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1499798930}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1500157501}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1499798932
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1499798930}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 1384774831, guid: e743331561ef77147ae48cda9bcb8209, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: PlayMaker.dll::PlayMakerFSM
+  fsm:
+    dataVersion: 2
+    usedInTemplate: {fileID: 0}
+    name: FSM
+    startState: wait
+    states:
+    - name: wait
+      description: 
+      colorIndex: 0
+      position:
+        serializedVersion: 2
+        x: 55
+        y: 111
+        width: 100
+        height: 32
+      isBreakpoint: 0
+      isSequence: 0
+      hideUnused: 0
+      transitions:
+      - fsmEvent:
+          name: TRIGGER
+          isSystemEvent: 0
+          isGlobal: 0
+        toState: "\u63DB\u8863\u670Dmode"
+        linkStyle: 0
+        linkConstraint: 0
+        linkTarget: 0
+        colorIndex: 0
+      actionData:
+        actionNames: []
+        customNames: []
+        actionEnabled: 
+        actionIsOpen: 
+        actionStartIndex: 
+        actionHashCodes: 
+        unityObjectParams: []
+        fsmGameObjectParams: []
+        fsmOwnerDefaultParams: []
+        animationCurveParams: []
+        functionCallParams: []
+        fsmTemplateControlParams: []
+        fsmEventTargetParams: []
+        fsmPropertyParams: []
+        layoutOptionParams: []
+        fsmStringParams: []
+        fsmObjectParams: []
+        fsmVarParams: []
+        fsmArrayParams: []
+        fsmEnumParams: []
+        fsmFloatParams: []
+        fsmIntParams: []
+        fsmBoolParams: []
+        fsmVector2Params: []
+        fsmVector3Params: []
+        fsmColorParams: []
+        fsmRectParams: []
+        fsmQuaternionParams: []
+        stringParams: []
+        byteData: 
+        arrayParamSizes: 
+        arrayParamTypes: []
+        customTypeSizes: 
+        customTypeNames: []
+        paramDataType: 
+        paramName: []
+        paramDataPos: 
+        paramByteDataSize: 
+    - name: "\u63DB\u8863\u670Dmode"
+      description: 
+      colorIndex: 0
+      position:
+        serializedVersion: 2
+        x: 60.25
+        y: 184
+        width: 101.27
+        height: 32
+      isBreakpoint: 0
+      isSequence: 0
+      hideUnused: 0
+      transitions:
+      - fsmEvent:
+          name: FINISHED
+          isSystemEvent: 1
+          isGlobal: 0
+        toState: wait
+        linkStyle: 0
+        linkConstraint: 0
+        linkTarget: 0
+        colorIndex: 0
+      actionData:
+        actionNames:
+        - MyGame.Actions.TachieSetBodyMode
+        customNames:
+        - 
+        actionEnabled: 01
+        actionIsOpen: 01
+        actionStartIndex: 00000000
+        actionHashCodes: a4b08a01
+        unityObjectParams: []
+        fsmGameObjectParams: []
+        fsmOwnerDefaultParams: []
+        animationCurveParams: []
+        functionCallParams: []
+        fsmTemplateControlParams: []
+        fsmEventTargetParams: []
+        fsmPropertyParams: []
+        layoutOptionParams: []
+        fsmStringParams:
+        - useVariable: 0
+          name: 
+          tooltip: 
+          showInInspector: 0
+          networkSync: 0
+          value: sister
+        - useVariable: 0
+          name: 
+          tooltip: 
+          showInInspector: 0
+          networkSync: 0
+          value: Weekend
+        fsmObjectParams: []
+        fsmVarParams: []
+        fsmArrayParams: []
+        fsmEnumParams: []
+        fsmFloatParams: []
+        fsmIntParams: []
+        fsmBoolParams: []
+        fsmVector2Params: []
+        fsmVector3Params: []
+        fsmColorParams: []
+        fsmRectParams: []
+        fsmQuaternionParams: []
+        stringParams: []
+        byteData: 
+        arrayParamSizes: 
+        arrayParamTypes: []
+        customTypeSizes: 
+        customTypeNames: []
+        paramDataType: 1200000012000000
+        paramName:
+        - idOrGroup
+        - modeName
+        paramDataPos: 0000000001000000
+        paramByteDataSize: 0000000000000000
+    events:
+    - name: FINISHED
+      isSystemEvent: 1
+      isGlobal: 0
+    - name: CleanRoom
+      isSystemEvent: 0
+      isGlobal: 0
+    - name: Next
+      isSystemEvent: 0
+      isGlobal: 0
+    - name: Shave
+      isSystemEvent: 0
+      isGlobal: 0
+    - name: Smoke
+      isSystemEvent: 0
+      isGlobal: 0
+    - name: TodayNoComeAction
+      isSystemEvent: 0
+      isGlobal: 0
+    - name: TRIGGER
+      isSystemEvent: 0
+      isGlobal: 0
+    - name: Intro
+      isSystemEvent: 0
+      isGlobal: 0
+    - name: Day7
+      isSystemEvent: 0
+      isGlobal: 0
+    - name: Day3
+      isSystemEvent: 0
+      isGlobal: 0
+    - name: HighPriorityComeAction
+      isSystemEvent: 0
+      isGlobal: 0
+    - name: GoOutFailure
+      isSystemEvent: 0
+      isGlobal: 0
+    globalTransitions: []
+    variables:
+      floatVariables: []
+      intVariables: []
+      boolVariables: []
+      stringVariables: []
+      vector2Variables: []
+      vector3Variables: []
+      colorVariables: []
+      rectVariables: []
+      quaternionVariables: []
+      gameObjectVariables: []
+      objectVariables: []
+      materialVariables: []
+      textureVariables: []
+      arrayVariables: []
+      enumVariables: []
+      categories:
+      - 
+      variableCategoryIDs: 
+    description: 
+    docUrl: 
+    showStateLabel: 0
+    maxLoopCount: 0
+    watermark: 
+    password: 
+    locked: 0
+    manualUpdate: 0
+    outVariableIndices: 
+    keepDelayedEventsOnStateExit: 0
+    preprocessed: 0
+    ExposedEvents: []
+    OutputEvents: []
+    RestartOnEnable: 1
+    ResetVariablesOnEnable: 0
+    EnableDebugFlow: 0
+    EnableBreakpoints: 1
+    editorFlags: 225
+    activeStateName: 
+    mouseEvents: 0
+    handleLevelLoaded: 0
+    handleTriggerEnter2D: 0
+    handleTriggerExit2D: 0
+    handleTriggerStay2D: 0
+    handleCollisionEnter2D: 0
+    handleCollisionExit2D: 0
+    handleCollisionStay2D: 0
+    handleTriggerEnter: 0
+    handleTriggerExit: 0
+    handleTriggerStay: 0
+    handleCollisionEnter: 0
+    handleCollisionExit: 0
+    handleCollisionStay: 0
+    handleParticleCollision: 0
+    handleControllerColliderHit: 0
+    handleJointBreak: 0
+    handleJointBreak2D: 0
+    handleOnGUI: 0
+    handleFixedUpdate: 0
+    handleLateUpdate: 0
+    handleApplicationEvents: 0
+    handleUiEvents: 0
+    handleLegacyNetworking: 0
+    handleAnimatorMove: 0
+    handleAnimatorIK: 0
+  fsmTemplate: {fileID: 0}
+  eventHandlerComponentsAdded: 0
+--- !u!114 &1499798933
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1499798930}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e8b12bee42e8aa45bc35d52f71819e1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::FsmTrigge
+  fsmName: FSM
+  eventName: TRIGGER
+--- !u!1 &1500157500
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1500157501}
+  - component: {fileID: 1500157502}
+  m_Layer: 0
+  m_Name: "P0S1(\u5047\u65E5only)"
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1500157501
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1500157500}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1499798931}
+  m_Father: {fileID: 16233307}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1500157502
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1500157500}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f7cab20c605d2004f958200516a7a8bc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TimeLoopTrigger
+  targetPhaseIndex: 0
+  targetSlotInPhase: 1
+  dayFilter: 2
+  onTimeReached:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 1499798933}
+        m_TargetAssemblyTypeName: FsmTrigge, Assembly-CSharp
+        m_MethodName: Trigger
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!1 &1530414176 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 2644345024678488336, guid: b2d23e03f0a6a9544aa359c674881752, type: 3}
@@ -21152,9 +21949,10 @@ MonoBehaviour:
     Conditions: []
     ToActivate:
     - {fileID: 728273899}
+    - {fileID: 453104105}
     ToDeactivate:
     - {fileID: 1724634830}
-    - {fileID: 0}
+    - {fileID: 213059573}
     - {fileID: 5942501405593604670}
   - StateName: "\u958B\u5834\u6232\u72C0\u614B"
     Priority: 1
@@ -21341,6 +22139,18 @@ MonoBehaviour:
     ToActivate: []
     ToDeactivate:
     - {fileID: 236891002}
+  - StateName: Stress100
+    Priority: 0
+    Logic: 0
+    Conditions:
+    - Definition: {fileID: 11400000, guid: e33e13f9cd9f37948a7ed70a3640e811, type: 2}
+      RequiredState: 1
+      Comparison: 0
+      TargetValue: 0
+    ToActivate:
+    - {fileID: 213059573}
+    ToDeactivate:
+    - {fileID: 453104105}
 --- !u!1 &1805022242
 GameObject:
   m_ObjectHideFlags: 0
@@ -21477,6 +22287,223 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1805022242}
   m_CullTransparentMesh: 1
+--- !u!1001 &1816400349
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 736525990}
+    m_Modifications:
+    - target: {fileID: 1056477514127989995, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2272863855504091501, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
+      propertyPath: m_text
+      value: "\u7761\u5230\u9694\u5929\uFF1F"
+      objectReference: {fileID: 0}
+    - target: {fileID: 2272863855504091501, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
+      propertyPath: m_fontColor.b
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2272863855504091501, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
+      propertyPath: m_fontColor.g
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2272863855504091501, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
+      propertyPath: m_fontColor.r
+      value: 0.9811321
+      objectReference: {fileID: 0}
+    - target: {fileID: 2272863855504091501, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 4278190330
+      objectReference: {fileID: 0}
+    - target: {fileID: 3502851869128306123, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 7.9200134
+      objectReference: {fileID: 0}
+    - target: {fileID: 3537198183688809409, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
+      propertyPath: m_Name
+      value: Hub_Button_Insomnia
+      objectReference: {fileID: 0}
+    - target: {fileID: 3537198183688809409, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4559656184487046613, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
+      propertyPath: m_text
+      value: "(\u58D3\u529B+10)"
+      objectReference: {fileID: 0}
+    - target: {fileID: 5466847637706275784, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 7.922516
+      objectReference: {fileID: 0}
+    - target: {fileID: 6421439240120235383, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Mode
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 6421439240120235383, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 1165572487}
+    - target: {fileID: 6421439240120235383, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: PlayConversation
+      objectReference: {fileID: 0}
+    - target: {fileID: 6421439240120235383, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
+      value: StoryBridge, Assembly-CSharp
+      objectReference: {fileID: 0}
+    - target: {fileID: 6421439240120235383, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_StringArgument
+      value: DayLoopTalk/Insomnia
+      objectReference: {fileID: 0}
+    - target: {fileID: 7690801874805736377, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
+      propertyPath: onCompleteEvents.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 718980585}
+    - target: {fileID: 7690801874805736377, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
+      propertyPath: onCompleteEvents.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: RestToNextDay
+      objectReference: {fileID: 0}
+    - target: {fileID: 7690801874805736377, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
+      propertyPath: onCompleteEvents.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
+      value: RestButtonController, Assembly-CSharp
+      objectReference: {fileID: 0}
+    - target: {fileID: 7840533614062965497, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
+      propertyPath: m_Pivot.x
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 7840533614062965497, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
+      propertyPath: m_Pivot.y
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 7840533614062965497, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7840533614062965497, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7840533614062965497, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
+      propertyPath: m_AnchorMin.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7840533614062965497, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7840533614062965497, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 598.79
+      objectReference: {fileID: 0}
+    - target: {fileID: 7840533614062965497, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 105.42
+      objectReference: {fileID: 0}
+    - target: {fileID: 7840533614062965497, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7840533614062965497, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7840533614062965497, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7840533614062965497, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7840533614062965497, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7840533614062965497, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7840533614062965497, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7840533614062965497, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7840533614062965497, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7840533614062965497, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7840533614062965497, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7840533614062965497, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8344330051873758458, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
+      propertyPath: deductTime
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8344330051873758458, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
+      propertyPath: sourceRouter
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 8344330051873758458, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
+      propertyPath: manualTimeAmount
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8344330051873758458, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
+      propertyPath: flagChanges.Array.size
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8344330051873758458, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
+      propertyPath: resourceGains.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8344330051873758458, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
+      propertyPath: flagChanges.Array.data[0].lifetime
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 8344330051873758458, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
+      propertyPath: resourceGains.Array.data[0].baseAmount
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 8344330051873758458, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
+      propertyPath: resourceGains.Array.data[1].baseAmount
+      value: -2
+      objectReference: {fileID: 0}
+    - target: {fileID: 8344330051873758458, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
+      propertyPath: resourceGains.Array.data[2].baseAmount
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8344330051873758458, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
+      propertyPath: flagChanges.Array.data[0].flagDefinition
+      value: 
+      objectReference: {fileID: 11400000, guid: d3749f941461efa478b12b7ddbb7ba94, type: 2}
+    - target: {fileID: 8344330051873758458, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
+      propertyPath: resourceGains.Array.data[1].resourceType
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8344330051873758458, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
+      propertyPath: resourceGains.Array.data[2].resourceType
+      value: 2
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
 --- !u!1 &1817232480
 GameObject:
   m_ObjectHideFlags: 0
@@ -22905,6 +23932,69 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 9142738333852747400, guid: b2d23e03f0a6a9544aa359c674881752, type: 3}
   m_PrefabInstance: {fileID: 1905829716}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1918198305
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1918198306}
+  - component: {fileID: 1918198307}
+  m_Layer: 0
+  m_Name: "P0S1(\u5E73\u65E5only)"
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1918198306
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1918198305}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 523499422}
+  m_Father: {fileID: 344300586}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1918198307
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1918198305}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f7cab20c605d2004f958200516a7a8bc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TimeLoopTrigger
+  targetPhaseIndex: 0
+  targetSlotInPhase: 1
+  dayFilter: 1
+  onTimeReached:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 523499424}
+        m_TargetAssemblyTypeName: FsmTrigge, Assembly-CSharp
+        m_MethodName: Trigger
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!1 &1931643956
 GameObject:
   m_ObjectHideFlags: 0
@@ -23692,6 +24782,54 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: b2d23e03f0a6a9544aa359c674881752, type: 3}
+--- !u!1 &2098287159
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2098287160}
+  - component: {fileID: 2098287161}
+  m_Layer: 0
+  m_Name: ProgressFlagSetter (Weekend)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2098287160
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2098287159}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 350774505}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2098287161
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2098287159}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 42e17fc95f8fd3148a7023cd99e3c0c6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ProgressFlagSetter
+  targetFlags:
+  - {fileID: 11400000, guid: 3a33d653a4780964db7b8edc3d2ad1a2, type: 2}
+  - {fileID: 11400000, guid: 534c7e5e12b38f7489336b52de9bcd27, type: 2}
+  defaultAsTemporary: 0
 --- !u!1 &2108125702
 GameObject:
   m_ObjectHideFlags: 0
@@ -24677,7 +25815,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8724541396291409099, guid: 9305167245852a146b134061fba75f31, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
