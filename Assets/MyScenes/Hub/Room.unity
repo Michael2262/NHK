@@ -20683,10 +20683,36 @@ MonoBehaviour:
     ToActivate:
     - {fileID: 728273899}
     - {fileID: 453104105}
+    - {fileID: 1745311312}
     ToDeactivate:
     - {fileID: 1724634830}
     - {fileID: 213059573}
     - {fileID: 5942501405593604670}
+    - {fileID: 413265865}
+    - {fileID: 1073748258}
+    - {fileID: 838189584}
+    - {fileID: 343458837}
+    - {fileID: 1866921980}
+    - {fileID: 42885445}
+    - {fileID: 1305287846}
+    - {fileID: 236891002}
+    - {fileID: 855370715}
+    - {fileID: 71923890}
+    - {fileID: 1214348841}
+    - {fileID: 753010545}
+    - {fileID: 1870348263}
+  - StateName: Stress100
+    Priority: 0
+    Logic: 0
+    Conditions:
+    - Definition: {fileID: 11400000, guid: e33e13f9cd9f37948a7ed70a3640e811, type: 2}
+      RequiredState: 1
+      Comparison: 0
+      TargetValue: 0
+    ToActivate:
+    - {fileID: 213059573}
+    ToDeactivate:
+    - {fileID: 453104105}
   - StateName: "\u958B\u5834\u6232\u72C0\u614B"
     Priority: 1
     Logic: 0
@@ -20711,7 +20737,140 @@ MonoBehaviour:
     - {fileID: 5942501405593604670}
     ToDeactivate:
     - {fileID: 347633661}
-  - StateName: RoomMessLevel==25
+  - StateName: RoomMessLevel>=1
+    Priority: 1
+    Logic: 0
+    Conditions:
+    - Definition: {fileID: 11400000, guid: b76eae3ca8c86884cbc0b471a9bed419, type: 2}
+      RequiredState: 0
+      Comparison: 4
+      TargetValue: 1
+    ToActivate:
+    - {fileID: 1870348263}
+    ToDeactivate: []
+  - StateName: RoomMessLevel>=3
+    Priority: 1
+    Logic: 0
+    Conditions:
+    - Definition: {fileID: 11400000, guid: b76eae3ca8c86884cbc0b471a9bed419, type: 2}
+      RequiredState: 0
+      Comparison: 4
+      TargetValue: 3
+    ToActivate:
+    - {fileID: 753010545}
+    ToDeactivate: []
+  - StateName: RoomMessLevel>=5
+    Priority: 1
+    Logic: 0
+    Conditions:
+    - Definition: {fileID: 11400000, guid: b76eae3ca8c86884cbc0b471a9bed419, type: 2}
+      RequiredState: 0
+      Comparison: 4
+      TargetValue: 5
+    ToActivate:
+    - {fileID: 1214348841}
+    ToDeactivate: []
+  - StateName: RoomMessLevel>=8
+    Priority: 1
+    Logic: 0
+    Conditions:
+    - Definition: {fileID: 11400000, guid: b76eae3ca8c86884cbc0b471a9bed419, type: 2}
+      RequiredState: 0
+      Comparison: 4
+      TargetValue: 8
+    ToActivate:
+    - {fileID: 855370715}
+    ToDeactivate: []
+  - StateName: RoomMessLevel>=11
+    Priority: 1
+    Logic: 0
+    Conditions:
+    - Definition: {fileID: 11400000, guid: b76eae3ca8c86884cbc0b471a9bed419, type: 2}
+      RequiredState: 0
+      Comparison: 4
+      TargetValue: 11
+    ToActivate:
+    - {fileID: 236891002}
+    ToDeactivate: []
+  - StateName: RoomMessLevel>=13
+    Priority: 1
+    Logic: 0
+    Conditions:
+    - Definition: {fileID: 11400000, guid: b76eae3ca8c86884cbc0b471a9bed419, type: 2}
+      RequiredState: 0
+      Comparison: 4
+      TargetValue: 13
+    ToActivate:
+    - {fileID: 42885445}
+    ToDeactivate: []
+  - StateName: RoomMessLevel>=15
+    Priority: 1
+    Logic: 0
+    Conditions:
+    - Definition: {fileID: 11400000, guid: b76eae3ca8c86884cbc0b471a9bed419, type: 2}
+      RequiredState: 0
+      Comparison: 4
+      TargetValue: 15
+    ToActivate:
+    - {fileID: 1305287846}
+    ToDeactivate: []
+  - StateName: RoomMessLevel>=17
+    Priority: 1
+    Logic: 0
+    Conditions:
+    - Definition: {fileID: 11400000, guid: b76eae3ca8c86884cbc0b471a9bed419, type: 2}
+      RequiredState: 0
+      Comparison: 4
+      TargetValue: 17
+    ToActivate:
+    - {fileID: 413265865}
+    ToDeactivate:
+    - {fileID: 1745311312}
+  - StateName: RoomMessLevel>=19
+    Priority: 1
+    Logic: 0
+    Conditions:
+    - Definition: {fileID: 11400000, guid: b76eae3ca8c86884cbc0b471a9bed419, type: 2}
+      RequiredState: 0
+      Comparison: 4
+      TargetValue: 19
+    ToActivate:
+    - {fileID: 1866921980}
+    ToDeactivate: []
+  - StateName: RoomMessLevel>=20
+    Priority: 1
+    Logic: 0
+    Conditions:
+    - Definition: {fileID: 11400000, guid: b76eae3ca8c86884cbc0b471a9bed419, type: 2}
+      RequiredState: 0
+      Comparison: 4
+      TargetValue: 20
+    ToActivate:
+    - {fileID: 838189584}
+    ToDeactivate: []
+  - StateName: RoomMessLevel>=21
+    Priority: 1
+    Logic: 0
+    Conditions:
+    - Definition: {fileID: 11400000, guid: b76eae3ca8c86884cbc0b471a9bed419, type: 2}
+      RequiredState: 0
+      Comparison: 4
+      TargetValue: 21
+    ToActivate:
+    - {fileID: 343458837}
+    ToDeactivate: []
+  - StateName: RoomMessLevel>=23
+    Priority: 1
+    Logic: 0
+    Conditions:
+    - Definition: {fileID: 11400000, guid: b76eae3ca8c86884cbc0b471a9bed419, type: 2}
+      RequiredState: 0
+      Comparison: 4
+      TargetValue: 23
+    ToActivate:
+    - {fileID: 1073748258}
+    ToDeactivate: []
+  - StateName: RoomMessLevel>=25
     Priority: 1
     Logic: 0
     Conditions:
@@ -20720,170 +20879,8 @@ MonoBehaviour:
       Comparison: 0
       TargetValue: 25
     ToActivate:
-    - {fileID: 413265865}
-    - {fileID: 1073748258}
-    - {fileID: 838189584}
-    - {fileID: 343458837}
-    - {fileID: 1866921980}
-    - {fileID: 42885445}
-    - {fileID: 1305287846}
-    - {fileID: 236891002}
-    - {fileID: 855370715}
     - {fileID: 71923890}
-    - {fileID: 1214348841}
-    - {fileID: 753010545}
-    - {fileID: 1870348263}
     ToDeactivate: []
-  - StateName: RoomMessLevel=23
-    Priority: 2
-    Logic: 0
-    Conditions:
-    - Definition: {fileID: 11400000, guid: b76eae3ca8c86884cbc0b471a9bed419, type: 2}
-      RequiredState: 0
-      Comparison: 0
-      TargetValue: 23
-    ToActivate:
-    - {fileID: 343458837}
-    ToDeactivate:
-    - {fileID: 71923890}
-  - StateName: RoomMessLevel=21
-    Priority: 3
-    Logic: 0
-    Conditions:
-    - Definition: {fileID: 11400000, guid: b76eae3ca8c86884cbc0b471a9bed419, type: 2}
-      RequiredState: 0
-      Comparison: 0
-      TargetValue: 21
-    ToActivate:
-    - {fileID: 1073748258}
-    - {fileID: 1870348263}
-    ToDeactivate:
-    - {fileID: 343458837}
-  - StateName: RoomMessLevel=19
-    Priority: 4
-    Logic: 0
-    Conditions:
-    - Definition: {fileID: 11400000, guid: b76eae3ca8c86884cbc0b471a9bed419, type: 2}
-      RequiredState: 0
-      Comparison: 0
-      TargetValue: 19
-    ToActivate:
-    - {fileID: 1866921980}
-    - {fileID: 42885445}
-    ToDeactivate:
-    - {fileID: 1073748258}
-    - {fileID: 1870348263}
-  - StateName: RoomMessLevel=16
-    Priority: 4
-    Logic: 0
-    Conditions:
-    - Definition: {fileID: 11400000, guid: b76eae3ca8c86884cbc0b471a9bed419, type: 2}
-      RequiredState: 0
-      Comparison: 0
-      TargetValue: 16
-    ToActivate:
-    - {fileID: 838189584}
-    ToDeactivate:
-    - {fileID: 1866921980}
-    - {fileID: 42885445}
-  - StateName: RoomMessLevel=14
-    Priority: 4
-    Logic: 0
-    Conditions:
-    - Definition: {fileID: 11400000, guid: b76eae3ca8c86884cbc0b471a9bed419, type: 2}
-      RequiredState: 0
-      Comparison: 0
-      TargetValue: 14
-    ToActivate:
-    - {fileID: 855370715}
-    ToDeactivate:
-    - {fileID: 838189584}
-  - StateName: RoomMessLevel=11
-    Priority: 4
-    Logic: 0
-    Conditions:
-    - Definition: {fileID: 11400000, guid: b76eae3ca8c86884cbc0b471a9bed419, type: 2}
-      RequiredState: 0
-      Comparison: 0
-      TargetValue: 11
-    ToActivate:
-    - {fileID: 413265865}
-    ToDeactivate:
-    - {fileID: 855370715}
-    - {fileID: 1745311312}
-  - StateName: RoomMessLevel=8
-    Priority: 4
-    Logic: 0
-    Conditions:
-    - Definition: {fileID: 11400000, guid: b76eae3ca8c86884cbc0b471a9bed419, type: 2}
-      RequiredState: 0
-      Comparison: 0
-      TargetValue: 8
-    ToActivate:
-    - {fileID: 1745311312}
-    - {fileID: 1214348841}
-    - {fileID: 753010545}
-    ToDeactivate:
-    - {fileID: 413265865}
-  - StateName: RoomMessLevel=6
-    Priority: 4
-    Logic: 0
-    Conditions:
-    - Definition: {fileID: 11400000, guid: b76eae3ca8c86884cbc0b471a9bed419, type: 2}
-      RequiredState: 0
-      Comparison: 0
-      TargetValue: 6
-    ToActivate:
-    - {fileID: 753010545}
-    ToDeactivate:
-    - {fileID: 1214348841}
-  - StateName: RoomMessLevel=4
-    Priority: 4
-    Logic: 0
-    Conditions:
-    - Definition: {fileID: 11400000, guid: b76eae3ca8c86884cbc0b471a9bed419, type: 2}
-      RequiredState: 0
-      Comparison: 0
-      TargetValue: 4
-    ToActivate:
-    - {fileID: 1305287846}
-    ToDeactivate:
-    - {fileID: 753010545}
-  - StateName: RoomMessLevel=2
-    Priority: 4
-    Logic: 0
-    Conditions:
-    - Definition: {fileID: 11400000, guid: b76eae3ca8c86884cbc0b471a9bed419, type: 2}
-      RequiredState: 0
-      Comparison: 0
-      TargetValue: 2
-    ToActivate:
-    - {fileID: 236891002}
-    ToDeactivate:
-    - {fileID: 1305287846}
-  - StateName: RoomMessLevel=0
-    Priority: 4
-    Logic: 0
-    Conditions:
-    - Definition: {fileID: 11400000, guid: b76eae3ca8c86884cbc0b471a9bed419, type: 2}
-      RequiredState: 0
-      Comparison: 0
-      TargetValue: 0
-    ToActivate: []
-    ToDeactivate:
-    - {fileID: 236891002}
-  - StateName: Stress100
-    Priority: 0
-    Logic: 0
-    Conditions:
-    - Definition: {fileID: 11400000, guid: e33e13f9cd9f37948a7ed70a3640e811, type: 2}
-      RequiredState: 1
-      Comparison: 0
-      TargetValue: 0
-    ToActivate:
-    - {fileID: 213059573}
-    ToDeactivate:
-    - {fileID: 453104105}
 --- !u!1 &1805022242
 GameObject:
   m_ObjectHideFlags: 0
