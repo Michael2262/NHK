@@ -46,8 +46,17 @@ public class ProtagonistStatusModel
     public const int INITIAL_ROOM_MESS_LEVEL = ROOM_MESS_LEVEL_MAX;
 
     // ───── 數值範圍 ─────
+    // 通用範圍（LifePower / Sociality 使用）
     public const int MIN_STATUS_VALUE = 0;
     public const int MAX_STATUS_VALUE = 100;
+
+    // Stress 獨立範圍：可累積超過分級門檻（門檻維持 50/80/100，但實際數值上限放寬到 150）
+    public const int STRESS_MIN_VALUE = 0;
+    public const int STRESS_MAX_VALUE = 150;
+
+    // Dependency 獨立範圍：同上
+    public const int DEPENDENCY_MIN_VALUE = 0;
+    public const int DEPENDENCY_MAX_VALUE = 150;
 
     // ───── 分級門檻（各數值可獨立調整，預設一致） ─────
     // Stress
@@ -72,7 +81,7 @@ public class ProtagonistStatusModel
 
     // ───── 核心狀態 ─────
 
-    /// <summary>壓力：0～100。越高越危險。</summary>
+    /// <summary>壓力：0～150。越高越危險（分級門檻仍維持 50/80/100）。</summary>
     public int Stress { get; private set; } = INITIAL_STRESS;
 
     /// <summary>生活力：0～100。越高代表越能維持正常生活。</summary>
@@ -81,7 +90,7 @@ public class ProtagonistStatusModel
     /// <summary>社會性：0～100。越高代表越能面對外界與正常社交。</summary>
     public int Sociality { get; private set; } = INITIAL_SOCIALITY;
 
-    /// <summary>依賴度：0～100。主角對妹妹的心理與生活依賴。</summary>
+    /// <summary>依賴度：0～150。主角對妹妹的心理與生活依賴（分級門檻仍維持 50/80/100）。</summary>
     public int Dependency { get; private set; } = INITIAL_DEPENDENCY;
 
     /// <summary>保留資源：金錢。</summary>
@@ -152,10 +161,10 @@ public class ProtagonistStatusModel
             return;
         }
 
-        Stress = ClampStatus(data.Stress);
+        Stress = ClampStress(data.Stress);
         LifePower = ClampStatus(data.LifePower);
         Sociality = ClampStatus(data.Sociality);
-        Dependency = ClampStatus(data.Dependency);
+        Dependency = ClampDependency(data.Dependency);
         Money = Math.Max(0, data.Money);
         SkillPoints = Math.Max(0, data.SkillPoints);
         ShootTimes = Math.Max(SHOOT_TIMES_MIN, Math.Min(data.ShootTimes, int.MaxValue));
@@ -209,7 +218,7 @@ public class ProtagonistStatusModel
 
         int prevValue = Stress;
         StatusGrade prevGrade = GetStressGrade();
-        Stress = ClampStatus(Stress + delta);
+        Stress = ClampStress(Stress + delta);
 
         if (Stress == prevValue) return;
 
@@ -228,7 +237,7 @@ public class ProtagonistStatusModel
 
     public void SetStress(int value)
     {
-        AddStress(ClampStatus(value) - Stress);
+        AddStress(ClampStress(value) - Stress);
     }
 
     public void AddLifePower(int delta)
@@ -293,7 +302,7 @@ public class ProtagonistStatusModel
 
         int prevValue = Dependency;
         StatusGrade prevGrade = GetDependencyGrade();
-        Dependency = ClampStatus(Dependency + delta);
+        Dependency = ClampDependency(Dependency + delta);
 
         if (Dependency == prevValue) return;
 
@@ -312,7 +321,7 @@ public class ProtagonistStatusModel
 
     public void SetDependency(int value)
     {
-        AddDependency(ClampStatus(value) - Dependency);
+        AddDependency(ClampDependency(value) - Dependency);
     }
 
     // ───── Money / SkillPoints ─────
@@ -500,6 +509,20 @@ public class ProtagonistStatusModel
     {
         if (value < MIN_STATUS_VALUE) return MIN_STATUS_VALUE;
         if (value > MAX_STATUS_VALUE) return MAX_STATUS_VALUE;
+        return value;
+    }
+
+    private static int ClampStress(int value)
+    {
+        if (value < STRESS_MIN_VALUE) return STRESS_MIN_VALUE;
+        if (value > STRESS_MAX_VALUE) return STRESS_MAX_VALUE;
+        return value;
+    }
+
+    private static int ClampDependency(int value)
+    {
+        if (value < DEPENDENCY_MIN_VALUE) return DEPENDENCY_MIN_VALUE;
+        if (value > DEPENDENCY_MAX_VALUE) return DEPENDENCY_MAX_VALUE;
         return value;
     }
 

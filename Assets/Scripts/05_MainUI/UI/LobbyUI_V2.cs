@@ -79,6 +79,11 @@ public class LobbyUI_V2 : MonoBehaviour
     private TimeSystemModel _timeModel;
     private int _lastPhaseIndex = -1;
 
+    // 警示變色用：記住未達門檻時的原始顏色（只擷取一次），達門檻時改用 UIColorPalette 的色票。
+    private bool _alertColorsCaptured;
+    private Color _stressDefaultColor = Color.white;
+    private Color _dependencyDefaultColor = Color.white;
+
     private void Awake()
     {
         if (Instance == null)
@@ -178,6 +183,8 @@ public class LobbyUI_V2 : MonoBehaviour
         if (textStressTitle == null) textStressTitle = textSuspicionTitle;
         if (textStressTitle != null) textStressTitle.text = "壓力";
 
+        CaptureAlertDefaultColors();
+
         HideAllPreviewTexts();
         if (suspicionDaysPanel != null) suspicionDaysPanel.SetActive(false);
 
@@ -197,7 +204,7 @@ public class LobbyUI_V2 : MonoBehaviour
         int v = _protagonistModel != null ? _protagonistModel.Stress : 0;
         StatusPreviewSequencer.Instance.Enqueue(
             StatusPreviewSequencer.OrderStress,
-            () => SetText(textStress, v),
+            () => { SetText(textStress, v); ApplyStressColor(v); },
             PreviewIfAllowed(textStressPreview, delta),
             delta);
     }
@@ -227,7 +234,7 @@ public class LobbyUI_V2 : MonoBehaviour
         int v = _protagonistModel != null ? _protagonistModel.Dependency : 0;
         StatusPreviewSequencer.Instance.Enqueue(
             StatusPreviewSequencer.OrderDependency,
-            () => SetText(textDependency, v),
+            () => { SetText(textDependency, v); ApplyDependencyColor(v); },
             PreviewIfAllowed(textDependencyPreview, delta),
             delta);
     }
@@ -271,8 +278,10 @@ public class LobbyUI_V2 : MonoBehaviour
 
     private void UpdateStressUI()
     {
-        if (textStress != null && _protagonistModel != null)
+        if (_protagonistModel == null) return;
+        if (textStress != null)
             textStress.text = _protagonistModel.Stress.ToString();
+        ApplyStressColor(_protagonistModel.Stress);
     }
 
     private void UpdateLifePowerUI()
@@ -289,8 +298,40 @@ public class LobbyUI_V2 : MonoBehaviour
 
     private void UpdateDependencyUI()
     {
-        if (textDependency != null && _protagonistModel != null)
+        if (_protagonistModel == null) return;
+        if (textDependency != null)
             textDependency.text = _protagonistModel.Dependency.ToString();
+        ApplyDependencyColor(_protagonistModel.Dependency);
+    }
+
+    // ==================================================
+    // 警示變色：Stress 數字 / Dependency 數字達 Extreme 門檻時換色
+    // 顏色取自 UIColorPalette（靜態色票）；未達門檻時還原成原始顏色。
+    // ==================================================
+
+    // 只擷取一次原始顏色，避免在已變色狀態下把警示色誤存成「預設色」。
+    private void CaptureAlertDefaultColors()
+    {
+        if (_alertColorsCaptured) return;
+        if (textStress != null) _stressDefaultColor = textStress.color;
+        if (textDependency != null) _dependencyDefaultColor = textDependency.color;
+        _alertColorsCaptured = true;
+    }
+
+    private void ApplyStressColor(int stress)
+    {
+        if (textStress == null) return;
+        textStress.color = stress >= ProtagonistStatusModel.STRESS_EXTREME_THRESHOLD
+            ? UIColorPalette.Red
+            : _stressDefaultColor;
+    }
+
+    private void ApplyDependencyColor(int dependency)
+    {
+        if (textDependency == null) return;
+        textDependency.color = dependency >= ProtagonistStatusModel.DEPENDENCY_EXTREME_THRESHOLD
+            ? UIColorPalette.Pink
+            : _dependencyDefaultColor;
     }
 
     private void HideAllPreviewTexts()

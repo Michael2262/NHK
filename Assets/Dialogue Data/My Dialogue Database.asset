@@ -21,7 +21,7 @@ MonoBehaviour:
     bold: 0
     italic: 0
     underline: 0
-  - color: {r: 1, g: 0.23113209, b: 0.23113209, a: 1}
+  - color: {r: 1, g: 0.10849059, b: 0.10849059, a: 1}
     bold: 1
     italic: 0
     underline: 0
@@ -33,7 +33,7 @@ MonoBehaviour:
     bold: 0
     italic: 0
     underline: 0
-  - color: {r: 1, g: 1, b: 1, a: 1}
+  - color: {r: 1, g: 0.4009434, b: 0.4009434, a: 1}
     bold: 0
     italic: 0
     underline: 0
@@ -97711,6 +97711,7 @@ MonoBehaviour:
           Sister, Normal1);
 
 
+          TachieControl(Body, Sister, Normal);
 
 
           Delay({{end}});'
@@ -174870,8 +174871,9 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: 'TachieControl(Show, Sister, 0.5);
+        value: '
 
+          TachieControl(Body, Sister, Normal);
 
           Delay({{end}});'
         type: 0
@@ -174976,7 +174978,10 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: 
+        value: 'TachieControl(Show, Sister, 0.5);
+
+
+          Delay({{end}});'
         type: 0
         typeString: CustomFieldType_Text
       - title: zh-TW
@@ -175347,7 +175352,7 @@ MonoBehaviour:
       - originConversationID: 143
         originDialogueID: 5
         destinationConversationID: 143
-        destinationDialogueID: 91
+        destinationDialogueID: 7
         isConnector: 0
         priority: 2
       conditionsString: 
@@ -175461,7 +175466,7 @@ MonoBehaviour:
       canvasRect:
         serializedVersion: 2
         x: 275.08945
-        y: 355.46265
+        y: 309.46265
         width: 160
         height: 30
     - id: 57
@@ -175557,111 +175562,8 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 272.08945
-        y: 411.46265
-        width: 160
-        height: 30
-    - id: 91
-      fields:
-      - title: Title
-        value: 
-        type: 0
-        typeString: CustomFieldType_Text
-      - title: Description
-        value: 
-        type: 0
-        typeString: CustomFieldType_Text
-      - title: Actor
-        value: 5
-        type: 5
-        typeString: CustomFieldType_Actor
-      - title: Conversant
-        value: 2
-        type: 5
-        typeString: CustomFieldType_Actor
-      - title: Menu Text
-        value: 
-        type: 0
-        typeString: CustomFieldType_Text
-      - title: Dialogue Text
-        value: "\u54E5\u54E5\u5E73\u5E38\u6709\u6C92\u6709\u4E82\u5403\u5783\u573E\u98DF\u7269\u554A\uFF1F\n"
-        type: 0
-        typeString: CustomFieldType_Text
-      - title: Sequence
-        value: 
-        type: 0
-        typeString: CustomFieldType_Text
-      - title: zh-TW
-        value: 
-        type: 4
-        typeString: CustomFieldType_Localization
-      - title: zh-CN
-        value: 
-        type: 4
-        typeString: CustomFieldType_Localization
-      - title: en
-        value: 
-        type: 4
-        typeString: CustomFieldType_Localization
-      - title: ja
-        value: 
-        type: 4
-        typeString: CustomFieldType_Localization
-      - title: ko
-        value: 
-        type: 4
-        typeString: CustomFieldType_Localization
-      - title: StaminaPreview
-        value: 0
-        type: 1
-        typeString: CustomFieldType_Number
-      - title: canvasRect
-        value: 
-        type: 0
-        typeString: CustomFieldType_Text
-      - title: Response Menu Sequence
-        value: 
-        type: 0
-        typeString: CustomFieldType_Text
-      - title: Notes
-        value: 
-        type: 0
-        typeString: CustomFieldType_Text
-      - title: DontTranslate
-        value: False
-        type: 2
-        typeString: CustomFieldType_Boolean
-      - title: Guid
-        value: 
-        type: 0
-        typeString: CustomFieldType_Text
-      - title: Show Invalid
-        value: False
-        type: 2
-        typeString: CustomFieldType_Boolean
-      conversationID: 143
-      isRoot: 0
-      isGroup: 0
-      nodeColor: 
-      delaySimStatus: 0
-      falseConditionAction: Block
-      conditionPriority: 2
-      outgoingLinks:
-      - originConversationID: 143
-        originDialogueID: 91
-        destinationConversationID: 143
-        destinationDialogueID: 7
-        isConnector: 0
-        priority: 2
-      conditionsString: 
-      userScript: 
-      onExecute:
-        m_PersistentCalls:
-          m_Calls: []
-      canvasRect:
-        serializedVersion: 2
-        x: 280.08945
-        y: 307.46265
+        x: 275.08945
+        y: 363.46265
         width: 160
         height: 30
     entryGroups: []
@@ -181582,7 +181484,10 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: 
+        value: 'TachieControl(Body, Sister, Normal);
+
+
+          Delay({{end}});'
         type: 0
         typeString: CustomFieldType_Text
       - title: zh-TW
@@ -181693,6 +181598,8 @@ MonoBehaviour:
 
 
           TachieControl(Mouth, Sister, Smile3);
+
+
 
 
           Delay({{end}});'
