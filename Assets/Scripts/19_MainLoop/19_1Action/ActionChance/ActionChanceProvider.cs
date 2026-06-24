@@ -125,13 +125,16 @@ public abstract class ActionChanceProvider : MonoBehaviour
             return lastCalculatedChance;
         }
 
-        float chance = CalculateChance(protagonist);
-        chance = ApplyChanceLimits(chance);
+        // 實際擲骰用的成功率（真實值）。CalculateSuccessChance 的回傳值供 trigger / 按鈕擲骰，必須真實。
+        float chance = ApplyChanceLimits(CalculateChance(protagonist));
+
+        // 顯示用的成功率（可造假）。預設與真實值相同，子類別可 override CalculateDisplayChance 做假。
+        float displayChance = ApplyChanceLimits(CalculateDisplayChance(protagonist));
 
         lastCalculatedChance = chance;
         lastDebugSummary = BuildDebugSummary(protagonist, chance);
-        UpdateChanceDisplay(chance);
-        WriteChanceToDialogueVariable(chance);
+        UpdateChanceDisplay(displayChance);
+        WriteChanceToDialogueVariable(displayChance);
         return chance;
     }
 
@@ -159,8 +162,19 @@ public abstract class ActionChanceProvider : MonoBehaviour
 
     /// <summary>
     /// 子類別必須實作：根據主角數值計算原始成功率（尚未 Clamp）。
+    /// 此值為「真實成功率」，會作為 CalculateSuccessChance 的回傳值供實際擲骰使用。
     /// </summary>
     protected abstract float CalculateChance(ProtagonistStatusModel protagonist);
+
+    /// <summary>
+    /// 顯示用的原始成功率（尚未 Clamp）。預設等同 CalculateChance（顯示=真實）。
+    /// 子類別可 override 來「造假」顯示值，使 chanceDisplay / Dialogue 變數顯示的數字
+    /// 與實際擲骰用的真實成功率不同（例如造假重複點擊的危險度）。
+    /// </summary>
+    protected virtual float CalculateDisplayChance(ProtagonistStatusModel protagonist)
+    {
+        return CalculateChance(protagonist);
+    }
 
     /// <summary>
     /// 當找不到 ProtagonistStatusModel 時的預設成功率。子類別可 override。

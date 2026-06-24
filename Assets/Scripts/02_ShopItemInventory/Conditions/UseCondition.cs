@@ -95,27 +95,6 @@ public class SkillPointsAtLeastCondition : UseCondition
 }
 
 // ==========================================================
-// 舊版相容條件
-// ==========================================================
-
-/// <summary>
-/// 舊版精力劑條件。NHK 已移除 EnergyDrink。
-/// 為避免 Inspector / 既有 SO 參照爆掉，暫時保留 class，預設永遠通過。
-/// 建議之後改用 StressAtMostCondition / LifePowerAtLeastCondition 等 NHK 條件。
-/// </summary>
-[System.Serializable]
-public class EnergyDrinkChargesCondition : UseCondition
-{
-    [Tooltip("舊版欄位，NHK 不再使用。保留僅為相容。")]
-    public int RequiredCharges = 1;
-
-    public override bool IsMet(ProtagonistStatusModel protagonist)
-    {
-        return true;
-    }
-}
-
-// ==========================================================
 // Flag 條件
 // ==========================================================
 

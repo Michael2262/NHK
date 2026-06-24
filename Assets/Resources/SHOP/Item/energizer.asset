@@ -17,32 +17,27 @@ MonoBehaviour:
   DisplayNameKey: Store.Energizer.Name
   DescriptionKey: Store.Energizer.Describe
   Price: 1000
-  Icon: {fileID: 7084784825825613666, guid: dc9125bdcd0f46446af4b26eba5ee8d5, type: 3}
+  Icon: {fileID: 21300000, guid: dc9125bdcd0f46446af4b26eba5ee8d5, type: 3}
   MaxPurchaseLimit: 1
   ResetFrequency: 1
+  IsOnlineOrder: 0
   TargetingRule:
     Category: 0
     AllowedHeroineIDs: []
   UseConditions: []
-  SelfEffects:
-  - rid: 8306280457156952167
-  - rid: 8306280974442299540
+  SelfEffects: []
   DefaultGiftEffects:
   - rid: 8306280457156952168
+  DefaultGiftReaction:
+    DialogueConversationTitle: 
+    ReactionEvent:
+      m_PersistentCalls:
+        m_Calls: []
   HeroineOverrides: []
   references:
     version: 2
     RefIds:
-    - rid: 8306280457156952167
-      type: {class: AddStaminaEffect, ns: , asm: Assembly-CSharp}
-      data:
-        Amount: 10
-        AllowOverflow: 0
     - rid: 8306280457156952168
       type: {class: AddAffinityExpEffect, ns: , asm: Assembly-CSharp}
       data:
         Amount: 20
-    - rid: 8306280974442299540
-      type: {class: AddShootTimesEffect, ns: , asm: Assembly-CSharp}
-      data:
-        Amount: 2

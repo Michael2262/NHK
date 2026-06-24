@@ -52,9 +52,6 @@ public class BackpackUI : MonoBehaviour, IItemButtonHost
     // ★ 追蹤目前被選中的 BackpackItemButton，用於高亮管理
     private BackpackItemButton _selectedButton = null;
 
-    // ★ UseButton 上的體力預覽觸發器
-    private StaminaPreviewHoverTrigger _useButtonStaminaPreview;
-
     // ───── Unity 生命週期 ─────
 
     private void Awake()
@@ -70,13 +67,6 @@ public class BackpackUI : MonoBehaviour, IItemButtonHost
         _filterGiftButton.onClick.AddListener(() => SetFilter(ItemFilterType.Gift));
         _filterPermanentButton.onClick.AddListener(() => SetFilter(ItemFilterType.Permanent));
         _useButton.onClick.AddListener(OnUseItemButtonClicked);
-
-        // ★ 確保 UseButton 上有 StaminaPreviewHoverTrigger（自動新增或取得）
-        _useButtonStaminaPreview = _useButton.GetComponent<StaminaPreviewHoverTrigger>();
-        if (_useButtonStaminaPreview == null)
-            _useButtonStaminaPreview = _useButton.gameObject.AddComponent<StaminaPreviewHoverTrigger>();
-        _useButtonStaminaPreview.SetUseRouter(false);
-        _useButtonStaminaPreview.SetPreviewDelta(0);
 
         // ★ Awake 就設好篩選按鈕狀態，避免打開時閃爍
         UpdateFilterButtonStates();
@@ -212,14 +202,6 @@ public class BackpackUI : MonoBehaviour, IItemButtonHost
         UpdateDetailPanel(item);
     }
 
-    /// <summary>
-    /// 【相容舊介面】如果有其他腳本直接呼叫 OnItemSelected(item)，保留此 overload。
-    /// </summary>
-    public void OnItemSelected(ItemConfigData item)
-    {
-        OnItemSelected(item, null);
-    }
-
     private void OnUseItemButtonClicked()
     {
         if (_selectedItem == null) return;
@@ -340,32 +322,11 @@ public class BackpackUI : MonoBehaviour, IItemButtonHost
             _useButton.gameObject.SetActive(true);
             var preview = GameStatusService.Instance.ItemUseService.PreviewUseItemOnSelf(item.ItemID);
             _useButton.interactable = preview.IsSuccess;
-
-            // ★ 計算此道具的體力回復量，設定到預覽觸發器
-            _useButtonStaminaPreview.SetPreviewDelta(GetStaminaDelta(item));
         }
         else
         {
             _useButton.gameObject.SetActive(false);
-            _useButtonStaminaPreview.SetPreviewDelta(0);
         }
-    }
-
-    /// <summary>
-    /// 從道具的 SelfEffects 中找出 AddStaminaEffect，回傳體力變化量。
-    /// 如果沒有體力效果則回傳 0。
-    /// </summary>
-    private int GetStaminaDelta(ItemConfigData item)
-    {
-        if (item == null || item.SelfEffects == null) return 0;
-
-        float total = 0f;
-        foreach (var effect in item.SelfEffects)
-        {
-            if (effect is AddStaminaEffect staminaEffect)
-                total += staminaEffect.Amount;
-        }
-        return Mathf.RoundToInt(total);
     }
 
     private void ClearDetailPanel()

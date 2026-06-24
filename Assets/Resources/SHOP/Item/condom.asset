@@ -17,9 +17,10 @@ MonoBehaviour:
   DisplayNameKey: Store.Cobdom.Name
   DescriptionKey: Store.Cobdom.Describe
   Price: 10
-  Icon: {fileID: 0}
+  Icon: {fileID: 21300000, guid: 15b3552cb6b9d6744916d60670d25147, type: 3}
   MaxPurchaseLimit: 20
   ResetFrequency: 1
+  IsOnlineOrder: 0
   TargetingRule:
     Category: 1
     AllowedHeroineIDs:
@@ -27,12 +28,13 @@ MonoBehaviour:
   UseConditions: []
   SelfEffects:
   - rid: 8306280457156952167
-  DefaultGiftEffects:
-  - rid: 8306280457156952168
-  HeroineOverrides:
-  - HeroineID: 
-    Conditions: []
-    Effects: []
+  DefaultGiftEffects: []
+  DefaultGiftReaction:
+    DialogueConversationTitle: 
+    ReactionEvent:
+      m_PersistentCalls:
+        m_Calls: []
+  HeroineOverrides: []
   references:
     version: 2
     RefIds:
@@ -40,8 +42,3 @@ MonoBehaviour:
       type: {class: AddStaminaEffect, ns: , asm: Assembly-CSharp}
       data:
         Amount: 10
-        AllowOverflow: 0
-    - rid: 8306280457156952168
-      type: {class: AddAffinityExpEffect, ns: , asm: Assembly-CSharp}
-      data:
-        Amount: 20

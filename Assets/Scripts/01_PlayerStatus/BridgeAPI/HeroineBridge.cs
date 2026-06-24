@@ -154,6 +154,7 @@ public class HeroineBridge : MonoBehaviour
 
     public void SetCurrentEmotion(HeroineEmotionCardType emotion) => H?.SetCurrentEmotion(emotion);
 
+    public void SetCurrentEmotionNormal() => SetCurrentEmotion(HeroineEmotionCardType.Normal);
     public void SetCurrentEmotionAngry() => SetCurrentEmotion(HeroineEmotionCardType.Angry);
     public void SetCurrentEmotionShy() => SetCurrentEmotion(HeroineEmotionCardType.Shy);
     public void SetCurrentEmotionWorried() => SetCurrentEmotion(HeroineEmotionCardType.Worried);
