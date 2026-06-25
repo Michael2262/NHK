@@ -63,6 +63,11 @@ public class HeroineUI : MonoBehaviour
     [SerializeField] private bool showPositivePreview = true;
     [SerializeField] private bool showNegativePreview = true;
 
+    [Header("=== 顯示設定（暫時性） ===")]
+    [Tooltip("開啟後：女主角不顯示主導情緒（textCurrentEmotion），" +
+             "也不顯示情緒相關的兩種 preview（新增情緒飄字、情緒轉變提示）。")]
+    [SerializeField] private bool hideEmotionDisplay = false;
+
     [Header("=== 按鈕綁定 ===")]
     [SerializeField] private UnityEngine.UI.Button nextButton;
     [SerializeField] private UnityEngine.UI.Button closeButton;
@@ -245,6 +250,9 @@ public class HeroineUI : MonoBehaviour
 
     private void HandleCurrentEmotionChanged(HeroineEmotionCardType emotion)
     {
+        // 暫時性：關閉情緒顯示時，不更新標籤、也不閃「情緒轉變」提示。
+        if (hideEmotionDisplay) return;
+
         // 標籤本體在輪到它的 step 才更新；同時閃一下「情緒轉變」提示（文字固定、只開關）。
         StatusPreviewSequencer.Instance.EnqueueToggle(
             StatusPreviewSequencer.OrderHeroineCurrentEmotion,
@@ -254,6 +262,9 @@ public class HeroineUI : MonoBehaviour
 
     private void HandleEmotionCardAdded(HeroineEmotionCardType emotion)
     {
+        // 暫時性：關閉情緒顯示時，不冒出「情緒名稱 ↑」飄字。
+        if (hideEmotionDisplay) return;
+
         // 新增情緒卡：冒出「情緒名稱 ↑」飄字（名稱同樣走 EmotionCardCatalog 查表本地化）。
         string label = ResolveEmotionDisplayText(emotion);
         StatusPreviewSequencer.Instance.EnqueueText(
@@ -288,6 +299,17 @@ public class HeroineUI : MonoBehaviour
     private void UpdateCurrentEmotionUI()
     {
         if (textCurrentEmotion == null || _currentModel == null) return;
+
+        // 暫時性：關閉情緒顯示時，主導情緒標籤隱藏。
+        if (hideEmotionDisplay)
+        {
+            if (textCurrentEmotion.gameObject.activeSelf)
+                textCurrentEmotion.gameObject.SetActive(false);
+            return;
+        }
+
+        if (!textCurrentEmotion.gameObject.activeSelf)
+            textCurrentEmotion.gameObject.SetActive(true);
 
         string displayText = ResolveEmotionDisplayText(_currentModel.CurrentEmotion);
         textCurrentEmotion.text = displayText;

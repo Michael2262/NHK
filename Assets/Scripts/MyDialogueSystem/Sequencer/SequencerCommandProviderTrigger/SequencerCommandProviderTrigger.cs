@@ -13,9 +13,14 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
     ///
     /// 本命令瞬間完成（fire-and-forget），不跑任何演出、不 blocking，算完即 Stop。
     ///
+    /// 此外，每次呼叫都會「固定再覆蓋一份公用變數」，方便用單一名稱讀最近一次結果：
+    ///   Variable["Provider"]         // 最近一次的百分比(0~100)
+    ///   Variable["Provider_Result"]  // 最近一次的擲骰結果(true/false)
+    ///
     /// 對話條件式範例：
     ///   Variable["myAction"] >= 50            // 用機率數字判定
     ///   Variable["myAction_Result"] == true   // 用擲骰結果分支
+    ///   Variable["Provider_Result"] == true   // 不在意是哪個 ID，只看最近一次結果
     ///
     /// === 使用限制 ===
     /// 與 ActionOverlay 相同：ProviderTrigger 以 ID 自我註冊，只有「目前已載入且 enable」的才在註冊表中。
@@ -24,6 +29,9 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
     public class SequencerCommandProviderTrigger : SequencerCommand
     {
         private const string ResultVariableSuffix = "_Result";
+
+        // 不論 actionId / 變數名為何，每次呼叫都會額外覆蓋這份公用變數，供對話用固定名稱讀最近一次結果。
+        private const string SharedVariableName = "Provider";
 
         public void Awake()
         {
@@ -59,11 +67,17 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
 
             // 機率：整數百分比 (0~100)。與 ActionChanceProvider 的顯示換算一致。
             int percent = Mathf.RoundToInt(chance * 100f);
-            DialogueLua.SetVariable(variableName, percent);
 
-            // 結果：當場依此機率擲骰一次，成功/失敗寫進 {變數名}_Result。
+            // 結果：當場依此機率擲骰一次。
             bool isSuccess = Random.value <= chance;
+
+            // 寫進以 ID（或自訂變數名）命名的變數。
+            DialogueLua.SetVariable(variableName, percent);
             DialogueLua.SetVariable(variableName + ResultVariableSuffix, isSuccess);
+
+            // 同時覆蓋公用變數，供對話用固定名稱讀最近一次結果。
+            DialogueLua.SetVariable(SharedVariableName, percent);
+            DialogueLua.SetVariable(SharedVariableName + ResultVariableSuffix, isSuccess);
 
             Stop();
         }

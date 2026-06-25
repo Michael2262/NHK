@@ -16516,6 +16516,8 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 40139464}
+  - {fileID: 1644540638}
+  - {fileID: 1895665027}
   m_Father: {fileID: 2014910956}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1499798930
@@ -18928,6 +18930,89 @@ MonoBehaviour:
   m_ChildScaleWidth: 0
   m_ChildScaleHeight: 0
   m_ReverseArrangement: 0
+--- !u!1 &1644540637
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1644540638}
+  - component: {fileID: 1644540640}
+  - component: {fileID: 1644540639}
+  m_Layer: 0
+  m_Name: StayLate
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1644540638
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1644540637}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1486916937}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1644540639
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1644540637}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 572830fcdde20c3479bc8a2e6c79eb5a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HeroineActionChanceProvider
+  targetTrigger: {fileID: 0}
+  chanceDisplay: {fileID: 0}
+  refreshOnEnable: 1
+  minChance: 0.1
+  maxChance: 0.9
+  writeToDialogueVariable: 1
+  dialogueVariableName: StayLate
+  lastCalculatedChance: 0
+  lastDebugSummary: 
+  heroineID: 
+  emotionFailureRateConfig: {fileID: 11400000, guid: 0535f124eb2025f4798fb8d7cfb6697a, type: 2}
+  operationFailureRate: 50
+  libidoMultiplier: 1
+  trustMultiplier: 1
+  libidoBonusMax: 10
+  trustBonusMax: 10
+  repeatPenaltyPerSuccess: 10
+  repeatPenaltyMax: 50
+  currentRepeatPenalty: 0
+  fakeRepeatPenaltyPerSuccess: 10
+  fakeRepeatPenaltyMax: 50
+  currentFakeRepeatPenalty: 0
+  guaranteeFirstSuccess: 0
+  firstSuccessPending: 1
+--- !u!114 &1644540640
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1644540637}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 42ef177a7830592499eeb5553c59d3a8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ProviderTrigger
+  actionId: StayLate
+  chanceProvider: {fileID: 1644540639}
 --- !u!1001 &1656941392
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -21808,6 +21893,89 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 2653564038742800066, guid: ebb0911a63b51c4428ebcf8e42a79d78, type: 3}
   m_PrefabInstance: {fileID: 597929225}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1895665026
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1895665027}
+  - component: {fileID: 1895665029}
+  - component: {fileID: 1895665028}
+  m_Layer: 0
+  m_Name: StayLate2
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1895665027
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1895665026}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1486916937}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1895665028
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1895665026}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 572830fcdde20c3479bc8a2e6c79eb5a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HeroineActionChanceProvider
+  targetTrigger: {fileID: 0}
+  chanceDisplay: {fileID: 0}
+  refreshOnEnable: 1
+  minChance: 0.1
+  maxChance: 0.9
+  writeToDialogueVariable: 1
+  dialogueVariableName: StayLate2
+  lastCalculatedChance: 0
+  lastDebugSummary: 
+  heroineID: 
+  emotionFailureRateConfig: {fileID: 11400000, guid: 0535f124eb2025f4798fb8d7cfb6697a, type: 2}
+  operationFailureRate: 20
+  libidoMultiplier: 1
+  trustMultiplier: 1
+  libidoBonusMax: 10
+  trustBonusMax: 10
+  repeatPenaltyPerSuccess: 10
+  repeatPenaltyMax: 50
+  currentRepeatPenalty: 0
+  fakeRepeatPenaltyPerSuccess: 10
+  fakeRepeatPenaltyMax: 50
+  currentFakeRepeatPenalty: 0
+  guaranteeFirstSuccess: 0
+  firstSuccessPending: 1
+--- !u!114 &1895665029
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1895665026}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 42ef177a7830592499eeb5553c59d3a8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ProviderTrigger
+  actionId: StayLate
+  chanceProvider: {fileID: 1895665028}
 --- !u!1 &1900334697
 GameObject:
   m_ObjectHideFlags: 0

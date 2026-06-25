@@ -402,6 +402,10 @@ public class TimeSystemModel
         CurrentPhaseIndex = data.CurrentPhaseIndex;
         CurrentSlotInPhase = data.CurrentSlotInPhase;
 
+        // 讀檔後務必依還原的 DayIndex 重新計算週末狀態，
+        // 否則 IsWeekend 會停留在讀檔前的舊值，導致周末/平日觸發判斷錯誤。
+        UpdateWeekendStatus();
+
         Debug.Log($"[TimeSystemModel] LoadFromSaveData executed. New GameDate is: {GameDate.ToString("o")}");
     }
 
