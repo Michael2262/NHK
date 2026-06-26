@@ -68244,7 +68244,16 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: 
+        value: 'TachieControl(Show, Sister, 0.5);
+
+
+          TachieControl(Expression,
+          Sister, Normal1);
+
+          TachieControl(Mouth, Sister, Small3);
+
+
+          Delay({{end}});'
         type: 0
         typeString: CustomFieldType_Text
       - title: zh-TW
@@ -68320,7 +68329,7 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 247
+        x: 248
         y: 111
         width: 160
         height: 30
@@ -68458,7 +68467,16 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: 
+        value: 'TachieControl(Eye, Sister, Close_Happy);
+
+
+          TachieControl(Mouth,
+          Sister, Smile3);
+
+
+          Delay({{end}});
+
+'
         type: 0
         typeString: CustomFieldType_Text
       - title: zh-TW
@@ -68672,7 +68690,16 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: 
+        value: '
+
+          TachieControl(Eye, Sister, Surprise);
+
+          TachieControl(Mouth,
+          Sister, Close2);
+
+
+
+          Delay({{end}});'
         type: 0
         typeString: CustomFieldType_Text
       - title: zh-TW
@@ -68779,7 +68806,19 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: 
+        value: 'TachieControl(Brow, Sister, Angry1);
+
+          TachieControl(Eye,
+          Sister, Half);
+
+          TachieControl(Mouth, Sister, Small2);
+
+          TachieControl(Other,
+          Sister, SweatL1);
+
+          TachieControl(Body, Sister, Worry1);
+
+          Delay({{end}});'
         type: 0
         typeString: CustomFieldType_Text
       - title: zh-TW
@@ -68886,18 +68925,15 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: 'TachieControl(Eye,Sister,Close_Happy);
-
+        value: 'TachieControl(Mouth, Sister, Close4);
 
           TachieControl(Brow,
-          Sister, Normal1);
+          Sister, Angry1);
 
-          TachieControl(Mouth, Sister, Smile2);
+          StatPackage(TrustTalk, sister);
 
-
-          StatPackage(TrustTalk,
-          sister);
-
+          HeroineStatChange(sister,
+          libido, add, 4);
 
           Delay({{end}});'
         type: 0
@@ -69278,7 +69314,15 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: 
+        value: 'TachieControl(Eye, Sister, Half_Lookaway);
+
+          TachieControl(Brow,
+          Sister, Sad4);
+
+
+          TachieControl(Mouth, Sister, Open3);
+
+          Delay({{end}});'
         type: 0
         typeString: CustomFieldType_Text
       - title: zh-TW
@@ -69354,7 +69398,7 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 248
+        x: 249
         y: 589
         width: 160
         height: 30
@@ -69492,7 +69536,17 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: 
+        value: 'TachieControl(Brow, Sister, Angry4);
+
+          TachieControl(Mouth,
+          Sister, Loathe1);
+
+          TachieControl(Eye, Sister, Half);
+
+          TachieControl(Body,
+          Sister, Normal);
+
+          Delay({{end}});'
         type: 0
         typeString: CustomFieldType_Text
       - title: zh-TW
@@ -69599,7 +69653,14 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: 
+        value: 'TachieControl(Expression, Sister, Happy2);
+
+          TachieControl(Mouth,
+          Sister, Smile2);
+
+          TachieControl(Brow, Sister, Normal1);
+
+          Delay({{end}});'
         type: 0
         typeString: CustomFieldType_Text
       - title: zh-TW
@@ -69706,7 +69767,19 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: 
+        value: 'TachieControl(Brow, Sister, Sad4);
+
+          TachieControl(Eye,
+          Sister, Normal);
+
+          TachieControl(Other, Sister, SweatL1);
+
+          TachieControl(Mouth,
+          Sister, Open2);
+
+          TachieControl(Blush, Sister, BlushL2);
+
+          Delay({{end}});'
         type: 0
         typeString: CustomFieldType_Text
       - title: zh-TW
@@ -69782,12 +69855,12 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 243
+        x: 245
         y: 530
         width: 160
         height: 30
     entryGroups: []
-    canvasScrollPosition: {x: 0, y: 0}
+    canvasScrollPosition: {x: 12, y: 317}
     canvasZoom: 1
   - id: 128
     fields:
@@ -71865,7 +71938,7 @@ MonoBehaviour:
         width: 160
         height: 30
     entryGroups: []
-    canvasScrollPosition: {x: 11, y: 94}
+    canvasScrollPosition: {x: 32, y: 300}
     canvasZoom: 1
   - id: 126
     fields:
@@ -229443,7 +229516,7 @@ MonoBehaviour:
         isConnector: 0
         priority: 2
       conditionsString: 
-      userScript: SetFlag("Flag_Event_Worried")
+      userScript: SetFlagWithLifetime("Flag_Event_Worried", "UntilNextDay")
       onExecute:
         m_PersistentCalls:
           m_Calls: []

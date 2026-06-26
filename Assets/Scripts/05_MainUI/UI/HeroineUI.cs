@@ -3,6 +3,14 @@ using TMPro;
 using UnityEngine;
 using PixelCrushers;
 
+// 常駐顯示設計說明：
+//   HeroineUI 用單一 int Variable（VAR_VISIBLE）同時記錄「要不要顯示」與「顯示哪位」。
+//   值為 0 → 隱藏；值為 N（N > 0）→ 顯示 heroineOrder[N-1]（順位從 1 起算）。
+//   - Show()  → SetValue(順位索引 + 1)
+//   - Hide()  → SetValue(0)
+//   - 讀檔後（OnGameStatusLoaded）→ 取值，0 不動，> 0 則 ShowByOrder(value - 1)
+//   開場 FSM 只需照常呼叫 Show()，讀檔路徑由 HeroineUI 自行處理，兩條路徑共用同一邏輯。
+
 /// <summary>
 /// 女主角狀態面板 UI（NHK 重構版）。
 /// 透過 CanvasGroup 控制顯示/隱藏，初始不可見。
@@ -73,6 +81,14 @@ public class HeroineUI : MonoBehaviour
     [SerializeField] private UnityEngine.UI.Button closeButton;
 
     // ==========================================================
+    //  ProgressFlag 常數
+    // ==========================================================
+
+    // 0 = 隱藏；N > 0 = 顯示 heroineOrder[N-1]
+    // 單一 Variable 同時記錄顯示狀態與角色順位，存檔後讀檔可自動還原
+    private const string VAR_VISIBLE = "Value_System_HeroineUIVisible";
+
+    // ==========================================================
     //  內部狀態
     // ==========================================================
     private int _currentOrderIndex = 0;
@@ -99,10 +115,21 @@ public class HeroineUI : MonoBehaviour
 
         if (nextButton != null) nextButton.onClick.AddListener(OnNextClicked);
         if (closeButton != null) closeButton.onClick.AddListener(Hide);
+
+    }
+
+    private void Start()
+    {
+        // 訂閱讀檔完成事件，讓 HeroineUI 在讀檔後自行還原顯示狀態
+        // 放在 Start 確保 GameStatusService.Instance 已在 Awake（-900）完成初始化
+        if (GameStatusService.Instance != null)
+            GameStatusService.Instance.OnGameStatusLoaded += OnGameStatusLoaded;
     }
 
     private void OnDestroy()
     {
+        if (GameStatusService.Instance != null)
+            GameStatusService.Instance.OnGameStatusLoaded -= OnGameStatusLoaded;
         UnsubscribeFromModel();
         StatusPreviewSequencer.CancelAllIfExists();
         if (Instance == this) Instance = null;
@@ -122,12 +149,11 @@ public class HeroineUI : MonoBehaviour
         }
 
         _currentOrderIndex = Mathf.Clamp(orderIndex, 0, heroineOrder.Count - 1);
-        ApplyHeroineData(heroineOrder[_currentOrderIndex]);
-        SetCanvasGroupVisible(true);
+        Show(heroineOrder[_currentOrderIndex]);
     }
 
     /// <summary>
-    /// 以 HeroineID 開啟面板。
+    /// 以 HeroineID 開啟面板，並設置 Persistent Flag 讓讀檔後能自動還原。
     /// 若該 ID 存在於順位列表中，會同步更新 currentOrderIndex。
     /// </summary>
     public void Show(string heroineID)
@@ -143,9 +169,12 @@ public class HeroineUI : MonoBehaviour
 
         ApplyHeroineData(heroineID);
         SetCanvasGroupVisible(true);
+
+        // 存入順位索引 + 1（0 保留給「隱藏」狀態，讀檔時以此還原）
+        GameStatusService.Instance?.ProgressFlags?.SetValue(VAR_VISIBLE, _currentOrderIndex + 1);
     }
 
-    /// <summary>關閉面板。</summary>
+    /// <summary>關閉面板，並清除 Persistent Flag。</summary>
     public void Hide()
     {
         SetCanvasGroupVisible(false);
@@ -153,6 +182,23 @@ public class HeroineUI : MonoBehaviour
         StatusPreviewSequencer.CancelAllIfExists();
         HideAllPreviewTexts();
         _currentModel = null;
+
+        // 歸零表示「隱藏」，讀檔後不會還原顯示
+        GameStatusService.Instance?.ProgressFlags?.SetValue(VAR_VISIBLE, 0);
+    }
+
+    /// <summary>
+    /// 讀檔完成後由 GameStatusService.OnGameStatusLoaded 觸發。
+    /// 此時 ProgressFlags 已還原，若 FLAG_VISIBLE 存在則自動重新顯示 UI。
+    /// </summary>
+    private void OnGameStatusLoaded()
+    {
+        var flags = GameStatusService.Instance?.ProgressFlags;
+        if (flags == null) return;
+
+        // 0 = 隱藏，不還原；N > 0 = 顯示 heroineOrder[N-1]
+        int saved = flags.GetValue(VAR_VISIBLE);
+        if (saved > 0) ShowByOrder(saved - 1);
     }
 
     // ==========================================================
