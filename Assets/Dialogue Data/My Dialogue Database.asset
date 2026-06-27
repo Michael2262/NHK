@@ -75877,11 +75877,14 @@ MonoBehaviour:
           Sister, Angry2);
 
 
-          TachieControl(Eye, Sister, Half);
+          TachieControl(Eye, Sister, Normal);
 
 
           TachieControl(Mouth,
           Sister, Small3);
+
+
+          TachieControl(Body, Sister, Normal);
 
 
           Delay({{end}});'
@@ -75960,7 +75963,7 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 247
+        x: 250.77359
         y: 111
         width: 160
         height: 30
@@ -76106,7 +76109,7 @@ MonoBehaviour:
           TachieControl(Other, Sister, Angry);
 
           TachieControl(Brow,
-          Sister, Angry3);
+          Sister, Angry4);
 
           TachieControl(Mouth, Sister, Open3);
 
@@ -76670,7 +76673,7 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Dialogue Text
-        value: "\u9084\u771F\u7684\u6709\u5594\uFF01"
+        value: "\u9084\u771F\u7684\u6709\u5594\uFF01\u90A3\u6703\u53EB\u4EBA\u8A18\u5F97\u5403\u98EF\u55CE\uFF1F"
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
@@ -76743,7 +76746,7 @@ MonoBehaviour:
       - originConversationID: 130
         originDialogueID: 9
         destinationConversationID: 130
-        destinationDialogueID: 31
+        destinationDialogueID: 32
         isConnector: 0
         priority: 2
       conditionsString: 
@@ -77225,13 +77228,14 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: 'TachieControl(Eye, Sister, Half);
+        value: '
 
-          TachieControl(Brow,
-          Sister, Angry1);
+          TachieControl(Brow, Sister, Angry1);
 
-          TachieControl(Mouth, Sister, Close4);
+          TachieControl(Mouth,
+          Sister, Close4);
 
+          TachieControl(Eye, Sister, Half_Lookaway);
 
 
           Delay({{end}});'
@@ -77448,7 +77452,7 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: 'TachieControl(Eye, Sister, Half_Lookaway);
+        value: 'TachieControl(Eye, Sister, Close_Sad);
 
           TachieControl(Mouth,
           Sister, Small2);
@@ -77543,113 +77547,6 @@ MonoBehaviour:
         serializedVersion: 2
         x: 500
         y: 264
-        width: 160
-        height: 30
-    - id: 31
-      fields:
-      - title: Title
-        value: 
-        type: 0
-        typeString: CustomFieldType_Text
-      - title: Description
-        value: 
-        type: 0
-        typeString: CustomFieldType_Text
-      - title: Actor
-        value: 5
-        type: 5
-        typeString: CustomFieldType_Actor
-      - title: Conversant
-        value: 2
-        type: 5
-        typeString: CustomFieldType_Actor
-      - title: Menu Text
-        value: 
-        type: 0
-        typeString: CustomFieldType_Text
-      - title: Dialogue Text
-        value: "\u90A3\u6703\u53EB\u4EBA\u8A18\u5F97\u5403\u98EF\u55CE\uFF1F"
-        type: 0
-        typeString: CustomFieldType_Text
-      - title: Sequence
-        value: 
-        type: 0
-        typeString: CustomFieldType_Text
-      - title: zh-TW
-        value: 
-        type: 4
-        typeString: CustomFieldType_Localization
-      - title: zh-CN
-        value: 
-        type: 4
-        typeString: CustomFieldType_Localization
-      - title: en
-        value: 
-        type: 4
-        typeString: CustomFieldType_Localization
-      - title: ja
-        value: 
-        type: 4
-        typeString: CustomFieldType_Localization
-      - title: ko
-        value: 
-        type: 4
-        typeString: CustomFieldType_Localization
-      - title: StaminaPreview
-        value: 0
-        type: 1
-        typeString: CustomFieldType_Number
-      - title: canvasRect
-        value: 
-        type: 0
-        typeString: CustomFieldType_Text
-      - title: Response Menu Sequence
-        value: 
-        type: 0
-        typeString: CustomFieldType_Text
-      - title: Notes
-        value: 
-        type: 0
-        typeString: CustomFieldType_Text
-      - title: DontTranslate
-        value: False
-        type: 2
-        typeString: CustomFieldType_Boolean
-      - title: Guid
-        value: 
-        type: 0
-        typeString: CustomFieldType_Text
-      - title: Show Invalid
-        value: False
-        type: 2
-        typeString: CustomFieldType_Boolean
-      - title: Ghost
-        value: False
-        type: 2
-        typeString: CustomFieldType_Boolean
-      conversationID: 130
-      isRoot: 0
-      isGroup: 0
-      nodeColor: 
-      delaySimStatus: 0
-      falseConditionAction: Block
-      conditionPriority: 2
-      outgoingLinks:
-      - originConversationID: 130
-        originDialogueID: 31
-        destinationConversationID: 130
-        destinationDialogueID: 32
-        isConnector: 0
-        priority: 2
-      conditionsString: 
-      userScript: 
-      onExecute:
-        m_PersistentCalls:
-          m_Calls: []
-      canvasRect:
-        serializedVersion: 2
-        x: 247
-        y: 511
         width: 160
         height: 30
     - id: 32
@@ -77763,8 +77660,8 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 247
-        y: 561
+        x: 245.11319
+        y: 519.49054
         width: 160
         height: 30
     - id: 33
@@ -77870,8 +77767,8 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 247
-        y: 611
+        x: 247.94339
+        y: 586.4717
         width: 160
         height: 30
     - id: 34
@@ -77978,7 +77875,7 @@ MonoBehaviour:
       canvasRect:
         serializedVersion: 2
         x: 500
-        y: 314
+        y: 313.08255
         width: 160
         height: 30
     - id: 35
@@ -78298,8 +78195,8 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 500
-        y: 363
+        x: 500.91742
+        y: 362.08258
         width: 160
         height: 30
     - id: 38
@@ -78329,7 +78226,10 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: 
+        value: "TachieControl(Brow, Sister, Angry1);\n\nTachieControl(Eye, Sister,
+          Surprise);\n\nTachieControl(Mouth, Sister, Open1);\n\nTachieControl(Other,
+          Sister, SweatL1);\n\nTachieControl(Blush, Sister, BlushL2);\n\nAnim(Shy); 
+          \n\nDelay({{end}});"
         type: 0
         typeString: CustomFieldType_Text
       - title: zh-TW
@@ -78405,8 +78305,8 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 500
-        y: 414
+        x: 505.53052
+        y: 408.4435
         width: 160
         height: 30
     - id: 39
@@ -78436,7 +78336,13 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: 
+        value: 'TachieControl(Expression, Sister, Sad2);
+
+
+
+          Delay({{end}});
+
+'
         type: 0
         typeString: CustomFieldType_Text
       - title: zh-TW
@@ -78543,7 +78449,19 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: 
+        value: 'TachieControl(Mouth, Sister, Small3);
+
+
+          TachieControl(Eye,
+          Sister, Ajar_Lookaway);
+
+
+          TachieControl(Brow, Sister, Sad4);
+
+
+          Anim(Stop);
+
+          Delay({{end}});'
         type: 0
         typeString: CustomFieldType_Text
       - title: zh-TW
@@ -78619,8 +78537,8 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 500
-        y: 464
+        x: 500.94336
+        y: 462.16522
         width: 160
         height: 30
     - id: 41
@@ -78650,7 +78568,17 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: 
+        value: 'TachieControl(Brow, Sister, Angry1);
+
+
+          TachieControl(Eye,
+          Sister, Half);
+
+
+          TachieControl(Mouth, Sister, Open4);
+
+
+          Delay({{end}});'
         type: 0
         typeString: CustomFieldType_Text
       - title: zh-TW
@@ -78726,8 +78654,8 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 500
-        y: 514
+        x: 504.58716
+        y: 513.0826
         width: 160
         height: 30
     - id: 44
@@ -78864,7 +78792,8 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: 
+        value: "TachieControl(Expression, Sister, Angry5);\nTachieControl(Brow, Sister,
+          Angry4);\nTachieControl(Body, Sister, Angry1);\n\nAnim(Angry);  \nDelay({{end}});"
         type: 0
         typeString: CustomFieldType_Text
       - title: zh-TW
@@ -78941,7 +78870,7 @@ MonoBehaviour:
       canvasRect:
         serializedVersion: 2
         x: 499
-        y: 627
+        y: 629.75226
         width: 160
         height: 30
     - id: 47
@@ -78971,17 +78900,24 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: 'TachieControl(Eye,Sister,Close_Happy);
+        value: 'TachieControl(Eye,Sister,Close_Sad);
 
 
           TachieControl(Brow,
-          Sister, Normal1);
-
-          TachieControl(Mouth, Sister, Smile2);
+          Sister, Angry1);
 
 
-          StatPackage(TrustTalk,
-          sister);
+          TachieControl(Mouth, Sister, Sign);
+
+
+          TachieControl(Other,
+          Sister, None);
+
+
+          StatPackage(TrustTalk, sister);
+
+
+          Anim(Stop);
 
 
           Delay({{end}});'
@@ -79120,8 +79056,8 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 593.8824
-        y: 703
+        x: 597.55206
+        y: 704.8349
         width: 160
         height: 30
     - id: 48
@@ -79453,13 +79389,13 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 250
+        x: 250.94339
         y: 784
         width: 160
         height: 30
     entryGroups: []
-    canvasScrollPosition: {x: 0, y: 201}
-    canvasZoom: 1
+    canvasScrollPosition: {x: 0, y: 192.45279}
+    canvasZoom: 1.06
   - id: 46
     fields:
     - title: Title
