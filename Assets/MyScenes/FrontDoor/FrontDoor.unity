@@ -1035,18 +1035,6 @@ MonoBehaviour:
     - {fileID: 1787918386}
     ToDeactivate:
     - {fileID: 64838701}
-  - StateName: Stress100
-    Priority: 5
-    Logic: 0
-    Conditions:
-    - Definition: {fileID: 11400000, guid: e33e13f9cd9f37948a7ed70a3640e811, type: 2}
-      RequiredState: 1
-      Comparison: 0
-      TargetValue: 0
-    ToActivate:
-    - {fileID: 64838701}
-    ToDeactivate:
-    - {fileID: 654799045}
   - StateName: "\u555F\u52D5\u53EF\u4EE5\u51FA\u9580"
     Priority: 1
     Logic: 0
@@ -4021,7 +4009,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3537198183688809409, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5466847637706275784, guid: d73cc6d6668d4654db159a6905a3d647, type: 3}
       propertyPath: m_AnchoredPosition.y
@@ -5270,7 +5258,7 @@ MonoBehaviour:
         x: 385
         y: 417
         width: 143.25
-        height: 96
+        height: 112
       isBreakpoint: 0
       isSequence: 0
       hideUnused: 0
@@ -5320,18 +5308,30 @@ MonoBehaviour:
         linkConstraint: 0
         linkTarget: 0
         colorIndex: 0
+      - fsmEvent:
+          name: Stress100
+          isSystemEvent: 0
+          isGlobal: 0
+        toState: "\u5982\u679C\u5931\u65576\u6B21\uFF1AGoOut\u5931\u6548"
+        linkStyle: 0
+        linkConstraint: 0
+        linkTarget: 0
+        colorIndex: 6
       actionData:
         actionNames:
         - HutongGames.PlayMaker.Actions.IntCompare
+        - MyGame.Actions.CheckProgressFlag
         - HutongGames.PlayMaker.Actions.IntSwitch
         customNames:
         - 
         - 
-        actionEnabled: 0101
-        actionIsOpen: 0101
-        actionStartIndex: 0000000006000000
-        actionHashCodes: 09faa102092dca00
-        unityObjectParams: []
+        - 
+        actionEnabled: 010101
+        actionIsOpen: 010101
+        actionStartIndex: 00000000060000000b000000
+        actionHashCodes: 09faa102a1418002092dca00
+        unityObjectParams:
+        - {fileID: 11400000, guid: e33e13f9cd9f37948a7ed70a3640e811, type: 2}
         fsmGameObjectParams: []
         fsmOwnerDefaultParams: []
         animationCurveParams: []
@@ -5383,7 +5383,13 @@ MonoBehaviour:
           showInInspector: 0
           networkSync: 0
           value: 6
-        fsmBoolParams: []
+        fsmBoolParams:
+        - useVariable: 1
+          name: 
+          tooltip: 
+          showInInspector: 0
+          networkSync: 0
+          value: 0
         fsmVector2Params: []
         fsmVector3Params: []
         fsmColorParams: []
@@ -5393,23 +5399,30 @@ MonoBehaviour:
         - 
         - 
         - TooManyAddStress
+        - Stress100
+        - 
         - Failure2Times
         - Failure4Times
         - Failure6Times
-        byteData: 0000
+        byteData: 000000
         arrayParamSizes: 0300000003000000
         arrayParamTypes:
         - HutongGames.PlayMaker.FsmInt
         - HutongGames.PlayMaker.FsmEvent
         customTypeSizes: 
         customTypeNames: []
-        paramDataType: 100000001000000017000000170000001700000001000000100000000c0000001000000010000000100000000c00000017000000170000001700000001000000
+        paramDataType: 1000000010000000170000001700000017000000010000000500000017000000170000001100000001000000100000000c0000001000000010000000100000000c00000017000000170000001700000001000000
         paramName:
         - integer1
         - integer2
         - equal
         - lessThan
         - greaterThan
+        - everyFrame
+        - flagDef
+        - trueEvent
+        - falseEvent
+        - storeResult
         - everyFrame
         - intVariable
         - compareTo
@@ -5421,8 +5434,8 @@ MonoBehaviour:
         - 
         - 
         - everyFrame
-        paramDataPos: 00000000010000000000000001000000020000000000000002000000000000000300000004000000050000000100000003000000040000000500000001000000
-        paramByteDataSize: 00000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000000000000000000001000000
+        paramDataPos: 000000000100000000000000010000000200000000000000000000000300000004000000000000000100000002000000000000000300000004000000050000000100000005000000060000000700000002000000
+        paramByteDataSize: 000000000000000000000000000000000000000001000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000000000000000000001000000
     - name: "set add stress \u4E0A\u9650(10)"
       description: 
       colorIndex: 0
@@ -5890,6 +5903,9 @@ MonoBehaviour:
       isSystemEvent: 0
       isGlobal: 0
     - name: TRIGGER
+      isSystemEvent: 0
+      isGlobal: 0
+    - name: Stress100
       isSystemEvent: 0
       isGlobal: 0
     globalTransitions: []
