@@ -7,12 +7,12 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
     /// 語法：CGControl(動作, 參數1, 參數2, 參數3)
     /// 
     /// 支援動作：
-    /// 1. ShowBG:   CGControl(ShowBG, 背景名稱, Alpha[1], 時間[預設])
+    /// 1. ShowBG:   CGControl(ShowBG, 背景名稱, 時間[預設], Alpha[1])
     /// 2. HideBG:   CGControl(HideBG, 時間[預設])
-    /// 3. SwitchBG: CGControl(SwitchBG, 背景名稱, Alpha[1], 時間[預設])
-    /// 4. ShowCG:   CGControl(ShowCG, 插圖名稱, Alpha[1], 時間[預設])
+    /// 3. SwitchBG: CGControl(SwitchBG, 背景名稱, 時間[預設], Alpha[1])
+    /// 4. ShowCG:   CGControl(ShowCG, 插圖名稱, 時間[預設], Alpha[1])
     /// 5. HideCG:   CGControl(HideCG, 時間[預設])
-    /// 6. SwitchCG: CGControl(SwitchCG, 插圖名稱, Alpha[1], 時間[預設])
+    /// 6. SwitchCG: CGControl(SwitchCG, 插圖名稱, 時間[預設], Alpha[1])
     /// 7. ZoomIn:   CGControl(ZoomIn, 目標物件名稱, 縮放倍率[1.5], 時間[1.0])
     /// 8. ZoomOut:  CGControl(ZoomOut, 目標物件名稱, 縮放倍率[0.5], 時間[1.0])
     /// 9. ResetZoom:CGControl(ResetZoom, 時間[1.0])
@@ -38,8 +38,8 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
             if (IsAction(action, "ShowBG"))
             {
                 string bgName = GetParameter(1);
-                float alpha = GetParameterAsFloat(2, 1f);
-                float duration = GetParameterAsFloat(3, -1f);
+                float duration = GetParameterAsFloat(2, -1f);
+                float alpha = GetParameterAsFloat(3, 1f);
                 CGController.Instance.ShowBG(bgName, alpha, duration);
             }
             else if (IsAction(action, "HideBG"))
@@ -50,8 +50,8 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
             else if (IsAction(action, "SwitchBG"))
             {
                 string bgName = GetParameter(1);
-                float alpha = GetParameterAsFloat(2, 1f);
-                float duration = GetParameterAsFloat(3, -1f);
+                float duration = GetParameterAsFloat(2, -1f);
+                float alpha = GetParameterAsFloat(3, 1f);
                 CGController.Instance.SwitchBG(bgName, alpha, duration);
             }
 
@@ -59,8 +59,8 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
             else if (IsAction(action, "ShowCG"))
             {
                 string cgName = GetParameter(1);
-                float alpha = GetParameterAsFloat(2, 1f);
-                float duration = GetParameterAsFloat(3, -1f);
+                float duration = GetParameterAsFloat(2, -1f);
+                float alpha = GetParameterAsFloat(3, 1f);
                 CGController.Instance.ShowCG(cgName, alpha, duration);
             }
             else if (IsAction(action, "HideCG"))
@@ -71,8 +71,8 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
             else if (IsAction(action, "SwitchCG"))
             {
                 string cgName = GetParameter(1);
-                float alpha = GetParameterAsFloat(2, 1f);
-                float duration = GetParameterAsFloat(3, -1f);
+                float duration = GetParameterAsFloat(2, -1f);
+                float alpha = GetParameterAsFloat(3, 1f);
                 CGController.Instance.SwitchCG(cgName, alpha, duration);
             }
 

@@ -117,9 +117,29 @@ public class SceneMusicController : MonoBehaviour
     }
 
     /// <summary>
-    /// 根據當前 Flag 狀態評估應播放的場景音樂
+    /// 根據當前 Flag 狀態評估應播放的場景音樂(使用預設淡化時間)。
+    /// 無參版本供事件(OnPhaseChanged / OnDayPassed / OnFlagChanged)當 Action 訂閱。
     /// </summary>
     public void RefreshSceneMusic()
+    {
+        RefreshSceneMusic(1.0f);
+    }
+
+    /// <summary>
+    /// 根據當前 Flag 狀態評估應播放的場景音樂,並以指定淡化時間切換(交叉淡化)。
+    /// </summary>
+    /// <param name="fadeDuration">切換到目標音樂時的淡入/淡出時間(秒)</param>
+    public void RefreshSceneMusic(float fadeDuration)
+    {
+        RefreshSceneMusic(fadeDuration, MusicManager.FadeMode.Crossfade);
+    }
+
+    /// <summary>
+    /// 根據當前 Flag 狀態評估應播放的場景音樂,並以指定淡化時間與淡化方式切換。
+    /// </summary>
+    /// <param name="fadeDuration">切換到目標音樂時的淡化時間(秒)</param>
+    /// <param name="mode">淡化方式:交叉淡化或序列式(先淡出到靜音再淡入)</param>
+    public void RefreshSceneMusic(float fadeDuration, MusicManager.FadeMode mode)
     {
         if (!playSceneMusic) return;
 
@@ -163,11 +183,11 @@ public class SceneMusicController : MonoBehaviour
         {
             if (string.IsNullOrEmpty(_currentSceneBgmKey))
             {
-                MusicManager.Instance.StopMusic();
+                MusicManager.Instance.StopMusic(fadeDuration);
             }
             else
             {
-                MusicManager.Instance.PlayMusic(_currentSceneBgmKey);
+                MusicManager.Instance.PlayMusic(_currentSceneBgmKey, fadeDuration, mode);
             }
         }
     }
@@ -213,21 +233,23 @@ public class SceneMusicController : MonoBehaviour
     // 公開 API 供外部調用
     // ==========================================================
 
-    public void PlayOverride(string key, float fadeDuration = 1.0f)
+    public void PlayOverride(string key, float fadeDuration = 1.0f,
+        MusicManager.FadeMode mode = MusicManager.FadeMode.Crossfade)
     {
         _isOverridden = true;
         if (MusicManager.Instance != null)
         {
-            MusicManager.Instance.PlayMusic(key, fadeDuration);
+            MusicManager.Instance.PlayMusic(key, fadeDuration, mode);
         }
     }
 
-    public void StopOverride(bool resumeSceneMusic, float fadeDuration = 1.0f)
+    public void StopOverride(bool resumeSceneMusic, float fadeDuration = 1.0f,
+        MusicManager.FadeMode mode = MusicManager.FadeMode.Crossfade)
     {
         if (resumeSceneMusic)
         {
             _isOverridden = false;
-            RefreshSceneMusic();
+            RefreshSceneMusic(fadeDuration, mode);
         }
         else
         {

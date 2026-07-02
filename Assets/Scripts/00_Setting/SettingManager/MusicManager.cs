@@ -21,6 +21,36 @@ public class MusicManager : MonoBehaviour
 {
     public static MusicManager Instance { get; private set; }
 
+    /// <summary>
+    /// 音樂切換的淡化方式。
+    /// Crossfade:舊曲淡出同時新曲淡入(兩者交疊)。
+    /// Sequential:舊曲先完全淡出到靜音,再淡入新曲(不交疊,總時間約為 fadeDuration 的兩倍)。
+    /// </summary>
+    public enum FadeMode { Crossfade, Sequential }
+
+    /// <summary>
+    /// 把字串解析成 FadeMode。接受 q/queue/s/sequential → Sequential;
+    /// c/cross/crossfade → Crossfade;其餘或空字串回傳 fallback。
+    /// </summary>
+    public static FadeMode ParseFadeMode(string s, FadeMode fallback = FadeMode.Crossfade)
+    {
+        if (string.IsNullOrEmpty(s)) return fallback;
+        switch (s.Trim().ToLowerInvariant())
+        {
+            case "q":
+            case "queue":
+            case "s":
+            case "sequential":
+                return FadeMode.Sequential;
+            case "c":
+            case "cross":
+            case "crossfade":
+                return FadeMode.Crossfade;
+            default:
+                return fallback;
+        }
+    }
+
     [Tooltip("在這裡設定您所有的背景音樂")]
     [SerializeField] private List<MusicTrack> musicTracks;
 
@@ -75,8 +105,9 @@ public class MusicManager : MonoBehaviour
     /// 以交叉淡化效果播放指定的背景音樂
     /// </summary>
     /// <param name="key">音樂的 Key</param>
-    /// <param name="fadeDuration">淡化時間(秒)</param>
-    public void PlayMusic(string key, float fadeDuration = 1.0f)
+    /// <param name="fadeDuration">淡化時間(秒)。Sequential 模式下為「每一段(淡出/淡入)」各自的時間</param>
+    /// <param name="mode">淡化方式:交叉淡化(預設)或序列式(先淡出到靜音再淡入)</param>
+    public void PlayMusic(string key, float fadeDuration = 1.0f, FadeMode mode = FadeMode.Crossfade)
     {
         if (!_musicDictionary.TryGetValue(key, out AudioClip clipToPlay))
         {
@@ -97,8 +128,15 @@ public class MusicManager : MonoBehaviour
             StopCoroutine(_activeFadeCoroutine);
         }
 
-        // 開始新的淡化協程
-        _activeFadeCoroutine = StartCoroutine(CrossfadeCoroutine(clipToPlay, fadeDuration));
+        // 依模式開始對應的淡化協程
+        if (mode == FadeMode.Sequential)
+        {
+            _activeFadeCoroutine = StartCoroutine(SequentialFadeCoroutine(clipToPlay, fadeDuration));
+        }
+        else
+        {
+            _activeFadeCoroutine = StartCoroutine(CrossfadeCoroutine(clipToPlay, fadeDuration));
+        }
     }
 
     /// <summary>
@@ -167,6 +205,44 @@ public class MusicManager : MonoBehaviour
         newSource.volume = MasterVolume;
         oldSource.Stop();
         oldSource.clip = null; // 清除舊的 clip
+    }
+
+    // 序列式淡化的協程:先把舊曲完全淡出到靜音,再淡入新曲(兩段不交疊)
+    private IEnumerator SequentialFadeCoroutine(AudioClip newClip, float duration)
+    {
+        // --- 第一段:目前作用中的音樂淡出到靜音 ---
+        AudioSource oldSource = _isSource1Active ? _audioSource1 : _audioSource2;
+        float oldStartVolume = oldSource.volume;
+
+        float timer = 0f;
+        while (timer < duration)
+        {
+            timer += Time.deltaTime;
+            oldSource.volume = Mathf.Lerp(oldStartVolume, 0, timer / duration);
+            yield return null;
+        }
+        oldSource.volume = 0;
+        oldSource.Stop();
+        oldSource.clip = null;
+
+        // --- 第二段:切換 Source,換上新曲並從靜音淡入 ---
+        _isSource1Active = !_isSource1Active; // 切換作用中的 Source
+        AudioSource newSource = _isSource1Active ? _audioSource1 : _audioSource2;
+
+        newSource.clip = newClip;
+        newSource.volume = 0;
+        newSource.Play();
+
+        timer = 0f;
+        while (timer < duration)
+        {
+            timer += Time.deltaTime;
+            newSource.volume = Mathf.Lerp(0, MasterVolume, timer / duration);
+            yield return null;
+        }
+
+        // 確保最終狀態正確
+        newSource.volume = MasterVolume;
     }
 
     // 淡出至靜音的協程
