@@ -156,6 +156,7 @@ public class StoryManager : MonoBehaviour
     //    TE  = Energy [em3] 綠色-體力
     //    TG  = Gray   [em4] 灰色-已閱讀
     //    TP  = Pink   [em5] 粉色-色情
+    //    TB  = Blue   [em6] 藍色
     //
     //  後綴:
     //    (無) = key only
@@ -226,6 +227,12 @@ public class StoryManager : MonoBehaviour
         Lua.RegisterFunction("TPn", this, SymbolExtensions.GetMethodInfo(() => TPn(string.Empty, (double)0)));
         Lua.RegisterFunction("TPs", this, SymbolExtensions.GetMethodInfo(() => TPs(string.Empty, string.Empty)));
         Lua.RegisterFunction("TPsn", this, SymbolExtensions.GetMethodInfo(() => TPsn(string.Empty, string.Empty, (double)0)));
+
+        // --- 藍色 B [em6] ---
+        Lua.RegisterFunction("TB", this, SymbolExtensions.GetMethodInfo(() => TB(string.Empty)));
+        Lua.RegisterFunction("TBn", this, SymbolExtensions.GetMethodInfo(() => TBn(string.Empty, (double)0)));
+        Lua.RegisterFunction("TBs", this, SymbolExtensions.GetMethodInfo(() => TBs(string.Empty, string.Empty)));
+        Lua.RegisterFunction("TBsn", this, SymbolExtensions.GetMethodInfo(() => TBsn(string.Empty, string.Empty, (double)0)));
     }
 
     private void UnregisterAllLuaFunctions()
@@ -259,6 +266,12 @@ public class StoryManager : MonoBehaviour
         Lua.UnregisterFunction("TPn");
         Lua.UnregisterFunction("TPs");
         Lua.UnregisterFunction("TPsn");
+
+        // 藍 B
+        Lua.UnregisterFunction("TB");
+        Lua.UnregisterFunction("TBn");
+        Lua.UnregisterFunction("TBs");
+        Lua.UnregisterFunction("TBsn");
     }
 
     // ============================================================
@@ -358,6 +371,15 @@ public class StoryManager : MonoBehaviour
     public string TPn(string key, double value) => Wrap("em5", Tn(key, value));
     public string TPs(string key, string argKey) => Wrap("em5", Ts(key, argKey));
     public string TPsn(string key, string argKey, double value) => Wrap("em5", Tsn(key, argKey, value));
+
+    // ============================================================
+    //  藍色 B [em6]
+    // ============================================================
+
+    public string TB(string key) => Wrap("em6", T(key));
+    public string TBn(string key, double value) => Wrap("em6", Tn(key, value));
+    public string TBs(string key, string argKey) => Wrap("em6", Ts(key, argKey));
+    public string TBsn(string key, string argKey, double value) => Wrap("em6", Tsn(key, argKey, value));
 
     // ============================================================
     //  對話結束 → 隊列處理

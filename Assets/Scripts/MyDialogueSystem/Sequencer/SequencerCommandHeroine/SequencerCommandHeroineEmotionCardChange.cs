@@ -82,6 +82,7 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
 
             switch (raw)
             {
+                case "普通": return HeroineEmotionCardType.Normal;
                 case "生氣": return HeroineEmotionCardType.Angry;
                 case "害羞": return HeroineEmotionCardType.Shy;
                 case "擔心": return HeroineEmotionCardType.Worried;

@@ -151,6 +151,7 @@ public class HeroineStatusModel
         nextEmotionCardOrder = 0;
 
         HeroineStat targetStat = stat ?? sourceStat;
+        AddInitialCards(targetStat, HeroineEmotionCardType.Normal);
         AddInitialCards(targetStat, HeroineEmotionCardType.Angry);
         AddInitialCards(targetStat, HeroineEmotionCardType.Shy);
         AddInitialCards(targetStat, HeroineEmotionCardType.Worried);
@@ -172,6 +173,7 @@ public class HeroineStatusModel
     {
         switch (type)
         {
+            case HeroineEmotionCardType.Normal: return 0;
             case HeroineEmotionCardType.Angry: return 8;
             case HeroineEmotionCardType.Shy: return 2;
             default: return 0;

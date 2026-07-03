@@ -79,6 +79,9 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
             DialogueLua.SetVariable(SharedVariableName, percent);
             DialogueLua.SetVariable(SharedVariableName + ResultVariableSuffix, isSuccess);
 
+            Debug.Log($"[ProviderTrigger] actionId「{actionId}」成功率 {percent}% → {(isSuccess ? "成功" : "失敗")}。" +
+                $"已寫入 Variable[\"{variableName}\"]={percent}、Variable[\"{variableName}{ResultVariableSuffix}\"]={isSuccess}。");
+
             Stop();
         }
     }

@@ -118,7 +118,6 @@ public class HeroineStatusDebugBridge : MonoBehaviour
 
         var lines = Enum.GetValues(typeof(HeroineEmotionCardType))
             .Cast<HeroineEmotionCardType>()
-            .Where(t => t != HeroineEmotionCardType.Normal)
             .Select(t => $"  {t,-13}: {m.GetCardCount(t)}");
 
         Debug.Log(

@@ -9,7 +9,7 @@ using UnityEngine;
 /// </summary>
 public enum EmotionResultMode
 {
-    /// <summary>結果 = 主導情緒（CurrentEmotion，獨立儲存值）。</summary>
+    /// <summary>結果 = 主導情緒（CurrentEmotion，獨立儲存值）。可能為 Normal，抽選臉由 Catalog 的 Normal Entry 提供。</summary>
     Current,
 
     /// <summary>結果 = 大宗情緒（DominantEmotion，卡池最多者）。</summary>
@@ -200,20 +200,6 @@ public class EmotionCardDrawMachine : MonoBehaviour
     // Result resolution
     // ─────────────────────────────────────────────────────────────
 
-    /// <summary>
-    /// 取得有效的主導情緒。若 CurrentEmotion 為 Normal，改用 DominantEmotion。
-    /// </summary>
-    private HeroineEmotionCardType GetEffectiveCurrentEmotion(HeroineStatusModel heroine)
-    {
-        if (heroine == null) return HeroineEmotionCardType.Angry;
-
-        var current = heroine.CurrentEmotion;
-        if (current == HeroineEmotionCardType.Normal)
-            return heroine.GetDominantEmotion();
-
-        return current;
-    }
-
     private EmotionDrawResult ResolveResult(HeroineStatusModel heroine, string heroineID,
         EmotionResultMode resultMode, EmotionShowMode showMode, HeroineEmotionCardType specifiedEmotion)
     {
@@ -227,8 +213,10 @@ public class EmotionCardDrawMachine : MonoBehaviour
         switch (resultMode)
         {
             case EmotionResultMode.Current:
-                // ★ Normal 透通：CurrentEmotion 為 Normal 時改用 DominantEmotion
-                result.ResultEmotion = GetEffectiveCurrentEmotion(heroine);
+                // ★ Normal 誠實回傳：當下心情是 Normal 就回 Normal，
+                //   抽選臉由 Catalog 的 Normal Entry 提供（未配置時 View 只印 Warning、表情不變）。
+                //   對話端請注意 Lua 變數可能拿到 "Normal"。
+                result.ResultEmotion = heroine != null ? heroine.CurrentEmotion : HeroineEmotionCardType.Angry;
                 break;
 
             case EmotionResultMode.Bulk:
@@ -259,7 +247,7 @@ public class EmotionCardDrawMachine : MonoBehaviour
                 break;
 
             default:
-                result.ResultEmotion = GetEffectiveCurrentEmotion(heroine);
+                result.ResultEmotion = heroine != null ? heroine.CurrentEmotion : HeroineEmotionCardType.Angry;
                 break;
         }
 
@@ -273,7 +261,7 @@ public class EmotionCardDrawMachine : MonoBehaviour
     }
 
     /// <summary>
-    /// 從卡池隨機抽一張。防禦性過濾掉 Normal（理論上卡池不該有）。
+    /// 從卡池隨機抽一張（Normal 卡也是合法結果）。
     /// </summary>
     private HeroineEmotionCardType GetRandomFromDeck(HeroineStatusModel heroine)
     {
@@ -282,45 +270,33 @@ public class EmotionCardDrawMachine : MonoBehaviour
         IReadOnlyList<HeroineEmotionCardSaveData> deck = heroine.EmotionDeck;
         if (deck == null || deck.Count == 0) return heroine.GetDominantEmotion();
 
-        // ★ 防禦性過濾：排除 Normal 卡
-        var validCards = new List<HeroineEmotionCardSaveData>();
-        foreach (var card in deck)
-        {
-            if (card.Type != HeroineEmotionCardType.Normal)
-                validCards.Add(card);
-        }
-
-        // 如果過濾後為空（整副牌都是 Normal，不該發生），退回 DominantEmotion
-        if (validCards.Count == 0) return heroine.GetDominantEmotion();
-
-        int index = UnityEngine.Random.Range(0, validCards.Count);
-        return validCards[index].Type;
+        int index = UnityEngine.Random.Range(0, deck.Count);
+        return deck[index].Type;
     }
 
     /// <summary>
-    /// 情緒鄰近抽選：依據有效主導情緒取得可抽到的情緒清單，
-    /// 再從卡池中只抽這些情緒。若卡池中沒有任何鄰近情緒的卡，退回有效主導情緒。
+    /// 情緒鄰近抽選：依據主導情緒（CurrentEmotion）取得可抽到的情緒清單，
+    /// 再從卡池中只抽這些情緒。若卡池中沒有任何鄰近情緒的卡，退回主導情緒。
     /// </summary>
     private HeroineEmotionCardType GetAdjacentRandomFromDeck(HeroineStatusModel heroine)
     {
         if (heroine == null) return HeroineEmotionCardType.Angry;
 
-        // ★ Normal 透通：用有效主導情緒作為鄰近中心點
-        var effectiveCurrent = GetEffectiveCurrentEmotion(heroine);
-        var allowed = GetAdjacentEmotions(effectiveCurrent);
+        var current = heroine.CurrentEmotion;
+        var allowed = GetAdjacentEmotions(current);
 
         IReadOnlyList<HeroineEmotionCardSaveData> deck = heroine.EmotionDeck;
-        if (deck == null || deck.Count == 0) return effectiveCurrent;
+        if (deck == null || deck.Count == 0) return current;
 
-        // 篩選卡池中屬於鄰近情緒的卡（同時排除 Normal）
+        // 篩選卡池中屬於鄰近情緒的卡
         var candidates = new List<HeroineEmotionCardSaveData>();
         foreach (var card in deck)
         {
-            if (card.Type != HeroineEmotionCardType.Normal && allowed.Contains(card.Type))
+            if (allowed.Contains(card.Type))
                 candidates.Add(card);
         }
 
-        if (candidates.Count == 0) return effectiveCurrent;
+        if (candidates.Count == 0) return current;
 
         int index = UnityEngine.Random.Range(0, candidates.Count);
         return candidates[index].Type;
@@ -328,12 +304,25 @@ public class EmotionCardDrawMachine : MonoBehaviour
 
     /// <summary>
     /// 取得指定主導情緒的鄰近情緒清單（含自身）。
-    /// Normal 不應該出現在這裡（呼叫前應已透通），但 default 分支會安全處理。
+    /// Normal 採「只出不進」：從 Normal 可走向任何情緒（含留在 Normal），
+    /// 但其他情緒的鄰近清單不含 Normal。
     /// </summary>
     private static HashSet<HeroineEmotionCardType> GetAdjacentEmotions(HeroineEmotionCardType current)
     {
         switch (current)
         {
+            case HeroineEmotionCardType.Normal:
+                return new HashSet<HeroineEmotionCardType>
+                {
+                    HeroineEmotionCardType.Normal,
+                    HeroineEmotionCardType.Angry,
+                    HeroineEmotionCardType.Shy,
+                    HeroineEmotionCardType.Worried,
+                    HeroineEmotionCardType.Maternal,
+                    HeroineEmotionCardType.Relaxed,
+                    HeroineEmotionCardType.Disappointed
+                };
+
             case HeroineEmotionCardType.Angry:
                 return new HashSet<HeroineEmotionCardType>
                 {
@@ -385,7 +374,7 @@ public class EmotionCardDrawMachine : MonoBehaviour
                 };
 
             default:
-                // Normal 不該走到這裡，但安全起見回傳空集合避免抽到自身
+                // 未知情緒：回傳空集合，讓呼叫端退回主導情緒
                 return new HashSet<HeroineEmotionCardType>();
         }
     }

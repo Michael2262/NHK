@@ -244,4 +244,20 @@ public abstract class ActionChanceProvider : MonoBehaviour
         float chance = CalculateSuccessChance();
         Debug.Log(lastDebugSummary + $" ({chance})", this);
     }
+
+    /// <summary>
+    /// 右鍵選單：計算目前成功率並實際擲骰一次，用 Log 告知結果。
+    /// 只做試算，不會寫入 targetTrigger、不觸發任何行動。
+    /// （chanceDisplay / Dialogue 變數仍會隨 CalculateSuccessChance 刷新。）
+    /// </summary>
+    [ContextMenu("試算一次")]
+    private void DebugSimulateOnce()
+    {
+        float chance = CalculateSuccessChance();
+        float roll = Random.value;
+        bool isSuccess = roll <= chance;
+
+        Debug.Log($"[試算] {GetType().Name}: 成功率 {Mathf.RoundToInt(chance * 100)}%，" +
+                  $"擲骰 {roll:F3} → {(isSuccess ? "成功" : "失敗")}\n{lastDebugSummary}", this);
+    }
 }

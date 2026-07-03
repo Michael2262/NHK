@@ -91,10 +91,12 @@ public static class HeroineActionHelper
         FsmEvent maternalEvent,
         FsmEvent relaxedEvent,
         FsmEvent disappointedEvent,
+        FsmEvent normalEvent,
         FsmEvent defaultEvent)
     {
         switch (type)
         {
+            case HeroineEmotionCardType.Normal: return normalEvent ?? defaultEvent;
             case HeroineEmotionCardType.Angry: return angryEvent ?? defaultEvent;
             case HeroineEmotionCardType.Shy: return shyEvent ?? defaultEvent;
             case HeroineEmotionCardType.Worried: return worriedEvent ?? defaultEvent;
@@ -366,6 +368,8 @@ public class CheckCurrentEmotion : FsmStateAction
     public FsmEvent maternalEvent;
     public FsmEvent relaxedEvent;
     public FsmEvent disappointedEvent;
+    [Tooltip("Normal（普通）情緒的路線事件。未設定時走 defaultEvent。")]
+    public FsmEvent normalEvent;
     public FsmEvent defaultEvent;
     public FsmEvent failedEvent;
 
@@ -380,6 +384,7 @@ public class CheckCurrentEmotion : FsmStateAction
         maternalEvent = null;
         relaxedEvent = null;
         disappointedEvent = null;
+        normalEvent = null;
         defaultEvent = null;
         failedEvent = null;
     }
@@ -404,7 +409,7 @@ public class CheckCurrentEmotion : FsmStateAction
             current,
             angryEvent, shyEvent, worriedEvent,
             maternalEvent, relaxedEvent, disappointedEvent,
-            defaultEvent));
+            normalEvent, defaultEvent));
         Finish();
     }
 }
@@ -463,6 +468,8 @@ public class CheckDominantEmotion : FsmStateAction
     public FsmEvent maternalEvent;
     public FsmEvent relaxedEvent;
     public FsmEvent disappointedEvent;
+    [Tooltip("Normal（普通）情緒的路線事件。未設定時走 defaultEvent。")]
+    public FsmEvent normalEvent;
     public FsmEvent defaultEvent;
     public FsmEvent failedEvent;
 
@@ -477,6 +484,7 @@ public class CheckDominantEmotion : FsmStateAction
         maternalEvent = null;
         relaxedEvent = null;
         disappointedEvent = null;
+        normalEvent = null;
         defaultEvent = null;
         failedEvent = null;
     }
@@ -501,7 +509,7 @@ public class CheckDominantEmotion : FsmStateAction
             dominant,
             angryEvent, shyEvent, worriedEvent,
             maternalEvent, relaxedEvent, disappointedEvent,
-            defaultEvent));
+            normalEvent, defaultEvent));
         Finish();
     }
 }
@@ -542,6 +550,8 @@ public class HeroineEmotionDraw : FsmStateAction
     public FsmEvent maternalEvent;
     public FsmEvent relaxedEvent;
     public FsmEvent disappointedEvent;
+    [Tooltip("Normal（普通）情緒的路線事件。未設定時走 defaultEvent。")]
+    public FsmEvent normalEvent;
     public FsmEvent defaultEvent;
     public FsmEvent failedEvent;
 
@@ -562,6 +572,7 @@ public class HeroineEmotionDraw : FsmStateAction
         maternalEvent = null;
         relaxedEvent = null;
         disappointedEvent = null;
+        normalEvent = null;
         defaultEvent = null;
         failedEvent = null;
     }
@@ -632,7 +643,7 @@ public class HeroineEmotionDraw : FsmStateAction
             result.ResultEmotion,
             angryEvent, shyEvent, worriedEvent,
             maternalEvent, relaxedEvent, disappointedEvent,
-            defaultEvent));
+            normalEvent, defaultEvent));
     }
 
     private void SendAndFinish(FsmEvent evt)

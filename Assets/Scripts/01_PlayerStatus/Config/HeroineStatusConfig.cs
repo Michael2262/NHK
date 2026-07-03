@@ -29,6 +29,7 @@ public class HeroineStat
     [Tooltip("若勾選，這位女主角使用下方自訂初始情緒卡數量；否則使用全域初始卡池。")]
     public bool UseCustomInitialEmotionDeck = false;
 
+    [Min(0)] public int InitialNormalCards = 0;
     [Min(0)] public int InitialAngryCards = 8;
     [Min(0)] public int InitialShyCards = 2;
     [Min(0)] public int InitialWorriedCards = 0;
@@ -45,6 +46,9 @@ public class HeroineStatusConfig : ScriptableObject
 
     [Header("NHK 情緒卡池設定")]
     [Min(1)] public int EmotionDeckMaxCount = 10;
+
+    [Tooltip("全域初始：普通卡數。")]
+    [Min(0)] public int InitialNormalCards = 0;
 
     [Tooltip("全域初始：生氣卡數。")]
     [Min(0)] public int InitialAngryCards = 8;
@@ -102,6 +106,7 @@ public class HeroineStatusConfig : ScriptableObject
         bool custom = stat != null && stat.UseCustomInitialEmotionDeck;
         switch (type)
         {
+            case HeroineEmotionCardType.Normal: return custom ? stat.InitialNormalCards : InitialNormalCards;
             case HeroineEmotionCardType.Angry: return custom ? stat.InitialAngryCards : InitialAngryCards;
             case HeroineEmotionCardType.Shy: return custom ? stat.InitialShyCards : InitialShyCards;
             case HeroineEmotionCardType.Worried: return custom ? stat.InitialWorriedCards : InitialWorriedCards;
