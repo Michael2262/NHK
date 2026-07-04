@@ -27,6 +27,7 @@ public class TimeLuaBridge : MonoBehaviour
 
     private void RegisterLuaFunctions()
     {
+        Lua.RegisterFunction("GetDay", this, typeof(TimeLuaBridge).GetMethod("GetDay"));
         Lua.RegisterFunction("DayOfWeek", this, typeof(TimeLuaBridge).GetMethod("GetDayOfWeek"));
         Lua.RegisterFunction("IsDayOfWeek", this, typeof(TimeLuaBridge).GetMethod("IsDayOfWeek"));
         Lua.RegisterFunction("IsWeekend", this, typeof(TimeLuaBridge).GetMethod("IsWeekend"));
@@ -37,6 +38,7 @@ public class TimeLuaBridge : MonoBehaviour
 
     private void UnregisterLuaFunctions()
     {
+        Lua.UnregisterFunction("GetDay");
         Lua.UnregisterFunction("DayOfWeek");
         Lua.UnregisterFunction("IsDayOfWeek");
         Lua.UnregisterFunction("IsWeekend");
@@ -46,8 +48,22 @@ public class TimeLuaBridge : MonoBehaviour
     }
 
     // ==========================================================
-    // 星期相關 Lua 函數
+    // 日期 / 星期相關 Lua 函數
     // ==========================================================
+
+    /// <summary>
+    /// 取得目前是遊戲第幾天（TimeSystemModel.DayIndex）。
+    /// Lua 用法: GetDay() >= 5  → 已到第 5 天以後
+    /// </summary>
+    public double GetDay()
+    {
+        if (GameStatusService.Instance == null)
+        {
+            Debug.LogWarning("TimeLuaBridge: GameStatusService not available.");
+            return 1;
+        }
+        return GameStatusService.Instance.Time.DayIndex;
+    }
 
     /// <summary>
     /// 取得今天星期幾的數字（對齊 System.DayOfWeek：0=週日, 1=週一 … 6=週六）。

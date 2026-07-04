@@ -487,9 +487,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2a852015ed21d2642859a85240362c08, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ActionOverlayTrigger
+  actionId: 
   duration: 2
   actionSprite: {fileID: 0}
   localizationKey: 
+  overlayPosition: 0
   enableOutcomeResult: 0
   successChance: 0.5
   chanceProvider: {fileID: 0}
@@ -539,6 +541,7 @@ MonoBehaviour:
   manualDeductions: []
   resourceGains: []
   deductTime: 0
+  timeUnit: 0
   manualTimeAmount: 0
   targetHeroineID: 
   heroineResourceChanges: []
@@ -567,7 +570,6 @@ GameObject:
   - component: {fileID: 2865881838498405525}
   - component: {fileID: 6374196943994827700}
   - component: {fileID: 4241055633935974769}
-  - component: {fileID: 4181213242230060316}
   - component: {fileID: 4508186669953064930}
   m_Layer: 0
   m_Name: Hub_Button_ActionName(WorldSpace)
@@ -741,31 +743,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::StaminaPreviewHoverTrigger
   useRouter: 1
   previewDelta: 0
---- !u!114 &4181213242230060316
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2768162558774822466}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0666e5339c797d741b69d7ca3bb21a19, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::RequirementBlocker
-  Enabled: 1
-  RuleAsset: {fileID: 0}
-  Mode: 0
-  Conditions:
-  - Type: 2
-    HeroineID: sister
-    RequiredLevel: 0
-    FlagID: 
-  BlockerObject: {fileID: 609052589307423285}
-  LevelText: {fileID: 7827195190488223944}
-  TypeText: {fileID: 8945844953392057260}
-  LevelFormat: LV.{0}
-  AutoRefresh: 0
 --- !u!114 &4508186669953064930
 MonoBehaviour:
   m_ObjectHideFlags: 0

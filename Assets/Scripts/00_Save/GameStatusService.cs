@@ -281,6 +281,8 @@ public class GameStatusService : MonoBehaviour
         };
         TimeManager.OnDayPassed += () =>
         {
+            if (_suppressDaySettlement) return;
+
             ValueTriggerManager.OnValueChanged("Phase", Time.CurrentPhaseIndex);
             //每次換Day 時，對所有女主興奮度衰減
             foreach (var heroine in Heroines.Values)
@@ -318,7 +320,13 @@ public class GameStatusService : MonoBehaviour
         Inventory.NewGame();
         ShopStatus.NewGame();
         PendingDelivery.NewGame();
+
+        // Time.NewGame() → LoadInitialState() 會發一次 OnDayPassed 當「初始刷新」，
+        // 但開新遊戲不是換日，不應執行每日結算（依賴+5、房間髒亂+1、女主角衰減等），
+        // 故在此期間抑制結算，只讓一般訂閱者收到刷新。
+        _suppressDaySettlement = true;
         Time.NewGame();
+        _suppressDaySettlement = false;
         StatusEffectModel.NewGame();
         ProgressFlags.NewGame();
         ApplyAllDefaults();
@@ -455,11 +463,19 @@ public class GameStatusService : MonoBehaviour
     // ==========================================================
 
     /// <summary>
+    /// StartNewGame 期間為 true：Time.NewGame() 的初始刷新會發 OnDayPassed，
+    /// 但那不是真正的換日，每日結算（HandleDayPassed、女主角每日衰減）須跳過。
+    /// </summary>
+    private bool _suppressDaySettlement;
+
+    /// <summary>
     /// 當時間系統通知新的一天開始時，協調所有 Model 執行重置。
     /// </summary>
     // 在 GameStatusService.cs 內
     private void HandleDayPassed()
     {
+        if (_suppressDaySettlement) return;
+
         Debug.Log($"GameStatusService: Starting NextDay Reset for Day {Time.DayIndex}.");
 
         // 1. 清除所有每日標記 (UntilNextDay)

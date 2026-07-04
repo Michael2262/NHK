@@ -58,6 +58,9 @@ public class ProtagonistStatusModel
     public const int DEPENDENCY_MIN_VALUE = 0;
     public const int DEPENDENCY_MAX_VALUE = 150;
 
+    /// <summary>每日依賴度自動上升量（換日時套用，參照 HeroineStatusModel.LibidoDailyDecay 的模式）。</summary>
+    public const int DEPENDENCY_DAILY_GAIN = 5;
+
     // ───── 分級門檻（各數值可獨立調整，預設一致） ─────
     // Stress
     public const int STRESS_MEDIUM_THRESHOLD = 50;
@@ -90,7 +93,7 @@ public class ProtagonistStatusModel
     /// <summary>社會性：0～100。越高代表越能面對外界與正常社交。</summary>
     public int Sociality { get; private set; } = INITIAL_SOCIALITY;
 
-    /// <summary>依賴度：0～150。主角對妹妹的心理與生活依賴（分級門檻仍維持 50/80/100）。</summary>
+    /// <summary>依賴度：0～150。主角對妹妹的心理與生活依賴（分級門檻仍維持 50/80/100）。每日自動上升 DEPENDENCY_DAILY_GAIN。</summary>
     public int Dependency { get; private set; } = INITIAL_DEPENDENCY;
 
     /// <summary>保留資源：金錢。</summary>
@@ -194,6 +197,7 @@ public class ProtagonistStatusModel
     public void OnDayEnd()
     {
         AddRoomMessLevel(1);
+        ApplyDependencyDailyGain();
     }
 
     public void NextDay()
@@ -322,6 +326,12 @@ public class ProtagonistStatusModel
     public void SetDependency(int value)
     {
         AddDependency(ClampDependency(value) - Dependency);
+    }
+
+    /// <summary>每日依賴度上升。由每日流程 (OnDayEnd) 呼叫。</summary>
+    public void ApplyDependencyDailyGain()
+    {
+        AddDependency(DEPENDENCY_DAILY_GAIN);
     }
 
     // ───── Money / SkillPoints ─────

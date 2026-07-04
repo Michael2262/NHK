@@ -33,7 +33,6 @@ public class ProtagonistLuaBridge : MonoBehaviour
         Lua.RegisterFunction("GetDependency", this, SymbolExtensions.GetMethodInfo(() => GetDependency()));
         Lua.RegisterFunction("GetMoney", this, SymbolExtensions.GetMethodInfo(() => GetMoney()));
         Lua.RegisterFunction("GetSkillPoints", this, SymbolExtensions.GetMethodInfo(() => GetSkillPoints()));
-        Lua.RegisterFunction("GetDay", this, SymbolExtensions.GetMethodInfo(() => GetDay()));
 
         // ── 分級查詢（回傳 "Low" / "Medium" / "High" / "Extreme"） ──
         Lua.RegisterFunction("GetStressGrade", this, SymbolExtensions.GetMethodInfo(() => GetStressGrade()));
@@ -54,15 +53,6 @@ public class ProtagonistLuaBridge : MonoBehaviour
 
         // ── ShootTimes ──
         Lua.RegisterFunction("GetShootTimes", this, SymbolExtensions.GetMethodInfo(() => GetShootTimes()));
-
-        // ── Legacy aliases ──
-        Lua.RegisterFunction("GetStamina", this, SymbolExtensions.GetMethodInfo(() => GetLifePower()));
-        Lua.RegisterFunction("GetSocialFear", this, SymbolExtensions.GetMethodInfo(() => GetSocialFearCompat()));
-        Lua.RegisterFunction("IsSocialFearHigh", this, SymbolExtensions.GetMethodInfo(() => IsSocialFearHighCompat()));
-        // 舊名相容
-        Lua.RegisterFunction("IsStressCritical", this, SymbolExtensions.GetMethodInfo(() => IsStressHigh()));
-        Lua.RegisterFunction("IsStressCollapsed", this, SymbolExtensions.GetMethodInfo(() => IsStressExtreme()));
-        Lua.RegisterFunction("IsLifeHealthy", this, SymbolExtensions.GetMethodInfo(() => IsLifeHigh()));
     }
 
     void OnDisable()
@@ -73,7 +63,6 @@ public class ProtagonistLuaBridge : MonoBehaviour
         Lua.UnregisterFunction("GetDependency");
         Lua.UnregisterFunction("GetMoney");
         Lua.UnregisterFunction("GetSkillPoints");
-        Lua.UnregisterFunction("GetDay");
 
         Lua.UnregisterFunction("GetStressGrade");
         Lua.UnregisterFunction("GetLifeGrade");
@@ -91,13 +80,6 @@ public class ProtagonistLuaBridge : MonoBehaviour
         Lua.UnregisterFunction("IsOverShoot");
 
         Lua.UnregisterFunction("GetShootTimes");
-
-        Lua.UnregisterFunction("GetStamina");
-        Lua.UnregisterFunction("GetSocialFear");
-        Lua.UnregisterFunction("IsSocialFearHigh");
-        Lua.UnregisterFunction("IsStressCritical");
-        Lua.UnregisterFunction("IsStressCollapsed");
-        Lua.UnregisterFunction("IsLifeHealthy");
     }
 
     // ───── 內部取得 Model ─────
@@ -124,7 +106,6 @@ public class ProtagonistLuaBridge : MonoBehaviour
     public double GetDependency() => GetModel()?.Dependency ?? 0;
     public double GetMoney() => GetModel()?.Money ?? 0;
     public double GetSkillPoints() => GetModel()?.SkillPoints ?? 0;
-    public double GetDay() => GameStatusService.Instance?.Time?.DayIndex ?? 1;
 
     // ───── 分級查詢 ─────
     public string GetStressGrade() => GetModel()?.GetStressGrade().ToString() ?? "Low";
@@ -145,8 +126,4 @@ public class ProtagonistLuaBridge : MonoBehaviour
 
     // ───── ShootTimes ─────
     public double GetShootTimes() => GetModel()?.CheckShootTimes() ?? 0;
-
-    // ───── Legacy 相容 ─────
-    public double GetSocialFearCompat() => 100 - (GetModel()?.Sociality ?? 0);
-    public bool IsSocialFearHighCompat() => GetModel()?.IsSocialityLow() ?? false;
 }

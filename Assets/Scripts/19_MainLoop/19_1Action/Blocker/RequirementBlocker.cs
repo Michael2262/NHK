@@ -42,7 +42,7 @@ public class RequirementBlocker : MonoBehaviour
     [Tooltip("顯示所需 LV 的 TextMeshPro（等級類條件才會寫入）")]
     public TMP_Text LevelText;
 
-    [Tooltip("顯示條件類型名稱的 TextMeshPro（好感度/興奮度/開發度；Flag 類型不變動）")]
+    [Tooltip("顯示條件類型名稱的 TextMeshPro（Libido / Trust / Stress … 等數值名稱；Flag 類型不變動）")]
     public TMP_Text TypeText;
 
     [Header("顯示設定")]
@@ -178,7 +178,7 @@ public class RequirementBlocker : MonoBehaviour
 
         if (passed || firstFailed == null) return;
 
-        if (firstFailed.IsLevelType && LevelText != null)
+        if (firstFailed.IsStatType && LevelText != null)
         {
             LevelText.text = string.Format(LevelFormat, firstFailed.RequiredLevel);
         }
@@ -231,7 +231,7 @@ public class RequirementBlocker : MonoBehaviour
                 if (c == null) continue;
                 if (!c.IsMet())
                 {
-                    if (firstFailed == null || (!firstFailed.IsLevelType && c.IsLevelType))
+                    if (firstFailed == null || (!firstFailed.IsStatType && c.IsStatType))
                         firstFailed = c;
                 }
             }
@@ -244,7 +244,7 @@ public class RequirementBlocker : MonoBehaviour
             {
                 if (c == null) continue;
                 if (c.IsMet()) return true;
-                if (anyFail == null || (!anyFail.IsLevelType && c.IsLevelType))
+                if (anyFail == null || (!anyFail.IsStatType && c.IsStatType))
                     anyFail = c;
             }
             firstFailed = anyFail;
@@ -283,17 +283,32 @@ public class RequirementBlocker : MonoBehaviour
                 svc.Protagonist.OnRoomMessLevelChanged += OnAnyChanged;
             }
         }
-        else if (svc.Heroines != null && Conditions != null)
+        else if (Conditions != null)
         {
-            // Conditions 路徑：維持舊訂閱邏輯
+            // Conditions 路徑：依條件的數值來源訂閱對應事件
+            bool protagonistSubscribed = false;
             foreach (var c in Conditions)
             {
-                if (c == null || !c.IsLevelType || string.IsNullOrEmpty(c.HeroineID)) continue;
-                if (svc.Heroines.TryGetValue(c.HeroineID, out var h) && h != null)
+                if (c == null || !c.IsStatType) continue;
+
+                if (c.IsHeroineStat)
                 {
-                    h.OnAffinityChanged += OnAnyChanged;
-                    h.OnExcitementLevelChanged += OnAnyChanged;
-                    h.OnLewdnessChanged += OnAnyChanged;
+                    if (svc.Heroines == null || string.IsNullOrEmpty(c.HeroineID)) continue;
+                    if (svc.Heroines.TryGetValue(c.HeroineID, out var h) && h != null)
+                    {
+                        h.OnLibidoChanged += OnAnyChanged;
+                        h.OnTrustChanged += OnAnyChanged;
+                        h.OnHCountChanged += OnAnyChanged;
+                    }
+                }
+                else if (!protagonistSubscribed && svc.Protagonist != null)
+                {
+                    svc.Protagonist.OnStressChanged += OnAnyChanged;
+                    svc.Protagonist.OnLifePowerChanged += OnAnyChanged;
+                    svc.Protagonist.OnSocialityChanged += OnAnyChanged;
+                    svc.Protagonist.OnDependencyChanged += OnAnyChanged;
+                    svc.Protagonist.OnRoomMessLevelChanged += OnAnyChanged;
+                    protagonistSubscribed = true;
                 }
             }
         }
@@ -330,16 +345,31 @@ public class RequirementBlocker : MonoBehaviour
                 svc.Protagonist.OnRoomMessLevelChanged -= OnAnyChanged;
             }
         }
-        else if (svc.Heroines != null && Conditions != null)
+        else if (Conditions != null)
         {
+            bool protagonistUnsubscribed = false;
             foreach (var c in Conditions)
             {
-                if (c == null || !c.IsLevelType || string.IsNullOrEmpty(c.HeroineID)) continue;
-                if (svc.Heroines.TryGetValue(c.HeroineID, out var h) && h != null)
+                if (c == null || !c.IsStatType) continue;
+
+                if (c.IsHeroineStat)
                 {
-                    h.OnAffinityChanged -= OnAnyChanged;
-                    h.OnExcitementLevelChanged -= OnAnyChanged;
-                    h.OnLewdnessChanged -= OnAnyChanged;
+                    if (svc.Heroines == null || string.IsNullOrEmpty(c.HeroineID)) continue;
+                    if (svc.Heroines.TryGetValue(c.HeroineID, out var h) && h != null)
+                    {
+                        h.OnLibidoChanged -= OnAnyChanged;
+                        h.OnTrustChanged -= OnAnyChanged;
+                        h.OnHCountChanged -= OnAnyChanged;
+                    }
+                }
+                else if (!protagonistUnsubscribed && svc.Protagonist != null)
+                {
+                    svc.Protagonist.OnStressChanged -= OnAnyChanged;
+                    svc.Protagonist.OnLifePowerChanged -= OnAnyChanged;
+                    svc.Protagonist.OnSocialityChanged -= OnAnyChanged;
+                    svc.Protagonist.OnDependencyChanged -= OnAnyChanged;
+                    svc.Protagonist.OnRoomMessLevelChanged -= OnAnyChanged;
+                    protagonistUnsubscribed = true;
                 }
             }
         }
