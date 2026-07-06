@@ -228,11 +228,17 @@ public class HeroineActionChanceProvider : ActionChanceProvider
             CalculateSuccessChance();
     }
 
+    /// <summary>目前實際訂閱中的女主角實例。取消訂閱必須對「當初訂閱的那顆」操作，
+    /// 不能重新 GetHeroine()——開新遊戲會重建 Heroines，屆時查到的是新實例，
+    /// 對新實例退訂等於沒退，舊實例上的訂閱會殘留。</summary>
+    private HeroineStatusModel subscribedHeroine;
+
     private void SubscribeHeroineEvents()
     {
         HeroineStatusModel heroine = GetHeroine();
         if (heroine == null) return;
 
+        subscribedHeroine = heroine;
         heroine.OnCurrentEmotionChanged += OnHeroineValueChanged;
         heroine.OnLibidoChanged += OnHeroineIntValueChanged;
         heroine.OnTrustChanged += OnHeroineIntValueChanged;
@@ -240,12 +246,24 @@ public class HeroineActionChanceProvider : ActionChanceProvider
 
     private void UnsubscribeHeroineEvents()
     {
-        HeroineStatusModel heroine = GetHeroine();
-        if (heroine == null) return;
+        if (subscribedHeroine == null) return;
 
-        heroine.OnCurrentEmotionChanged -= OnHeroineValueChanged;
-        heroine.OnLibidoChanged -= OnHeroineIntValueChanged;
-        heroine.OnTrustChanged -= OnHeroineIntValueChanged;
+        subscribedHeroine.OnCurrentEmotionChanged -= OnHeroineValueChanged;
+        subscribedHeroine.OnLibidoChanged -= OnHeroineIntValueChanged;
+        subscribedHeroine.OnTrustChanged -= OnHeroineIntValueChanged;
+        subscribedHeroine = null;
+    }
+
+    /// <summary>
+    /// 遊戲數據載入 / 重置完畢：StartNewGame 會整批重建 Heroines（實例更換），
+    /// OnEnable 時訂閱的事件會指向被丟棄的舊實例，之後情緒 / Libido / Trust 變動
+    /// 都不會再刷新顯示。這裡先換訂到新實例，再交給基底重算顯示。
+    /// </summary>
+    protected override void HandleGameStatusLoaded()
+    {
+        UnsubscribeHeroineEvents();
+        SubscribeHeroineEvents();
+        base.HandleGameStatusLoaded();
     }
 
     private void OnHeroineValueChanged(HeroineEmotionCardType _)

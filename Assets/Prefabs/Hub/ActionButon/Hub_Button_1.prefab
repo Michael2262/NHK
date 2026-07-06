@@ -12,7 +12,6 @@ GameObject:
   - component: {fileID: 8167133423207697615}
   - component: {fileID: 7690801874805736377}
   - component: {fileID: 8344330051873758458}
-  - component: {fileID: 3875758045393155581}
   m_Layer: 0
   m_Name: Trigger
   m_TagString: Untagged
@@ -63,16 +62,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2a852015ed21d2642859a85240362c08, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ActionOverlayTrigger
+  actionId: 
   duration: 2
   actionSprite: {fileID: 0}
   localizationKey: 
+  overlayPosition: 0
   enableOutcomeResult: 0
   successChance: 0.5
-  chanceProvider: {fileID: 0}
+  chanceProvider: {fileID: 7454243999103612049}
   autoApplyChanceProviderOnExecute: 1
   successLocalizationKey: Result.Success
   failureLocalizationKey: Result.Failure
   resultHoldSeconds: 2
+  successSoundKey: action_success
+  failureSoundKey: action_failure
   onCompleteEvents:
     m_PersistentCalls:
       m_Calls:
@@ -113,6 +116,7 @@ MonoBehaviour:
   manualDeductions: []
   resourceGains: []
   deductTime: 0
+  timeUnit: 0
   manualTimeAmount: 0
   targetHeroineID: 
   heroineResourceChanges: []
@@ -128,31 +132,6 @@ MonoBehaviour:
   onComplete:
     m_PersistentCalls:
       m_Calls: []
---- !u!114 &3875758045393155581
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 333929077466992854}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 572830fcdde20c3479bc8a2e6c79eb5a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::HeroineActionChanceProvider
-  targetTrigger: {fileID: 7690801874805736377}
-  chanceDisplay: {fileID: 1484966839195989016}
-  refreshOnEnable: 1
-  minChance: 0
-  maxChance: 1
-  lastCalculatedChance: 0
-  lastDebugSummary: 
-  heroineID: sister
-  emotionFailureRateConfig: {fileID: 11400000, guid: 0535f124eb2025f4798fb8d7cfb6697a, type: 2}
-  operationFailureRate: 0
-  repeatPenaltyPerSuccess: 2
-  repeatPenaltyMax: 50
-  currentRepeatPenalty: 0
 --- !u!1 &769945113996537697
 GameObject:
   m_ObjectHideFlags: 0
@@ -723,6 +702,7 @@ RectTransform:
   - {fileID: 5153155726305949737}
   - {fileID: 2548250145582017484}
   - {fileID: 8089632289576099157}
+  - {fileID: 3108075399255706989}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -868,6 +848,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   soundKey: ui_button_click
+  hoverSoundKey: ui_button_hover
 --- !u!1 &4068566778228411609
 GameObject:
   m_ObjectHideFlags: 0
@@ -943,6 +924,78 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!1 &7180064727822516845
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3108075399255706989}
+  - component: {fileID: 7454243999103612049}
+  m_Layer: 0
+  m_Name: Provider
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &3108075399255706989
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7180064727822516845}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7840533614062965497}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 100, y: 100}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &7454243999103612049
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7180064727822516845}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 572830fcdde20c3479bc8a2e6c79eb5a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HeroineActionChanceProvider
+  targetTrigger: {fileID: 7690801874805736377}
+  chanceDisplay: {fileID: 1484966839195989016}
+  refreshOnEnable: 1
+  minChance: 0
+  maxChance: 1
+  writeToDialogueVariable: 0
+  dialogueVariableName: 
+  lastCalculatedChance: 0
+  lastDebugSummary: 
+  heroineID: sister
+  emotionFailureRateConfig: {fileID: 11400000, guid: 0535f124eb2025f4798fb8d7cfb6697a, type: 2}
+  operationFailureRate: 0
+  libidoMultiplier: 1
+  trustMultiplier: 1
+  libidoBonusMax: 10
+  trustBonusMax: 10
+  repeatPenaltyPerSuccess: 2
+  repeatPenaltyMax: 50
+  currentRepeatPenalty: 0
+  fakeRepeatPenaltyPerSuccess: 10
+  fakeRepeatPenaltyMax: 50
+  currentFakeRepeatPenalty: 0
+  guaranteeFirstSuccess: 0
+  firstSuccessPending: 1
 --- !u!1 &7682082461747208051
 GameObject:
   m_ObjectHideFlags: 0

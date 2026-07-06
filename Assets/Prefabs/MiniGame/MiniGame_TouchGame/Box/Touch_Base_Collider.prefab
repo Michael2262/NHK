@@ -9,11 +9,10 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6733106727544686121}
-  - component: {fileID: 4896421554760614356}
+  - component: {fileID: 2756149918762703396}
   - component: {fileID: 2614575733137511023}
   - component: {fileID: 1101266372728130912}
   - component: {fileID: 4112284724543734475}
-  - component: {fileID: 6513463371699337996}
   m_Layer: 0
   m_Name: Touch_Base_Collider
   m_TagString: Untagged
@@ -36,7 +35,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &4896421554760614356
+--- !u!114 &2756149918762703396
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -45,12 +44,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 1676240280818158668}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7dc0ae0a116636947bea329a99c26b5e, type: 3}
+  m_Script: {fileID: 11500000, guid: f855739733415cf4f8313ba61249238c, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::GesturePressLogicProxy
-  targetLogicObject: {fileID: 0}
-  swipeConds: 
-  swipeThreshold: 50
+  m_EditorClassIdentifier: Assembly-CSharp::InputSensor
+  targets: []
+  holdThreshold: 0.5
 --- !u!60 &2614575733137511023
 PolygonCollider2D:
   m_ObjectHideFlags: 0
@@ -177,16 +175,3 @@ MonoBehaviour:
   normalHotspot: {x: 0, y: 0}
   clickTexture: {fileID: 2800000, guid: d1b918e27fb0b8d489236c1439afae98, type: 3}
   clickHotspot: {x: 0, y: 0}
---- !u!114 &6513463371699337996
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1676240280818158668}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 789cbb84090913b4a833983c429d5ba4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ColliderIdOverride
-  id: 

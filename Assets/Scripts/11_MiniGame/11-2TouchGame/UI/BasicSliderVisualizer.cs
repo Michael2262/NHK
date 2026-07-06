@@ -86,6 +86,42 @@ public class BasicSliderVisualizer : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// 【外部可呼叫】重新抓取一次 FSM 變數參照，並依當前數值立即刷新 Slider（瞬間定位，不漸變）。
+    /// 用於解決進場時序問題：Start() 執行時 FSM 變數尚未就緒、或 sourceFSM 是之後才指定的情況。
+    /// 可由 Button.onClick / UnityEvent / PlayMaker (Call Method / Send Message "ForceRefresh") 呼叫。
+    /// </summary>
+    public void ForceRefresh()
+    {
+        if (slider == null) slider = GetComponent<Slider>();
+
+        if (sourceFSM == null)
+        {
+            Debug.LogWarning($"[{nameof(BasicSliderVisualizer)}] ForceRefresh 失敗：sourceFSM 為空。", this);
+            return;
+        }
+
+        // 若先前因 sourceFSM 為空被停用，這裡重新啟用讓 Update 恢復運作
+        enabled = true;
+
+        // 重新抓一次變數參照（涵蓋 FSM 較晚初始化 / 變數執行期才建立的情況）
+        maxValueRef = new FsmFloatOrInt(sourceFSM, maxValueVariableName);
+        currentValueRef = new FsmFloatOrInt(sourceFSM, currentValueVariableName);
+
+        if (!maxValueRef.IsValid)
+            Debug.LogWarning($"[{nameof(BasicSliderVisualizer)}] ForceRefresh：在 FSM 中找不到最大值變數: {maxValueVariableName}", this);
+
+        if (!currentValueRef.IsValid)
+            Debug.LogWarning($"[{nameof(BasicSliderVisualizer)}] ForceRefresh：在 FSM 中找不到當前值變數: {currentValueVariableName}", this);
+
+        // 重置狀態：殺掉進行中的 tween，強制重新初始化並瞬間定位
+        if (currentTweener != null) currentTweener.Kill();
+        isInitialized = false;
+        lastValue = float.NaN;
+
+        CheckInitialization();
+    }
+
     /// <summary>用 DOTween 平滑移動 Slider 數值，會先 Kill 掉舊的 tween。</summary>
     private void UpdateSlider(float target)
     {

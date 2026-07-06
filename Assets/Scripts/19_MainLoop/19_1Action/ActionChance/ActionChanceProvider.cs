@@ -1,5 +1,6 @@
 using UnityEngine;
 using TMPro;
+using PixelCrushers;
 using PixelCrushers.DialogueSystem;
 
 /// <summary>
@@ -56,7 +57,14 @@ public abstract class ActionChanceProvider : MonoBehaviour
         // 之後讀檔管線才套用存檔並觸發 OnGameStatusLoaded，
         // 屆時再重新計算一次，確保第一次進場顯示正確。
         if (GameStatusService.Instance != null)
-            GameStatusService.Instance.OnGameStatusLoaded += OnGameStatusLoaded;
+            GameStatusService.Instance.OnGameStatusLoaded += HandleGameStatusLoaded;
+
+        // 訂閱 Pixel Crushers「存檔資料套用完畢」事件。
+        // 讀檔管線的最後一步 SaveSystem.ApplySavedGameData 會把整個 Lua 變數表
+        // 覆寫回存檔當下的快照，蓋掉 OnGameStatusLoaded 期間剛寫入的最新成功率
+        // （存檔快照裡的數字還含有當時的重複失敗率，讀檔後已重置，兩者會對不上）。
+        // 因此套用完畢後必須再刷新一次，把 Dialogue 變數 / 顯示更新成當前真實狀態。
+        SaveSystem.saveDataApplied += HandleSaveDataApplied;
 
         if (refreshOnEnable && (chanceDisplay != null || writeToDialogueVariable))
         {
@@ -69,13 +77,26 @@ public abstract class ActionChanceProvider : MonoBehaviour
         UnsubscribeFromStatusChanges();
 
         if (GameStatusService.Instance != null)
-            GameStatusService.Instance.OnGameStatusLoaded -= OnGameStatusLoaded;
+            GameStatusService.Instance.OnGameStatusLoaded -= HandleGameStatusLoaded;
+
+        SaveSystem.saveDataApplied -= HandleSaveDataApplied;
     }
 
     /// <summary>
     /// 遊戲數據載入 / 重置完畢後重新計算並刷新顯示。
+    /// 子類別可 override 在刷新前補做事（例如重新訂閱被重建的 Model 事件），
+    /// 記得呼叫 base.HandleGameStatusLoaded()。
     /// </summary>
-    private void OnGameStatusLoaded()
+    protected virtual void HandleGameStatusLoaded()
+    {
+        if (chanceDisplay == null && !writeToDialogueVariable) return;
+        CalculateSuccessChance();
+    }
+
+    /// <summary>
+    /// Pixel Crushers 存檔資料套用完畢（Lua 變數已被覆寫為存檔快照）後再刷新一次。
+    /// </summary>
+    private void HandleSaveDataApplied()
     {
         if (chanceDisplay == null && !writeToDialogueVariable) return;
         CalculateSuccessChance();

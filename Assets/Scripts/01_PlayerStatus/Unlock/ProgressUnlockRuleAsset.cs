@@ -67,6 +67,15 @@ public class ProgressUnlockRuleAsset : ScriptableObject
     )]
     public bool revertWhenConditionFails = false;
 
+    // ───── 達成時的公告 (Alert) ─────
+    [Header("達成時的公告 (Alert，選填)")]
+    [Tooltip(
+        "達成條件套用動作時，用 StoryManager 顯示的系統公告 (無顏色)。\n" +
+        "填 Localization Key (找不到 Key 時會直接顯示原文)；留空則不顯示公告。\n" +
+        "只在「達成」時顯示一次；條件失去而撤銷 (revert) 時不會顯示。"
+    )]
+    public string unlockAlertKey;
+
     // ==========================================================
     // UI 提示資訊 (供 RequirementBlocker 使用)
     // ==========================================================

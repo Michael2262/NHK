@@ -25,6 +25,12 @@ public class ProgressRulesInspectorWindow : EditorWindow
         = new Dictionary<ProgressUnlockRuleAsset, bool>();
     private Vector2 _scroll;
 
+    // 專案內所有 ProgressUnlockConfig，以及「已被任一 Config 收錄」的 Rule 集合。
+    // Manager 只評估 Config 內的 Rule，沒掛進 Config 的 Rule 不會生效 → 用來標警示。
+    private List<ProgressUnlockConfig> _allConfigs = new List<ProgressUnlockConfig>();
+    private HashSet<ProgressUnlockRuleAsset> _rulesInConfigs
+        = new HashSet<ProgressUnlockRuleAsset>();
+
     // ───── 排序模式 ─────
     private enum SortMode
     {
@@ -83,7 +89,34 @@ public class ProgressRulesInspectorWindow : EditorWindow
             var asset = AssetDatabase.LoadAssetAtPath<ProgressUnlockRuleAsset>(path);
             if (asset != null) _allRules.Add(asset);
         }
+
+        RefreshConfigList();
         ApplySort();
+    }
+
+    /// <summary>
+    /// 掃描專案內所有 ProgressUnlockConfig，記錄哪些 Rule 已被收錄。
+    /// </summary>
+    private void RefreshConfigList()
+    {
+        _allConfigs.Clear();
+        _rulesInConfigs.Clear();
+
+        var guids = AssetDatabase.FindAssets("t:ProgressUnlockConfig");
+        foreach (var guid in guids)
+        {
+            var path = AssetDatabase.GUIDToAssetPath(guid);
+            var cfg = AssetDatabase.LoadAssetAtPath<ProgressUnlockConfig>(path);
+            if (cfg == null) continue;
+
+            _allConfigs.Add(cfg);
+
+            if (cfg.rules == null) continue;
+            foreach (var rule in cfg.rules)
+            {
+                if (rule != null) _rulesInConfigs.Add(rule);
+            }
+        }
     }
 
     /// <summary>
@@ -264,10 +297,15 @@ public class ProgressRulesInspectorWindow : EditorWindow
 
             // 規則名稱 (可編輯 asset 檔名) + 跳轉按鈕
             // 把寬度分成：檔名輸入框 + 小按鈕
+            // 未被任何 Config 收錄的規則 (OnlyCondition 除外) 名稱標紅提醒
+            bool notInConfig = rule.action != ProgressActionType.OnlyCondition
+                && !_rulesInConfigs.Contains(rule);
             const float JUMP_BTN_WIDTH = 24f;
+            if (notInConfig) GUI.color = new Color(1f, 0.5f, 0.5f);
             string newName = EditorGUILayout.DelayedTextField(
                 rule.name,
                 GUILayout.Width(COL_NAME - JUMP_BTN_WIDTH - 2));
+            if (notInConfig) GUI.color = Color.white;
 
             if (newName != rule.name && !string.IsNullOrWhiteSpace(newName))
             {
@@ -337,6 +375,8 @@ public class ProgressRulesInspectorWindow : EditorWindow
 
         using (new EditorGUILayout.VerticalScope(GUI.skin.box))
         {
+            DrawConfigMembership(rule);
+
             EditorGUILayout.LabelField("── 條件 (全部達成才算符合) ──", EditorStyles.miniBoldLabel);
 
             if (rule.conditions == null)
@@ -407,6 +447,15 @@ public class ProgressRulesInspectorWindow : EditorWindow
             }
 
             EditorGUILayout.Space(2);
+            EditorGUILayout.LabelField("── 達成公告 (Alert，選填) ──", EditorStyles.miniBoldLabel);
+
+            rule.unlockAlertKey = EditorGUILayout.TextField(
+                new GUIContent("公告 Key",
+                    "達成時用 StoryManager 顯示的系統公告 (無顏色)。\n" +
+                    "填 Localization Key；留空則不顯示。撤銷 (revert) 時不會顯示。"),
+                rule.unlockAlertKey);
+
+            EditorGUILayout.Space(2);
             EditorGUILayout.LabelField("── UI 提示覆蓋 ──", EditorStyles.miniBoldLabel);
 
             rule.uiHintTypeKeyOverride = EditorGUILayout.TextField(
@@ -426,6 +475,64 @@ public class ProgressRulesInspectorWindow : EditorWindow
         {
             Undo.RecordObject(rule, "Edit Rule Details");
             EditorUtility.SetDirty(rule);
+        }
+    }
+
+    // ==========================================================
+    // Config 收錄狀態 (Manager 只評估 Config 內的 Rule)
+    // ==========================================================
+
+    /// <summary>
+    /// 顯示此規則的 Config 收錄狀態。
+    /// 未被任何 Config 收錄的規則 Manager 不會評估 (等於不生效)，
+    /// 提供一鍵加入按鈕；OnlyCondition 類型本來就不需要掛 Config，不警告。
+    /// </summary>
+    private void DrawConfigMembership(ProgressUnlockRuleAsset rule)
+    {
+        if (_rulesInConfigs.Contains(rule))
+        {
+            // 找出收錄它的 Config 名稱 (通常只有一個)
+            var owners = _allConfigs
+                .Where(c => c.rules != null && c.rules.Contains(rule))
+                .Select(c => c.name);
+            EditorGUILayout.LabelField(
+                $"已收錄於 Config：{string.Join(", ", owners)}", EditorStyles.miniLabel);
+            return;
+        }
+
+        if (rule.action == ProgressActionType.OnlyCondition)
+            return; // 純 UI 條件用，不需要掛 Config
+
+        EditorGUILayout.HelpBox(
+            "此規則未被任何 ProgressUnlockConfig 收錄，Manager 不會評估它 (規則不生效)！\n" +
+            "請把它加入 Config 的 rules 列表。",
+            MessageType.Error);
+
+        if (_allConfigs.Count == 0)
+        {
+            EditorGUILayout.HelpBox(
+                "專案內找不到任何 ProgressUnlockConfig，請先建立 (Create → Game → Progress → Progress Unlock Config)。",
+                MessageType.Warning);
+            return;
+        }
+
+        using (new EditorGUILayout.HorizontalScope())
+        {
+            GUILayout.Space(16);
+            foreach (var cfg in _allConfigs)
+            {
+                if (GUILayout.Button($"加入 {cfg.name}", GUILayout.Width(220)))
+                {
+                    Undo.RecordObject(cfg, "Add Rule To Config");
+                    if (cfg.rules == null) cfg.rules = new List<ProgressUnlockRuleAsset>();
+                    cfg.rules.Add(rule);
+                    EditorUtility.SetDirty(cfg);
+                    AssetDatabase.SaveAssets();
+                    _rulesInConfigs.Add(rule);
+                    Debug.Log($"[Rules Inspector] 已把 '{rule.name}' 加入 Config '{cfg.name}'。");
+                }
+            }
+            GUILayout.FlexibleSpace();
         }
     }
 

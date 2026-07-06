@@ -46,6 +46,9 @@ public class ProgressUnlockManager
     // 主角的 handler，掛在 Stress / LifePower / Sociality / Dependency 四個事件上
     private Action<int> _protagonistHandler;
 
+    // RefreshAllRules (讀檔 / 新遊戲) 期間不發公告，避免載入時整批已達成規則同時彈 Alert
+    private bool _suppressAlerts = false;
+
     public ProgressUnlockManager(
         ProgressFlagModel progress,
         Dictionary<string, HeroineStatusModel> heroines,
@@ -253,8 +256,16 @@ public class ProgressUnlockManager
         var keys = new List<ProgressUnlockRuleAsset>(_ruleApplied.Keys);
         foreach (var k in keys) _ruleApplied[k] = false;
 
-        foreach (var rule in keys)
-            EvaluateRule(rule);
+        _suppressAlerts = true;
+        try
+        {
+            foreach (var rule in keys)
+                EvaluateRule(rule);
+        }
+        finally
+        {
+            _suppressAlerts = false;
+        }
 
         // 數值映射也一併做一次初始同步
         RefreshAllMirrors();
@@ -348,12 +359,34 @@ public class ProgressUnlockManager
         {
             ApplyAction(rule, true);
             _ruleApplied[rule] = true;
+            ShowUnlockAlert(rule);
         }
         else if (!meetsCondition && isApplied && rule.revertWhenConditionFails)
         {
             ApplyAction(rule, false);
             _ruleApplied[rule] = false;
         }
+    }
+
+    /// <summary>
+    /// 規則達成時顯示公告 (選填；unlockAlertKey 留空則不顯示)。
+    /// 只在「達成」時呼叫；撤銷 (revert) 不發公告。RefreshAllRules 期間也不發。
+    /// </summary>
+    private void ShowUnlockAlert(ProgressUnlockRuleAsset rule)
+    {
+        if (_suppressAlerts) return;
+        if (string.IsNullOrEmpty(rule.unlockAlertKey)) return;
+
+        if (StoryManager.Instance == null)
+        {
+            Debug.LogWarning(
+                $"[ProgressUnlockManager] 規則 '{rule.name}' 想顯示公告 '{rule.unlockAlertKey}'，" +
+                "但找不到 StoryManager 實例。"
+            );
+            return;
+        }
+
+        StoryManager.Instance.ShowLocalizedMessage(rule.unlockAlertKey);
     }
 
     /// <summary>
