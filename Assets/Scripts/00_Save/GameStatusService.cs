@@ -63,6 +63,7 @@ public class GameStatusService : MonoBehaviour
     public ShopStatusModel ShopStatus { get; private set; }
     public PendingDeliveryModel PendingDelivery { get; private set; }
     public ProgressFlagModel ProgressFlags { get; private set; }// 進度開關模型
+    public QuestObjectiveModel QuestObjectives { get; private set; }// 任務目標模型（三態：未顯示/已顯示/已完成）
 
     // 處理多女主角：使用 Dictionary 來儲存多個 Heroine Model
     public Dictionary<string, HeroineStatusModel> Heroines { get; private set; }
@@ -144,6 +145,11 @@ public class GameStatusService : MonoBehaviour
 
         Inventory = new ProtagonistInventoryModel();
         ProgressFlags = new ProgressFlagModel();
+
+        // 任務目標：目錄來自 Resources/Progress/Objective 下的 QuestObjectiveDefinition。
+        // 依賴 ProgressFlags（完成映射用），故排在其後。
+        QuestObjectives = new QuestObjectiveModel(ProgressFlags,
+            Resources.LoadAll<QuestObjectiveDefinition>("Progress/Objective"));
         Skills = new ProtagonistSkillModel();
         ShopStatus = new ShopStatusModel();
         PendingDelivery = new PendingDeliveryModel();
@@ -329,6 +335,7 @@ public class GameStatusService : MonoBehaviour
         _suppressDaySettlement = false;
         StatusEffectModel.NewGame();
         ProgressFlags.NewGame();
+        QuestObjectives.NewGame();
         ApplyAllDefaults();
 
         //新遊戲時刷新通用觸發規則

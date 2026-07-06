@@ -43,6 +43,7 @@ public class GameSaveData
     public ProtagonistStatusEffectSaveData StatusEffectData; //狀態效果的存檔數據
     public ProgressFlagSaveData ProgressFlagData;// 進度開關存檔數據
     public DeliverySaveData DeliveryData; // 網購待到貨訂單
+    public QuestObjectiveSaveData QuestObjectiveData; // 任務目標三態（Revealed / Completed；Hidden 不存）
 
     // ==========================================================
     // 女主角數據 (已修改為 JsonUtility 相容格式)
@@ -72,6 +73,7 @@ public class GameSaveData
         StatusEffectData = new ProtagonistStatusEffectSaveData();
         ProgressFlagData = new ProgressFlagSaveData();
         DeliveryData = new DeliverySaveData();
+        QuestObjectiveData = new QuestObjectiveSaveData();
 
         // 初始化新增的欄位
         ScenarioData = new CurrentScenarioSaveData();
