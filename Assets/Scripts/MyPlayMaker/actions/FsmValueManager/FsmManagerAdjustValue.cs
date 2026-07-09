@@ -21,6 +21,9 @@ public class FsmManagerAdjustValue : FsmStateAction
     {
         if (FsmValueManager.Instance != null)
         {
+            // FsmVar 綁定變數時，讀取前必須先 UpdateValue() 同步即時值
+            deltaValue.UpdateValue();
+
             object delta = null;
             if (deltaValue.Type == VariableType.Int) delta = deltaValue.intValue;
             else if (deltaValue.Type == VariableType.Float) delta = deltaValue.floatValue;

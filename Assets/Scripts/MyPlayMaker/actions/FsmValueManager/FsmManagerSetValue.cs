@@ -32,10 +32,19 @@ public class FsmManagerSetValue : FsmStateAction
 
     void DoSetValues()
     {
-        if (FsmValueManager.Instance == null || targetIdentifier == null) return;
+        if (FsmValueManager.Instance == null)
+        {
+            Debug.LogWarning($"[FsmManagerSetValue] FsmValueManager.Instance==null，SetValue 未執行（target={targetIdentifier?.Value}）");
+            return;
+        }
+        if (targetIdentifier == null) return;
 
         for (int i = 0; i < varNames.Length; i++)
         {
+            // FsmVar 綁定變數時，intValue 等欄位只是快照，不會自動同步，
+            // 讀取前必須先 UpdateValue() 從變數取得即時值
+            values[i].UpdateValue();
+
             object realValue = null;
 
             // 根據 FsmVar 的類型提取數值
@@ -46,6 +55,8 @@ public class FsmManagerSetValue : FsmStateAction
                 case VariableType.Bool: realValue = values[i].boolValue; break;
                 case VariableType.String: realValue = values[i].stringValue; break;
             }
+
+            Debug.Log($"[FsmManagerSetValue] {targetIdentifier.Value}.{varNames[i].Value} = {realValue}");
 
             if (useGroupMode)
                 FsmValueManager.Instance.SetGroupValue(targetIdentifier.Value, varNames[i].Value, realValue);

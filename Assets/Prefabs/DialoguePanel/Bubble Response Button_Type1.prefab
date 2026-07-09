@@ -86,10 +86,10 @@ GameObject:
   - component: {fileID: 3164816355140691630}
   - component: {fileID: 4802210272818488268}
   - component: {fileID: 552931441853791777}
-  - component: {fileID: 2973405506002183390}
   - component: {fileID: 3062829670692852861}
   - component: {fileID: 3959997734310557750}
   - component: {fileID: 9086460096995281018}
+  - component: {fileID: 2799768129103139740}
   m_Layer: 5
   m_Name: Bubble Response Button_Type1
   m_TagString: Untagged
@@ -111,6 +111,7 @@ RectTransform:
   m_Children:
   - {fileID: 2383896865683116117}
   - {fileID: 2626998835296431111}
+  - {fileID: 1939144108144914457}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
@@ -170,24 +171,6 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
---- !u!114 &2973405506002183390
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4325092904172056102}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 05399fb241106df4fbea2cb9b72f8a5b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  button: {fileID: 552931441853791777}
-  label:
-    m_uiText: {fileID: 3540490115636745947}
-    m_textMeshProUGUI: {fileID: 0}
-  setLabelColor: 1
-  defaultColor: {r: 0, g: 0, b: 0, a: 1}
 --- !u!114 &3062829670692852861
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -228,6 +211,102 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::UIButtonSound
   soundKey: ui_button_click
   hoverSoundKey: ui_button_hover
+--- !u!114 &2799768129103139740
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4325092904172056102}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b13f6481a1e13d4c8f114257aba7953, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PixelCrushers.DialogueSystem.OptionImageResponseButton
+  button: {fileID: 552931441853791777}
+  label:
+    m_uiText: {fileID: 3540490115636745947}
+    m_textMeshProUGUI: {fileID: 0}
+  setLabelColor: 1
+  defaultColor: {r: 0, g: 0, b: 0, a: 1}
+  iconImage: {fileID: 5711308478882464004}
+  imageDatabase: {fileID: 11400000, guid: 9c2771d61eea22c4f80ceae48b37c872, type: 2}
+  imageFieldName: Option Image
+--- !u!1 &4348973555065916427
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1939144108144914457}
+  - component: {fileID: 4590323955385167224}
+  - component: {fileID: 5711308478882464004}
+  m_Layer: 5
+  m_Name: Option Image
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &1939144108144914457
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4348973555065916427}
+  m_LocalRotation: {x: 0, y: 0, z: 0.06975647, w: 0.9975641}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3164816355140691630}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 8}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: -87.57, y: 6.1}
+  m_SizeDelta: {x: 30, y: 30}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!222 &4590323955385167224
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4348973555065916427}
+  m_CullTransparentMesh: 1
+--- !u!114 &5711308478882464004
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4348973555065916427}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 21300000, guid: 2b1346b0ce700d949b47943f8be13d53, type: 3}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
 --- !u!1 &4448526101739946665
 GameObject:
   m_ObjectHideFlags: 0

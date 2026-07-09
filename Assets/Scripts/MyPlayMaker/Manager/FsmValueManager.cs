@@ -4,6 +4,10 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
+// 提早於所有預設順序腳本（含 PlayMakerFSM）Awake，
+// 確保自動啟動的 FSM 呼叫本 Manager 時 Instance 已註冊完畢。
+// （-900 是 GameStatusService，本 Manager 排在其後）
+[DefaultExecutionOrder(-500)]
 public class FsmValueManager : MonoBehaviour
 {
     public static FsmValueManager Instance { get; private set; }
@@ -58,34 +62,69 @@ public class FsmValueManager : MonoBehaviour
         {
             if (entry.targetObject == null) continue;
 
-            if (string.IsNullOrEmpty(entry.fsmName))
+            if (!ResolveEntry(entry))
             {
-                entry.resolvedFsm = entry.targetObject.GetComponent<PlayMakerFSM>();
-            }
-            else
-            {
-                // 找尋名稱匹配的 FSM
-                var fsms = entry.targetObject.GetComponents<PlayMakerFSM>();
-                entry.resolvedFsm = fsms.FirstOrDefault(f => f.FsmName == entry.fsmName);
-            }
-
-            if (entry.resolvedFsm == null)
-            {
-                Debug.LogWarning($"[FsmValueManager] ID: {entry.id} 找不到指定的 FSM ({entry.fsmName})");
+                Debug.LogWarning($"[FsmValueManager] ID: {entry.id} 於 Awake 找不到指定的 FSM ({entry.fsmName})，將於首次使用時重試解析");
             }
         }
+    }
+
+    /// <summary>
+    /// 解析 entry 對應的 PlayMakerFSM。
+    /// 本 Manager 的 Awake 排序很早（-500），可能早於 PlayMaker 完成 FSM 初始化，
+    /// 導致 FsmName 比對失敗；因此解析失敗不視為永久錯誤，
+    /// 使用端（GetEntryById）會在每次存取時重試（惰性解析）。
+    /// </summary>
+    private bool ResolveEntry(FsmEntry entry)
+    {
+        if (entry.resolvedFsm != null) return true;
+        if (entry.targetObject == null) return false;
+
+        if (string.IsNullOrEmpty(entry.fsmName))
+        {
+            entry.resolvedFsm = entry.targetObject.GetComponent<PlayMakerFSM>();
+        }
+        else
+        {
+            // 找尋名稱匹配的 FSM
+            var fsms = entry.targetObject.GetComponents<PlayMakerFSM>();
+            entry.resolvedFsm = fsms.FirstOrDefault(f => f.FsmName == entry.fsmName);
+        }
+        return entry.resolvedFsm != null;
+    }
+
+    /// <summary>
+    /// 依 ID 取得 entry，並確保 resolvedFsm 已解析。
+    /// 找不到或解析失敗時輸出診斷（含本 Manager 所屬場景與已註冊的 ID 清單），
+    /// 方便判斷是「時序問題」還是「Instance 被別的場景接管」。
+    /// </summary>
+    private FsmEntry GetEntryById(string id, string context)
+    {
+        var entry = registeredFSMs.FirstOrDefault(e => e.id == id);
+        if (entry == null)
+        {
+            Debug.LogWarning($"[FsmValueManager] {context}: 找不到 ID '{id}'。目前 Instance 屬於場景 [{gameObject.scene.name}]，已註冊的 ID: {string.Join(", ", registeredFSMs.Select(e => e.id))}");
+            return null;
+        }
+
+        if (!ResolveEntry(entry))
+        {
+            Debug.LogWarning($"[FsmValueManager] {context}: ID '{id}' 的目標 FSM ({entry.fsmName}) 解析失敗（targetObject={(entry.targetObject == null ? "null" : entry.targetObject.name)}）");
+            return null;
+        }
+        return entry;
     }
 
     #region 1. 針對特定 ID 操作
     public void SetValue(string id, string varName, object value)
     {
-        var entry = registeredFSMs.FirstOrDefault(e => e.id == id);
+        var entry = GetEntryById(id, $"SetValue({varName})");
         if (entry != null) ApplyValue(entry, varName, value, false);
     }
 
     public void AdjustValue(string id, string varName, object delta)
     {
-        var entry = registeredFSMs.FirstOrDefault(e => e.id == id);
+        var entry = GetEntryById(id, $"AdjustValue({varName})");
         if (entry != null) ApplyValue(entry, varName, delta, true);
     }
     #endregion
@@ -93,7 +132,7 @@ public class FsmValueManager : MonoBehaviour
     #region 2. 取消特定 ID 的改動
     public void RevertValue(string id, string varName)
     {
-        var entry = registeredFSMs.FirstOrDefault(e => e.id == id);
+        var entry = GetEntryById(id, $"RevertValue({varName})");
         if (entry != null && entry.initialValues.ContainsKey(varName))
         {
             ApplyValue(entry, varName, entry.initialValues[varName], false);
@@ -143,8 +182,8 @@ public class FsmValueManager : MonoBehaviour
     #region 6. 讀取數值 (供 Lua 使用)
     public int GetIntById(string id, string varName)
     {
-        var entry = registeredFSMs.FirstOrDefault(e => e.id == id);
-        if (entry != null && entry.resolvedFsm != null)
+        var entry = GetEntryById(id, $"GetIntById({varName})");
+        if (entry != null)
         {
             var v = entry.resolvedFsm.FsmVariables.GetFsmInt(varName);
             return (v != null) ? v.Value : 0;
@@ -154,8 +193,8 @@ public class FsmValueManager : MonoBehaviour
 
     public float GetFloatById(string id, string varName)
     {
-        var entry = registeredFSMs.FirstOrDefault(e => e.id == id);
-        if (entry != null && entry.resolvedFsm != null)
+        var entry = GetEntryById(id, $"GetFloatById({varName})");
+        if (entry != null)
         {
             var v = entry.resolvedFsm.FsmVariables.GetFsmFloat(varName);
             return (v != null) ? v.Value : 0f;
@@ -165,8 +204,8 @@ public class FsmValueManager : MonoBehaviour
 
     public bool GetBoolById(string id, string varName)
     {
-        var entry = registeredFSMs.FirstOrDefault(e => e.id == id);
-        if (entry != null && entry.resolvedFsm != null)
+        var entry = GetEntryById(id, $"GetBoolById({varName})");
+        if (entry != null)
         {
             var v = entry.resolvedFsm.FsmVariables.GetFsmBool(varName);
             return (v != null) ? v.Value : false;
@@ -176,8 +215,8 @@ public class FsmValueManager : MonoBehaviour
 
     public string GetStringById(string id, string varName)
     {
-        var entry = registeredFSMs.FirstOrDefault(e => e.id == id);
-        if (entry != null && entry.resolvedFsm != null)
+        var entry = GetEntryById(id, $"GetStringById({varName})");
+        if (entry != null)
         {
             var v = entry.resolvedFsm.FsmVariables.GetFsmString(varName);
             return (v != null) ? v.Value : "";
@@ -190,15 +229,11 @@ public class FsmValueManager : MonoBehaviour
 
     public void SendEventById(string id, string eventName)
     {
-        var entry = registeredFSMs.FirstOrDefault(e => e.id == id);
-        if (entry != null && entry.resolvedFsm != null)
+        var entry = GetEntryById(id, $"SendEventById({eventName})");
+        if (entry != null)
         {
             Debug.Log($"[診斷] 對 ID={id} 送出「{eventName}」，FSM={entry.resolvedFsm.FsmName}，目前狀態={entry.resolvedFsm.ActiveStateName}，Active={entry.resolvedFsm.gameObject.activeInHierarchy}");
             entry.resolvedFsm.SendEvent(eventName);
-        }
-        else
-        {
-            Debug.LogWarning($"[FsmValueManager] 無法發送事件 {eventName}，找不到 ID: {id}（entry={(entry == null ? "null" : "found")}, resolvedFsm={(entry?.resolvedFsm == null ? "null" : "ok")}）");
         }
     }
 
@@ -207,7 +242,7 @@ public class FsmValueManager : MonoBehaviour
         var entries = registeredFSMs.Where(e => e.group == groupName);
         foreach (var entry in entries)
         {
-            if (entry.resolvedFsm != null)
+            if (ResolveEntry(entry))
             {
                 entry.resolvedFsm.SendEvent(eventName);
             }
@@ -217,8 +252,8 @@ public class FsmValueManager : MonoBehaviour
     #endregion
     private void ApplyValue(FsmEntry entry, string varName, object value, bool isDelta)
     {
-        // 確保 resolvedFsm 存在
-        if (entry.resolvedFsm == null) return;
+        // 確保 resolvedFsm 存在（失敗時重試解析，涵蓋 Group 系列呼叫）
+        if (!ResolveEntry(entry)) return;
 
         if (!entry.initialValues.ContainsKey(varName))
         {

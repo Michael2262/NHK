@@ -41,7 +41,10 @@ namespace PixelCrushers.DialogueSystem
         public override void Awake()
         {
             base.Awake();
-            HideIcon();
+            // 模板生成的按鈕會「先被指派 response、才 SetActive(true)」，
+            // Awake 在啟用時才執行，比 UpdateIcon 晚——此時不能把剛設好的圖蓋掉。
+            // 只在尚未指派 response 時才隱藏（確保閒置按鈕的初始狀態為空）。
+            if (response == null) HideIcon();
         }
 
         public override void Reset()
@@ -84,6 +87,7 @@ namespace PixelCrushers.DialogueSystem
             if (sprite != null)
             {
                 iconImage.sprite = sprite;
+                iconImage.enabled = true; // 防止 Image 元件本身在 prefab 中被取消勾選
                 iconImage.gameObject.SetActive(true);
             }
             else
