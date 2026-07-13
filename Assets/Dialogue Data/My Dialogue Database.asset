@@ -4023,121 +4023,6 @@ MonoBehaviour:
         y: 795
         width: 160
         height: 30
-    - id: 21
-      fields:
-      - title: Title
-        value: 
-        type: 0
-        typeString: CustomFieldType_Text
-      - title: Description
-        value: 
-        type: 0
-        typeString: CustomFieldType_Text
-      - title: Actor
-        value: 5
-        type: 5
-        typeString: CustomFieldType_Actor
-      - title: Conversant
-        value: 4
-        type: 5
-        typeString: CustomFieldType_Actor
-      - title: Menu Text
-        value: 
-        type: 0
-        typeString: CustomFieldType_Text
-      - title: Dialogue Text
-        value: "\u2026\u2026\u86E4\uFF1F"
-        type: 0
-        typeString: CustomFieldType_Text
-      - title: Sequence
-        value: 
-        type: 0
-        typeString: CustomFieldType_Text
-      - title: zh-TW
-        value: 
-        type: 4
-        typeString: CustomFieldType_Localization
-      - title: zh-CN
-        value: 
-        type: 4
-        typeString: CustomFieldType_Localization
-      - title: en
-        value: 
-        type: 4
-        typeString: CustomFieldType_Localization
-      - title: ja
-        value: 
-        type: 4
-        typeString: CustomFieldType_Localization
-      - title: ko
-        value: 
-        type: 4
-        typeString: CustomFieldType_Localization
-      - title: StaminaPreview
-        value: 0
-        type: 1
-        typeString: CustomFieldType_Number
-      - title: canvasRect
-        value: 
-        type: 0
-        typeString: CustomFieldType_Text
-      - title: Response Menu Sequence
-        value: 
-        type: 0
-        typeString: CustomFieldType_Text
-      - title: Notes
-        value: 
-        type: 0
-        typeString: CustomFieldType_Text
-      - title: DontTranslate
-        value: False
-        type: 2
-        typeString: CustomFieldType_Boolean
-      - title: Guid
-        value: 
-        type: 0
-        typeString: CustomFieldType_Text
-      - title: Show Invalid
-        value: False
-        type: 2
-        typeString: CustomFieldType_Boolean
-      - title: Ghost
-        value: False
-        type: 2
-        typeString: CustomFieldType_Boolean
-      - title: Enable Conditions
-        value: 
-        type: 0
-        typeString: CustomFieldType_Text
-      - title: Option Image
-        value: 
-        type: 0
-        typeString: CustomFieldType_Text
-      conversationID: 7
-      isRoot: 0
-      isGroup: 0
-      nodeColor: 
-      delaySimStatus: 0
-      falseConditionAction: Block
-      conditionPriority: 2
-      outgoingLinks:
-      - originConversationID: 7
-        originDialogueID: 21
-        destinationConversationID: 7
-        destinationDialogueID: 29
-        isConnector: 0
-        priority: 2
-      conditionsString: 
-      userScript: 
-      onExecute:
-        m_PersistentCalls:
-          m_Calls: []
-      canvasRect:
-        serializedVersion: 2
-        x: 81
-        y: 900.9174
-        width: 160
-        height: 30
     - id: 22
       fields:
       - title: Title
@@ -4586,7 +4471,7 @@ MonoBehaviour:
       - originConversationID: 7
         originDialogueID: 26
         destinationConversationID: 7
-        destinationDialogueID: 21
+        destinationDialogueID: 29
         isConnector: 0
         priority: 2
       conditionsString: 
@@ -4830,12 +4715,12 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 82.03093
-        y: 949.0825
+        x: 79.96907
+        y: 900.6289
         width: 160
         height: 30
     entryGroups: []
-    canvasScrollPosition: {x: 0, y: 0}
+    canvasScrollPosition: {x: 10.309296, y: 536.0825}
     canvasZoom: 0.96999997
   - id: 94
     fields:
@@ -23144,11 +23029,9 @@ MonoBehaviour:
           HeroineEmotionCardChange(sister,
           add, Relaxed);
 
-          StoryAlert(Alert.UnlockRequest, 2.5);
 
 
-          StopMusic(4,
-          Q);
+          StopMusic(4, Q);
 
 
           Anim(Stop);  '
@@ -36181,6 +36064,12 @@ MonoBehaviour:
         originDialogueID: 49
         destinationConversationID: 88
         destinationDialogueID: 47
+        isConnector: 0
+        priority: 2
+      - originConversationID: 88
+        originDialogueID: 49
+        destinationConversationID: 88
+        destinationDialogueID: 60
         isConnector: 0
         priority: 2
       conditionsString: 
@@ -268286,7 +268175,7 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: 'CGControl(SwitchCG, HugAngry03, 0);
+        value: 'CGControl(SwitchCG,  HugNormal04, 0);
 
           Delay({{end}});'
         type: 0
@@ -268488,7 +268377,7 @@ MonoBehaviour:
       canvasRect:
         serializedVersion: 2
         x: 857.7352
-        y: 391.17706
+        y: 390.17706
         width: 160
         height: 30
     - id: 98
@@ -268968,11 +268857,11 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Actor
-        value: 5
+        value: 2
         type: 5
         typeString: CustomFieldType_Actor
       - title: Conversant
-        value: 2
+        value: 5
         type: 5
         typeString: CustomFieldType_Actor
       - title: Menu Text
@@ -269640,7 +269529,7 @@ MonoBehaviour:
         width: 160
         height: 30
     entryGroups: []
-    canvasScrollPosition: {x: 518, y: 0}
+    canvasScrollPosition: {x: 453, y: 131}
     canvasZoom: 1
   - id: 161
     fields:
@@ -288195,9 +288084,9 @@ MonoBehaviour:
         typeString: CustomFieldType_Text
       - title: Sequence
         value: "TachieControl(Brow, Sister, Angry4);\nTachieControl(Eye, Sister,
-          Close_Happy);\nTachieControl(Mouth, Sister, Open3);\n\nTachieControl(Body,
-          Sister, Normal);\n\nHeroineEmotionCardChange(sister, add, Angry);\n\nAnim(Angry); 
-          \n\nDelay({{end}});"
+          Close_Happy);\nTachieControl(Mouth, Sister, Open3);\nTachieControl(Other,
+          Sister, None);\nTachieControl(Body, Sister, Normal);\n\nHeroineEmotionCardChange(sister,
+          add, Angry);\n\nAnim(Angry);  \n\nDelay({{end}});"
         type: 0
         typeString: CustomFieldType_Text
       - title: zh-TW
@@ -288277,8 +288166,8 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 729.0003
-        y: 116.60417
+        x: 730.0992
+        y: 115.50528
         width: 160
         height: 30
     - id: 130
