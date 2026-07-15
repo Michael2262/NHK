@@ -118,6 +118,12 @@ public class CommandButtonGroup : MonoBehaviour
         {
             _buttons.Add(button);
             registeredButtonCount = _buttons.Count;
+
+            // 跑條中換頁進來的新按鈕要同步鎖定；
+            // 鎖定期間被藏起、解鎖後才重新顯示的按鈕則要解鎖回來。
+            var uiButton = button.GetComponent<Button>();
+            if (uiButton != null)
+                uiButton.interactable = !isLocked;
         }
     }
 

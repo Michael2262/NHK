@@ -727,8 +727,8 @@ MonoBehaviour:
       hideUnused: 0
       transitions:
       - fsmEvent:
-          name: FINISHED
-          isSystemEvent: 1
+          name: NEXT
+          isSystemEvent: 0
           isGlobal: 0
         toState: "\u521D\u898B\u53CD\u61C9?"
         linkStyle: 0
@@ -739,13 +739,15 @@ MonoBehaviour:
         actionNames:
         - MySpineSystem.PlayMaker.PlaySpineAnimationByID
         - MySpineSystem.PlayMaker.PlaySpineAnimationByID
+        - HutongGames.PlayMaker.Actions.Wait
         customNames:
         - 
         - 
-        actionEnabled: 0101
-        actionIsOpen: 0101
-        actionStartIndex: 0000000006000000
-        actionHashCodes: a1cb4a04a1cb4a04
+        - 
+        actionEnabled: 010101
+        actionIsOpen: 010101
+        actionStartIndex: 00000000060000000c000000
+        actionHashCodes: a1cb4a04a1cb4a0448c01101
         unityObjectParams: []
         fsmGameObjectParams: []
         fsmOwnerDefaultParams: []
@@ -825,6 +827,12 @@ MonoBehaviour:
           showInInspector: 0
           networkSync: 0
           value: -1
+        - useVariable: 0
+          name: 
+          tooltip: 
+          showInInspector: 0
+          networkSync: 0
+          value: 0.05
         fsmIntParams: []
         fsmBoolParams: []
         fsmVector2Params: []
@@ -835,12 +843,13 @@ MonoBehaviour:
         stringParams:
         - 
         - 
-        byteData: 
+        - NEXT
+        byteData: 00
         arrayParamSizes: 
         arrayParamTypes: []
         customTypeSizes: 
         customTypeNames: []
-        paramDataType: 120000002a000000120000002a0000000f00000017000000120000002a000000120000002a0000000f00000017000000
+        paramDataType: 120000002a000000120000002a0000000f00000017000000120000002a000000120000002a0000000f000000170000000f0000001700000001000000
         paramName:
         - controllerID
         - track
@@ -854,8 +863,11 @@ MonoBehaviour:
         - clearMode
         - delaySeconds
         - finishEvent
-        paramDataPos: 000000000000000001000000010000000000000000000000020000000200000003000000030000000100000001000000
-        paramByteDataSize: 000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+        - time
+        - finishEvent
+        - realTime
+        paramDataPos: 000000000000000001000000010000000000000000000000020000000200000003000000030000000100000001000000020000000200000000000000
+        paramByteDataSize: 000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000000
     - name: "\u4F9D\u7167\u7576\u524D\u60C5\u7DD2\u5206\u652F\u8868\u6F14"
       description: 
       colorIndex: 0
@@ -982,6 +994,9 @@ MonoBehaviour:
       isSystemEvent: 0
       isGlobal: 0
     - name: Angry
+      isSystemEvent: 0
+      isGlobal: 0
+    - name: NEXT
       isSystemEvent: 0
       isGlobal: 0
     globalTransitions: []
