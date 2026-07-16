@@ -32,8 +32,9 @@ public class PagedCommandButtonGroup : MonoBehaviour
     public CommandButtonPage defaultPage;
 
     [Header("連動群組（可選）")]
-    [Tooltip("換頁後會呼叫其 UpdateButtonConditions()，讓新頁面上的 Flag 條件按鈕立即生效。")]
-    public CommandButtonGroup linkedGroup;
+    [Tooltip("每次換頁後會逐一呼叫其 UpdateButtonConditions()，讓各群組的 Flag 條件按鈕立即生效。" +
+             "建議把場景中所有 CommandButtonGroup 都加進來。")]
+    public List<CommandButtonGroup> linkedGroups = new List<CommandButtonGroup>();
 
     [Header("行為")]
     [Tooltip("OnEnable 時回到預設頁並清空返回歷史。面板重開時建議勾選。")]
@@ -201,8 +202,11 @@ public class PagedCommandButtonGroup : MonoBehaviour
         _current = target;
         currentPageId = target.pageId;
 
-        // 讓新頁面上的 Flag 條件按鈕立即套用顯示條件
-        if (linkedGroup != null)
-            linkedGroup.UpdateButtonConditions();
+        // 讓所有連動群組的 Flag 條件按鈕立即套用顯示條件
+        foreach (var group in linkedGroups)
+        {
+            if (group != null)
+                group.UpdateButtonConditions();
+        }
     }
 }

@@ -232,8 +232,16 @@ public class FsmValueManager : MonoBehaviour
         var entry = GetEntryById(id, $"SendEventById({eventName})");
         if (entry != null)
         {
+            // 必須在 SendEvent「之前」體檢：若事件被接收，FSM 會立刻轉換狀態，事後檢查會誤判
+            string failReason = DiagnoseEventDelivery(entry.resolvedFsm, eventName);
+
             Debug.Log($"[診斷] 對 ID={id} 送出「{eventName}」，FSM={entry.resolvedFsm.FsmName}，目前狀態={entry.resolvedFsm.ActiveStateName}，Active={entry.resolvedFsm.gameObject.activeInHierarchy}");
             entry.resolvedFsm.SendEvent(eventName);
+
+            if (failReason != null)
+            {
+                Debug.LogWarning($"[FsmValueManager] SendEventById: ID '{id}' 收不到事件「{eventName}」—— {failReason}");
+            }
         }
     }
 
@@ -244,9 +252,47 @@ public class FsmValueManager : MonoBehaviour
         {
             if (ResolveEntry(entry))
             {
+                string failReason = DiagnoseEventDelivery(entry.resolvedFsm, eventName);
                 entry.resolvedFsm.SendEvent(eventName);
+
+                if (failReason != null)
+                {
+                    Debug.LogWarning($"[FsmValueManager] SendEventByGroup({groupName}): ID '{entry.id}' 收不到事件「{eventName}」—— {failReason}");
+                }
             }
         }
+    }
+
+    /// <summary>
+    /// 檢查目標 FSM 目前是否有辦法接收該事件。
+    /// PlayMaker 對無人接收的事件完全沉默，這裡補上診斷。
+    /// 收得到回傳 null，收不到回傳原因說明。
+    /// </summary>
+    private static string DiagnoseEventDelivery(PlayMakerFSM fsm, string eventName)
+    {
+        if (!fsm.gameObject.activeInHierarchy)
+            return $"GameObject [{fsm.gameObject.name}] 未啟用（activeInHierarchy=false）";
+
+        if (!fsm.enabled)
+            return "PlayMakerFSM 元件未啟用（enabled=false）";
+
+        var f = fsm.Fsm;
+        if (f == null || f.ActiveState == null)
+            return "FSM 尚未啟動（還沒進入任何 State）";
+
+        // 全域轉換
+        foreach (var t in f.GlobalTransitions)
+        {
+            if (t.EventName == eventName) return null;
+        }
+
+        // 當前 State 的轉換
+        foreach (var t in f.ActiveState.Transitions)
+        {
+            if (t.EventName == eventName) return null;
+        }
+
+        return $"當前狀態 [{f.ActiveStateName}] 沒有「{eventName}」的轉換，FSM 也沒有它的全域轉換（Global Transition）";
     }
 
     #endregion

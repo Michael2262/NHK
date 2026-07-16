@@ -83,6 +83,31 @@ public class SceneReadyCoordinator : MonoBehaviour, ISceneReadyHandler
         Debug.Log("--- Coordinator: 所有任務執行完畢 ---");
     }
 
+    // 是否正在執行中，避免按鈕連點造成多條 Coroutine 同時跑任務列表。
+    private bool _isRunning;
+
+    /// <summary>
+    /// 給 UI Button.onClick / UnityEvent 呼叫：重新觸發整份 OnSceneReady 任務列表。
+    /// 執行中再次呼叫會被忽略。
+    /// </summary>
+    public void ReRunFromUI()
+    {
+        if (_isRunning)
+        {
+            Debug.LogWarning("--- Coordinator: OnSceneReady 尚在執行中，忽略此次觸發 ---");
+            return;
+        }
+        Debug.Log("--- Coordinator: UI 觸發重新執行 OnSceneReady ---");
+        StartCoroutine(RunFromUIRoutine());
+    }
+
+    private IEnumerator RunFromUIRoutine()
+    {
+        _isRunning = true;
+        yield return OnSceneReady();
+        _isRunning = false;
+    }
+
     // ============================================================
     // 編輯器輔助
     // ============================================================

@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
-using TMPro;
-using PixelCrushers.DialogueSystem;
 using DG.Tweening;
 
 /// <summary>
@@ -13,55 +11,22 @@ using DG.Tweening;
 /// 職責：
 ///   - 管理所有註冊的 CommandButton。
 ///   - 當任一機率按鈕被點擊時，鎖定群組內所有按鈕。
-///   - 驅動共用的時間條 UI（Image.fillAmount 或 Slider）。
+///   - 透過 ProgressBarFrame 驅動共用的時間條 / 結果文字 / 結果音效。
 ///   - 時間條結束後依照成功率擲骰，觸發對應的成功 / 失敗事件。
 ///   - 時間條結束後解鎖所有按鈕。
 ///
 /// 使用方式：
 ///   1. 場景中放一個 GameObject 掛此腳本。
-///   2. 指定 progressBarImage（填充式 Image）或 progressBarSlider（Slider）。
+///   2. 指定 progressBarFrame（掛著 ProgressBarFrame 的共用時間條物件）。
 ///   3. 各 CommandButton 的 group 欄位指向此物件。
 ///   4. 按鈕的 Button.OnClick() 掛 CommandButton.OnButtonClicked()。
 /// </summary>
 public class CommandButtonGroup : MonoBehaviour
 {
-    [Header("共用時間條 UI")]
-    [Tooltip("填充式 Image（fillAmount 0→1）。與 Slider 二選一。")]
-    public Image progressBarImage;
-
-    [Tooltip("Slider（value 0→1）。與 Image 二選一。")]
-    public Slider progressBarSlider;
-
-    [Tooltip("啟用後時間條從中間同時往左右展開（使用 RectTransform 寬度）。progressBarImage 的 Pivot 請設為 (0.5, 0.5)。")]
-    public bool fillFromCenter = false;
-
-    [Tooltip("時間條的父物件。跑條時自動顯示，結束後自動隱藏。若未指定則不控制顯隱。")]
-    public GameObject progressBarRoot;
-
-    [Header("思考動畫")]
-    [Tooltip("思考氣泡的父物件。跑條時自動顯示，結束後自動隱藏。若未指定則不控制。")]
-    public GameObject thinkingRoot;
-
-    [Tooltip("AnimatorEmotionController 的 ID。會透過 AnimatorEmotionController.Get() 查找，" +
-             "並呼叫 Think() / Stop() 控制動畫。")]
-    public string thinkingControllerId = "MiniGame";
-
-    [Header("結果文字")]
-    [Tooltip("顯示成功或失敗文字的 TMP 元件。")]
-    public TMP_Text resultText;
-
-    [Tooltip("成功時的多語系 Key。")]
-    public string successLocalizationKey = "System.Succese";
-
-    [Tooltip("失敗時的多語系 Key。")]
-    public string failLocalizationKey = "System.Failed";
-
-    [Header("結果音效")]
-    [Tooltip("成功時播放的音效 Key（對應 AudioManager 設定）。留空則不播放。")]
-    public string successSoundKey = "action_success";
-
-    [Tooltip("失敗時播放的音效 Key（對應 AudioManager 設定）。留空則不播放。")]
-    public string failureSoundKey = "action_failure";
+    [Header("共用時間條外框")]
+    [Tooltip("時間條 UI、結果文字、結果音效的集中設定（ProgressBarFrame）。" +
+             "可被同場景多個 CommandButtonGroup 共用。")]
+    public ProgressBarFrame progressBarFrame;
 
     [Header("結果停留")]
     [Tooltip("時間條跑完後，先播放音效並顯示成功/失敗文字，停留這個秒數後，" +
@@ -102,10 +67,11 @@ public class CommandButtonGroup : MonoBehaviour
 
     private void Awake()
     {
-        SetProgressValue(0f);
-        SetProgressBarVisible(false);
-        SetThinkingVisible(false);
-        HideResultText();
+        if (progressBarFrame == null)
+        {
+            Debug.LogWarning($"[CommandButtonGroup] {gameObject.name}: 未指定 progressBarFrame，" +
+                             "時間條、結果文字與結果音效將不會顯示。", this);
+        }
     }
 
     // ─────────────────────────────────────────────
@@ -196,12 +162,13 @@ public class CommandButtonGroup : MonoBehaviour
 
         float duration = button.GetCurrentBarDuration();
         button.AdvanceClickCount();
-        bool useThinking = duration >= 1f;
 
-        // 顯示時間條，條件性顯示思考動畫
-        SetProgressBarVisible(true);
-        if (useThinking) SetThinkingVisible(true);
-        SetProgressValue(0f);
+        // 顯示時間條
+        if (progressBarFrame != null)
+        {
+            progressBarFrame.SetVisible(true);
+            progressBarFrame.SetProgressValue(0f);
+        }
         SetDim(true);
 
         onBarStarted?.Invoke();
@@ -212,14 +179,13 @@ public class CommandButtonGroup : MonoBehaviour
         {
             elapsed += Time.deltaTime;
             float t = Mathf.Clamp01(elapsed / duration);
-            SetProgressValue(t);
+            if (progressBarFrame != null)
+                progressBarFrame.SetProgressValue(t);
             yield return null;
         }
 
-        SetProgressValue(1f);
-
-        // 時間條結束，停止思考動畫
-        if (useThinking) SetThinkingVisible(false);
+        if (progressBarFrame != null)
+            progressBarFrame.SetProgressValue(1f);
 
         // 判定成功 / 失敗
         float chance = button.chanceProvider.CalculateSuccessChance();
@@ -230,8 +196,11 @@ public class CommandButtonGroup : MonoBehaviour
                   $"這次成功率 {chance:P1}，骰到 {roll:F3}，結果是「{(success ? "成功" : "失敗")}」！</color>");
 
         // 先播放結果音效 + 顯示成功/失敗文字，讓玩家先看到、聽到結果
-        PlayResultSound(success);
-        ShowResultText(success);
+        if (progressBarFrame != null)
+        {
+            progressBarFrame.PlayResultSound(success);
+            progressBarFrame.ShowResultText(success);
+        }
 
         // 結果停留一段時間，讓玩家看到結果。
         // 此期間還不執行成功/失敗事件。
@@ -247,103 +216,17 @@ public class CommandButtonGroup : MonoBehaviour
         onBarFinished?.Invoke();
 
         // 隱藏時間條與結果文字
-        SetProgressBarVisible(false);
-        HideResultText();
+        if (progressBarFrame != null)
+        {
+            progressBarFrame.SetVisible(false);
+            progressBarFrame.HideResultText();
+        }
         SetDim(false);
 
         // 解鎖群組
         SetLocked(false);
 
         _barCoroutine = null;
-    }
-
-    // ─────────────────────────────────────────────
-    // 時間條 UI 操作
-    // ─────────────────────────────────────────────
-
-    private void SetProgressValue(float value)
-    {
-        if (progressBarImage != null)
-        {
-            if (fillFromCenter)
-            {
-                // 從中間往兩邊展開：X 軸縮放 0→1，Pivot (0.5, 0.5) 確保從中心擴張
-                var scale = progressBarImage.rectTransform.localScale;
-                scale.x = value;
-                progressBarImage.rectTransform.localScale = scale;
-            }
-            else
-            {
-                progressBarImage.fillAmount = value;
-            }
-        }
-
-        if (progressBarSlider != null)
-            progressBarSlider.value = value;
-    }
-
-    private void SetProgressBarVisible(bool visible)
-    {
-        if (progressBarRoot != null)
-            progressBarRoot.SetActive(visible);
-    }
-
-    private void SetThinkingVisible(bool visible)
-    {
-        if (thinkingRoot != null)
-            thinkingRoot.SetActive(visible);
-
-        var controller = AnimatorEmotionController.Get(thinkingControllerId);
-        if (controller != null)
-        {
-            if (visible)
-                controller.Think();
-            else
-                controller.Stop();
-        }
-    }
-
-    // ─────────────────────────────────────────────
-    // 結果文字
-    // ─────────────────────────────────────────────
-
-    private void ShowResultText(bool success)
-    {
-        if (resultText == null) return;
-
-        string key = success ? successLocalizationKey : failLocalizationKey;
-        string localized = DialogueManager.GetLocalizedText(key);
-
-        // 查不到就直接顯示 key
-        if (string.IsNullOrEmpty(localized))
-            localized = key;
-
-        resultText.text = localized;
-        resultText.gameObject.SetActive(true);
-    }
-
-    private void HideResultText()
-    {
-        if (resultText == null) return;
-        resultText.gameObject.SetActive(false);
-    }
-
-    // ─────────────────────────────────────────────
-    // 結果音效
-    // ─────────────────────────────────────────────
-
-    /// <summary>
-    /// 依成功 / 失敗播放對應音效。透過 AudioManager 單例播放，Key 留空則不播放。
-    /// </summary>
-    private void PlayResultSound(bool success)
-    {
-        string key = success ? successSoundKey : failureSoundKey;
-        if (string.IsNullOrEmpty(key)) return;
-
-        if (AudioManager.Instance != null)
-            AudioManager.Instance.PlaySound(key);
-        else
-            Debug.LogWarning("[CommandButtonGroup] 找不到 AudioManager.Instance，無法播放結果音效。");
     }
 
     // ─────────────────────────────────────────────
@@ -381,9 +264,11 @@ public class CommandButtonGroup : MonoBehaviour
             _barCoroutine = null;
         }
 
-        SetProgressBarVisible(false);
-        SetThinkingVisible(false);
-        HideResultText();
+        if (progressBarFrame != null)
+        {
+            progressBarFrame.SetVisible(false);
+            progressBarFrame.HideResultText();
+        }
         SetDim(false, instant: true);
         SetLocked(false);
     }
