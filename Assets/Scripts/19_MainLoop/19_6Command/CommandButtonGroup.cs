@@ -310,10 +310,57 @@ public class CommandButtonGroup : MonoBehaviour
     private void OnEnable()
     {
         UpdateButtonConditions();
+        SubscribeFlagEvents();
     }
 
     private void OnDisable()
     {
+        UnsubscribeFlagEvents();
         CancelBar();
+    }
+
+    // ─────────────────────────────────────────────
+    // Flag 變化即時刷新
+    // ─────────────────────────────────────────────
+
+    private ProgressFlagModel _subscribedFlags;
+
+    private void SubscribeFlagEvents()
+    {
+        // 沒有條件按鈕就不需要訂閱
+        if (conditionalButtons == null || conditionalButtons.Count == 0) return;
+
+        _subscribedFlags = GameStatusService.Instance?.ProgressFlags;
+        if (_subscribedFlags != null)
+            _subscribedFlags.OnFlagChanged += HandleFlagChanged;
+    }
+
+    private void UnsubscribeFlagEvents()
+    {
+        if (_subscribedFlags != null)
+        {
+            _subscribedFlags.OnFlagChanged -= HandleFlagChanged;
+            _subscribedFlags = null;
+        }
+    }
+
+    private void HandleFlagChanged(string flagID, bool isOn)
+    {
+        // 只有條件列表有用到的 Flag 變化才需要刷新
+        if (!UsesFlag(flagID)) return;
+        UpdateButtonConditions();
+    }
+
+    private bool UsesFlag(string flagID)
+    {
+        if (conditionalButtons == null) return false;
+
+        foreach (var entry in conditionalButtons)
+        {
+            if (entry == null || entry.isDefault) continue;
+            if (entry.requiredFlag != null && entry.requiredFlag.FlagID == flagID)
+                return true;
+        }
+        return false;
     }
 }

@@ -10561,6 +10561,7 @@ RectTransform:
   - {fileID: 1160196629}
   - {fileID: 8842335940989796446}
   - {fileID: 1457052161}
+  - {fileID: 1801475826}
   - {fileID: 2102085558}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -11031,13 +11032,12 @@ RectTransform:
   - {fileID: 1681865654}
   - {fileID: 996417665}
   - {fileID: 1760406568}
-  - {fileID: 1801475826}
   m_Father: {fileID: 1424981076}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 776, y: -55}
-  m_SizeDelta: {x: 500.27, y: 830.05}
+  m_AnchoredPosition: {x: 776, y: -34.73}
+  m_SizeDelta: {x: 500.27, y: 789.51}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1457052162
 MonoBehaviour:
@@ -11089,17 +11089,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 02aa27da7d72d8f4f97cd1d8e771bcf3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CommandButtonGroup
-  progressBarImage: {fileID: 1118277015}
-  progressBarSlider: {fileID: 0}
-  fillFromCenter: 0
-  progressBarRoot: {fileID: 1118277013}
-  thinkingRoot: {fileID: 0}
-  thinkingControllerId: MiniGame
-  resultText: {fileID: 55746251}
-  successLocalizationKey: System.Succese
-  failLocalizationKey: System.Failed
-  successSoundKey: action_success
-  failureSoundKey: action_failure
+  progressBarFrame: {fileID: 1801475829}
   delayAfterBar: 1
   onBarStarted:
     m_PersistentCalls:
@@ -15839,6 +15829,7 @@ GameObject:
   - component: {fileID: 1801475826}
   - component: {fileID: 1801475828}
   - component: {fileID: 1801475827}
+  - component: {fileID: 1801475829}
   m_Layer: 0
   m_Name: ProgressBarFrame
   m_TagString: Untagged
@@ -15853,18 +15844,18 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1801475825}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: -9720}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1118277014}
   - {fileID: 55746250}
-  m_Father: {fileID: 1457052161}
+  m_Father: {fileID: 1424981076}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 1817.9606, y: -1048.5046}
   m_SizeDelta: {x: 412.69, y: 16.71}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1801475827
@@ -15905,6 +15896,27 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1801475825}
   m_CullTransparentMesh: 1
+--- !u!114 &1801475829
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1801475825}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 539b6b01ca188674bbf01f8fe21d2ed4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ProgressBarFrame
+  progressBarImage: {fileID: 1118277015}
+  progressBarSlider: {fileID: 0}
+  fillFromCenter: 0
+  progressBarRoot: {fileID: 1118277013}
+  resultText: {fileID: 55746251}
+  successLocalizationKey: System.Succese
+  failLocalizationKey: System.Failed
+  successSoundKey: action_success
+  failureSoundKey: action_failure
 --- !u!1 &1803924719
 GameObject:
   m_ObjectHideFlags: 0
