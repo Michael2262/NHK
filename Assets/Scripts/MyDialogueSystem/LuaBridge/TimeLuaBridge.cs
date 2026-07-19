@@ -32,6 +32,9 @@ public class TimeLuaBridge : MonoBehaviour
         Lua.RegisterFunction("IsDayOfWeek", this, typeof(TimeLuaBridge).GetMethod("IsDayOfWeek"));
         Lua.RegisterFunction("IsWeekend", this, typeof(TimeLuaBridge).GetMethod("IsWeekend"));
         Lua.RegisterFunction("IsWeekday", this, typeof(TimeLuaBridge).GetMethod("IsWeekday"));
+        Lua.RegisterFunction("GetPhase", this, typeof(TimeLuaBridge).GetMethod("GetPhase"));
+        Lua.RegisterFunction("IsPhase", this, typeof(TimeLuaBridge).GetMethod("IsPhase"));
+        Lua.RegisterFunction("GetSlot", this, typeof(TimeLuaBridge).GetMethod("GetSlot"));
 
         Debug.Log("TimeLuaBridge: Lua functions registered.");
     }
@@ -43,6 +46,9 @@ public class TimeLuaBridge : MonoBehaviour
         Lua.UnregisterFunction("IsDayOfWeek");
         Lua.UnregisterFunction("IsWeekend");
         Lua.UnregisterFunction("IsWeekday");
+        Lua.UnregisterFunction("GetPhase");
+        Lua.UnregisterFunction("IsPhase");
+        Lua.UnregisterFunction("GetSlot");
 
         Debug.Log("TimeLuaBridge: Lua functions unregistered.");
     }
@@ -129,5 +135,66 @@ public class TimeLuaBridge : MonoBehaviour
             return false;
         }
         return !GameStatusService.Instance.Time.IsWeekend;
+    }
+
+    // ==========================================================
+    // Phase / Slot 相關 Lua 函數
+    // ==========================================================
+
+    /// <summary>
+    /// 取得目前 Phase 索引（0=白天, 1=黃昏, 2=晚上, 3=深夜，依 TimeConfig.PhaseNames 而定）。
+    /// Lua 用法: GetPhase() == 2  → 目前是晚上
+    /// </summary>
+    public double GetPhase()
+    {
+        if (GameStatusService.Instance == null)
+        {
+            Debug.LogWarning("TimeLuaBridge: GameStatusService not available.");
+            return 0;
+        }
+        return GameStatusService.Instance.Time.CurrentPhaseIndex;
+    }
+
+    /// <summary>
+    /// 判斷目前是否為指定 Phase。可傳數字字串（"2"）或 TimeConfig.PhaseNames 中的名稱（"晚上"）。
+    /// Lua 用法: IsPhase("晚上") 或 IsPhase("2")
+    /// </summary>
+    public bool IsPhase(string phase)
+    {
+        if (GameStatusService.Instance == null)
+        {
+            Debug.LogWarning("TimeLuaBridge: GameStatusService not available.");
+            return false;
+        }
+
+        int current = GameStatusService.Instance.Time.CurrentPhaseIndex;
+
+        if (int.TryParse(phase, out int phaseNum))
+            return current == phaseNum;
+
+        var config = GameStatusService.Instance.TimeConfig;
+        if (config != null)
+        {
+            int index = config.PhaseNames.IndexOf(phase);
+            if (index >= 0)
+                return current == index;
+        }
+
+        Debug.LogWarning($"TimeLuaBridge: 無法解析 Phase 參數 \"{phase}\"。可用：0~3 或 TimeConfig.PhaseNames 中的名稱。");
+        return false;
+    }
+
+    /// <summary>
+    /// 取得目前是當前 Phase 的第幾個 Slot（從 1 開始）。
+    /// Lua 用法: GetSlot() == 1  → 剛進入這個 Phase 的第一格
+    /// </summary>
+    public double GetSlot()
+    {
+        if (GameStatusService.Instance == null)
+        {
+            Debug.LogWarning("TimeLuaBridge: GameStatusService not available.");
+            return 1;
+        }
+        return GameStatusService.Instance.Time.CurrentSlotInPhase;
     }
 }
