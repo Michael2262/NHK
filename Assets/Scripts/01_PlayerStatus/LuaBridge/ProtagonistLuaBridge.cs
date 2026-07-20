@@ -50,6 +50,7 @@ public class ProtagonistLuaBridge : MonoBehaviour
         Lua.RegisterFunction("IsDependencyHigh", this, SymbolExtensions.GetMethodInfo(() => IsDependencyHigh()));
         Lua.RegisterFunction("IsDependencyExtreme", this, SymbolExtensions.GetMethodInfo(() => IsDependencyExtreme()));
         Lua.RegisterFunction("IsOverShoot", this, SymbolExtensions.GetMethodInfo(() => IsOverShoot()));
+        Lua.RegisterFunction("IsBadHealthy", this, SymbolExtensions.GetMethodInfo(() => IsBadHealthy()));
 
         // ── ShootTimes ──
         Lua.RegisterFunction("GetShootTimes", this, SymbolExtensions.GetMethodInfo(() => GetShootTimes()));
@@ -78,6 +79,7 @@ public class ProtagonistLuaBridge : MonoBehaviour
         Lua.UnregisterFunction("IsDependencyHigh");
         Lua.UnregisterFunction("IsDependencyExtreme");
         Lua.UnregisterFunction("IsOverShoot");
+        Lua.UnregisterFunction("IsBadHealthy");
 
         Lua.UnregisterFunction("GetShootTimes");
     }
@@ -123,6 +125,7 @@ public class ProtagonistLuaBridge : MonoBehaviour
     public bool IsDependencyHigh() => GetModel()?.IsDependencyHigh() ?? false;
     public bool IsDependencyExtreme() => GetModel()?.IsDependencyExtreme() ?? false;
     public bool IsOverShoot() => GetModel()?.IsOverShoot ?? false;
+    public bool IsBadHealthy() => GetModel()?.BadHealthy ?? false;
 
     // ───── ShootTimes ─────
     public double GetShootTimes() => GetModel()?.CheckShootTimes() ?? 0;

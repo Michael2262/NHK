@@ -22,6 +22,7 @@
 //   Sociality:  AddSociality / ReduceSociality / SetSociality
 //   Dependency:  AddDependency / ReduceDependency / SetDependency
 //   ShootTimes:  AddShootTimes / ReduceShootTimes
+//   BadHealthy:  BadHealthy(on) / BadHealthy(off)
 // ============================================================
 
 using UnityEngine;
@@ -439,6 +440,46 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
             int prev = p.CheckShootTimes();
             p.TryReduceShootTimes(amount);
             return p.CheckShootTimes() - prev;
+        }
+    }
+
+    // ========================================================
+    // BadHealthy（狀態不好）
+    // ========================================================
+
+    /// <summary>
+    /// 用法: BadHealthy(on) / BadHealthy(off)
+    /// 也接受 true/false、add/remove。
+    /// 開啟期間：增加壓力再 +1、減少壓力少 -1。換日自動解除。
+    /// </summary>
+    public class SequencerCommandBadHealthy : SequencerCommand
+    {
+        public void Awake()
+        {
+            string mode = GetParameter(0, string.Empty).Trim().ToLower();
+
+            var p = ProtagonistStatusSequencerUtil.GetProtagonist("BadHealthy");
+            if (p != null)
+            {
+                switch (mode)
+                {
+                    case "on":
+                    case "true":
+                    case "add":
+                        p.SetBadHealthy(true);
+                        break;
+                    case "off":
+                    case "false":
+                    case "remove":
+                        p.SetBadHealthy(false);
+                        break;
+                    default:
+                        Debug.LogWarning($"Dialogue System: BadHealthy 未知參數 '{mode}'，請使用 on / off。");
+                        break;
+                }
+            }
+
+            Stop();
         }
     }
 }

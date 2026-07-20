@@ -537,7 +537,8 @@ public class CheckProtagonistStatus : FsmStateAction
         IsSocialityHigh,
         IsDependencyHigh,
         IsDependencyExtreme,
-        IsOverShoot
+        IsOverShoot,
+        IsBadHealthy
     }
 
     public CheckType check;
@@ -563,11 +564,36 @@ public class CheckProtagonistStatus : FsmStateAction
             CheckType.IsDependencyHigh => p.IsDependencyHigh(),
             CheckType.IsDependencyExtreme => p.IsDependencyExtreme(),
             CheckType.IsOverShoot => p.IsOverShoot,
+            CheckType.IsBadHealthy => p.BadHealthy,
             _ => false
         };
 
         ProtagonistPlayMakerUtil.StoreBool(storeResult, result);
         Fsm.Event(result ? trueEvent : falseEvent);
+        Finish();
+    }
+}
+
+// ==========================================================
+// BadHealthy（狀態不好）
+// ==========================================================
+[ActionCategory("Protagonist Status")]
+[Tooltip("設定主角「狀態不好 BadHealthy」。開啟期間：增加壓力再 +1、減少壓力少 -1。換日自動解除。")]
+public class SetBadHealthy : FsmStateAction
+{
+    [Tooltip("true = 開啟狀態不好，false = 解除")]
+    public FsmBool value;
+    [UIHint(UIHint.Variable)] public FsmBool storeBadHealthy;
+
+    public override void Reset() { value = true; storeBadHealthy = null; }
+    public override void OnEnter()
+    {
+        var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(SetBadHealthy));
+        if (p != null)
+        {
+            p.SetBadHealthy(value.Value);
+            ProtagonistPlayMakerUtil.StoreBool(storeBadHealthy, p.BadHealthy);
+        }
         Finish();
     }
 }

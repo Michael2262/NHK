@@ -111,6 +111,9 @@ public class ProtagonistStatusModel
     /// <summary>房間髒亂度：0～25。每日結束自動 +1。越高代表房間越亂。</summary>
     public int RoomMessLevel { get; private set; } = INITIAL_ROOM_MESS_LEVEL;
 
+    /// <summary>狀態不好：true 時「增加壓力會再多 +1、減少壓力會少 -1」。換日時自動解除。</summary>
+    public bool BadHealthy { get; private set; } = false;
+
     // ───── 事件通知 ─────
     public event Action<int> OnStressChanged;       // delta
     public event Action<int> OnLifePowerChanged;    // delta
@@ -120,6 +123,7 @@ public class ProtagonistStatusModel
     public event Action<int> OnSkillPointsChanged;  // delta
     public event Action<int> OnShootTimesChanged;   // delta
     public event Action<int> OnRoomMessLevelChanged; // delta
+    public event Action<bool> OnBadHealthyChanged;   // 新狀態值
 
     public event Action<StatusGrade, StatusGrade> OnStressGradeChanged;
     public event Action<StatusGrade, StatusGrade> OnLifeGradeChanged;
@@ -137,6 +141,7 @@ public class ProtagonistStatusModel
         SkillPoints = INITIAL_SKILL_POINTS;
         ShootTimes = INITIAL_SHOOT_TIMES;
         RoomMessLevel = INITIAL_ROOM_MESS_LEVEL;
+        BadHealthy = false;
 
         NotifyAllCoreValues();
     }
@@ -152,7 +157,8 @@ public class ProtagonistStatusModel
             Money = Money,
             SkillPoints = SkillPoints,
             ShootTimes = ShootTimes,
-            RoomMessLevel = RoomMessLevel
+            RoomMessLevel = RoomMessLevel,
+            BadHealthy = BadHealthy
         };
     }
 
@@ -172,6 +178,7 @@ public class ProtagonistStatusModel
         SkillPoints = Math.Max(0, data.SkillPoints);
         ShootTimes = Math.Max(SHOOT_TIMES_MIN, Math.Min(data.ShootTimes, int.MaxValue));
         RoomMessLevel = ClampRoomMessLevel(data.RoomMessLevel);
+        BadHealthy = data.BadHealthy; // 舊存檔沒有此欄位時，Newtonsoft 預設為 false
 
         NotifyAllCoreValues();
     }
@@ -186,12 +193,14 @@ public class ProtagonistStatusModel
         OnSkillPointsChanged?.Invoke(0);
         OnShootTimesChanged?.Invoke(0);
         OnRoomMessLevelChanged?.Invoke(0);
+        OnBadHealthyChanged?.Invoke(BadHealthy);
     }
 
     // ───── 每日流程 ─────
     public void OnDayStart()
     {
         ResetShootTimes();
+        DisableBadHealthy(); // 「狀態不好」換日自動解除
     }
 
     public void OnDayEnd()
@@ -218,6 +227,22 @@ public class ProtagonistStatusModel
 
     public void AddStress(int delta)
     {
+        ApplyStressDelta(ApplyBadHealthyModifier(delta));
+    }
+
+    /// <summary>
+    /// 「狀態不好」的壓力修正：增加壓力時再 +1、減少壓力時少 -1（兩者皆為 delta + 1）。
+    /// 例：+5 → +6；-5 → -4；-1 → 0（等於這次減壓無效）。
+    /// </summary>
+    private int ApplyBadHealthyModifier(int delta)
+    {
+        if (!BadHealthy || delta == 0) return delta;
+        return delta + 1;
+    }
+
+    /// <summary>實際套用壓力變化（不經過 BadHealthy 修正）。SetStress 走這裡以確保精確設定。</summary>
+    private void ApplyStressDelta(int delta)
+    {
         if (delta == 0) return;
 
         int prevValue = Stress;
@@ -241,7 +266,7 @@ public class ProtagonistStatusModel
 
     public void SetStress(int value)
     {
-        AddStress(ClampStress(value) - Stress);
+        ApplyStressDelta(ClampStress(value) - Stress);
     }
 
     public void AddLifePower(int delta)
@@ -466,6 +491,22 @@ public class ProtagonistStatusModel
         int prev = RoomMessLevel;
         RoomMessLevel = ClampRoomMessLevel(value);
         if (RoomMessLevel != prev) OnRoomMessLevelChanged?.Invoke(RoomMessLevel - prev);
+    }
+
+    // ───── BadHealthy（狀態不好） ─────
+
+    /// <summary>開啟「狀態不好」。開啟期間：增加壓力再 +1、減少壓力少 -1。</summary>
+    public void EnableBadHealthy() => SetBadHealthy(true);
+
+    /// <summary>解除「狀態不好」。換日 (OnDayStart) 也會自動呼叫。</summary>
+    public void DisableBadHealthy() => SetBadHealthy(false);
+
+    /// <summary>直接設定「狀態不好」。狀態有變化時觸發 OnBadHealthyChanged。</summary>
+    public void SetBadHealthy(bool value)
+    {
+        if (BadHealthy == value) return;
+        BadHealthy = value;
+        OnBadHealthyChanged?.Invoke(BadHealthy);
     }
 
     // ───── 分級查詢 ─────

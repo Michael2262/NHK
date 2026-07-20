@@ -221,6 +221,40 @@ public List<HeroineSaveData> HeroineSaveDataList; // value（與 IDs 同 index �
 
 ---
 
+## UI 多語系（程式端動態查表標準寫法）
+
+文字來源統一是 **Pixel Crushers Text Table**（`Assets/Localization/MyTextTable/Common_TextTable.asset`）。
+Key 的新增／翻譯內容由我在 Editor 維護，**程式只負責用 key 查表**。
+
+**程式端動態查表**（UI 由 C# 塞字時一律用這個模式，範本：`StoryManager.Localize`、`HeroineStatusUI.Localize`）：
+
+```csharp
+private string Localize(string key)
+{
+    if (string.IsNullOrEmpty(key)) return "";
+    string text = PixelCrushers.DialogueSystem.DialogueManager.GetLocalizedText(key);
+    if (string.IsNullOrEmpty(text))
+    {
+        Debug.LogWarning($"[類別名] Text Table 找不到 Key: {key}");
+        return key; // 查不到時 fallback 顯示 key 本身
+    }
+    return text;
+}
+```
+
+- 需要帶參數時：先 `Localize(key)` 取模板，再 `string.Format(template, ...)` 填 `{0}` `{1}`
+  （參考 `StoryManager` 的 `Tn` / `Ts` / `Tsn` 系列）。
+- **注意刷新時機**：程式塞的字在切換語言當下**不會**自動更新，只有重新執行該段程式
+  （重進場景、`OnGameStatusLoaded`、UI 重開）才會刷新。若該文字必須即時跟著語言切換，
+  請在每次更新 UI 時重新查表，不要把查表結果快取起來。
+- 對照組：**場景靜態標籤**用 Pixel Crushers `LocalizeUI` 元件（掛在 TMP 物件上，由我在 Editor 設定），
+  切語言時 `LanguageManager.SetLanguage → UILocalizationManager.UpdateUIs` 會自動重查表，程式不用管。
+  **不要在程式裡對掛了 LocalizeUI 的物件硬塞字**（會在 OnEnable/初始化時互相覆蓋）。
+- 語言切換指揮鏈在 `00_Setting/SettingManager/LanguageManager.cs`；進場景後的保底刷新是
+  `07_ScenceChangeTask/Initializer/Task/Task_ReapplyLanguage.cs`。
+
+---
+
 ## 慣例
 
 - **語言**：程式註解與 Debug 訊息以繁體中文為主，沿用既有風格。

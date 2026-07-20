@@ -14,6 +14,7 @@ public static class UIColorPalette
     public const string HEX_GRAY  = "434343";
     public const string HEX_PINK  = "FF6666";
     public const string HEX_BLUE  = "2832FF";
+    public const string HEX_DARK_RED = "8B0000";
 
     // ───── 對外色票（Color，已快取） ─────
     public static readonly Color White = FromHex(HEX_WHITE);
@@ -22,6 +23,7 @@ public static class UIColorPalette
     public static readonly Color Gray  = FromHex(HEX_GRAY);
     public static readonly Color Pink  = FromHex(HEX_PINK);
     public static readonly Color Blue  = FromHex(HEX_BLUE);
+    public static readonly Color DarkRed = FromHex(HEX_DARK_RED);
 
     /// <summary>
     /// 把 6 碼（RGB）或 8 碼（RGBA）的 hex 字串轉成 Color，可含或不含開頭的 '#'。
