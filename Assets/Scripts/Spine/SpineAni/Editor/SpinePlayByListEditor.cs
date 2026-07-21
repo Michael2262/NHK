@@ -149,17 +149,43 @@ public class SpinePlayByListEditor : Editor
 
                             // 顯示此組的條目摘要
                             int clipCount = clipsProp != null && clipsProp.isArray ? clipsProp.arraySize : 0;
+
+                            // 先算出 loop / random 後段起點（第一個被勾的 clip）
+                            int loopStart = -1, randomStart = -1;
+                            for (int c = 0; c < clipCount; c++)
+                            {
+                                var clip = clipsProp.GetArrayElementAtIndex(c);
+                                if (loopStart < 0 && (clip.FindPropertyRelative("isLoop")?.boolValue ?? false)) loopStart = c;
+                                if (randomStart < 0 && (clip.FindPropertyRelative("isRandom")?.boolValue ?? false)) randomStart = c;
+                            }
+
                             EditorGUILayout.LabelField($"Clips: {clipCount}");
                             EditorGUI.indentLevel++;
                             if (clipCount > 0)
                             {
+                                var baseColor = GUI.color;
                                 for (int c = 0; c < clipCount; c++)
                                 {
                                     var clip = clipsProp.GetArrayElementAtIndex(c);
                                     var animName = clip.FindPropertyRelative("animationName")?.stringValue ?? "(null)";
                                     var repeatCount = Mathf.Max(1, clip.FindPropertyRelative("repeatCount").intValue);
-                                    EditorGUILayout.LabelField($"• {animName}  ×{repeatCount}");
+
+                                    bool inLoop = loopStart >= 0 && c >= loopStart;
+                                    bool inRandom = randomStart >= 0 && c >= randomStart;
+
+                                    string tag = "";
+                                    if (inLoop) tag += "  ⟳Loop";
+                                    if (inRandom) tag += "  ⤨Rand";
+
+                                    // 變色：loop+random=橘、loop=綠、random=青、無=預設
+                                    if (inLoop && inRandom) GUI.color = new Color(1f, 0.6f, 0.2f);
+                                    else if (inLoop) GUI.color = new Color(0.45f, 1f, 0.45f);
+                                    else if (inRandom) GUI.color = Color.cyan;
+                                    else GUI.color = baseColor;
+
+                                    EditorGUILayout.LabelField($"• {animName}  ×{repeatCount}{tag}");
                                 }
+                                GUI.color = baseColor;
                             }
                             else
                             {

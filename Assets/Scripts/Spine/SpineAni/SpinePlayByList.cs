@@ -8,18 +8,21 @@ using MySpineSystem; // for AnimationTrack enum
 using SpineAnimationState = Spine.AnimationState; // 避免與 UnityEngine.AnimationState 衝突
 
 /// <summary>
-/// Spine 動畫播放順序器（每組可自訂 isLoop / isRandom / nextGroupName / track）:
-/// - isLoop: 播完整輪是否再來一輪（預設 false）
-/// - isRandom: 每一輪是否隨機順序（預設 false）
-/// - nextGroupName: 若有填，該組的 isLoop 失效；播完本輪後自動接到 nextGroupName（預設空）
-/// - track: 指定此動畫組要在哪個軌道(AnimationTrack)上播放（預設為 AnimationTrack 第一個值）
+/// Spine 動畫播放順序器（loop / random 改為「以 clip 為單位」定義後段）:
+/// - 每個 SpineClip 可勾 isLoop / isRandom。第一個被勾 isLoop 的 clip 起（含）到末端 = loop 後段，
+///   前段當一次性 intro 播完後，後段無限循環。想整組 loop 就勾在第一個 clip。
+/// - isRandom 同理：第一個被勾 isRandom 的 clip 起到末端，每一輪播放時隨機排序（與 loop 起點各自獨立）。
+/// - nextGroupName: 若有填，該組的 loop 失效；播完本輪後自動接到 nextGroupName（預設空）。保留但少用。
+/// - track: 指定此動畫組要在哪個軌道(AnimationTrack)上播放（預設為 AnimationTrack 第一個值）。
 /// - ConditionalTransitionCheck: 外部條件檢查委派，返回 true 表示條件滿足。
 /// - checkGroupName: 各組可自訂，當條件滿足時要跳轉的目標組名。
-/// - StopPlaying(): 停止並清除正在播放的軌道
-/// - PlayGroup(name): 中斷現有播放、清除目標軌道後從指定組開始；若該組含 NextGroup 會一路串接到鏈末端
+/// - StopPlaying(): 停止並清除正在播放的軌道。
+/// - PlayGroup(name): 中斷現有播放、清除目標軌道後從指定組開始；若該組含 NextGroup 會一路串接到鏈末端。
+///   若指定組「已在播放中」(CurrentGroupName == name) 則略過不重播。
 /// - PlayGroupAndGoBack(name): 播放指定組一次（會先檢查外部條件轉場），然後返回播放呼叫前的組。
-/// - OnGroupCompleted(string startGroupName): 整條鏈播放完畢後觸發，回傳最初 PlayGroup() 的組名
-/// - GetByControllerID(id): 透過 SpineAnimationController 的 ID 系統取得對應的 SpinePlayByList
+///   若指定組正是當前播放組則略過。
+/// - OnGroupCompleted(string startGroupName): 整條鏈播放完畢後觸發，回傳最初 PlayGroup() 的組名。
+/// - GetByControllerID(id): 透過 SpineAnimationController 的 ID 系統取得對應的 SpinePlayByList。
 /// </summary>
 public class SpinePlayByList : MonoBehaviour
 {
@@ -45,15 +48,21 @@ public class SpinePlayByList : MonoBehaviour
 
     // ==========================================
 
-    // SpineClip 結構 - 保持不變
+    // SpineClip 結構 - 新增 isLoop / isRandom（以 clip 為單位定義後段起點）
     [Serializable]
     public class SpineClip
     {
         [SpineAnimation] public string animationName;
         [Min(1)] public int repeatCount = 1;
+
+        [Tooltip("勾選後：此 clip 及其後的所有 clip 形成 loop 後段（前段當一次性 intro 播完，後段無限循環）。想整組 loop 就勾在第一個 clip。")]
+        public bool isLoop = false;
+
+        [Tooltip("勾選後：此 clip 及其後的所有 clip 在每一輪播放時隨機排序（與 loop 起點各自獨立）。")]
+        public bool isRandom = false;
     }
 
-    // SpinePlayGroup 結構 - trackIndex 改為 AnimationTrack
+    // SpinePlayGroup 結構 - loop/random 已下放到 clip；此處僅保留軌道與串接/條件設定
     [Serializable]
     public class SpinePlayGroup
     {
@@ -63,10 +72,8 @@ public class SpinePlayByList : MonoBehaviour
         [Header("Options (per-group)")]
         [Tooltip("指定此動畫組要在哪個軌道(AnimationTrack)上播放。")]
         public AnimationTrack track = 0;
-        public bool isLoop = false;
-        public bool isRandom = false;
 
-        [Tooltip("若有填，此組播完會接續播放該組；同時忽略本組 isLoop。")]
+        [Tooltip("若有填，此組播完會接續播放該組；同時忽略本組的 loop 後段。")]
         public string nextGroupName = null;
 
         [Tooltip("若外部條件成立，要跳轉到的目標組名；若為空則不檢查。")]
@@ -154,6 +161,13 @@ public class SpinePlayByList : MonoBehaviour
 
     public void PlayGroup(string groupName)
     {
+        // 已在播放同一組 → 略過不重播（loop 現在留在同一組內，CurrentGroupName 會整段等於此組）
+        if (IsPlaying && string.Equals(CurrentGroupName, groupName, StringComparison.Ordinal))
+        {
+            Debug.Log($"[{nameof(SpinePlayByList)}] 組 '{groupName}' 已在播放中，略過重複呼叫。", this);
+            return;
+        }
+
         if (!EnsureController()) return;
 
         var group = FindGroup(groupName);
@@ -184,6 +198,13 @@ public class SpinePlayByList : MonoBehaviour
 
     public void PlayGroupAndGoBack(string groupName)
     {
+        // 已在播放同一組 → 略過（沒必要插播自己）
+        if (IsPlaying && string.Equals(CurrentGroupName, groupName, StringComparison.Ordinal))
+        {
+            Debug.Log($"[{nameof(SpinePlayByList)}] [PlayGroupAndGoBack] 組 '{groupName}' 已在播放中，略過插播。", this);
+            return;
+        }
+
         if (!EnsureController()) return;
 
         var groupToPlay = FindGroup(groupName);
@@ -205,9 +226,10 @@ public class SpinePlayByList : MonoBehaviour
             groupToPlay = newGroup;
         }
 
-        if (groupToPlay.isLoop)
+        // 有 loop 後段 → 永遠不會結束，無法返回
+        if (FindLoopStart(groupToPlay.clips) >= 0)
         {
-            Debug.LogError($"[{nameof(SpinePlayByList)}] [PlayGroupAndGoBack] 最終要播放的組 '{groupToPlay.groupName}' 被設定為 isLoop，無法用於此功能，因為它永遠不會結束。", this);
+            Debug.LogError($"[{nameof(SpinePlayByList)}] [PlayGroupAndGoBack] 最終要播放的組 '{groupToPlay.groupName}' 含有 loop 後段（某 clip 勾了 isLoop），無法用於此功能，因為它永遠不會結束。", this);
             return;
         }
 
@@ -231,28 +253,11 @@ public class SpinePlayByList : MonoBehaviour
 
         int trackIndex = (int)groupToPlay.track;
         int clipCount = groupToPlay.clips?.Count ?? 0;
-        var order = BuildOrder(clipCount, groupToPlay.isRandom);
+        int randomStart = FindRandomStart(groupToPlay.clips);
 
-        for (int oi = 0; oi < order.Count; oi++)
-        {
-            var idx = order[oi];
-            var clip = SafeGet(groupToPlay.clips, idx);
-            if (clip == null || string.IsNullOrEmpty(clip.animationName)) continue;
-
-            int times = Mathf.Max(1, clip.repeatCount);
-            for (int r = 0; r < times; r++)
-            {
-                if (_state == null) yield break;
-
-                _controller.ClearTrack(groupToPlay.track);
-                TrackEntry te = _state.SetAnimation(trackIndex, clip.animationName, false);
-
-                while (te != null && !te.IsComplete)
-                {
-                    yield return null;
-                }
-            }
-        }
+        // 播放整組一次（隨機後段依 randomStart 打亂；此處保證無 loop）
+        yield return CoPlayRange(groupToPlay, trackIndex, 0, clipCount, randomStart);
+        if (_state == null) { _playRoutine = null; yield break; }
 
         CurrentGroupName = null;
         _playRoutine = null;
@@ -283,61 +288,56 @@ public class SpinePlayByList : MonoBehaviour
             OnGroupStarted?.Invoke(CurrentGroupName);
 
             int trackIndex = (int)group.track;
-            bool hasNext = !string.IsNullOrEmpty(group.nextGroupName);
-            bool allowLoopThisGroup = !hasNext && group.isLoop;
             int clipCount = group.clips?.Count ?? 0;
+            bool hasNext = !string.IsNullOrEmpty(group.nextGroupName);
+            int loopStart = FindLoopStart(group.clips);
+            int randomStart = FindRandomStart(group.clips);
+
+            // 有 nextGroupName 時 loop 失效（沿用舊語意）
+            bool allowLoop = !hasNext && loopStart >= 0;
+            int introEnd = allowLoop ? loopStart : clipCount;
 
             bool transitioned = false;
 
-            do
+            // ---- intro 段（一次性前段）----
+            if (introEnd > 0)
             {
-                var order = BuildOrder(clipCount, group.isRandom);
-                for (int oi = 0; oi < order.Count; oi++)
+                yield return CoPlayRange(group, trackIndex, 0, introEnd, randomStart);
+                if (_state == null) { _playRoutine = null; yield break; }
+            }
+
+            // intro 播完檢查一次外部條件
+            string ctarget = GetConditionTransitionTarget(group);
+            if (ctarget != null)
+            {
+                group = FindGroup(ctarget);
+                transitioned = true;
+            }
+
+            // ---- loop 後段 [loopStart, clipCount) 無限循環 ----
+            if (!transitioned && allowLoop)
+            {
+                while (true)
                 {
-                    var idx = order[oi];
-                    var clip = SafeGet(group.clips, idx);
-                    if (clip == null || string.IsNullOrEmpty(clip.animationName)) continue;
+                    yield return CoPlayRange(group, trackIndex, loopStart, clipCount, randomStart);
+                    if (_state == null) { _playRoutine = null; yield break; }
 
-                    int times = Mathf.Max(1, clip.repeatCount);
-                    for (int r = 0; r < times; r++)
+                    ctarget = GetConditionTransitionTarget(group);
+                    if (ctarget != null)
                     {
-                        if (_state == null) yield break;
-
-                        _controller.ClearTrack(group.track);
-                        TrackEntry te = _state.SetAnimation(trackIndex, clip.animationName, false);
-
-                        while (te != null && !te.IsComplete)
-                        {
-                            yield return null;
-                        }
-                    }
-                }
-
-                // 在每一輪播放完畢後，檢查外部條件
-                if (!string.IsNullOrEmpty(group.checkGroupName) && IsConditionMet())
-                {
-                    var targetGroup = FindGroup(group.checkGroupName);
-                    if (targetGroup != null)
-                    {
-                        Debug.Log($"[{nameof(SpinePlayByList)}] 外部條件滿足。從 '{group.groupName}' 跳轉至 '{group.checkGroupName}'。", this);
-                        group = targetGroup;
+                        group = FindGroup(ctarget);
                         transitioned = true;
                         break;
                     }
-                    else
-                    {
-                        Debug.LogWarning($"[{nameof(SpinePlayByList)}] 組 '{group.groupName}' 的條件跳轉目標 '{group.checkGroupName}' 不存在。繼續正常流程。", this);
-                    }
                 }
-
-            } while (allowLoopThisGroup);
+            }
 
             if (transitioned)
             {
                 continue;
             }
 
-            if (!string.IsNullOrEmpty(group.nextGroupName))
+            if (hasNext)
             {
                 var next = FindGroup(group.nextGroupName);
                 if (next == null)
@@ -356,6 +356,53 @@ public class SpinePlayByList : MonoBehaviour
         CurrentGroupName = null;
         _playRoutine = null;
         OnGroupCompleted?.Invoke(startName);
+    }
+
+    /// <summary>
+    /// 播放 clips 索引範圍 [start, end)。位於 randomStart 之後的部分會被隨機排序。
+    /// 若過程中 _state 變為 null（例如被中斷）會提前結束。
+    /// </summary>
+    IEnumerator CoPlayRange(SpinePlayGroup group, int trackIndex, int start, int end, int randomStart)
+    {
+        var order = BuildRangeOrder(start, end, randomStart);
+        for (int oi = 0; oi < order.Count; oi++)
+        {
+            var clip = SafeGet(group.clips, order[oi]);
+            if (clip == null || string.IsNullOrEmpty(clip.animationName)) continue;
+
+            int times = Mathf.Max(1, clip.repeatCount);
+            for (int r = 0; r < times; r++)
+            {
+                if (_state == null) yield break;
+
+                _controller.ClearTrack(group.track);
+                TrackEntry te = _state.SetAnimation(trackIndex, clip.animationName, false);
+
+                while (te != null && !te.IsComplete)
+                {
+                    yield return null;
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// 若組設定了 checkGroupName 且外部條件成立，回傳要跳轉的目標組名；否則回傳 null。
+    /// </summary>
+    private string GetConditionTransitionTarget(SpinePlayGroup group)
+    {
+        if (string.IsNullOrEmpty(group.checkGroupName)) return null;
+        if (!IsConditionMet()) return null;
+
+        var target = FindGroup(group.checkGroupName);
+        if (target != null)
+        {
+            Debug.Log($"[{nameof(SpinePlayByList)}] 外部條件滿足。從 '{group.groupName}' 跳轉至 '{group.checkGroupName}'。", this);
+            return group.checkGroupName;
+        }
+
+        Debug.LogWarning($"[{nameof(SpinePlayByList)}] 組 '{group.groupName}' 的條件跳轉目標 '{group.checkGroupName}' 不存在。繼續正常流程。", this);
+        return null;
     }
 
     private string CheckForImmediateTransition(SpinePlayGroup initialGroup)
@@ -397,17 +444,46 @@ public class SpinePlayByList : MonoBehaviour
         return groups.Find(g => string.Equals(g.groupName, name, StringComparison.Ordinal));
     }
 
-    static List<int> BuildOrder(int count, bool random)
+    /// <summary>回傳第一個勾了 isLoop 的 clip 索引；沒有則回傳 -1。</summary>
+    static int FindLoopStart(List<SpineClip> clips)
     {
-        var order = new List<int>(count);
-        for (int i = 0; i < count; i++) order.Add(i);
+        if (clips == null) return -1;
+        for (int i = 0; i < clips.Count; i++)
+            if (clips[i] != null && clips[i].isLoop) return i;
+        return -1;
+    }
 
-        if (random && count > 1)
+    /// <summary>回傳第一個勾了 isRandom 的 clip 索引；沒有則回傳 -1。</summary>
+    static int FindRandomStart(List<SpineClip> clips)
+    {
+        if (clips == null) return -1;
+        for (int i = 0; i < clips.Count; i++)
+            if (clips[i] != null && clips[i].isRandom) return i;
+        return -1;
+    }
+
+    /// <summary>
+    /// 產生 [start, end) 的播放索引順序。若 randomStart >= 0，則 max(start, randomStart) 起的尾段會被洗牌。
+    /// </summary>
+    static List<int> BuildRangeOrder(int start, int end, int randomStart)
+    {
+        var order = new List<int>();
+        if (end <= start) return order;
+        for (int i = start; i < end; i++) order.Add(i);
+
+        if (randomStart >= 0)
         {
-            for (int i = count - 1; i > 0; i--)
+            int rStart = Mathf.Max(start, randomStart);
+            int firstPos = rStart - start; // 洗牌區在 order 中的起始位置
+            if (firstPos < 0) firstPos = 0;
+
+            if (order.Count - firstPos > 1)
             {
-                int j = UnityEngine.Random.Range(0, i + 1);
-                (order[i], order[j]) = (order[j], order[i]);
+                for (int i = order.Count - 1; i > firstPos; i--)
+                {
+                    int j = UnityEngine.Random.Range(firstPos, i + 1);
+                    (order[i], order[j]) = (order[j], order[i]);
+                }
             }
         }
         return order;

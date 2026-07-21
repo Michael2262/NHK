@@ -3253,6 +3253,53 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 299811012}
   m_CullTransparentMesh: 1
+--- !u!1 &322544168
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 322544169}
+  - component: {fileID: 322544170}
+  m_Layer: 0
+  m_Name: ProgressFlagSetter (Slang)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &322544169
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 322544168}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 350774505}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &322544170
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 322544168}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 42e17fc95f8fd3148a7023cd99e3c0c6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ProgressFlagSetter
+  targetFlags:
+  - {fileID: 11400000, guid: 81889497e25fcab419920f03c5dacdc4, type: 2}
+  defaultAsTemporary: 0
 --- !u!1001 &329637930
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3783,6 +3830,7 @@ Transform:
   - {fileID: 1677808320}
   - {fileID: 2098287160}
   - {fileID: 904063034}
+  - {fileID: 322544169}
   - {fileID: 1286862564}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -5739,6 +5787,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::FsmTrigge
   fsmName: FSM
   eventName: TRIGGER
+--- !u!1 &524171356 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8710944983853017169, guid: b2d23e03f0a6a9544aa359c674881752, type: 3}
+  m_PrefabInstance: {fileID: 552993294}
+  m_PrefabAsset: {fileID: 0}
+--- !u!224 &524171357 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 9142738333852747400, guid: b2d23e03f0a6a9544aa359c674881752, type: 3}
+  m_PrefabInstance: {fileID: 552993294}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &525376812
 GameObject:
   m_ObjectHideFlags: 0
@@ -6038,6 +6096,151 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dd3e346adf585e24681199cb1a8ceeb0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SceneMusicController
+--- !u!1001 &552993294
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 1592895357}
+    m_Modifications:
+    - target: {fileID: 4040464214283652743, guid: b2d23e03f0a6a9544aa359c674881752, type: 3}
+      propertyPath: statPackageIDs.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4040464214283652743, guid: b2d23e03f0a6a9544aa359c674881752, type: 3}
+      propertyPath: 'statPackageIDs.Array.data[0]'
+      value: Slang
+      objectReference: {fileID: 0}
+    - target: {fileID: 4040464214283652743, guid: b2d23e03f0a6a9544aa359c674881752, type: 3}
+      propertyPath: flagChanges.Array.data[0].flagDefinition
+      value: 
+      objectReference: {fileID: 11400000, guid: 81889497e25fcab419920f03c5dacdc4, type: 2}
+    - target: {fileID: 4634207704582524524, guid: b2d23e03f0a6a9544aa359c674881752, type: 3}
+      propertyPath: m_text
+      value: "\u6253\u624B\u69CD"
+      objectReference: {fileID: 0}
+    - target: {fileID: 4813255307791682992, guid: b2d23e03f0a6a9544aa359c674881752, type: 3}
+      propertyPath: m_text
+      value: "\u6027\u885D\u52D5\u2193\u2193\u58D3\u529B\u2193"
+      objectReference: {fileID: 0}
+    - target: {fileID: 4813255307791682992, guid: b2d23e03f0a6a9544aa359c674881752, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8226973579053956318, guid: b2d23e03f0a6a9544aa359c674881752, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8710944983853017169, guid: b2d23e03f0a6a9544aa359c674881752, type: 3}
+      propertyPath: m_Name
+      value: Hub_Button_Slang
+      objectReference: {fileID: 0}
+    - target: {fileID: 8710944983853017169, guid: b2d23e03f0a6a9544aa359c674881752, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 9114058277431609538, guid: b2d23e03f0a6a9544aa359c674881752, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 7.922516
+      objectReference: {fileID: 0}
+    - target: {fileID: 9142738333852747400, guid: b2d23e03f0a6a9544aa359c674881752, type: 3}
+      propertyPath: m_Pivot.x
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 9142738333852747400, guid: b2d23e03f0a6a9544aa359c674881752, type: 3}
+      propertyPath: m_Pivot.y
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 9142738333852747400, guid: b2d23e03f0a6a9544aa359c674881752, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 9142738333852747400, guid: b2d23e03f0a6a9544aa359c674881752, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 9142738333852747400, guid: b2d23e03f0a6a9544aa359c674881752, type: 3}
+      propertyPath: m_AnchorMin.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9142738333852747400, guid: b2d23e03f0a6a9544aa359c674881752, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9142738333852747400, guid: b2d23e03f0a6a9544aa359c674881752, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9142738333852747400, guid: b2d23e03f0a6a9544aa359c674881752, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9142738333852747400, guid: b2d23e03f0a6a9544aa359c674881752, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.9998401
+      objectReference: {fileID: 0}
+    - target: {fileID: 9142738333852747400, guid: b2d23e03f0a6a9544aa359c674881752, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.9998401
+      objectReference: {fileID: 0}
+    - target: {fileID: 9142738333852747400, guid: b2d23e03f0a6a9544aa359c674881752, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0.9998401
+      objectReference: {fileID: 0}
+    - target: {fileID: 9142738333852747400, guid: b2d23e03f0a6a9544aa359c674881752, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9142738333852747400, guid: b2d23e03f0a6a9544aa359c674881752, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9142738333852747400, guid: b2d23e03f0a6a9544aa359c674881752, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9142738333852747400, guid: b2d23e03f0a6a9544aa359c674881752, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 9142738333852747400, guid: b2d23e03f0a6a9544aa359c674881752, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9142738333852747400, guid: b2d23e03f0a6a9544aa359c674881752, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9142738333852747400, guid: b2d23e03f0a6a9544aa359c674881752, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9142738333852747400, guid: b2d23e03f0a6a9544aa359c674881752, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9142738333852747400, guid: b2d23e03f0a6a9544aa359c674881752, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9142738333852747400, guid: b2d23e03f0a6a9544aa359c674881752, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9142738333852747400, guid: b2d23e03f0a6a9544aa359c674881752, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9142738333852747400, guid: b2d23e03f0a6a9544aa359c674881752, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: b2d23e03f0a6a9544aa359c674881752, type: 3}
 --- !u!1 &553140969
 GameObject:
   m_ObjectHideFlags: 0
@@ -7202,7 +7405,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 343.88, y: -464.55}
+  m_AnchoredPosition: {x: 343.88, y: -694.37006}
   m_SizeDelta: {x: 598.79, y: 105.42}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &660780429
@@ -9857,7 +10060,7 @@ MonoBehaviour:
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
           m_IntArgument: 0
           m_FloatArgument: 0
-          m_StringArgument: X98_Test/Test
+          m_StringArgument: BigEvent/Slang
           m_BoolArgument: 0
         m_CallState: 2
 --- !u!114 &864033171
@@ -10560,8 +10763,8 @@ MonoBehaviour:
       colorIndex: 0
       position:
         serializedVersion: 2
-        x: 56.554688
-        y: 275.3047
+        x: 73.55469
+        y: 274.3047
         width: 103.76
         height: 48
       isBreakpoint: 0
@@ -10569,7 +10772,7 @@ MonoBehaviour:
       hideUnused: 0
       transitions:
       - fsmEvent:
-          name: BigDayEvent
+          name: "Event\u9806\u4F4D2_\u4F9D\u65E5\u671F\u89F8\u767C_\u6C92\u89F8\u767C\u53EF\u9806\u5EF6"
           isSystemEvent: 0
           isGlobal: 0
         toState: "\u9996\u6B21\u5047\u65E5\u7684Come"
@@ -10649,9 +10852,9 @@ MonoBehaviour:
         fsmRectParams: []
         fsmQuaternionParams: []
         stringParams:
-        - BigDayEvent
+        - "Event\u9806\u4F4D2_\u4F9D\u65E5\u671F\u89F8\u767C_\u6C92\u89F8\u767C\u53EF\u9806\u5EF6"
         - 
-        - HighPriorityEvent
+        - "Event\u9806\u4F4D3_\u76EE\u524D\u53EA\u7528\u4F86\u56FA\u5B9A\u89F8\u767C\u751F\u6C23"
         - 
         byteData: 01000000000100000000
         arrayParamSizes: 000000000100000000000000010000000000000001000000
@@ -10689,202 +10892,13 @@ MonoBehaviour:
         - storeKeptCount
         paramDataPos: 000000000000000001000000000000000000000001000000000000000400000005000000020000000300000001000000020000000300000001000000090000000000000004000000050000000200000001000000
         paramByteDataSize: 040000000000000000000000000000000000000000000000000000000100000004000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000
-    - name: SwitchProgressFlag
-      description: 
-      colorIndex: 4
-      position:
-        serializedVersion: 2
-        x: 121
-        y: 408.5
-        width: 146.08
-        height: 80
-      isBreakpoint: 0
-      isSequence: 0
-      hideUnused: 0
-      transitions:
-      - fsmEvent:
-          name: FINISHED
-          isSystemEvent: 1
-          isGlobal: 0
-        toState: "\u666E\u901A\u5047\u65E5\u7684Come"
-        linkStyle: 0
-        linkConstraint: 0
-        linkTarget: 0
-        colorIndex: 0
-      - fsmEvent:
-          name: Shave
-          isSystemEvent: 0
-          isGlobal: 0
-        toState: "\u666E\u901A\u5047\u65E5\u7684Come"
-        linkStyle: 0
-        linkConstraint: 0
-        linkTarget: 0
-        colorIndex: 0
-      - fsmEvent:
-          name: CleanRoom
-          isSystemEvent: 0
-          isGlobal: 0
-        toState: "\u666E\u901A\u5047\u65E5\u7684Come"
-        linkStyle: 0
-        linkConstraint: 0
-        linkTarget: 0
-        colorIndex: 0
-      - fsmEvent:
-          name: PornVideo
-          isSystemEvent: 0
-          isGlobal: 0
-        toState: "\u8272\u60C5\u5F71\u7247"
-        linkStyle: 0
-        linkConstraint: 0
-        linkTarget: 0
-        colorIndex: 0
-      actionData:
-        actionNames:
-        - MyGame.Actions.SwitchProgressFlag
-        customNames:
-        - 
-        actionEnabled: 01
-        actionIsOpen: 01
-        actionStartIndex: 00000000
-        actionHashCodes: 7defeb03
-        unityObjectParams:
-        - {fileID: 11400000, guid: 6461914c094961242a5618aba4aef89f, type: 2}
-        - {fileID: 11400000, guid: 704a0910b20dd19438e878c837dfd2fa, type: 2}
-        - {fileID: 11400000, guid: 0dd5b7f673488c34fad4d7bb4f298bc2, type: 2}
-        - {fileID: 11400000, guid: 870095aab33f699418df3dc83a8df04f, type: 2}
-        fsmGameObjectParams: []
-        fsmOwnerDefaultParams: []
-        animationCurveParams: []
-        functionCallParams: []
-        fsmTemplateControlParams: []
-        fsmEventTargetParams: []
-        fsmPropertyParams: []
-        layoutOptionParams: []
-        fsmStringParams: []
-        fsmObjectParams: []
-        fsmVarParams: []
-        fsmArrayParams: []
-        fsmEnumParams: []
-        fsmFloatParams: []
-        fsmIntParams: []
-        fsmBoolParams: []
-        fsmVector2Params: []
-        fsmVector3Params: []
-        fsmColorParams: []
-        fsmRectParams: []
-        fsmQuaternionParams: []
-        stringParams:
-        - Shave
-        - Worried
-        - CleanRoom
-        - PornVideo
-        - FINISHED
-        byteData: 
-        arrayParamSizes: 04000000
-        arrayParamTypes:
-        - MyGame.Actions.SwitchProgressFlag+FlagEventEntry
-        customTypeSizes: 02000000020000000200000002000000
-        customTypeNames:
-        - MyGame.Actions.SwitchProgressFlag+FlagEventEntry
-        - MyGame.Actions.SwitchProgressFlag+FlagEventEntry
-        - MyGame.Actions.SwitchProgressFlag+FlagEventEntry
-        - MyGame.Actions.SwitchProgressFlag+FlagEventEntry
-        paramDataType: 0c00000028000000050000001700000028000000050000001700000028000000050000001700000028000000050000001700000017000000
-        paramName:
-        - entries
-        - 
-        - flagDef
-        - sendEvent
-        - 
-        - flagDef
-        - sendEvent
-        - 
-        - flagDef
-        - sendEvent
-        - 
-        - flagDef
-        - sendEvent
-        - noneMatchedEvent
-        paramDataPos: 0000000000000000000000000000000001000000010000000100000002000000020000000200000003000000030000000300000004000000
-        paramByteDataSize: 0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-    - name: "\u8272\u60C5\u5F71\u7247"
-      description: 
-      colorIndex: 3
-      position:
-        serializedVersion: 2
-        x: 336.64844
-        y: 503.8828
-        width: 100
-        height: 32
-      isBreakpoint: 0
-      isSequence: 0
-      hideUnused: 0
-      transitions:
-      - fsmEvent:
-          name: FINISHED
-          isSystemEvent: 1
-          isGlobal: 0
-        toState: "\u662F\u5426\u89F8\u767C\u64D4\u5FC3?"
-        linkStyle: 0
-        linkConstraint: 0
-        linkTarget: 0
-        colorIndex: 0
-      actionData:
-        actionNames:
-        - PlayStoryConversation
-        customNames:
-        - 
-        actionEnabled: 01
-        actionIsOpen: 01
-        actionStartIndex: 00000000
-        actionHashCodes: a4345405
-        unityObjectParams: []
-        fsmGameObjectParams: []
-        fsmOwnerDefaultParams: []
-        animationCurveParams: []
-        functionCallParams: []
-        fsmTemplateControlParams: []
-        fsmEventTargetParams: []
-        fsmPropertyParams: []
-        layoutOptionParams: []
-        fsmStringParams:
-        - useVariable: 0
-          name: 
-          tooltip: 
-          showInInspector: 0
-          networkSync: 0
-          value: DayLoopTalk/Come/PornVideo
-        fsmObjectParams: []
-        fsmVarParams: []
-        fsmArrayParams: []
-        fsmEnumParams: []
-        fsmFloatParams: []
-        fsmIntParams: []
-        fsmBoolParams: []
-        fsmVector2Params: []
-        fsmVector3Params: []
-        fsmColorParams: []
-        fsmRectParams: []
-        fsmQuaternionParams: []
-        stringParams: []
-        byteData: 02000000
-        arrayParamSizes: 
-        arrayParamTypes: []
-        customTypeSizes: 
-        customTypeNames: []
-        paramDataType: 1200000007000000
-        paramName:
-        - title
-        - mode
-        paramDataPos: 0000000000000000
-        paramByteDataSize: 0000000004000000
     - name: "\u662F\u5426\u89F8\u767C\u64D4\u5FC3?"
       description: 
       colorIndex: 0
       position:
         serializedVersion: 2
-        x: 529
-        y: 130
+        x: 526
+        y: 132
         width: 113.57
         height: 48
       isBreakpoint: 0
@@ -11147,6 +11161,9 @@ MonoBehaviour:
       isSystemEvent: 0
       isGlobal: 0
     - name: "\u64D4\u5FC3"
+      isSystemEvent: 0
+      isGlobal: 0
+    - name: "Event\u9806\u4F4D2_\u4F9D\u65E5\u671F\u89F8\u767C_\u6C92\u89F8\u767C\u53EF\u9806\u5EF6"
       isSystemEvent: 0
       isGlobal: 0
     globalTransitions: []
@@ -11464,8 +11481,8 @@ MonoBehaviour:
       colorIndex: 0
       position:
         serializedVersion: 2
-        x: 231
-        y: 111
+        x: 233.66406
+        y: 216.33594
         width: 100
         height: 32
       isBreakpoint: 0
@@ -11525,8 +11542,8 @@ MonoBehaviour:
       colorIndex: 3
       position:
         serializedVersion: 2
-        x: 686.4844
-        y: 657.89844
+        x: 734.6719
+        y: 822.77344
         width: 100
         height: 32
       isBreakpoint: 0
@@ -11596,8 +11613,8 @@ MonoBehaviour:
       colorIndex: 0
       position:
         serializedVersion: 2
-        x: 445
-        y: 629
+        x: 463.29688
+        y: 813.41406
         width: 140.85
         height: 32
       isBreakpoint: 0
@@ -11696,8 +11713,8 @@ MonoBehaviour:
       colorIndex: 0
       position:
         serializedVersion: 2
-        x: 1332
-        y: 459
+        x: 1804.9453
+        y: 569.8047
         width: 100
         height: 32
       isBreakpoint: 0
@@ -11784,8 +11801,8 @@ MonoBehaviour:
       colorIndex: 0
       position:
         serializedVersion: 2
-        x: 236
-        y: 717
+        x: 252
+        y: 829
         width: 101.82
         height: 32
       isBreakpoint: 0
@@ -11867,10 +11884,10 @@ MonoBehaviour:
       colorIndex: 0
       position:
         serializedVersion: 2
-        x: 443
-        y: 709
+        x: 459.1953
+        y: 886.66406
         width: 146.08
-        height: 96
+        height: 48
       isBreakpoint: 0
       isSequence: 0
       hideUnused: 0
@@ -11885,37 +11902,10 @@ MonoBehaviour:
         linkTarget: 0
         colorIndex: 0
       - fsmEvent:
-          name: HighPriorityEvent
-          isSystemEvent: 0
-          isGlobal: 0
-        toState: "\u62BD\u83F8\u4E8B\u4EF6"
-        linkStyle: 0
-        linkConstraint: 0
-        linkTarget: 0
-        colorIndex: 0
-      - fsmEvent:
-          name: Shave
-          isSystemEvent: 0
-          isGlobal: 0
-        toState: "\u522E\u9B0D\u5B50\u4E8B\u4EF6"
-        linkStyle: 0
-        linkConstraint: 0
-        linkTarget: 0
-        colorIndex: 0
-      - fsmEvent:
           name: CleanRoom
           isSystemEvent: 0
           isGlobal: 0
         toState: DefaultTalk
-        linkStyle: 0
-        linkConstraint: 0
-        linkTarget: 0
-        colorIndex: 0
-      - fsmEvent:
-          name: PornVideo
-          isSystemEvent: 0
-          isGlobal: 0
-        toState: "\u8272\u60C5\u5F71\u7247"
         linkStyle: 0
         linkConstraint: 0
         linkTarget: 0
@@ -11930,10 +11920,7 @@ MonoBehaviour:
         actionStartIndex: 00000000
         actionHashCodes: 7defeb03
         unityObjectParams:
-        - {fileID: 11400000, guid: 6461914c094961242a5618aba4aef89f, type: 2}
-        - {fileID: 11400000, guid: 704a0910b20dd19438e878c837dfd2fa, type: 2}
         - {fileID: 11400000, guid: 0dd5b7f673488c34fad4d7bb4f298bc2, type: 2}
-        - {fileID: 11400000, guid: 870095aab33f699418df3dc83a8df04f, type: 2}
         fsmGameObjectParams: []
         fsmOwnerDefaultParams: []
         animationCurveParams: []
@@ -11956,117 +11943,31 @@ MonoBehaviour:
         fsmRectParams: []
         fsmQuaternionParams: []
         stringParams:
-        - Shave
-        - Worried
         - CleanRoom
-        - PornVideo
         - FINISHED
         byteData: 
-        arrayParamSizes: 04000000
+        arrayParamSizes: 01000000
         arrayParamTypes:
         - MyGame.Actions.SwitchProgressFlag+FlagEventEntry
-        customTypeSizes: 02000000020000000200000002000000
+        customTypeSizes: 02000000
         customTypeNames:
         - MyGame.Actions.SwitchProgressFlag+FlagEventEntry
-        - MyGame.Actions.SwitchProgressFlag+FlagEventEntry
-        - MyGame.Actions.SwitchProgressFlag+FlagEventEntry
-        - MyGame.Actions.SwitchProgressFlag+FlagEventEntry
-        paramDataType: 0c00000028000000050000001700000028000000050000001700000028000000050000001700000028000000050000001700000017000000
+        paramDataType: 0c00000028000000050000001700000017000000
         paramName:
         - entries
         - 
         - flagDef
         - sendEvent
-        - 
-        - flagDef
-        - sendEvent
-        - 
-        - flagDef
-        - sendEvent
-        - 
-        - flagDef
-        - sendEvent
         - noneMatchedEvent
-        paramDataPos: 0000000000000000000000000000000001000000010000000100000002000000020000000200000003000000030000000300000004000000
-        paramByteDataSize: 0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-    - name: "\u62BD\u83F8\u4E8B\u4EF6"
-      description: 
-      colorIndex: 3
-      position:
-        serializedVersion: 2
-        x: 687.4844
-        y: 716.90625
-        width: 100
-        height: 32
-      isBreakpoint: 0
-      isSequence: 0
-      hideUnused: 0
-      transitions:
-      - fsmEvent:
-          name: NextAction
-          isSystemEvent: 0
-          isGlobal: 0
-        toState: "\u662F\u5426\u89F8\u767C\u64D4\u5FC3?"
-        linkStyle: 0
-        linkConstraint: 0
-        linkTarget: 0
-        colorIndex: 0
-      actionData:
-        actionNames:
-        - PlayStoryConversation
-        customNames:
-        - 
-        actionEnabled: 01
-        actionIsOpen: 01
-        actionStartIndex: 00000000
-        actionHashCodes: a4345405
-        unityObjectParams: []
-        fsmGameObjectParams: []
-        fsmOwnerDefaultParams: []
-        animationCurveParams: []
-        functionCallParams: []
-        fsmTemplateControlParams: []
-        fsmEventTargetParams: []
-        fsmPropertyParams: []
-        layoutOptionParams: []
-        fsmStringParams:
-        - useVariable: 0
-          name: 
-          tooltip: 
-          showInInspector: 0
-          networkSync: 0
-          value: DayLoopTalk/Come/Smoke
-        fsmObjectParams: []
-        fsmVarParams: []
-        fsmArrayParams: []
-        fsmEnumParams: []
-        fsmFloatParams: []
-        fsmIntParams: []
-        fsmBoolParams: []
-        fsmVector2Params: []
-        fsmVector3Params: []
-        fsmColorParams: []
-        fsmRectParams: []
-        fsmQuaternionParams: []
-        stringParams: []
-        byteData: 02000000
-        arrayParamSizes: 
-        arrayParamTypes: []
-        customTypeSizes: 
-        customTypeNames: []
-        paramDataType: 1200000007000000
-        paramName:
-        - title
-        - mode
-        paramDataPos: 0000000000000000
-        paramByteDataSize: 0000000004000000
+        paramDataPos: 0000000000000000000000000000000001000000
+        paramByteDataSize: 0000000000000000000000000000000000000000
     - name: removeAllFlag
       description: 
       colorIndex: 0
       position:
         serializedVersion: 2
-        x: 1182.9062
-        y: 804.34375
+        x: 1658.1406
+        y: 573.7656
         width: 112.97
         height: 32
       isBreakpoint: 0
@@ -12129,226 +12030,13 @@ MonoBehaviour:
         - 
         paramDataPos: 000000000100000000000000
         paramByteDataSize: 000000000000000000000000
-    - name: "\u6E05\u7406\u623F\u9593\u4E8B\u4EF6"
-      description: 
-      colorIndex: 3
-      position:
-        serializedVersion: 2
-        x: 682.2422
-        y: 854.46094
-        width: 107.05
-        height: 32
-      isBreakpoint: 0
-      isSequence: 0
-      hideUnused: 0
-      transitions:
-      - fsmEvent:
-          name: NextAction
-          isSystemEvent: 0
-          isGlobal: 0
-        toState: "\u662F\u5426\u89F8\u767C\u64D4\u5FC3?"
-        linkStyle: 0
-        linkConstraint: 0
-        linkTarget: 0
-        colorIndex: 0
-      actionData:
-        actionNames:
-        - PlayStoryConversation
-        customNames:
-        - 
-        actionEnabled: 01
-        actionIsOpen: 01
-        actionStartIndex: 00000000
-        actionHashCodes: a4345405
-        unityObjectParams: []
-        fsmGameObjectParams: []
-        fsmOwnerDefaultParams: []
-        animationCurveParams: []
-        functionCallParams: []
-        fsmTemplateControlParams: []
-        fsmEventTargetParams: []
-        fsmPropertyParams: []
-        layoutOptionParams: []
-        fsmStringParams:
-        - useVariable: 0
-          name: 
-          tooltip: 
-          showInInspector: 0
-          networkSync: 0
-          value: DayLoopTalk/Come/CleanRoom
-        fsmObjectParams: []
-        fsmVarParams: []
-        fsmArrayParams: []
-        fsmEnumParams: []
-        fsmFloatParams: []
-        fsmIntParams: []
-        fsmBoolParams: []
-        fsmVector2Params: []
-        fsmVector3Params: []
-        fsmColorParams: []
-        fsmRectParams: []
-        fsmQuaternionParams: []
-        stringParams: []
-        byteData: 02000000
-        arrayParamSizes: 
-        arrayParamTypes: []
-        customTypeSizes: 
-        customTypeNames: []
-        paramDataType: 1200000007000000
-        paramName:
-        - title
-        - mode
-        paramDataPos: 0000000000000000
-        paramByteDataSize: 0000000004000000
-    - name: "\u522E\u9B0D\u5B50\u4E8B\u4EF6"
-      description: 
-      colorIndex: 3
-      position:
-        serializedVersion: 2
-        x: 691.2422
-        y: 779.3906
-        width: 100
-        height: 32
-      isBreakpoint: 0
-      isSequence: 0
-      hideUnused: 0
-      transitions:
-      - fsmEvent:
-          name: NextAction
-          isSystemEvent: 0
-          isGlobal: 0
-        toState: "\u662F\u5426\u89F8\u767C\u64D4\u5FC3?"
-        linkStyle: 0
-        linkConstraint: 0
-        linkTarget: 0
-        colorIndex: 0
-      actionData:
-        actionNames:
-        - PlayStoryConversation
-        customNames:
-        - 
-        actionEnabled: 01
-        actionIsOpen: 01
-        actionStartIndex: 00000000
-        actionHashCodes: a4345405
-        unityObjectParams: []
-        fsmGameObjectParams: []
-        fsmOwnerDefaultParams: []
-        animationCurveParams: []
-        functionCallParams: []
-        fsmTemplateControlParams: []
-        fsmEventTargetParams: []
-        fsmPropertyParams: []
-        layoutOptionParams: []
-        fsmStringParams:
-        - useVariable: 0
-          name: 
-          tooltip: 
-          showInInspector: 0
-          networkSync: 0
-          value: DayLoopTalk/Come/Shave
-        fsmObjectParams: []
-        fsmVarParams: []
-        fsmArrayParams: []
-        fsmEnumParams: []
-        fsmFloatParams: []
-        fsmIntParams: []
-        fsmBoolParams: []
-        fsmVector2Params: []
-        fsmVector3Params: []
-        fsmColorParams: []
-        fsmRectParams: []
-        fsmQuaternionParams: []
-        stringParams: []
-        byteData: 02000000
-        arrayParamSizes: 
-        arrayParamTypes: []
-        customTypeSizes: 
-        customTypeNames: []
-        paramDataType: 1200000007000000
-        paramName:
-        - title
-        - mode
-        paramDataPos: 0000000000000000
-        paramByteDataSize: 0000000004000000
-    - name: "\u8272\u60C5\u5F71\u7247"
-      description: 
-      colorIndex: 3
-      position:
-        serializedVersion: 2
-        x: 692.64844
-        y: 934.3828
-        width: 100
-        height: 32
-      isBreakpoint: 0
-      isSequence: 0
-      hideUnused: 0
-      transitions:
-      - fsmEvent:
-          name: NextAction
-          isSystemEvent: 0
-          isGlobal: 0
-        toState: "\u662F\u5426\u89F8\u767C\u64D4\u5FC3?"
-        linkStyle: 0
-        linkConstraint: 0
-        linkTarget: 0
-        colorIndex: 0
-      actionData:
-        actionNames:
-        - PlayStoryConversation
-        customNames:
-        - 
-        actionEnabled: 01
-        actionIsOpen: 01
-        actionStartIndex: 00000000
-        actionHashCodes: a4345405
-        unityObjectParams: []
-        fsmGameObjectParams: []
-        fsmOwnerDefaultParams: []
-        animationCurveParams: []
-        functionCallParams: []
-        fsmTemplateControlParams: []
-        fsmEventTargetParams: []
-        fsmPropertyParams: []
-        layoutOptionParams: []
-        fsmStringParams:
-        - useVariable: 0
-          name: 
-          tooltip: 
-          showInInspector: 0
-          networkSync: 0
-          value: DayLoopTalk/Come/PornVideo
-        fsmObjectParams: []
-        fsmVarParams: []
-        fsmArrayParams: []
-        fsmEnumParams: []
-        fsmFloatParams: []
-        fsmIntParams: []
-        fsmBoolParams: []
-        fsmVector2Params: []
-        fsmVector3Params: []
-        fsmColorParams: []
-        fsmRectParams: []
-        fsmQuaternionParams: []
-        stringParams: []
-        byteData: 02000000
-        arrayParamSizes: 
-        arrayParamTypes: []
-        customTypeSizes: 
-        customTypeNames: []
-        paramDataType: 1200000007000000
-        paramName:
-        - title
-        - mode
-        paramDataPos: 0000000000000000
-        paramByteDataSize: 0000000004000000
     - name: Intro?
       description: 
       colorIndex: 0
       position:
         serializedVersion: 2
-        x: 230.25
-        y: 351
+        x: 221.80469
+        y: 398.5547
         width: 100
         height: 48
       isBreakpoint: 0
@@ -12433,16 +12121,25 @@ MonoBehaviour:
       colorIndex: 0
       position:
         serializedVersion: 2
-        x: 202.50781
-        y: 455.32812
-        width: 132.16
-        height: 80
+        x: 65.17969
+        y: 599.5547
+        width: 272.58002
+        height: 96
       isBreakpoint: 0
       isSequence: 0
       hideUnused: 0
       transitions:
       - fsmEvent:
-          name: BigDayEvent
+          name: "Event\u9806\u4F4D1_\u7576\u65E5\u5FC5\u9808\u89F8\u767C_\u6C92\u89F8\u767C\u53EA\u80FD\u6368\u68C4"
+          isSystemEvent: 0
+          isGlobal: 0
+        toState: "Event\u9806\u4F4D1"
+        linkStyle: 0
+        linkConstraint: 0
+        linkTarget: 0
+        colorIndex: 0
+      - fsmEvent:
+          name: "Event\u9806\u4F4D2_\u4F9D\u65E5\u671F\u89F8\u767C_\u6C92\u89F8\u767C\u53EF\u9806\u5EF6"
           isSystemEvent: 0
           isGlobal: 0
         toState: openBlockAndWait 2
@@ -12451,7 +12148,7 @@ MonoBehaviour:
         linkTarget: 0
         colorIndex: 0
       - fsmEvent:
-          name: HighPriorityEvent
+          name: "Event\u9806\u4F4D3_\u76EE\u524D\u53EA\u7528\u4F86\u56FA\u5B9A\u89F8\u767C\u751F\u6C23"
           isSystemEvent: 0
           isGlobal: 0
         toState: openBlockAndWait 3
@@ -12460,7 +12157,7 @@ MonoBehaviour:
         linkTarget: 0
         colorIndex: 0
       - fsmEvent:
-          name: Next
+          name: "Event\u9806\u4F4D4_\u7576\u65E5\u89F8\u767C_\u4E0D\u89F8\u767C\u5C31\u6368\u68C4"
           isSystemEvent: 0
           isGlobal: 0
         toState: ComeAction
@@ -12534,12 +12231,12 @@ MonoBehaviour:
         fsmRectParams: []
         fsmQuaternionParams: []
         stringParams:
-        - BigDayEvent
+        - "Event\u9806\u4F4D2_\u4F9D\u65E5\u671F\u89F8\u767C_\u6C92\u89F8\u767C\u53EF\u9806\u5EF6"
         - 
-        - HighPriorityEvent
+        - "Event\u9806\u4F4D3_\u76EE\u524D\u53EA\u7528\u4F86\u56FA\u5B9A\u89F8\u767C\u751F\u6C23"
         - 
-        - Next
-        - HighPriorityEvent
+        - "Event\u9806\u4F4D4_\u7576\u65E5\u89F8\u767C_\u4E0D\u89F8\u767C\u5C31\u6368\u68C4"
+        - "Event\u9806\u4F4D3_\u76EE\u524D\u53EA\u7528\u4F86\u56FA\u5B9A\u89F8\u767C\u751F\u6C23"
         byteData: 0100000000010000000000
         arrayParamSizes: 00000000010000000000000001000000
         arrayParamTypes:
@@ -12579,8 +12276,8 @@ MonoBehaviour:
       colorIndex: 0
       position:
         serializedVersion: 2
-        x: 432.5
-        y: 203.5
+        x: 471.83594
+        y: 336.60938
         width: 151.29001
         height: 32
       isBreakpoint: 0
@@ -12679,8 +12376,8 @@ MonoBehaviour:
       colorIndex: 0
       position:
         serializedVersion: 2
-        x: 426.5
-        y: 280.5
+        x: 466.9453
+        y: 396.9453
         width: 156.51999
         height: 48
       isBreakpoint: 0
@@ -12761,8 +12458,8 @@ MonoBehaviour:
       colorIndex: 5
       position:
         serializedVersion: 2
-        x: 680
-        y: 128
+        x: 723.46875
+        y: 462.33594
         width: 100
         height: 32
       isBreakpoint: 0
@@ -12773,7 +12470,7 @@ MonoBehaviour:
           name: NextAction
           isSystemEvent: 0
           isGlobal: 0
-        toState: removeAllFlag 2
+        toState: "\u662F\u5426\u89F8\u767C\u64D4\u5FC3?"
         linkStyle: 0
         linkConstraint: 0
         linkTarget: 0
@@ -12827,212 +12524,13 @@ MonoBehaviour:
         - mode
         paramDataPos: 0000000000000000
         paramByteDataSize: 0000000004000000
-    - name: removeAllFlag 2
-      description: 
-      colorIndex: 0
-      position:
-        serializedVersion: 2
-        x: 873
-        y: 274
-        width: 123.4
-        height: 32
-      isBreakpoint: 0
-      isSequence: 0
-      hideUnused: 0
-      transitions:
-      - fsmEvent:
-          name: FINISHED
-          isSystemEvent: 1
-          isGlobal: 0
-        toState: "\u662F\u5426\u89F8\u767C\u64D4\u5FC3?"
-        linkStyle: 0
-        linkConstraint: 0
-        linkTarget: 0
-        colorIndex: 0
-      actionData:
-        actionNames:
-        - MyGame.Actions.RemoveMultipleFlags
-        - MyGame.Actions.RemoveMultipleFlags
-        customNames:
-        - 
-        - 
-        actionEnabled: 0001
-        actionIsOpen: 0101
-        actionStartIndex: 0000000003000000
-        actionHashCodes: 91a6eb0591a6eb05
-        unityObjectParams:
-        - {fileID: 11400000, guid: 73634302d8254774185c10773d32d41d, type: 2}
-        - {fileID: 11400000, guid: ade3c6571565dc04f9f3eeb32653275d, type: 2}
-        fsmGameObjectParams: []
-        fsmOwnerDefaultParams: []
-        animationCurveParams: []
-        functionCallParams: []
-        fsmTemplateControlParams: []
-        fsmEventTargetParams: []
-        fsmPropertyParams: []
-        layoutOptionParams: []
-        fsmStringParams: []
-        fsmObjectParams: []
-        fsmVarParams: []
-        fsmArrayParams: []
-        fsmEnumParams: []
-        fsmFloatParams: []
-        fsmIntParams: []
-        fsmBoolParams: []
-        fsmVector2Params: []
-        fsmVector3Params: []
-        fsmColorParams: []
-        fsmRectParams: []
-        fsmQuaternionParams: []
-        stringParams: []
-        byteData: 
-        arrayParamSizes: 00000000010000000000000001000000
-        arrayParamTypes:
-        - ProgressFlagDefinition
-        - FlagBundle
-        - ProgressFlagDefinition
-        - FlagBundle
-        customTypeSizes: 
-        customTypeNames: []
-        paramDataType: 0c0000000c000000050000000c0000000c00000005000000
-        paramName:
-        - flags
-        - bundles
-        - 
-        - flags
-        - bundles
-        - 
-        paramDataPos: 000000000100000000000000020000000300000001000000
-        paramByteDataSize: 000000000000000000000000000000000000000000000000
-    - name: DayX
-      description: 
-      colorIndex: 5
-      position:
-        serializedVersion: 2
-        x: 680.5
-        y: 222.05469
-        width: 100
-        height: 32
-      isBreakpoint: 0
-      isSequence: 0
-      hideUnused: 0
-      transitions:
-      - fsmEvent:
-          name: NextAction
-          isSystemEvent: 0
-          isGlobal: 0
-        toState: removeAllFlag 2
-        linkStyle: 0
-        linkConstraint: 0
-        linkTarget: 0
-        colorIndex: 0
-      actionData:
-        actionNames: []
-        customNames: []
-        actionEnabled: 
-        actionIsOpen: 
-        actionStartIndex: 
-        actionHashCodes: 
-        unityObjectParams: []
-        fsmGameObjectParams: []
-        fsmOwnerDefaultParams: []
-        animationCurveParams: []
-        functionCallParams: []
-        fsmTemplateControlParams: []
-        fsmEventTargetParams: []
-        fsmPropertyParams: []
-        layoutOptionParams: []
-        fsmStringParams: []
-        fsmObjectParams: []
-        fsmVarParams: []
-        fsmArrayParams: []
-        fsmEnumParams: []
-        fsmFloatParams: []
-        fsmIntParams: []
-        fsmBoolParams: []
-        fsmVector2Params: []
-        fsmVector3Params: []
-        fsmColorParams: []
-        fsmRectParams: []
-        fsmQuaternionParams: []
-        stringParams: []
-        byteData: 
-        arrayParamSizes: 
-        arrayParamTypes: []
-        customTypeSizes: 
-        customTypeNames: []
-        paramDataType: 
-        paramName: []
-        paramDataPos: 
-        paramByteDataSize: 
-    - name: DayY
-      description: 
-      colorIndex: 5
-      position:
-        serializedVersion: 2
-        x: 683.5
-        y: 306.0547
-        width: 100
-        height: 32
-      isBreakpoint: 0
-      isSequence: 0
-      hideUnused: 0
-      transitions:
-      - fsmEvent:
-          name: NextAction
-          isSystemEvent: 0
-          isGlobal: 0
-        toState: removeAllFlag 2
-        linkStyle: 0
-        linkConstraint: 0
-        linkTarget: 0
-        colorIndex: 0
-      actionData:
-        actionNames: []
-        customNames: []
-        actionEnabled: 
-        actionIsOpen: 
-        actionStartIndex: 
-        actionHashCodes: 
-        unityObjectParams: []
-        fsmGameObjectParams: []
-        fsmOwnerDefaultParams: []
-        animationCurveParams: []
-        functionCallParams: []
-        fsmTemplateControlParams: []
-        fsmEventTargetParams: []
-        fsmPropertyParams: []
-        layoutOptionParams: []
-        fsmStringParams: []
-        fsmObjectParams: []
-        fsmVarParams: []
-        fsmArrayParams: []
-        fsmEnumParams: []
-        fsmFloatParams: []
-        fsmIntParams: []
-        fsmBoolParams: []
-        fsmVector2Params: []
-        fsmVector3Params: []
-        fsmColorParams: []
-        fsmRectParams: []
-        fsmQuaternionParams: []
-        stringParams: []
-        byteData: 
-        arrayParamSizes: 
-        arrayParamTypes: []
-        customTypeSizes: 
-        customTypeNames: []
-        paramDataType: 
-        paramName: []
-        paramDataPos: 
-        paramByteDataSize: 
     - name: openBlockAndWait 3
       description: 
       colorIndex: 0
       position:
         serializedVersion: 2
-        x: 441.04688
-        y: 406.20312
+        x: 457.04688
+        y: 518.2031
         width: 151.65
         height: 32
       isBreakpoint: 0
@@ -13131,8 +12629,8 @@ MonoBehaviour:
       colorIndex: 0
       position:
         serializedVersion: 2
-        x: 432.04688
-        y: 506.20312
+        x: 448.04688
+        y: 618.2031
         width: 189.16
         height: 48
       isBreakpoint: 0
@@ -13217,8 +12715,8 @@ MonoBehaviour:
       colorIndex: 1
       position:
         serializedVersion: 2
-        x: 678
-        y: 523
+        x: 694
+        y: 635
         width: 191.17
         height: 32
       isBreakpoint: 0
@@ -13288,8 +12786,8 @@ MonoBehaviour:
       colorIndex: 0
       position:
         serializedVersion: 2
-        x: 232
-        y: 192
+        x: 234.66406
+        y: 281.78125
         width: 100
         height: 48
       isBreakpoint: 0
@@ -13382,8 +12880,8 @@ MonoBehaviour:
       colorIndex: 0
       position:
         serializedVersion: 2
-        x: 62
-        y: 202
+        x: 73.55469
+        y: 299.5547
         width: 100
         height: 32
       isBreakpoint: 0
@@ -13460,11 +12958,11 @@ MonoBehaviour:
         paramByteDataSize: 00000000000000000000000000000000
     - name: "\u64D4\u5FC3\u7684Come"
       description: 
-      colorIndex: 1
+      colorIndex: 2
       position:
         serializedVersion: 2
-        x: 983.0547
-        y: 660.7344
+        x: 1346.4219
+        y: 547.0781
         width: 102.63
         height: 32
       isBreakpoint: 0
@@ -13535,11 +13033,11 @@ MonoBehaviour:
         paramByteDataSize: 000000000000000004000000
     - name: "\u662F\u5426\u89F8\u767C\u64D4\u5FC3?"
       description: 
-      colorIndex: 0
+      colorIndex: 2
       position:
         serializedVersion: 2
-        x: 982.5
-        y: 488.4297
+        x: 1024.8672
+        y: 535.77344
         width: 113.57
         height: 48
       isBreakpoint: 0
@@ -13559,7 +13057,7 @@ MonoBehaviour:
           name: FINISHED
           isSystemEvent: 1
           isGlobal: 0
-        toState: AdvanceTime
+        toState: "\u662F\u5426\u89F8\u767C\u5C3B\u69CD\u61F7\u7591\uFF1F"
         linkStyle: 0
         linkConstraint: 0
         linkTarget: 0
@@ -13622,8 +13120,8 @@ MonoBehaviour:
       colorIndex: 0
       position:
         serializedVersion: 2
-        x: 987.5
-        y: 577.4297
+        x: 1203.8672
+        y: 543.77344
         width: 100
         height: 32
       isBreakpoint: 0
@@ -13695,8 +13193,8 @@ MonoBehaviour:
       colorIndex: 0
       position:
         serializedVersion: 2
-        x: 1202.5
-        y: 616.4297
+        x: 1514.5234
+        y: 573.21875
         width: 109.34
         height: 32
       isBreakpoint: 0
@@ -13707,7 +13205,7 @@ MonoBehaviour:
           name: FINISHED
           isSystemEvent: 1
           isGlobal: 0
-        toState: closeBlock
+        toState: removeAllFlag
         linkStyle: 0
         linkConstraint: 0
         linkTarget: 0
@@ -13761,14 +13259,549 @@ MonoBehaviour:
         - mode
         paramDataPos: 0000000000000000
         paramByteDataSize: 0000000004000000
+    - name: "Event\u9806\u4F4D1"
+      description: "\u7576\u65E5\u5FC5\u9808\u89F8\u767C_\u6C92\u89F8\u767C\u53EA\u80FD\u6368\u68C4"
+      colorIndex: 0
+      position:
+        serializedVersion: 2
+        x: 470.72656
+        y: 64.85156
+        width: 148.48
+        height: 32
+      isBreakpoint: 0
+      isSequence: 0
+      hideUnused: 0
+      transitions:
+      - fsmEvent:
+          name: FINISHED
+          isSystemEvent: 1
+          isGlobal: 0
+        toState: openBlockAndWait 4
+        linkStyle: 0
+        linkConstraint: 0
+        linkTarget: 0
+        colorIndex: 0
+      actionData:
+        actionNames: []
+        customNames: []
+        actionEnabled: 
+        actionIsOpen: 
+        actionStartIndex: 
+        actionHashCodes: 
+        unityObjectParams: []
+        fsmGameObjectParams: []
+        fsmOwnerDefaultParams: []
+        animationCurveParams: []
+        functionCallParams: []
+        fsmTemplateControlParams: []
+        fsmEventTargetParams: []
+        fsmPropertyParams: []
+        layoutOptionParams: []
+        fsmStringParams: []
+        fsmObjectParams: []
+        fsmVarParams: []
+        fsmArrayParams: []
+        fsmEnumParams: []
+        fsmFloatParams: []
+        fsmIntParams: []
+        fsmBoolParams: []
+        fsmVector2Params: []
+        fsmVector3Params: []
+        fsmColorParams: []
+        fsmRectParams: []
+        fsmQuaternionParams: []
+        stringParams: []
+        byteData: 
+        arrayParamSizes: 
+        arrayParamTypes: []
+        customTypeSizes: 
+        customTypeNames: []
+        paramDataType: 
+        paramName: []
+        paramDataPos: 
+        paramByteDataSize: 
+    - name: openBlockAndWait 4
+      description: 
+      colorIndex: 0
+      position:
+        serializedVersion: 2
+        x: 474.53906
+        y: 170.38281
+        width: 151.82
+        height: 32
+      isBreakpoint: 0
+      isSequence: 0
+      hideUnused: 0
+      transitions:
+      - fsmEvent:
+          name: FINISHED
+          isSystemEvent: 1
+          isGlobal: 0
+        toState: SwitchProgressFlag 4
+        linkStyle: 0
+        linkConstraint: 0
+        linkTarget: 0
+        colorIndex: 0
+      actionData:
+        actionNames:
+        - HutongGames.PlayMaker.Actions.ActivateGameObject
+        - HutongGames.PlayMaker.Actions.Wait
+        customNames:
+        - 
+        - 
+        actionEnabled: 0101
+        actionIsOpen: 0101
+        actionStartIndex: 0000000005000000
+        actionHashCodes: b2cf100048c01101
+        unityObjectParams: []
+        fsmGameObjectParams: []
+        fsmOwnerDefaultParams:
+        - ownerOption: 1
+          gameObject:
+            useVariable: 0
+            name: 
+            tooltip: 
+            showInInspector: 0
+            networkSync: 0
+            value: {fileID: 991983809}
+        animationCurveParams: []
+        functionCallParams: []
+        fsmTemplateControlParams: []
+        fsmEventTargetParams: []
+        fsmPropertyParams: []
+        layoutOptionParams: []
+        fsmStringParams: []
+        fsmObjectParams: []
+        fsmVarParams: []
+        fsmArrayParams: []
+        fsmEnumParams: []
+        fsmFloatParams:
+        - useVariable: 0
+          name: 
+          tooltip: 
+          showInInspector: 0
+          networkSync: 0
+          value: 1.5
+        fsmIntParams: []
+        fsmBoolParams:
+        - useVariable: 0
+          name: 
+          tooltip: 
+          showInInspector: 0
+          networkSync: 0
+          value: 1
+        - useVariable: 0
+          name: 
+          tooltip: 
+          showInInspector: 0
+          networkSync: 0
+          value: 0
+        fsmVector2Params: []
+        fsmVector3Params: []
+        fsmColorParams: []
+        fsmRectParams: []
+        fsmQuaternionParams: []
+        stringParams:
+        - FINISHED
+        byteData: 000000
+        arrayParamSizes: 
+        arrayParamTypes: []
+        customTypeSizes: 
+        customTypeNames: []
+        paramDataType: 14000000110000001100000001000000010000000f0000001700000001000000
+        paramName:
+        - gameObject
+        - activate
+        - recursive
+        - resetOnExit
+        - everyFrame
+        - time
+        - finishEvent
+        - realTime
+        paramDataPos: 0000000000000000010000000000000001000000000000000000000002000000
+        paramByteDataSize: 0000000000000000000000000100000001000000000000000000000001000000
+    - name: SwitchProgressFlag 4
+      description: 
+      colorIndex: 0
+      position:
+        serializedVersion: 2
+        x: 480.6953
+        y: 226.60156
+        width: 157.05
+        height: 48
+      isBreakpoint: 0
+      isSequence: 0
+      hideUnused: 0
+      transitions:
+      - fsmEvent:
+          name: FINISHED
+          isSystemEvent: 1
+          isGlobal: 0
+        toState: "\u6253\u624B\u69CD"
+        linkStyle: 0
+        linkConstraint: 0
+        linkTarget: 0
+        colorIndex: 6
+      - fsmEvent:
+          name: Day4
+          isSystemEvent: 0
+          isGlobal: 0
+        toState: "\u6253\u624B\u69CD"
+        linkStyle: 0
+        linkConstraint: 0
+        linkTarget: 0
+        colorIndex: 0
+      actionData:
+        actionNames:
+        - MyGame.Actions.SwitchProgressFlag
+        customNames:
+        - 
+        actionEnabled: 01
+        actionIsOpen: 01
+        actionStartIndex: 00000000
+        actionHashCodes: 7defeb03
+        unityObjectParams:
+        - {fileID: 11400000, guid: da16a3c69f349f14c93e20c5168eaf1f, type: 2}
+        fsmGameObjectParams: []
+        fsmOwnerDefaultParams: []
+        animationCurveParams: []
+        functionCallParams: []
+        fsmTemplateControlParams: []
+        fsmEventTargetParams: []
+        fsmPropertyParams: []
+        layoutOptionParams: []
+        fsmStringParams: []
+        fsmObjectParams: []
+        fsmVarParams: []
+        fsmArrayParams: []
+        fsmEnumParams: []
+        fsmFloatParams: []
+        fsmIntParams: []
+        fsmBoolParams: []
+        fsmVector2Params: []
+        fsmVector3Params: []
+        fsmColorParams: []
+        fsmRectParams: []
+        fsmQuaternionParams: []
+        stringParams:
+        - Day4
+        - FINISHED
+        byteData: 
+        arrayParamSizes: 01000000
+        arrayParamTypes:
+        - MyGame.Actions.SwitchProgressFlag+FlagEventEntry
+        customTypeSizes: 02000000
+        customTypeNames:
+        - MyGame.Actions.SwitchProgressFlag+FlagEventEntry
+        paramDataType: 0c00000028000000050000001700000017000000
+        paramName:
+        - entries
+        - 
+        - flagDef
+        - sendEvent
+        - noneMatchedEvent
+        paramDataPos: 0000000000000000000000000000000001000000
+        paramByteDataSize: 0000000000000000000000000000000000000000
+    - name: "\u6253\u624B\u69CD"
+      description: 
+      colorIndex: 7
+      position:
+        serializedVersion: 2
+        x: 733.3281
+        y: 235.35156
+        width: 100
+        height: 32
+      isBreakpoint: 0
+      isSequence: 0
+      hideUnused: 0
+      transitions:
+      - fsmEvent:
+          name: NextAction
+          isSystemEvent: 0
+          isGlobal: 0
+        toState: "\u662F\u5426\u89F8\u767C\u64D4\u5FC3?"
+        linkStyle: 0
+        linkConstraint: 0
+        linkTarget: 0
+        colorIndex: 0
+      actionData:
+        actionNames: []
+        customNames: []
+        actionEnabled: 
+        actionIsOpen: 
+        actionStartIndex: 
+        actionHashCodes: 
+        unityObjectParams: []
+        fsmGameObjectParams: []
+        fsmOwnerDefaultParams: []
+        animationCurveParams: []
+        functionCallParams: []
+        fsmTemplateControlParams: []
+        fsmEventTargetParams: []
+        fsmPropertyParams: []
+        layoutOptionParams: []
+        fsmStringParams: []
+        fsmObjectParams: []
+        fsmVarParams: []
+        fsmArrayParams: []
+        fsmEnumParams: []
+        fsmFloatParams: []
+        fsmIntParams: []
+        fsmBoolParams: []
+        fsmVector2Params: []
+        fsmVector3Params: []
+        fsmColorParams: []
+        fsmRectParams: []
+        fsmQuaternionParams: []
+        stringParams: []
+        byteData: 
+        arrayParamSizes: 
+        arrayParamTypes: []
+        customTypeSizes: 
+        customTypeNames: []
+        paramDataType: 
+        paramName: []
+        paramDataPos: 
+        paramByteDataSize: 
+    - name: Slang
+      description: 
+      colorIndex: 2
+      position:
+        serializedVersion: 2
+        x: 1346
+        y: 613
+        width: 100
+        height: 32
+      isBreakpoint: 0
+      isSequence: 0
+      hideUnused: 0
+      transitions:
+      - fsmEvent:
+          name: NextAction
+          isSystemEvent: 0
+          isGlobal: 0
+        toState: AdvanceTime
+        linkStyle: 0
+        linkConstraint: 0
+        linkTarget: 0
+        colorIndex: 0
+      actionData:
+        actionNames:
+        - MyGame.Actions.RemoveProgressFlag
+        - PlayStoryConversation
+        customNames:
+        - 
+        - 
+        actionEnabled: 0101
+        actionIsOpen: 0101
+        actionStartIndex: 0000000001000000
+        actionHashCodes: c6356f01a4345405
+        unityObjectParams:
+        - {fileID: 11400000, guid: 81889497e25fcab419920f03c5dacdc4, type: 2}
+        fsmGameObjectParams: []
+        fsmOwnerDefaultParams: []
+        animationCurveParams: []
+        functionCallParams: []
+        fsmTemplateControlParams: []
+        fsmEventTargetParams: []
+        fsmPropertyParams: []
+        layoutOptionParams: []
+        fsmStringParams:
+        - useVariable: 0
+          name: 
+          tooltip: 
+          showInInspector: 0
+          networkSync: 0
+          value: DayLoopTalk/Come/Slang
+        fsmObjectParams: []
+        fsmVarParams: []
+        fsmArrayParams: []
+        fsmEnumParams: []
+        fsmFloatParams: []
+        fsmIntParams: []
+        fsmBoolParams: []
+        fsmVector2Params: []
+        fsmVector3Params: []
+        fsmColorParams: []
+        fsmRectParams: []
+        fsmQuaternionParams: []
+        stringParams: []
+        byteData: 02000000
+        arrayParamSizes: 
+        arrayParamTypes: []
+        customTypeSizes: 
+        customTypeNames: []
+        paramDataType: 050000001200000007000000
+        paramName:
+        - flagDef
+        - title
+        - mode
+        paramDataPos: 000000000000000000000000
+        paramByteDataSize: 000000000000000004000000
+    - name: "\u662F\u5426\u89F8\u767C\u5C3B\u69CD\u61F7\u7591\uFF1F"
+      description: 
+      colorIndex: 2
+      position:
+        serializedVersion: 2
+        x: 1013
+        y: 612
+        width: 145.57
+        height: 48
+      isBreakpoint: 0
+      isSequence: 0
+      hideUnused: 0
+      transitions:
+      - fsmEvent:
+          name: Slang
+          isSystemEvent: 0
+          isGlobal: 0
+        toState: "\u77ED\u66AB\u7B49\u5F85 2"
+        linkStyle: 0
+        linkConstraint: 0
+        linkTarget: 0
+        colorIndex: 0
+      - fsmEvent:
+          name: FINISHED
+          isSystemEvent: 1
+          isGlobal: 0
+        toState: AdvanceTime
+        linkStyle: 0
+        linkConstraint: 0
+        linkTarget: 0
+        colorIndex: 0
+      actionData:
+        actionNames:
+        - MyGame.Actions.CheckProgressFlag
+        customNames:
+        - 
+        actionEnabled: 01
+        actionIsOpen: 01
+        actionStartIndex: 00000000
+        actionHashCodes: a1418002
+        unityObjectParams:
+        - {fileID: 11400000, guid: 81889497e25fcab419920f03c5dacdc4, type: 2}
+        fsmGameObjectParams: []
+        fsmOwnerDefaultParams: []
+        animationCurveParams: []
+        functionCallParams: []
+        fsmTemplateControlParams: []
+        fsmEventTargetParams: []
+        fsmPropertyParams: []
+        layoutOptionParams: []
+        fsmStringParams: []
+        fsmObjectParams: []
+        fsmVarParams: []
+        fsmArrayParams: []
+        fsmEnumParams: []
+        fsmFloatParams: []
+        fsmIntParams: []
+        fsmBoolParams:
+        - useVariable: 1
+          name: 
+          tooltip: 
+          showInInspector: 0
+          networkSync: 0
+          value: 0
+        fsmVector2Params: []
+        fsmVector3Params: []
+        fsmColorParams: []
+        fsmRectParams: []
+        fsmQuaternionParams: []
+        stringParams:
+        - 
+        - FINISHED
+        byteData: 00
+        arrayParamSizes: 
+        arrayParamTypes: []
+        customTypeSizes: 
+        customTypeNames: []
+        paramDataType: 0500000017000000170000001100000001000000
+        paramName:
+        - flagDef
+        - trueEvent
+        - falseEvent
+        - storeResult
+        - everyFrame
+        paramDataPos: 0000000000000000010000000000000000000000
+        paramByteDataSize: 0000000000000000000000000000000001000000
+    - name: "\u77ED\u66AB\u7B49\u5F85 2"
+      description: 
+      colorIndex: 0
+      position:
+        serializedVersion: 2
+        x: 1208.1641
+        y: 614.3281
+        width: 100
+        height: 32
+      isBreakpoint: 0
+      isSequence: 0
+      hideUnused: 0
+      transitions:
+      - fsmEvent:
+          name: FINISHED
+          isSystemEvent: 1
+          isGlobal: 0
+        toState: Slang
+        linkStyle: 0
+        linkConstraint: 0
+        linkTarget: 0
+        colorIndex: 0
+      actionData:
+        actionNames:
+        - HutongGames.PlayMaker.Actions.Wait
+        customNames:
+        - 
+        actionEnabled: 01
+        actionIsOpen: 01
+        actionStartIndex: 00000000
+        actionHashCodes: 48c01101
+        unityObjectParams: []
+        fsmGameObjectParams: []
+        fsmOwnerDefaultParams: []
+        animationCurveParams: []
+        functionCallParams: []
+        fsmTemplateControlParams: []
+        fsmEventTargetParams: []
+        fsmPropertyParams: []
+        layoutOptionParams: []
+        fsmStringParams: []
+        fsmObjectParams: []
+        fsmVarParams: []
+        fsmArrayParams: []
+        fsmEnumParams: []
+        fsmFloatParams:
+        - useVariable: 0
+          name: 
+          tooltip: 
+          showInInspector: 0
+          networkSync: 0
+          value: 0.5
+        fsmIntParams: []
+        fsmBoolParams: []
+        fsmVector2Params: []
+        fsmVector3Params: []
+        fsmColorParams: []
+        fsmRectParams: []
+        fsmQuaternionParams: []
+        stringParams:
+        - 
+        byteData: 00
+        arrayParamSizes: 
+        arrayParamTypes: []
+        customTypeSizes: 
+        customTypeNames: []
+        paramDataType: 0f0000001700000001000000
+        paramName:
+        - time
+        - finishEvent
+        - realTime
+        paramDataPos: 000000000000000000000000
+        paramByteDataSize: 000000000000000001000000
     events:
     - name: FINISHED
       isSystemEvent: 1
       isGlobal: 0
     - name: BeforeDay3AngryEveryDay
-      isSystemEvent: 0
-      isGlobal: 0
-    - name: BigDayEvent
       isSystemEvent: 0
       isGlobal: 0
     - name: CleanRoom
@@ -13780,16 +13813,31 @@ MonoBehaviour:
     - name: Day7
       isSystemEvent: 0
       isGlobal: 0
-    - name: GoOutFailure
+    - name: "Event\u9806\u4F4D1_\u7576\u65E5\u5FC5\u9808\u89F8\u767C_\u6C92\u89F8\u767C\u53EA\u80FD\u6368\u68C4"
       isSystemEvent: 0
       isGlobal: 0
-    - name: HighPriorityEvent
+    - name: "Event\u9806\u4F4D2_\u4F9D\u65E5\u671F\u89F8\u767C_\u6C92\u89F8\u767C\u53EF\u9806\u5EF6"
+      isSystemEvent: 0
+      isGlobal: 0
+    - name: "Event\u9806\u4F4D3_\u76EE\u524D\u53EA\u7528\u4F86\u56FA\u5B9A\u89F8\u767C\u751F\u6C23"
+      isSystemEvent: 0
+      isGlobal: 0
+    - name: "Event\u9806\u4F4D4_\u7576\u65E5\u89F8\u767C_\u4E0D\u89F8\u767C\u5C31\u6368\u68C4"
+      isSystemEvent: 0
+      isGlobal: 0
+    - name: GoOutFailure
       isSystemEvent: 0
       isGlobal: 0
     - name: Intro
       isSystemEvent: 0
       isGlobal: 0
     - name: Next
+      isSystemEvent: 0
+      isGlobal: 0
+    - name: NextAction
+      isSystemEvent: 0
+      isGlobal: 0
+    - name: PornVideo
       isSystemEvent: 0
       isGlobal: 0
     - name: Shave
@@ -13804,13 +13852,10 @@ MonoBehaviour:
     - name: "\u5E73\u65E5"
       isSystemEvent: 0
       isGlobal: 0
-    - name: PornVideo
-      isSystemEvent: 0
-      isGlobal: 0
-    - name: NextAction
-      isSystemEvent: 0
-      isGlobal: 0
     - name: "\u64D4\u5FC3"
+      isSystemEvent: 0
+      isGlobal: 0
+    - name: Slang
       isSystemEvent: 0
       isGlobal: 0
     globalTransitions: []
@@ -20998,6 +21043,7 @@ RectTransform:
   m_LocalScale: {x: 1.00008, y: 1.00008, z: 1.00008}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 524171357}
   - {fileID: 380165029}
   m_Father: {fileID: 1048692747}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -21987,7 +22033,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8710944983853017169, guid: b2d23e03f0a6a9544aa359c674881752, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 9114058277431609538, guid: b2d23e03f0a6a9544aa359c674881752, type: 3}
       propertyPath: m_AnchoredPosition.y
@@ -22090,6 +22136,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: b2d23e03f0a6a9544aa359c674881752, type: 3}
+--- !u!1 &1736794940 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8710944983853017169, guid: b2d23e03f0a6a9544aa359c674881752, type: 3}
+  m_PrefabInstance: {fileID: 1736794939}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1745311312
 GameObject:
   m_ObjectHideFlags: 0
@@ -23552,6 +23603,7 @@ MonoBehaviour:
     - {fileID: 728273899}
     - {fileID: 453104105}
     - {fileID: 1745311312}
+    - {fileID: 1736794940}
     ToDeactivate:
     - {fileID: 1431347329}
     - {fileID: 213059573}
@@ -23570,6 +23622,7 @@ MonoBehaviour:
     - {fileID: 1870348263}
     - {fileID: 34218239}
     - {fileID: 1950132414}
+    - {fileID: 524171356}
   - StateName: Stress100
     Priority: 0
     Logic: 0
@@ -23750,6 +23803,18 @@ MonoBehaviour:
     ToActivate:
     - {fileID: 71923890}
     ToDeactivate: []
+  - StateName: "\u6027\u885D\u52D5>50"
+    Priority: 3
+    Logic: 0
+    Conditions:
+    - Definition: {fileID: 11400000, guid: 80f987ff9e6a36147851fe7e1d34f823, type: 2}
+      RequiredState: 1
+      Comparison: 0
+      TargetValue: 0
+    ToActivate:
+    - {fileID: 524171356}
+    ToDeactivate:
+    - {fileID: 1736794940}
 --- !u!1 &1805022242
 GameObject:
   m_ObjectHideFlags: 0
