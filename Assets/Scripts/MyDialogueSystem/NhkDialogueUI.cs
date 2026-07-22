@@ -34,8 +34,8 @@ using PixelCrushers.DialogueSystem;
 
 namespace PixelCrushers.DialogueSystem
 {
-    [AddComponentMenu("Pixel Crushers/Dialogue System/UI/Standard Dialogue UI (Selective Invalid)")]
-    public class SelectiveInvalidDialogueUI : StandardDialogueUI
+    [AddComponentMenu("Pixel Crushers/Dialogue System/UI/Nhk Dialogue UI")]
+    public class NhkDialogueUI : StandardDialogueUI
     {
         [Header("Selective Invalid Response Settings")]
         [Tooltip("Dialogue Entry 自訂欄位名稱，Boolean 類型。True = Conditions 不符時灰顯；False = 不符時隱藏。（舊欄位，新節點建議改用 Enable Conditions）")]

@@ -1,6 +1,6 @@
 // Copyright (c) NHK Project. All rights reserved.
 // 選項圖片對照表：定義「圖片 ID → Sprite」的對應，
-// 供 OptionImageResponseButton 依對話節點欄位上的 ID 查圖。
+// 供 NhkUIResponseButton 依對話節點欄位上的 ID 查圖。
 //
 // 建立方式：Project 視窗右鍵 → Create → NHK → Option Image Database
 
