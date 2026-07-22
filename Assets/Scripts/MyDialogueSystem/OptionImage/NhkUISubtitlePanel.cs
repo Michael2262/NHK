@@ -33,6 +33,10 @@ namespace PixelCrushers.DialogueSystem
         [Tooltip("Dialogue Entry 自訂欄位名稱，Text 類型，直接填敘述文字。空白 = 不顯示。")]
         [SerializeField] private string narrationFieldName = "Narration";
 
+        [Tooltip("Dialogue Entry 自訂欄位名稱，Text 類型。該欄位值填 ProgressFlag 名稱：\n" +
+                 "留空 = 敘述照常顯示；有填 = 只有該 Flag 為 true 時才顯示敘述。")]
+        [SerializeField] private string narrationFlagFieldName = "NarrationFlag";
+
         public override void SetContent(Subtitle subtitle)
         {
             base.SetContent(subtitle);
@@ -48,6 +52,7 @@ namespace PixelCrushers.DialogueSystem
         /// <summary>
         /// 依當前字幕行節點的欄位取敘述：有字 → 顯示；否則隱藏。
         /// 用 LookupLocalizedValue，多語系機制與對話文字相同（維護 "Narration ja" 等變體）。
+        /// 文字會經 FormattedText 管線處理，支援 [em#]、[var=]、[lua(...)] 等標記（與對話文字一致）。
         /// </summary>
         private void UpdateNarration(Subtitle subtitle)
         {
@@ -59,16 +64,30 @@ namespace PixelCrushers.DialogueSystem
                 narration = Field.LookupLocalizedValue(subtitle.dialogueEntry.fields, narrationFieldName);
             }
 
-            if (!string.IsNullOrWhiteSpace(narration))
+            if (!string.IsNullOrWhiteSpace(narration) && IsNarrationAllowedByFlag(subtitle.dialogueEntry))
             {
                 if (narrationContainer != null) narrationContainer.SetActive(true);
-                narrationText.text = narration;
+                narrationText.text = UITools.GetUIFormattedText(FormattedText.Parse(narration));
                 narrationText.SetActive(true);
             }
             else
             {
                 HideNarration();
             }
+        }
+
+        /// <summary>
+        /// 依 NarrationFlag 欄位決定是否允許顯示敘述：
+        ///   - 欄位空白 → 允許（照常顯示）
+        ///   - 欄位有填 Flag 名稱 → 只有該 Flag 在 ProgressFlags 中為 true 時才允許
+        /// </summary>
+        private bool IsNarrationAllowedByFlag(DialogueEntry entry)
+        {
+            if (entry == null) return false;
+            string flag = Field.LookupValue(entry.fields, narrationFlagFieldName);
+            if (string.IsNullOrWhiteSpace(flag)) return true;
+            var flags = (GameStatusService.Instance != null) ? GameStatusService.Instance.ProgressFlags : null;
+            return flags != null && flags.Contains(flag);
         }
 
         private void HideNarration()

@@ -27,6 +27,7 @@ namespace PixelCrushers.DialogueSystem
             EditorGUILayout.PropertyField(serializedObject.FindProperty("narrationText"), true);
             EditorGUILayout.PropertyField(serializedObject.FindProperty("narrationContainer"), true);
             EditorGUILayout.PropertyField(serializedObject.FindProperty("narrationFieldName"), true);
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("narrationFlagFieldName"), true);
             serializedObject.ApplyModifiedProperties();
         }
     }
