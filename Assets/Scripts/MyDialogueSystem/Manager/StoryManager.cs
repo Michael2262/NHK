@@ -25,6 +25,12 @@ public class StoryManager : MonoBehaviour
     [SerializeField] private float minAlertDuration = 1.5f;   // 公告最少顯示多久
     [Tooltip("顯示公告時一併播放的音效 Key（留空則不播放）")]
     [SerializeField] private string alertSoundKey = "alert_show"; // 顯示公告時的音效
+    [Tooltip("公告音效節流視窗（秒）。0 = 同一幀內收到多則公告只播一次；>0 = 該秒數內只播一次")]
+    [SerializeField] private float alertSoundWindow = 0f;
+
+    // 音效節流用：上次播放的幀 / 時間
+    private int _lastAlertSoundFrame = -1;
+    private float _lastAlertSoundTime = -999f;
 
     public static StoryManager Instance
     {
@@ -502,12 +508,41 @@ public class StoryManager : MonoBehaviour
     /// </summary>
     private void ShowAlertInternal(string message, float duration)
     {
-        if (!string.IsNullOrEmpty(alertSoundKey) && AudioManager.Instance != null)
+        // 音效節流：一段時間內收到的多則公告只播一次
+        if (!string.IsNullOrEmpty(alertSoundKey) && AudioManager.Instance != null && ShouldPlayAlertSound())
         {
             AudioManager.Instance.PlaySound(alertSoundKey);
         }
 
-        DialogueManager.ShowAlert(message, duration);
+        // 有 Toast 堆疊管理器就走它（每則各自一框、可堆疊）；否則 fallback 原生單面板 Alert
+        if (AlertToastManager.Instance != null)
+        {
+            AlertToastManager.Instance.Show(message, duration);
+        }
+        else
+        {
+            Debug.LogWarning($"[StoryManager] 找不到 AlertToastManager（未載入或 GameObject 為 inactive），改用原生 Alert：{message}");
+            DialogueManager.ShowAlert(message, duration);
+        }
+    }
+
+    /// <summary>依 alertSoundWindow 判斷這次公告是否該播放音效（避免同批公告疊音）</summary>
+    private bool ShouldPlayAlertSound()
+    {
+        if (alertSoundWindow <= 0f)
+        {
+            // 同一幀只播一次
+            if (Time.frameCount == _lastAlertSoundFrame) return false;
+            _lastAlertSoundFrame = Time.frameCount;
+            _lastAlertSoundTime = Time.unscaledTime;
+            return true;
+        }
+
+        // 指定秒數視窗內只播一次
+        if (Time.unscaledTime - _lastAlertSoundTime < alertSoundWindow) return false;
+        _lastAlertSoundFrame = Time.frameCount;
+        _lastAlertSoundTime = Time.unscaledTime;
+        return true;
     }
 
     /// <summary>計算顯示時間</summary>

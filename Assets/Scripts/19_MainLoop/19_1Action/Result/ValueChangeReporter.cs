@@ -81,21 +81,17 @@ public static class ValueChangeReporter
     {
         if (records == null || records.Count == 0) return;
         if (_config == null) Initialize();
+        if (StoryManager.Instance == null) return;
 
-        StringBuilder sb = new StringBuilder();
+        // 每一筆變動各自彈一則公告（各自一個 toast 外框、可堆疊）
+        // ★ 不再串成單一多行字串 —— 交由 AlertToastManager 逐一交錯冒出
         foreach (var record in records)
         {
             string line = BuildReportLine(record);
             if (!string.IsNullOrEmpty(line))
             {
-                if (sb.Length > 0) sb.Append("\n");
-                sb.Append(line);
+                StoryManager.Instance.ShowSystemMessage(line);
             }
-        }
-
-        if (sb.Length > 0 && StoryManager.Instance != null)
-        {
-            StoryManager.Instance.ShowSystemMessage(sb.ToString());
         }
     }
 
