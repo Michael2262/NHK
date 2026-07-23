@@ -8,9 +8,10 @@ using UnityEngine;
 ///
 /// 生命週期：StartRun → (DrawCard → Flip)* / Rest* → GoHome 或牌上的結束效果。
 ///
-/// 翻牌一律拆成兩階段，讓呼叫端有機會在中間插入演出：
+/// 翻牌一律拆成兩階段，讓呼叫端有機會在中間停下來（等演出、等玩家決定要不要挑戰）：
 ///   ① ApplyAlwaysEffects()  必有效果
 ///   ② ResolveOutcome()      擲骰判定 + 成功/失敗效果
+/// 停在①之後可以不做②就直接 DrawCard() 發下一張，未結算的結果會被丟棄。
 /// 不需要中斷時直接呼叫 Flip()，它會一次跑完兩階段。
 ///
 /// 註：牌的 OutcomeMode（Judge / AlwaysOnly / ForceSuccess）在階段②由本 Model 落實規則；
@@ -35,6 +36,9 @@ public class AdventureRunModel
     public int RestRemaining { get; private set; }
     public AdventureCardData CurrentCard { get; private set; }
     public bool IsEnded { get; private set; }
+
+    /// <summary>已跑過必有效果、但還沒結算成敗（等待玩家決定要不要挑戰）。</summary>
+    public bool HasPendingOutcome => _pendingAlwaysChanges != null;
 
     private AdventureEndReason _endReason;
     private bool _suppressEndEvent; // 套效果期間先壓住結束事件，等結果送出後再發
@@ -64,11 +68,14 @@ public class AdventureRunModel
     // 開始 / 休息重置
     // ============================================================
 
-    /// <summary>開始一趟大冒險。startMileage 供未來「里程記憶」續玩用，目前傳 0。</summary>
-    public void StartRun(AdventureDungeonData dungeon, int startMileage = 0)
+    /// <summary>
+    /// 開始一趟大冒險。里程一律從 0 開始 —— 沒攻略成功就沒有進度保留，
+    /// 唯一會跨存檔留下的是「已攻克」的 persistent 旗標（見 MarkCurrentDungeonCleared）。
+    /// </summary>
+    public void StartRun(AdventureDungeonData dungeon)
     {
         Dungeon = dungeon;
-        CurrentMileage = Mathf.Max(0, startMileage);
+        CurrentMileage = 0;
         RestRemaining = MAX_REST_COUNT;
         CurrentCard = null;
         IsEnded = false;
@@ -89,10 +96,17 @@ public class AdventureRunModel
     // 發牌
     // ============================================================
 
-    /// <summary>依目前里程與 Dungeon 的牌池設定發一張牌。</summary>
+    /// <summary>
+    /// 依目前里程與 Dungeon 的牌池設定發一張牌。
+    /// 若上一張牌已跑過必有效果卻還沒結算（玩家選了「繞遠路」），
+    /// 這裡會直接把那個未完成的結果丟棄 —— 已生效的必有效果不會被回復，
+    /// 只是那張牌的成功/失敗分支永遠不會跑。
+    /// </summary>
     public AdventureCardData DrawCard()
     {
         if (IsEnded || Dungeon == null) return null;
+
+        _pendingAlwaysChanges = null; // 丟棄上一張未結算的結果
 
         CurrentCard = Dungeon.PickCard(CurrentMileage);
         if (CurrentCard == null)
@@ -237,14 +251,13 @@ public class AdventureRunModel
         return true;
     }
 
-    /// <summary>玩家主動回家，結束這趟大冒險。</summary>
+    /// <summary>
+    /// 玩家主動回家，結束這趟大冒險。
+    /// 里程不會被保留，下次進同一個 Dungeon 會從 0 重新開始。
+    /// </summary>
     public void GoHome()
     {
         if (IsEnded) return;
-
-        // TODO(里程記憶): 之後在這裡把 (Dungeon.DungeonID -> CurrentMileage) 存進
-        //                 一個 persistent 的 AdventureProgressModel，並進 GameSaveData
-        //                 （沿用 IDs List + Data List pattern），下次 StartRun 帶回 startMileage。
         EndAdventure(AdventureEndReason.GoHome);
     }
 

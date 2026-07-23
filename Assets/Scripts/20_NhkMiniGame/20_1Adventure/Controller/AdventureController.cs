@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
@@ -25,11 +24,6 @@ public class AdventureController : MonoBehaviour
     [Tooltip("StartDefaultAdventure() 用的預設地點，可留空")]
     [SerializeField] private AdventureDungeonData _defaultDungeon;
 
-    [Header("演出")]
-    [Tooltip("必有效果與第二拍（成敗判定 / 必定成功）之間的延遲秒數。\n" +
-             "AlwaysOnly 的牌沒有第二拍，不會用到這個值")]
-    [SerializeField] private float _outcomeDelaySeconds = 0.6f;
-
     /// <summary>目前進行中的 Run（尚未開始為 null）。</summary>
     public AdventureRunModel Run { get; private set; }
 
@@ -38,6 +32,9 @@ public class AdventureController : MonoBehaviour
 
     /// <summary>是否有一趟進行中的大冒險。</summary>
     public bool IsRunning => Run != null && !Run.IsEnded;
+
+    /// <summary>目前這張牌已跑必有效果、還沒結算成敗（等玩家決定挑戰 / 繞遠路）。</summary>
+    public bool HasPendingOutcome => Run != null && Run.HasPendingOutcome;
 
     /// <summary>本趟已翻過的所有結果，供結算畫面使用。</summary>
     private readonly List<AdventureFlipResult> _history = new List<AdventureFlipResult>();
@@ -79,8 +76,8 @@ public class AdventureController : MonoBehaviour
     /// <summary>用預設地點開始（測試 / 單一地點場景用）。</summary>
     public void StartDefaultAdventure() => StartAdventure(_defaultDungeon);
 
-    /// <summary>開始一趟大冒險。</summary>
-    public void StartAdventure(AdventureDungeonData dungeon, int startMileage = 0)
+    /// <summary>開始一趟大冒險（里程一律從 0 開始）。</summary>
+    public void StartAdventure(AdventureDungeonData dungeon)
     {
         if (dungeon == null)
         {
@@ -95,7 +92,6 @@ public class AdventureController : MonoBehaviour
             return;
         }
 
-        StopAllCoroutines();
         Unsubscribe();
         _history.Clear();
 
@@ -107,7 +103,7 @@ public class AdventureController : MonoBehaviour
         Run.OnRestChanged += HandleRestChanged;
         Run.OnRunEnded += HandleRunEnded;
 
-        Run.StartRun(dungeon, startMileage);
+        Run.StartRun(dungeon);
     }
 
     // ============================================================
@@ -116,48 +112,27 @@ public class AdventureController : MonoBehaviour
 
     public void ResetRest() => Run?.ResetRestToMax();
 
-    /// <summary>只發牌，不翻（要做「先看到牌背」的演出時用）。</summary>
-    public void DrawNext() => Run?.DrawCard();
+    // ── 分階段（給 AdventureCardPresenter 這類演出層在對的時間點呼叫）──
 
-    /// <summary>翻開目前的牌，依牌的 OutcomeMode 決定收尾方式。</summary>
-    public void Flip()
+    /// <summary>只發牌，不翻。回傳發到的牌。</summary>
+    public AdventureCardData DrawNext() => Run?.DrawCard();
+
+    /// <summary>階段①：立刻套用必有效果。</summary>
+    public List<AdventureChangeRecord> ApplyAlways() => Run?.ApplyAlwaysEffects();
+
+    /// <summary>階段②：立刻依 OutcomeMode 收尾（判成敗 / 必定成功 / 不判定）。</summary>
+    public AdventureFlipResult ResolveOutcome() => Run?.ResolveOutcome();
+
+    // ── 即時（不演出。Debug 面板或不需要演出的流程用）──
+
+    /// <summary>翻開目前的牌，兩階段一次跑完。</summary>
+    public AdventureFlipResult Flip() => Run?.Flip();
+
+    /// <summary>一次做完：依目前 Dungeon 的牌池發一張牌，並立刻觸發牌上的結果。</summary>
+    public AdventureFlipResult DrawAndResolve()
     {
-        var card = Run?.CurrentCard;
-        if (card == null) return;
-        RunFlipByMode(card);
-    }
-
-    /// <summary>
-    /// 一次做完：依目前 Dungeon 的牌池發一張牌，並觸發牌上的結果。
-    /// </summary>
-    public void DrawAndResolve()
-    {
-        if (Run == null || Run.IsEnded) return;
-
-        var card = Run.DrawCard();
-        if (card == null) return;
-        RunFlipByMode(card);
-    }
-
-    private void RunFlipByMode(AdventureCardData card)
-    {
-        if (card.OutcomeMode == AdventureOutcomeMode.AlwaysOnly)
-        {
-            // 沒有第二拍：只跑必有效果，然後直接收尾（不判成敗）
-            Run.ApplyAlwaysEffects();
-            Run.ResolveOutcome();
-            return;
-        }
-
-        // Judge / ForceSuccess：必有效果 → 延遲 → 第二拍
-        StartCoroutine(FlipWithDelay());
-    }
-
-    private IEnumerator FlipWithDelay()
-    {
-        Run.ApplyAlwaysEffects();
-        yield return new WaitForSeconds(_outcomeDelaySeconds);
-        if (Run != null) Run.ResolveOutcome();
+        if (Run == null || Run.IsEnded) return null;
+        return Run.DrawCard() == null ? null : Run.Flip();
     }
 
     public void Rest() => Run?.Rest();
