@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 /// <summary>
 /// 所有「大冒險翻牌結果效果」的抽象基底。
@@ -12,10 +13,20 @@ public abstract class AdventureEffect
     public abstract void Apply(AdventureContext ctx);
 
     /// <summary>
-    /// 回報此效果造成的數值變動，供 UI 產生「壓力+10」之類的提示。
+    /// 回報此效果造成的數值變動（單筆），供 UI 產生「壓力+10」之類的提示。
     /// 回傳 null 表示不需要顯示（例如結束大冒險、設 Flag 等）。
     /// </summary>
     public virtual AdventureChangeRecord? ReportChange(AdventureContext ctx) => null;
+
+    /// <summary>
+    /// 回報此效果造成的數值變動（可多筆）。
+    /// 預設把單筆的 ReportChange 包成序列；一次會產生多筆變動的效果（例如數值套組）覆寫這支。
+    /// </summary>
+    public virtual IEnumerable<AdventureChangeRecord> ReportChanges(AdventureContext ctx)
+    {
+        var record = ReportChange(ctx);
+        if (record.HasValue) yield return record.Value;
+    }
 }
 
 /// <summary>

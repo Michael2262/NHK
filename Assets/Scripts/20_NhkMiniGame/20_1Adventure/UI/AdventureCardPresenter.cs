@@ -25,6 +25,12 @@ using UnityEngine.Events;
 /// </summary>
 public class AdventureCardPresenter : MonoBehaviour
 {
+    /// <summary>
+    /// 場上唯一的 Presenter，供 Sequencer Command / 外部快速取用。
+    /// 這個元件放在會卸載的場景上，所以離場時會把參照清掉。
+    /// </summary>
+    public static AdventureCardPresenter Instance { get; private set; }
+
     [Header("參照")]
     [SerializeField] private AdventureController _controller;
 
@@ -54,6 +60,11 @@ public class AdventureCardPresenter : MonoBehaviour
     [Tooltip("Z：結果呈現後，等多久才讓牌淡出")]
     [SerializeField] private float _waitAfterOutcome = 0.8f;
 
+    [Tooltip("勾選：結果呈現後牌會一直留著，直到外部呼叫 DismissCard()（Adventure(Dismiss)）才淡出。\n" +
+             "適合由對話決定收牌時機，不用跟 Wait After Outcome 的秒數賽跑。\n" +
+             "勾選時 Wait After Outcome 不生效。")]
+    [SerializeField] private bool _holdUntilDismissed = false;
+
     [SerializeField] private float _fadeDuration = 0.35f;
 
     [Header("事件")]
@@ -70,6 +81,10 @@ public class AdventureCardPresenter : MonoBehaviour
     public bool IsAwaitingOutcome { get; private set; }
 
     private AdventureCardView _current;
+
+    // 「結果已呈現、正在等待淡出」的窗口 —— 這段可以被 DismissCard() 提前切斷
+    private bool _canCutWait;
+    private bool _dismissRequested;
 
     // ============================================================
     // 對外入口
@@ -98,6 +113,56 @@ public class AdventureCardPresenter : MonoBehaviour
     {
         if (IsPlaying || !IsAwaitingOutcome) return;
         StartCoroutine(OutcomeSequence());
+    }
+
+    /// <summary>
+    /// 讓「結果已呈現、正在等待淡出」的牌提前消失 —— 也就是把 Wait After Outcome 那段等待切短。
+    /// 三種牌都適用：AlwaysOnly 跑完後、Judge / ForceSuccess 判定完後。
+    /// 流程照常走完，onSequenceComplete 仍會照發，不會卡住後續。
+    ///
+    /// 不在該窗口時（飛入 / 翻面 / 等待挑戰 / 判定進行中）呼叫一律忽略，不會破壞狀態。
+    /// </summary>
+    public void DismissCard()
+    {
+        if (_canCutWait)
+        {
+            _dismissRequested = true;
+            return;
+        }
+
+        Debug.LogWarning("[AdventureCardPresenter] DismissCard() 被忽略：目前不在「結果已呈現、等待淡出」的窗口。" +
+                         $"（IsPlaying={IsPlaying}, IsAwaitingOutcome={IsAwaitingOutcome}, 有牌={_current != null}）" +
+                         " 若希望牌停著等對話決定何時收，請勾選 Hold Until Dismissed。");
+    }
+
+    /// <summary>目前是否可以用 DismissCard() 提前收牌。</summary>
+    public bool CanDismissNow => _canCutWait;
+
+    /// <summary>
+    /// 等待指定秒數，但期間若被 DismissCard() 請求提前結束就立刻返回。
+    /// </summary>
+    private IEnumerator WaitOrDismiss(float seconds)
+    {
+        _canCutWait = true;
+        _dismissRequested = false;
+
+        if (_holdUntilDismissed)
+        {
+            // 牌一直留著，直到外部呼叫 DismissCard()
+            while (!_dismissRequested) yield return null;
+        }
+        else
+        {
+            float elapsed = 0f;
+            while (elapsed < seconds && !_dismissRequested)
+            {
+                elapsed += Time.deltaTime;
+                yield return null;
+            }
+        }
+
+        _canCutWait = false;
+        _dismissRequested = false;
     }
 
     // ============================================================
@@ -139,7 +204,7 @@ public class AdventureCardPresenter : MonoBehaviour
             // 這種牌沒有挑戰階段：直接收尾、收牌
             _controller.ResolveOutcome();
 
-            yield return new WaitForSeconds(_waitAfterOutcome);
+            yield return WaitOrDismiss(_waitAfterOutcome); // 可被 DismissCard() 提前切斷
             yield return ClearCurrentCard();
 
             IsPlaying = false;
@@ -165,7 +230,7 @@ public class AdventureCardPresenter : MonoBehaviour
         if (result != null && _current != null)
             _current.SetSprite(result.ResultIllustration);
 
-        yield return new WaitForSeconds(_waitAfterOutcome);
+        yield return WaitOrDismiss(_waitAfterOutcome); // 可被 DismissCard() 提前切斷
         yield return ClearCurrentCard();
 
         IsPlaying = false;
@@ -181,8 +246,15 @@ public class AdventureCardPresenter : MonoBehaviour
         _current = null;
     }
 
+    private void OnEnable()
+    {
+        if (Instance == null) Instance = this;
+    }
+
     private void OnDisable()
     {
+        if (Instance == this) Instance = null;
+
         // 場景卸載 / 物件關閉時，避免留下半途的 clone
         StopAllCoroutines();
         if (_current != null)
@@ -192,5 +264,7 @@ public class AdventureCardPresenter : MonoBehaviour
         }
         IsPlaying = false;
         IsAwaitingOutcome = false;
+        _canCutWait = false;
+        _dismissRequested = false;
     }
 }

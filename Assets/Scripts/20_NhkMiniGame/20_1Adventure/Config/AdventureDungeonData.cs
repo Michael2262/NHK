@@ -15,7 +15,9 @@ public class AdventureDungeonData : ScriptableObject
     public Sprite Banner;
 
     [Header("規則")]
-    [Tooltip("里程目標，主要給進度條顯示。實際「結束」由牌上的 AdvEndAdventureEffect 觸發")]
+    [Tooltip("里程目標的「初始值」，開始時複製給 AdventureRunModel.TotalMileage。\n" +
+             "本輪可用 AddRequiredMileage() 加長（繞遠路），不會改到這裡。\n" +
+             "主要給進度條顯示；實際「結束」由牌上的 End Adventure 效果觸發")]
     public int TotalMileage = 8;
 
     // 休息次數上限 / 每次減壓量 → 改由 AdventureRunModel 統一定義（見其常數）

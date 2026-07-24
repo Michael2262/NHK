@@ -35,6 +35,10 @@ public class TachieController : MonoBehaviour
     [Header("全域時間設定")]
     public float defaultFadeDuration = 0.4f;
     public float defaultMoveDuration = 0.5f;
+    [Tooltip("縮放 (正常/縮小) 的預設過渡時間")]
+    public float defaultScaleDuration = 0.25f;
+    [Tooltip("嚇到晃動的預設持續時間")]
+    public float defaultShockDuration = 0.4f;
 
     // 內部查詢字典：Key = characterID, Value = TachieActor(不分大小寫)
     private Dictionary<string, TachieActor> actorDict = new Dictionary<string, TachieActor>(System.StringComparer.OrdinalIgnoreCase);
@@ -302,6 +306,36 @@ public class TachieController : MonoBehaviour
         MoveToX(id, leftPosX, duration);
     }
 
+    // --- 4.5 縮放控制 (有連動) ---
+    // 縮放作用在 bodyImage 那層，臉部圖層是它的子物件，所以會一起縮。
+
+    /// <summary>切成縮小 (smallScale) 或正常 (normalScale)。</summary>
+    public void SetSmall(string id, bool isSmall, float duration = -1)
+    {
+        float dur = duration < 0 ? defaultScaleDuration : duration;
+        ExecuteAppearance(id, linkId => GetActor(linkId)?.SetSmall(isSmall, dur));
+    }
+
+    /// <summary>縮小。</summary>
+    public void ScaleSmall(string id, float duration = -1) => SetSmall(id, true, duration);
+
+    /// <summary>回到正常大小。</summary>
+    public void ScaleNormal(string id, float duration = -1) => SetSmall(id, false, duration);
+
+    /// <summary>直接指定倍率（不受 normal/small 兩段限制）。</summary>
+    public void ScaleTo(string id, float scale, float duration = -1)
+    {
+        float dur = duration < 0 ? defaultScaleDuration : duration;
+        ExecuteAppearance(id, linkId => GetActor(linkId)?.ScaleTo(scale, dur));
+    }
+
+    // --- 4.6 嚇到 (上下晃動一下，有連動) ---
+    public void Shock(string id, float duration = -1, float strength = -1, int vibrato = -1)
+    {
+        float dur = duration < 0 ? defaultShockDuration : duration;
+        ExecuteAppearance(id, linkId => GetActor(linkId)?.Shock(dur, strength, vibrato));
+    }
+
     // --- 5. 全部消失並回到原位 (不連動，因為本來就是全部角色) ---
     public void ClearAll(float duration = -1)
     {
@@ -310,6 +344,9 @@ public class TachieController : MonoBehaviour
         {
             actor.Fade(0, dur);
             actor.MoveX(0, dur);
+            // 一併還原縮放與晃動位移，避免縮小狀態殘留到下一段劇情
+            actor.StopShock();
+            actor.SetSmall(false, 0f);
         }
     }
 }

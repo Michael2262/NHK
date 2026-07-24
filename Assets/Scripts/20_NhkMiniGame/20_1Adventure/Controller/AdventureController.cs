@@ -17,6 +17,12 @@ using UnityEngine.Events;
 /// </summary>
 public class AdventureController : MonoBehaviour
 {
+    /// <summary>
+    /// 場上唯一的 Controller，供 Sequencer Command / 外部快速取用。
+    /// 這個元件放在會卸載的場景上，所以離場時會把參照清掉。
+    /// </summary>
+    public static AdventureController Instance { get; private set; }
+
     [Header("資料來源")]
     [Tooltip("用 ID 開始大冒險時的查表來源")]
     [SerializeField] private AdventureDungeonDatabase _database;
@@ -47,6 +53,7 @@ public class AdventureController : MonoBehaviour
     public UnityEvent onSuccess;
     public UnityEvent onFail;
     public AdventureIntEvent onMileageChanged;
+    public AdventureIntEvent onTotalMileageChanged;
     public AdventureIntEvent onRestChanged;
     public UnityEvent onRunEnded;
 
@@ -100,6 +107,7 @@ public class AdventureController : MonoBehaviour
         Run.OnAlwaysEffectsApplied += HandleAlwaysEffectsApplied;
         Run.OnFlipResolved += HandleFlipResolved;
         Run.OnMileageChanged += HandleMileageChanged;
+        Run.OnTotalMileageChanged += HandleTotalMileageChanged;
         Run.OnRestChanged += HandleRestChanged;
         Run.OnRunEnded += HandleRunEnded;
 
@@ -135,6 +143,12 @@ public class AdventureController : MonoBehaviour
         return Run.DrawCard() == null ? null : Run.Flip();
     }
 
+    /// <summary>
+    /// 加長本輪的里程目標（繞遠路用）。只影響這一輪，不會改到 Dungeon 的設定檔。
+    /// 可直接掛在 Button.onClick 或用 FSM 呼叫。
+    /// </summary>
+    public void AddRequiredMileage(int amount) => Run?.AddRequiredMileage(amount);
+
     public void Rest() => Run?.Rest();
     public void GoHome() => Run?.GoHome();
 
@@ -158,6 +172,7 @@ public class AdventureController : MonoBehaviour
     }
 
     private void HandleMileageChanged(int mileage) => onMileageChanged?.Invoke(mileage);
+    private void HandleTotalMileageChanged(int total) => onTotalMileageChanged?.Invoke(total);
     private void HandleRestChanged(int remaining) => onRestChanged?.Invoke(remaining);
 
     private void HandleRunEnded(AdventureEndReason reason)
@@ -173,8 +188,19 @@ public class AdventureController : MonoBehaviour
         Run.OnAlwaysEffectsApplied -= HandleAlwaysEffectsApplied;
         Run.OnFlipResolved -= HandleFlipResolved;
         Run.OnMileageChanged -= HandleMileageChanged;
+        Run.OnTotalMileageChanged -= HandleTotalMileageChanged;
         Run.OnRestChanged -= HandleRestChanged;
         Run.OnRunEnded -= HandleRunEnded;
+    }
+
+    private void OnEnable()
+    {
+        if (Instance == null) Instance = this;
+    }
+
+    private void OnDisable()
+    {
+        if (Instance == this) Instance = null;
     }
 
     private void OnDestroy() => Unsubscribe();

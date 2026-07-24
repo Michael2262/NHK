@@ -22,6 +22,11 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
     /// 10. Clear: TachieControl(Clear, 0.5)
     /// 11. Mode (切身體 mode，會立刻判定): TachieControl(Mode, Sister, Weekend)
     /// 12. ModeAll (所有角色一起切): TachieControl(ModeAll, Weekend)
+    /// 13. Small (縮小): TachieControl(Small, Sister, 0.25)
+    /// 14. Normal (回正常大小): TachieControl(Normal, Sister, 0.25)   ※ Big 保留給未來擴充
+    /// 15. Scale (指定倍率): TachieControl(Scale, Sister, 0.88, 0.25)
+    /// 16. Shock (嚇到，上下晃一下): TachieControl(Shock, Sister, 0.4, 22, 10)
+    ///     參數 = 時間, 位移強度, 晃動次數；留空則用 Inspector 預設
     /// </summary>
 
 
@@ -94,6 +99,30 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
             else if (IsAction(action, "Mode")) TachieController.Instance.SetMode(actorID, GetParameter(2));
             // ModeAll: TachieControl(ModeAll, 模式名) -> 所有角色一起切，模式名在參數1
             else if (IsAction(action, "ModeAll")) TachieController.Instance.SetModeAll(GetParameter(1));
+            // --- 4.6 縮放與嚇到 ---
+            // Small: TachieControl(Small, Sister, duration)
+            else if (IsAction(action, "Small")) TachieController.Instance.ScaleSmall(actorID, GetParameterAsFloat(2, -1f));
+            // Big / Normal: TachieControl(Big, Sister, duration)
+            else if (IsAction(action, "Normal", "UnSmall")) TachieController.Instance.ScaleNormal(actorID, GetParameterAsFloat(2, -1f));
+            // Scale: TachieControl(Scale, Sister, 倍率, duration)
+            else if (IsAction(action, "Scale"))
+            {
+                float scale = GetParameterAsFloat(2, -1f);
+                float duration = GetParameterAsFloat(3, -1f);
+                if (scale <= 0f)
+                    Debug.LogWarning($"[TachieControl] Scale 需要一個大於 0 的倍率，收到: {GetParameter(2)}");
+                else
+                    TachieController.Instance.ScaleTo(actorID, scale, duration);
+            }
+            // Shock: TachieControl(Shock, Sister, 時間, 強度, 次數)
+            else if (IsAction(action, "Shock", "Shake"))
+            {
+                float duration = GetParameterAsFloat(2, -1f);
+                float strength = GetParameterAsFloat(3, -1f);
+                int vibrato = GetParameterAsInt(4, -1);
+                TachieController.Instance.Shock(actorID, duration, strength, vibrato);
+            }
+
             else if (IsAction(action, "Move"))
             {
                 float xValue = GetParameterAsFloat(2);

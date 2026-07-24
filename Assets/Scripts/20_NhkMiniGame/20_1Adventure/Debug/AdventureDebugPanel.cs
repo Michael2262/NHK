@@ -65,7 +65,7 @@ public class AdventureDebugPanel : MonoBehaviour
         // ── 狀態列 ──
         GUILayout.Space(4);
         GUILayout.Label($"地點：{run.Dungeon?.DungeonID}");
-        GUILayout.Label($"里程：{run.CurrentMileage} / {run.Dungeon?.TotalMileage}    休息剩：{run.RestRemaining}");
+        GUILayout.Label($"里程：{run.CurrentMileage} / {run.TotalMileage}    休息剩：{run.RestRemaining}");
         if (p != null)
             GUILayout.Label($"壓力：{p.Stress}   社會性：{p.Sociality}   生活力：{p.LifePower}   $：{p.Money}");
 
@@ -101,6 +101,8 @@ public class AdventureDebugPanel : MonoBehaviour
         GUI.enabled = true;
         if (GUILayout.Button("回家", Big())) _controller.GoHome();
         GUILayout.EndHorizontal();
+
+        if (GUILayout.Button("繞遠路：里程目標 +1", Big())) _controller.AddRequiredMileage(1);
 
         GUILayout.EndArea();
     }

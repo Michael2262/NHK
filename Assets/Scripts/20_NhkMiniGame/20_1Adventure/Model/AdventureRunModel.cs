@@ -33,6 +33,13 @@ public class AdventureRunModel
     // ───── 狀態 ─────
     public AdventureDungeonData Dungeon { get; private set; }
     public int CurrentMileage { get; private set; }
+
+    /// <summary>
+    /// 本輪所需的里程目標。開始時從 Dungeon 的設定複製過來，
+    /// 之後可用 AddRequiredMileage() 在本輪內加長（例如玩家繞遠路），不會改到 SO。
+    /// </summary>
+    public int TotalMileage { get; private set; }
+
     public int RestRemaining { get; private set; }
     public AdventureCardData CurrentCard { get; private set; }
     public bool IsEnded { get; private set; }
@@ -51,7 +58,8 @@ public class AdventureRunModel
     public event Action<AdventureCardData> OnCardDrawn;
     public event Action<List<AdventureChangeRecord>> OnAlwaysEffectsApplied; // 階段①完成
     public event Action<AdventureFlipResult> OnFlipResolved;                 // 階段②完成
-    public event Action<int> OnMileageChanged; // 新里程
+    public event Action<int> OnMileageChanged;      // 新里程
+    public event Action<int> OnTotalMileageChanged; // 新的里程目標（繞遠路等造成）
     public event Action<int> OnRestChanged;    // 剩餘休息次數
     public event Action<AdventureEndReason> OnRunEnded;
 
@@ -76,12 +84,14 @@ public class AdventureRunModel
     {
         Dungeon = dungeon;
         CurrentMileage = 0;
+        TotalMileage = dungeon != null ? dungeon.TotalMileage : 0;
         RestRemaining = MAX_REST_COUNT;
         CurrentCard = null;
         IsEnded = false;
         _pendingAlwaysChanges = null;
 
         OnMileageChanged?.Invoke(CurrentMileage);
+        OnTotalMileageChanged?.Invoke(TotalMileage);
         OnRestChanged?.Invoke(RestRemaining);
     }
 
@@ -221,14 +231,25 @@ public class AdventureRunModel
         {
             if (effect == null) continue;
             effect.Apply(ctx);
-            var record = effect.ReportChange(ctx);
-            if (record.HasValue) records.Add(record.Value);
+            foreach (var record in effect.ReportChanges(ctx))
+                records.Add(record);
         }
     }
 
     // ============================================================
     // 里程 / 休息 / 結束（供效果或外部呼叫）
     // ============================================================
+
+    /// <summary>
+    /// 加長本輪的里程目標（例如玩家繞遠路，路變遠了）。
+    /// 只影響這一輪，不會改動 Dungeon 的 SO 設定。
+    /// </summary>
+    public void AddRequiredMileage(int amount)
+    {
+        if (amount == 0) return;
+        TotalMileage = Mathf.Max(0, TotalMileage + amount);
+        OnTotalMileageChanged?.Invoke(TotalMileage);
+    }
 
     /// <summary>變更里程（AdvMileageEffect 會呼叫）。里程不會低於 0。</summary>
     public void AddMileage(int delta)

@@ -56,6 +56,25 @@ public class TachieActor : MonoBehaviour
     [Tooltip("可多個角色共用同一份 config")]
     public TachieExpressionConfig expressionConfig;
 
+    [Header("縮放設定 (作用在 bodyImage 那層，臉部會跟著縮)")]
+    [Tooltip("正常大小的倍率。填 0 或負數 = Awake 時自動取 bodyImage 目前的 scale 當正常值")]
+    public float normalScale = 0.92f;
+    [Tooltip("縮小時的倍率")]
+    public float smallScale = 0.85f;
+
+    [Header("嚇到 (上下晃動) 預設參數")]
+    [Tooltip("上下位移強度 (UI 像素)")]
+    public float shockStrength = 22f;
+    [Tooltip("晃動次數，越大晃越密")]
+    public int shockVibrato = 10;
+    [Tooltip("回彈彈性 0~1，越大晃越久")]
+    public float shockElasticity = 0.6f;
+
+    // ===== 縮放 / 晃動 執行期狀態 =====
+    private Tween bodyScaleTween;            // 縮放專用（與晃動互不 Kill）
+    private Tween bodyShockTween;            // 上下晃動專用
+    private Vector2 bodyBaseAnchoredPos;     // bodyImage 的原始位置，晃動結束/被打斷時還原
+
     // ===== 身體模式 (Mode) 執行期狀態 =====
     // 模式查詢表：Key = modeName, Value = 該模式的身體圖片清單
     private Dictionary<string, List<TachieSpriteData>> bodyModeDict;
@@ -68,6 +87,20 @@ public class TachieActor : MonoBehaviour
     private void Awake()
     {
         BuildBodyModes();
+        CacheBodyTransform();
+    }
+
+    /// <summary>
+    /// 記下 bodyImage 的原始位置；normalScale 沒填時，用場上目前的 scale 當正常值。
+    /// </summary>
+    private void CacheBodyTransform()
+    {
+        if (bodyImage == null) return;
+
+        bodyBaseAnchoredPos = bodyImage.rectTransform.anchoredPosition;
+
+        if (normalScale <= 0f)
+            normalScale = bodyImage.rectTransform.localScale.x;
     }
 
     /// <summary>
@@ -250,5 +283,101 @@ public class TachieActor : MonoBehaviour
     public void SetFlip(bool isFlipped)
     {
         transform.localScale = new Vector3(isFlipped ? -1 : 1, 1, 1);
+    }
+
+    // ===== 縮放 (bodyImage 那層) =====
+
+    /// <summary>
+    /// 把 bodyImage 縮放到指定倍率。duration &lt;= 0 則瞬間套用。
+    /// </summary>
+    public void ScaleTo(float targetScale, float duration)
+    {
+        if (bodyImage == null)
+        {
+            Debug.LogWarning($"[TachieActor] {characterID} 沒有指定 bodyImage，無法縮放");
+            return;
+        }
+
+        var rt = bodyImage.rectTransform;
+        KillScaleTween();
+
+        if (duration <= 0f)
+        {
+            rt.localScale = new Vector3(targetScale, targetScale, 1f);
+            return;
+        }
+
+        bodyScaleTween = rt.DOScale(new Vector3(targetScale, targetScale, 1f), duration)
+                           .SetEase(Ease.OutCubic);
+    }
+
+    /// <summary>
+    /// 切換「正常 / 縮小」兩段大小。
+    /// </summary>
+    public void SetSmall(bool isSmall, float duration)
+    {
+        ScaleTo(isSmall ? smallScale : normalScale, duration);
+    }
+
+    /// <summary>目前是不是縮小狀態（以最接近哪一段判定）。</summary>
+    public bool IsSmall()
+    {
+        if (bodyImage == null) return false;
+        float cur = bodyImage.rectTransform.localScale.x;
+        return Mathf.Abs(cur - smallScale) < Mathf.Abs(cur - normalScale);
+    }
+
+    // ===== 嚇到 (上下晃動一下) =====
+
+    /// <summary>
+    /// 嚇到效果：bodyImage 上下彈動一下後回原位。
+    /// 參數傳負數 = 使用 Inspector 上的預設值。
+    /// </summary>
+    public void Shock(float duration = 0.4f, float strength = -1f, int vibrato = -1)
+    {
+        if (bodyImage == null)
+        {
+            Debug.LogWarning($"[TachieActor] {characterID} 沒有指定 bodyImage，無法播放嚇到效果");
+            return;
+        }
+
+        float str = strength < 0f ? shockStrength : strength;
+        int vib = vibrato < 0 ? shockVibrato : vibrato;
+        float dur = duration <= 0f ? 0.4f : duration;
+
+        var rt = bodyImage.rectTransform;
+
+        // 打斷上一次晃動並先歸位，避免位移累加
+        StopShock();
+
+        bodyShockTween = rt.DOPunchAnchorPos(new Vector2(0f, str), dur, vib, shockElasticity)
+                           .SetEase(Ease.OutQuad)
+                           .OnComplete(() => rt.anchoredPosition = bodyBaseAnchoredPos);
+    }
+
+    private void KillScaleTween()
+    {
+        if (bodyScaleTween != null && bodyScaleTween.IsActive())
+            bodyScaleTween.Kill();
+        bodyScaleTween = null;
+    }
+
+    /// <summary>停止晃動並回到原始位置。</summary>
+    public void StopShock()
+    {
+        if (bodyImage == null) return;
+
+        if (bodyShockTween != null && bodyShockTween.IsActive())
+            bodyShockTween.Kill();
+        bodyShockTween = null;
+
+        bodyImage.rectTransform.anchoredPosition = bodyBaseAnchoredPos;
+    }
+
+    private void OnDisable()
+    {
+        // 物件被關掉時把 tween 收乾淨，避免下次啟用時停在中途的狀態
+        KillScaleTween();
+        StopShock();
     }
 }

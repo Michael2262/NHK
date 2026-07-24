@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 // ==========================================================
@@ -94,6 +95,66 @@ public class AdvMileageEffect : AdventureEffect
 
     public override AdventureChangeRecord? ReportChange(AdventureContext ctx)
         => new AdventureChangeRecord("Mileage", Delta);
+}
+
+/// <summary>
+/// 加長本輪的里程目標（路變遠了）。只影響這一輪，不會改到 Dungeon 的設定檔。
+/// </summary>
+[Serializable]
+public class AdvRequiredMileageEffect : AdventureEffect
+{
+    [Tooltip("里程目標的增加量（正數＝路變遠）")]
+    public int Amount = 1;
+
+    public override void Apply(AdventureContext ctx)
+    {
+        ctx.Run?.AddRequiredMileage(Amount);
+    }
+
+    public override AdventureChangeRecord? ReportChange(AdventureContext ctx)
+        => new AdventureChangeRecord("RequiredMileage", Amount);
+}
+
+/// <summary>
+/// 以 ID 調用 StatChangePackageDatabase 的數值變化套組（透過 StatChangeService 執行）。
+/// 一個套組可含多筆變化，會全部回報給結果的變動清單。
+/// </summary>
+[Serializable]
+public class AdvStatPackageEffect : AdventureEffect
+{
+    [Tooltip("StatChangePackageDatabase 裡的套組 ID")]
+    public string PackageID;
+
+    [Tooltip("套組若含女主角數值（Libido / Trust）才需要填；純主角套組留空")]
+    public string HeroineID;
+
+    // Apply 當下取得的結果，供 ReportChanges 回報（Apply → ReportChanges 是同步接續呼叫）
+    private List<ValueChangeRecord> _lastRecords;
+
+    public override void Apply(AdventureContext ctx)
+    {
+        _lastRecords = null;
+        if (string.IsNullOrEmpty(PackageID)) return;
+
+        var service = GameStatusService.Instance != null
+            ? GameStatusService.Instance.StatChangeService
+            : null;
+
+        if (service == null)
+        {
+            Debug.LogWarning($"[AdvStatPackageEffect] 找不到 StatChangeService，跳過套組 '{PackageID}'");
+            return;
+        }
+
+        _lastRecords = service.Apply(PackageID, string.IsNullOrEmpty(HeroineID) ? null : HeroineID);
+    }
+
+    public override IEnumerable<AdventureChangeRecord> ReportChanges(AdventureContext ctx)
+    {
+        if (_lastRecords == null) yield break;
+        foreach (var r in _lastRecords)
+            yield return new AdventureChangeRecord(r.resourceTypeKey, r.finalAmount);
+    }
 }
 
 /// <summary>獲得道具（塞進主角背包）。</summary>
