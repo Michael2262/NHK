@@ -45,7 +45,13 @@ public class LobbyUI_V2 : MonoBehaviour
     [SerializeField] private TextMeshProUGUI textSocialityPreview;
 
     [SerializeField] private TextMeshProUGUI textDependency;
+    [Tooltip("依賴度標題。平常顯示 Dependency；OverDependency Flag 成立時改顯示 OverDependency 並轉粉色。")]
+    [SerializeField] private TextMeshProUGUI textDependencyTitle;
     [SerializeField] private TextMeshProUGUI textDependencyPreview;
+
+    [Header("=== 依賴度標題顯示規則 ===")]
+    [Tooltip("OverDependency 條件 Flag。此 Flag 成立時，依賴度標題改顯示 OverDependency 並轉粉色，依賴度數字也轉粉色。")]
+    [SerializeField] private ProgressFlagDefinition overDependencyFlag;
 
     [Header("=== Preview 顯示設定 ===")]
     [Tooltip("正/負變動是否顯示飄字；播放間隔與淡入淡出時間改由 StatusPreviewSequencer 控制。")]
@@ -90,11 +96,16 @@ public class LobbyUI_V2 : MonoBehaviour
     private const string TITLE_KEY_OVER_STRESS = "OverStress";
     private const string TITLE_KEY_STRESS = "Stress";
 
+    // 依賴度標題的 Text Table Key（OverDependency Flag 成立時改用 OverDependency）
+    private const string TITLE_KEY_OVER_DEPENDENCY = "OverDependency";
+    private const string TITLE_KEY_DEPENDENCY = "Dependency";
+
     // 警示變色用：記住未觸發警示時的原始顏色（只擷取一次），觸發時改用 UIColorPalette 的色票。
     private bool _alertColorsCaptured;
     private Color _stressDefaultColor = Color.white;
     private Color _stressTitleDefaultColor = Color.white;
     private Color _dependencyDefaultColor = Color.white;
+    private Color _dependencyTitleDefaultColor = Color.white;
 
     private void Awake()
     {
@@ -203,9 +214,10 @@ public class LobbyUI_V2 : MonoBehaviour
         if (textStress == null) textStress = textSuspicion;
         if (textStressTitle == null) textStressTitle = textSuspicionTitle;
 
-        // 先擷取原始顏色，再更新標題（UpdateStressTitleUI 會套警示色，順序不能反）
+        // 先擷取原始顏色，再更新標題（UpdateXXXTitleUI 會套警示色，順序不能反）
         CaptureAlertDefaultColors();
         UpdateStressTitleUI();
+        UpdateDependencyTitleUI();
 
         HideAllPreviewTexts();
         if (suspicionDaysPanel != null) suspicionDaysPanel.SetActive(false);
@@ -256,7 +268,7 @@ public class LobbyUI_V2 : MonoBehaviour
         int v = _protagonistModel != null ? _protagonistModel.Dependency : 0;
         StatusPreviewSequencer.Instance.Enqueue(
             StatusPreviewSequencer.OrderDependency,
-            () => { SetText(textDependency, v); ApplyDependencyColor(v); },
+            () => { SetText(textDependency, v); ApplyDependencyColor(); },
             PreviewIfAllowed(textDependencyPreview, delta),
             delta);
     }
@@ -271,14 +283,21 @@ public class LobbyUI_V2 : MonoBehaviour
         UpdateStressTitleUI();
     }
 
-    // 只關心 OverStress 條件 Flag 的變化；含清桶（換日/換場景）時發出的 false 事件。
-    // Flag 切換時：標題文字/顏色 + 壓力數字顏色一起刷新。
+    // 監聽 OverStress / OverDependency 條件 Flag 的變化；含清桶（換日/換場景）時發出的 false 事件。
+    // Flag 切換時：對應標題文字/顏色 + 數字顏色一起刷新。
     private void HandleProgressFlagChanged(string flagID, bool _)
     {
-        if (overStressFlag == null) return;
-        if (flagID != overStressFlag.FlagID) return;
-        UpdateStressTitleUI();
-        ApplyStressColor();
+        if (overStressFlag != null && flagID == overStressFlag.FlagID)
+        {
+            UpdateStressTitleUI();
+            ApplyStressColor();
+        }
+
+        if (overDependencyFlag != null && flagID == overDependencyFlag.FlagID)
+        {
+            UpdateDependencyTitleUI();
+            ApplyDependencyColor();
+        }
     }
 
     private void HandleTimeSlotChanged(int _) => UpdateTimeUI();
@@ -342,6 +361,29 @@ public class LobbyUI_V2 : MonoBehaviour
         textStressTitle.color = color;
     }
 
+    /// <summary>
+    /// 依賴度標題兩規則：
+    /// 1. overDependencyFlag 成立 → "OverDependency"（Pink）
+    /// 2. 平常                    → "Dependency"（原始顏色）
+    /// 每次都重新查表，語言重進場景後會跟著刷新。
+    /// </summary>
+    private void UpdateDependencyTitleUI()
+    {
+        if (textDependencyTitle == null) return;
+
+        string key = TITLE_KEY_DEPENDENCY;
+        Color color = _dependencyTitleDefaultColor;
+
+        if (IsOverDependencyFlagActive())
+        {
+            key = TITLE_KEY_OVER_DEPENDENCY;
+            color = UIColorPalette.Pink;
+        }
+
+        textDependencyTitle.text = Localize(key);
+        textDependencyTitle.color = color;
+    }
+
     // 標準程式端動態查表（見 CLAUDE.md「UI 多語系」）
     private string Localize(string key)
     {
@@ -380,13 +422,13 @@ public class LobbyUI_V2 : MonoBehaviour
         if (_protagonistModel == null) return;
         if (textDependency != null)
             textDependency.text = _protagonistModel.Dependency.ToString();
-        ApplyDependencyColor(_protagonistModel.Dependency);
+        ApplyDependencyColor();
     }
 
     // ==================================================
     // 警示變色：
     // - Stress 數字：OverStress Flag 成立時變 Red，解除時還原。
-    // - Dependency 數字：達 Extreme 門檻時變 Pink。
+    // - Dependency 數字：OverDependency Flag 成立時變 Pink，解除時還原。
     // 顏色取自 UIColorPalette（靜態色票）；未觸發時還原成原始顏色。
     // ==================================================
 
@@ -397,6 +439,7 @@ public class LobbyUI_V2 : MonoBehaviour
         if (textStress != null) _stressDefaultColor = textStress.color;
         if (textStressTitle != null) _stressTitleDefaultColor = textStressTitle.color;
         if (textDependency != null) _dependencyDefaultColor = textDependency.color;
+        if (textDependencyTitle != null) _dependencyTitleDefaultColor = textDependencyTitle.color;
         _alertColorsCaptured = true;
     }
 
@@ -414,12 +457,18 @@ public class LobbyUI_V2 : MonoBehaviour
             && _progressFlagModel.Contains(overStressFlag.FlagID);
     }
 
-    private void ApplyDependencyColor(int dependency)
+    private void ApplyDependencyColor()
     {
         if (textDependency == null) return;
-        textDependency.color = dependency >= ProtagonistStatusModel.DEPENDENCY_EXTREME_THRESHOLD
+        textDependency.color = IsOverDependencyFlagActive()
             ? UIColorPalette.Pink
             : _dependencyDefaultColor;
+    }
+
+    private bool IsOverDependencyFlagActive()
+    {
+        return overDependencyFlag != null && _progressFlagModel != null
+            && _progressFlagModel.Contains(overDependencyFlag.FlagID);
     }
 
     private void HideAllPreviewTexts()

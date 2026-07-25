@@ -43,6 +43,7 @@ public class AlertToast : MonoBehaviour
 
     private AlertToastManager _manager;
     private Sequence _sequence;
+    private Vector3 _baseScale = Vector3.one; // prefab 原本的縮放（動畫的終點，避免被寫死成 1）
     private bool _dismissing; // 已進入淡出流程，避免重複觸發
     private bool _finished;   // 淡出已完成（但尚未銷毀，等整批一起清）
 
@@ -55,6 +56,7 @@ public class AlertToast : MonoBehaviour
     private void Awake()
     {
         if (canvasGroup == null) canvasGroup = GetComponent<CanvasGroup>();
+        _baseScale = transform.localScale; // 記住 prefab 原本的縮放，動畫以它為終點
     }
 
     /// <summary>由管理器呼叫：設定文字並開始生命週期動畫。</summary>
@@ -68,12 +70,12 @@ public class AlertToast : MonoBehaviour
         float life = (duration >= 0f) ? duration : fallbackDuration;
 
         canvasGroup.alpha = 0f;
-        transform.localScale = Vector3.one * popFromScale;
+        transform.localScale = _baseScale * popFromScale; // 以 prefab 原縮放為基準，起點縮小一點
 
         // 用 SetUpdate(true) 走 unscaled time，遊戲暫停（timeScale=0）時公告仍會動
         _sequence = DOTween.Sequence().SetUpdate(true);
         _sequence.Append(canvasGroup.DOFade(1f, fadeInTime));
-        _sequence.Join(transform.DOScale(1f, fadeInTime).SetEase(Ease.OutBack));
+        _sequence.Join(transform.DOScale(_baseScale, fadeInTime).SetEase(Ease.OutBack)); // 終點 = prefab 原縮放
         _sequence.AppendInterval(life);
         _sequence.OnComplete(RequestDismiss); // 停留結束 → 請求管理器安排錯開淡出
     }
