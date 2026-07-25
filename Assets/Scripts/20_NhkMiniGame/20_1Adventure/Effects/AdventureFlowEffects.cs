@@ -7,20 +7,23 @@ using UnityEngine;
 // ==========================================================
 
 /// <summary>
-/// 結束這趟大冒險。通常掛在最終牌的「成功效果」。
-/// 可選：一併把目前正在進行的 Dungeon 標記為已通關。
+/// 中止這趟大冒險。
+///
+/// 注意：里程達標的「正常通關」已經是固定行為，不需要用這個效果。
+/// 這支是給「提前中止」用的（例如某張牌代表意外，直接被迫結束）。
 /// </summary>
 [Serializable]
 public class AdvEndAdventureEffect : AdventureEffect
 {
-    [Tooltip("結束時是否把「目前 Dungeon」標記為已通關（設其 ClearedFlag 的 persistent 旗標）")]
-    public bool MarkCurrentDungeonCleared = true;
+    [Tooltip("結束時是否把「目前 Dungeon」標記為已通關（設其 ClearedFlag 的 persistent 旗標）。\n" +
+             "一般的提前中止應該不勾")]
+    public bool MarkCurrentDungeonCleared = false;
 
     public override void Apply(AdventureContext ctx)
     {
         if (ctx.Run == null) return;
         if (MarkCurrentDungeonCleared) ctx.Run.MarkCurrentDungeonCleared();
-        ctx.Run.EndAdventure(AdventureEndReason.ClearedByCard);
+        ctx.Run.EndAdventure(AdventureEndReason.ByEffect);
     }
 }
 

@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using DG.Tweening;
 using UnityEngine;
@@ -67,6 +68,13 @@ public class AdventureCardPresenter : MonoBehaviour
 
     [SerializeField] private float _fadeDuration = 0.35f;
 
+    [Header("里程完成演出")]
+    [Tooltip("牌收掉後，等多久才觸發 Dungeon 的完成效果")]
+    [SerializeField] private float _waitBeforeCompletion = 0.5f;
+
+    [Tooltip("完成效果觸發後，等多久才正式結束這趟大冒險")]
+    [SerializeField] private float _waitAfterCompletion = 0.8f;
+
     [Header("事件")]
     [Tooltip("必有效果已觸發，停下來等玩家決定。接這裡去開你的「挑戰 / 繞遠路」對話")]
     public UnityEvent onAwaitingOutcome;
@@ -91,18 +99,31 @@ public class AdventureCardPresenter : MonoBehaviour
     // ============================================================
 
     /// <summary>
-    /// 發下一張牌並演到「必有效果」為止。
+    /// 發下一張牌（依牌池抽）並演到「必有效果」為止。
     /// 「繼續前進」和「繞遠路」都呼叫這支 —— 畫面上還有舊牌的話會先淡出清掉。
     /// </summary>
     public void PlayDraw()
     {
-        if (IsPlaying) return;
+        if (!CanStartDraw()) return;
+        StartCoroutine(DrawSequence(() => _controller.DrawNext()));
+    }
+
+    /// <summary>發「指定 ID」的牌（略過牌池）並演到必有效果為止。給劇情腳本用。</summary>
+    public void PlayDrawByID(string cardID)
+    {
+        if (!CanStartDraw()) return;
+        StartCoroutine(DrawSequence(() => _controller.DrawNextByID(cardID)));
+    }
+
+    private bool CanStartDraw()
+    {
+        if (IsPlaying) return false;
         if (_controller == null || _cardPrefab == null || _cardParent == null)
         {
             Debug.LogError("[AdventureCardPresenter] 參照未設定完整（Controller / CardPrefab / CardParent）。");
-            return;
+            return false;
         }
-        StartCoroutine(DrawSequence());
+        return true;
     }
 
     /// <summary>
@@ -169,7 +190,7 @@ public class AdventureCardPresenter : MonoBehaviour
     // 演出
     // ============================================================
 
-    private IEnumerator DrawSequence()
+    private IEnumerator DrawSequence(Func<AdventureCardData> drawFunc)
     {
         IsPlaying = true;
         IsAwaitingOutcome = false;
@@ -178,7 +199,7 @@ public class AdventureCardPresenter : MonoBehaviour
         yield return ClearCurrentCard();
 
         // 發牌。Model 會在這裡丟棄上一張未結算的結果
-        var card = _controller.DrawNext();
+        var card = drawFunc();
         if (card == null)
         {
             IsPlaying = false;
@@ -205,10 +226,7 @@ public class AdventureCardPresenter : MonoBehaviour
             _controller.ResolveOutcome();
 
             yield return WaitOrDismiss(_waitAfterOutcome); // 可被 DismissCard() 提前切斷
-            yield return ClearCurrentCard();
-
-            IsPlaying = false;
-            onSequenceComplete?.Invoke();
+            yield return FinishCardSequence();
         }
         else
         {
@@ -231,10 +249,46 @@ public class AdventureCardPresenter : MonoBehaviour
             _current.SetSprite(result.ResultIllustration);
 
         yield return WaitOrDismiss(_waitAfterOutcome); // 可被 DismissCard() 提前切斷
+        yield return FinishCardSequence();
+    }
+
+    /// <summary>
+    /// 一張牌演完後的共同收尾：收牌 →
+    /// 若這次讓里程達標就接完成演出，否則發 onSequenceComplete 讓玩家選下一步。
+    /// </summary>
+    private IEnumerator FinishCardSequence()
+    {
         yield return ClearCurrentCard();
+
+        if (_controller.HasPendingCompletion)
+        {
+            yield return CompletionSequence();
+            yield break;
+        }
 
         IsPlaying = false;
         onSequenceComplete?.Invoke();
+    }
+
+    /// <summary>
+    /// 里程達標的完成演出。想加通關表演就插在這裡。
+    /// 結束（通關）是固定行為，不需要在 Dungeon 上設定 End Adventure。
+    /// </summary>
+    private IEnumerator CompletionSequence()
+    {
+        IsPlaying = true;
+
+        yield return new WaitForSeconds(_waitBeforeCompletion);
+
+        // 觸發 Dungeon 的完成效果 → Controller 的 onDungeonCompleted 會發出來，演出接那裡
+        _controller.ApplyCompletionEffects();
+
+        yield return new WaitForSeconds(_waitAfterCompletion);
+
+        // 固定收尾：通關結束（會發 onRunEnded）
+        _controller.CompleteRun();
+
+        IsPlaying = false;
     }
 
     private IEnumerator ClearCurrentCard()

@@ -20,10 +20,11 @@ using UnityEngine;
 public class AdventureRunModel
 {
     // ───── 休息規則（大冒險共通，不隨地點變動） ─────
-    /// <summary>每趟大冒險的休息次數上限</summary>
+    /// <summary>
+    /// 每趟大冒險的休息次數上限。
+    /// 注意：休息「本身不做任何數值變化」，降壓等效果由外部控制（見 Rest()）。
+    /// </summary>
     public const int MAX_REST_COUNT = 3;
-    /// <summary>每次休息減少的壓力</summary>
-    public const int REST_STRESS_RELIEF = 10;
 
     // ───── 依賴（由 GameStatusService 注入） ─────
     private readonly ProtagonistStatusModel _protagonist;
@@ -47,8 +48,12 @@ public class AdventureRunModel
     /// <summary>已跑過必有效果、但還沒結算成敗（等待玩家決定要不要挑戰）。</summary>
     public bool HasPendingOutcome => _pendingAlwaysChanges != null;
 
+    /// <summary>里程是否已達目標。</summary>
+    public bool IsComplete => TotalMileage > 0 && CurrentMileage >= TotalMileage;
+
     private AdventureEndReason _endReason;
     private bool _suppressEndEvent; // 套效果期間先壓住結束事件，等結果送出後再發
+    private bool _completionFired;  // Dungeon 的完成效果一趟只跑一次
 
     // 翻牌期間的暫存（跨兩階段）
     private int _flipMileageAnchor;
@@ -62,6 +67,9 @@ public class AdventureRunModel
     public event Action<int> OnTotalMileageChanged; // 新的里程目標（繞遠路等造成）
     public event Action<int> OnRestChanged;    // 剩餘休息次數
     public event Action<AdventureEndReason> OnRunEnded;
+
+    /// <summary>里程達標、Dungeon 的完成效果已執行（帶那些效果造成的數值變動）。</summary>
+    public event Action<List<AdventureChangeRecord>> OnDungeonCompleted;
 
     public AdventureRunModel(ProtagonistStatusModel protagonist,
                              ProtagonistInventoryModel inventory,
@@ -89,6 +97,7 @@ public class AdventureRunModel
         CurrentCard = null;
         IsEnded = false;
         _pendingAlwaysChanges = null;
+        _completionFired = false;
 
         OnMileageChanged?.Invoke(CurrentMileage);
         OnTotalMileageChanged?.Invoke(TotalMileage);
@@ -116,14 +125,34 @@ public class AdventureRunModel
     {
         if (IsEnded || Dungeon == null) return null;
 
-        _pendingAlwaysChanges = null; // 丟棄上一張未結算的結果
-
-        CurrentCard = Dungeon.PickCard(CurrentMileage);
-        if (CurrentCard == null)
+        var card = Dungeon.PickCard(CurrentMileage);
+        if (card == null)
             Debug.LogWarning($"[Adventure] Dungeon '{Dungeon.DungeonID}' 在里程 {CurrentMileage} 抽不到牌，請檢查牌池設定。");
 
-        OnCardDrawn?.Invoke(CurrentCard);
-        return CurrentCard;
+        return SetDrawnCard(card);
+    }
+
+    /// <summary>
+    /// 直接發一張「指定的」牌（略過牌池抽選），用於劇情腳本強制指定某張牌。
+    /// 一樣會丟棄上一張未結算的結果、發 OnCardDrawn。
+    /// </summary>
+    public AdventureCardData DrawSpecificCard(AdventureCardData card)
+    {
+        if (IsEnded) return null;
+        if (card == null)
+        {
+            Debug.LogWarning("[Adventure] DrawSpecificCard 收到 null card。");
+            return null;
+        }
+        return SetDrawnCard(card);
+    }
+
+    private AdventureCardData SetDrawnCard(AdventureCardData card)
+    {
+        _pendingAlwaysChanges = null; // 丟棄上一張未結算的結果
+        CurrentCard = card;
+        OnCardDrawn?.Invoke(card);
+        return card;
     }
 
     // ============================================================
@@ -207,12 +236,59 @@ public class AdventureRunModel
         return result;
     }
 
-    /// <summary>一次跑完兩階段（沒有勾 SorF 的牌用這支）。</summary>
+    // ============================================================
+    // 里程達標（完成）
+    // ============================================================
+
+    /// <summary>
+    /// 里程已達標、但 Dungeon 的完成效果還沒跑。
+    /// 由呼叫端（演出層）在翻牌完全結算後檢查，決定何時進入完成演出。
+    /// </summary>
+    public bool HasPendingCompletion => !_completionFired && !IsEnded && Dungeon != null && IsComplete;
+
+    /// <summary>
+    /// 執行 Dungeon 的 CompletionEffects（不含結束），一趟只會跑一次。
+    /// 刻意不在 AddMileage() 當下自動觸發 —— 那會插進牌的效果清單中間，順序會亂。
+    /// </summary>
+    public List<AdventureChangeRecord> ApplyCompletionEffects()
+    {
+        if (!HasPendingCompletion) return null;
+
+        _completionFired = true;
+
+        var records = new List<AdventureChangeRecord>();
+
+        // 壓住結束事件，確保 OnDungeonCompleted 先發
+        _suppressEndEvent = true;
+        ApplyEffectList(Dungeon.CompletionEffects, records);
+        _suppressEndEvent = false;
+
+        OnDungeonCompleted?.Invoke(records);
+        return records;
+    }
+
+    /// <summary>里程達標後的固定收尾：結束這趟大冒險（通關）。</summary>
+    public void CompleteRun() => EndAdventure(AdventureEndReason.Completed);
+
+    /// <summary>
+    /// 一次跑完整張牌（不演出的即時路徑）。
+    /// 若這次讓里程達標，會連完成效果與通關收尾一起跑完。
+    /// 需要在中間插演出的呼叫端請改用分階段的 API。
+    /// </summary>
     public AdventureFlipResult Flip()
     {
         if (IsEnded || CurrentCard == null) return null;
+
         ApplyAlwaysEffects();
-        return ResolveOutcome();
+        var result = ResolveOutcome();
+
+        if (HasPendingCompletion)
+        {
+            ApplyCompletionEffects();
+            CompleteRun();
+        }
+
+        return result;
     }
 
     private void ApplyEffectList(List<AdventureEffect> effects, List<AdventureChangeRecord> records)
@@ -259,13 +335,14 @@ public class AdventureRunModel
         OnMileageChanged?.Invoke(CurrentMileage);
     }
 
-    /// <summary>休息一次：減壓並扣一次休息次數。次數用完回傳 false。</summary>
+    /// <summary>
+    /// 休息一次：只扣一次休息次數並發事件，本身「不做任何數值變化」。
+    /// 實際的降壓效果由外部控制（對話的 Stat Package、FSM 等），
+    /// 這樣調平衡不必改程式碼。次數用完或已結束時回傳 false。
+    /// </summary>
     public bool Rest()
     {
         if (IsEnded || RestRemaining <= 0) return false;
-
-        if (REST_STRESS_RELIEF != 0)
-            _protagonist?.ReduceStress(REST_STRESS_RELIEF);
 
         RestRemaining--;
         OnRestChanged?.Invoke(RestRemaining);

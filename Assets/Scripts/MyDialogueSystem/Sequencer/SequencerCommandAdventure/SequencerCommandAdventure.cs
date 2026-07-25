@@ -11,11 +11,15 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
     /// 【卡片演出】（走 Presenter）
     ///   Adventure(Dismiss)    -> 讓「結果已呈現、正在等待淡出」的牌提前消失
     ///                            （把 Wait After Outcome 切短；不在該窗口時忽略）
-    ///   Adventure(Draw)       -> 發下一張牌並演到必有效果為止（繼續前進 / 繞遠路）
+    ///   Adventure(Draw)             -> 發下一張牌（依牌池抽）並演到必有效果為止
+    ///   Adventure(DrawByID, 卡片ID) -> 發「指定 ID」的牌並演到必有效果為止（卡片資產名 = ID）
     ///   Adventure(Challenge)  -> 要挑戰：跑成功率判定、演出結果、收牌
     ///
     /// 【流程】（走 Controller）
-    ///   Adventure(Rest)                  -> 休息一次（次數不足自動無效）
+    ///   Adventure(Start, CStore)         -> 用 Dungeon ID 開始一趟（查 Controller 上的 Database）
+    ///   Adventure(Start)                 -> 沒帶 ID 時用 Controller 的預設地點開始
+    ///   Adventure(Rest)                  -> 消耗一次休息次數（次數不足自動無效）。
+    ///                                       本身不做任何數值變化，降壓請另外用 StatPackage 等指令
     ///   Adventure(GoHome)                -> 回家，結束這趟
     ///   Adventure(ResetRest)             -> 休息次數重設為上限
     ///   Adventure(AddRequiredMileage, 2) -> 本輪里程目標 +2（繞遠路，不改 SO）
@@ -47,11 +51,30 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
             {
                 if (RequirePresenter(action, out var presenter)) presenter.PlayDraw();
             }
+            else if (IsAction(action, "DrawByID", "DrawCardByID", "NextByID"))
+            {
+                string cardID = GetParameter(1);
+                if (string.IsNullOrEmpty(cardID))
+                    Debug.LogWarning("[Adventure] DrawByID 缺少卡片 ID。用法：Adventure(DrawByID, 卡片ID)");
+                else if (RequirePresenter(action, out var presenter))
+                    presenter.PlayDrawByID(cardID);
+            }
             else if (IsAction(action, "Challenge", "Outcome", "Resolve"))
             {
                 if (RequirePresenter(action, out var presenter)) presenter.PlayOutcome();
             }
             // ── 流程：走 Controller ──
+            else if (IsAction(action, "Start", "StartDungeon", "Begin"))
+            {
+                if (RequireController(action, out var controller))
+                {
+                    string dungeonID = GetParameter(1);
+                    if (string.IsNullOrEmpty(dungeonID))
+                        controller.StartDefaultAdventure();
+                    else
+                        controller.StartDungeonByID(dungeonID);
+                }
+            }
             else if (IsAction(action, "Rest"))
             {
                 if (RequireController(action, out var controller)) controller.Rest();
@@ -75,7 +98,7 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
             else
             {
                 Debug.LogWarning($"[Adventure] 未知的動作類型: {action}。可用選項: " +
-                                 "Dismiss, Draw, Challenge, Rest, GoHome, ResetRest, AddRequiredMileage。");
+                                 "Dismiss, Draw, Challenge, Start, Rest, GoHome, ResetRest, AddRequiredMileage。");
             }
 
             Stop();

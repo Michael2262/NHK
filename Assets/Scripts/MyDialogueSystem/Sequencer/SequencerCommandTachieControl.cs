@@ -19,11 +19,15 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
     /// 7. Expression (表情預設): TachieControl(Expression, Sister, Angry)
     /// 8. Move: TachieControl(Move, Sister, 500, 0.5)
     /// 9. Left/Right/Center: TachieControl(Left, Sister, 0.5)
-    /// 10. Clear: TachieControl(Clear, 0.5)
+    /// 10. Clear: TachieControl(Clear, 0.5) -> 邊淡出邊移回原位（過程看得到）
+    /// 10.5 HideAndClear: 先原地淡出，看不見之後才歸零（過程看不到）
+    ///      TachieControl(HideAndClear, 0.5, 0.1)         -> 全部角色
+    ///      TachieControl(HideAndClear, Sister, 0.5, 0.1) -> 指定角色或群組
+    ///      參數 = 淡出時間, 淡出後額外緩衝秒數；留空用 Inspector 預設
     /// 11. Mode (切身體 mode，會立刻判定): TachieControl(Mode, Sister, Weekend)
     /// 12. ModeAll (所有角色一起切): TachieControl(ModeAll, Weekend)
     /// 13. Small (縮小): TachieControl(Small, Sister, 0.25)
-    /// 14. Normal (回正常大小): TachieControl(Normal, Sister, 0.25)   ※ Big 保留給未來擴充
+    /// 14. Normal (回正常大小): TachieControl(Normal, Sister, 0.25)
     /// 15. Scale (指定倍率): TachieControl(Scale, Sister, 0.88, 0.25)
     /// 16. Shock (嚇到，上下晃一下): TachieControl(Shock, Sister, 0.4, 22, 10)
     ///     參數 = 時間, 位移強度, 晃動次數；留空則用 Inspector 預設
@@ -103,7 +107,7 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
             // Small: TachieControl(Small, Sister, duration)
             else if (IsAction(action, "Small")) TachieController.Instance.ScaleSmall(actorID, GetParameterAsFloat(2, -1f));
             // Big / Normal: TachieControl(Big, Sister, duration)
-            else if (IsAction(action, "Normal", "UnSmall")) TachieController.Instance.ScaleNormal(actorID, GetParameterAsFloat(2, -1f));
+            else if (IsAction(action, "Normal")) TachieController.Instance.ScaleNormal(actorID, GetParameterAsFloat(2, -1f));
             // Scale: TachieControl(Scale, Sister, 倍率, duration)
             else if (IsAction(action, "Scale"))
             {
@@ -133,6 +137,29 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
             else if (IsAction(action, "Right")) TachieController.Instance.MoveToRight(actorID, GetParameterAsFloat(2, -1f));
             else if (IsAction(action, "Center")) TachieController.Instance.MoveToCenter(actorID, GetParameterAsFloat(2, -1f));
             else if (IsAction(action, "Clear")) TachieController.Instance.ClearAll(GetParameterAsFloat(1, -1f));
+
+            // HideAndClear: 先原地淡出，完全看不見之後才歸零（玩家不會看到位移/縮放的變化過程）
+            // 兩種寫法，用參數1 是不是數字來判斷：
+            //   TachieControl(HideAndClear, 0.5, 0.1)         -> 全部角色
+            //   TachieControl(HideAndClear, Sister, 0.5, 0.1) -> 指定角色或群組
+            else if (IsAction(action, "HideAndClear", "HideClear"))
+            {
+                string first = GetParameter(1);
+                bool isAllActors = string.IsNullOrEmpty(first) ||
+                                   float.TryParse(first, System.Globalization.NumberStyles.Float,
+                                                  System.Globalization.CultureInfo.InvariantCulture, out _);
+
+                if (isAllActors)
+                {
+                    TachieController.Instance.HideAndClearAll(
+                        GetParameterAsFloat(1, -1f), GetParameterAsFloat(2, -1f));
+                }
+                else
+                {
+                    TachieController.Instance.HideAndClear(
+                        actorID, GetParameterAsFloat(2, -1f), GetParameterAsFloat(3, -1f));
+                }
+            }
             else
             {
                 Debug.LogWarning($"[TachieControl] 未知的動作類型: {action}");

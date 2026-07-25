@@ -26,6 +26,13 @@ public class AdventureDungeonData : ScriptableObject
     [Tooltip("通關時要設的 persistent 進度旗標；也用來判定 IsCleared（供已通關顯示 / 解鎖）")]
     public ProgressFlagDefinition ClearedFlag;
 
+    [Header("完成時觸發")]
+    [Tooltip("里程達到目標（CurrentMileage >= TotalMileage）時執行的效果，一趟只會觸發一次。\n" +
+             "時機在「該次翻牌完全結算、牌收掉之後」，由演出層決定，不會插進牌的效果清單中間。\n" +
+             "「結束大冒險」是固定行為，不需要在這裡放 End Adventure。\n" +
+             "通常放：Mark Dungeon Cleared（標記通關）、Play Conversation（通關演出）、獎勵類效果")]
+    [SerializeReference] public List<AdventureEffect> CompletionEffects = new List<AdventureEffect>();
+
     [Header("牌池")]
     [Tooltip("指定里程強制發牌（優先於分段牌池）")]
     public List<AdventureForcedDraw> ForcedDraws = new List<AdventureForcedDraw>();

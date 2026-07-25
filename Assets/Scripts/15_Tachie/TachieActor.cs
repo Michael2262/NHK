@@ -271,12 +271,27 @@ public class TachieActor : MonoBehaviour
     public void Fade(float targetAlpha, float duration)
     {
         canvasGroup.DOKill();
+
+        if (duration <= 0f)
+        {
+            canvasGroup.alpha = targetAlpha;
+            return;
+        }
+
         canvasGroup.DOFade(targetAlpha, duration);
     }
 
     public void MoveX(float targetX, float duration)
     {
         transform.DOKill();
+
+        if (duration <= 0f)
+        {
+            var p = transform.localPosition;
+            transform.localPosition = new Vector3(targetX, p.y, p.z);
+            return;
+        }
+
         transform.DOLocalMoveX(targetX, duration).SetEase(Ease.OutCubic);
     }
 

@@ -10,12 +10,15 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fca591ba8e676d64f8bb42d878c49b45, type: 3}
-  m_Name: CStore Dungeon
+  m_Name: CStore
   m_EditorClassIdentifier: Assembly-CSharp::AdventureDungeonData
   DisplayNameKey: ADV_DUNGEON_NAME_DEFAULT
   Banner: {fileID: 0}
   TotalMileage: 8
   ClearedFlag: {fileID: 0}
+  CompletionEffects:
+  - rid: 8803944088594284631
+  - rid: 8803944088594284634
   ForcedDraws: []
   Bands:
   - MinMileage: 0
@@ -29,3 +32,15 @@ MonoBehaviour:
       Weight: 1
     - Card: {fileID: 11400000, guid: 6ca93dbc4eb3b3d43bcb5c3d597de01e, type: 2}
       Weight: 1
+  references:
+    version: 2
+    RefIds:
+    - rid: 8803944088594284631
+      type: {class: AdvPlayConversationEffect, ns: , asm: Assembly-CSharp}
+      data:
+        ConversationTitle: Adv/DungeonCleared
+        Mode: 2
+    - rid: 8803944088594284634
+      type: {class: AdvMarkDungeonClearedEffect, ns: , asm: Assembly-CSharp}
+      data:
+        Dungeon: {fileID: 11400000}

@@ -15,8 +15,9 @@ public enum AdventureRateMode
 /// <summary>大冒險結束原因。</summary>
 public enum AdventureEndReason
 {
-    GoHome,       // 玩家主動回家
-    ClearedByCard // 牌上的結束效果觸發（通常＝通關）
+    GoHome,    // 玩家主動回家
+    Completed, // 里程達標，正常通關（固定行為，不需要設定）
+    ByEffect   // 牌上的 End Adventure 效果手動中止
 }
 
 /// <summary>

@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using System.Collections;
 using System.Collections.Generic;
 using DG.Tweening;
 
@@ -39,12 +40,17 @@ public class TachieController : MonoBehaviour
     public float defaultScaleDuration = 0.25f;
     [Tooltip("嚇到晃動的預設持續時間")]
     public float defaultShockDuration = 0.4f;
+    [Tooltip("HideAndClear 淡出完成後，額外多等的緩衝秒數（確保沒有殘餘動態被玩家看到）")]
+    public float defaultClearBufferDelay = 0.08f;
 
     // 內部查詢字典：Key = characterID, Value = TachieActor(不分大小寫)
     private Dictionary<string, TachieActor> actorDict = new Dictionary<string, TachieActor>(System.StringComparer.OrdinalIgnoreCase);
 
     // 連動查詢字典：Key = groupName, Value = 群組內所有角色ID列表
     private Dictionary<string, List<string>> groupDict = new Dictionary<string, List<string>>(System.StringComparer.OrdinalIgnoreCase);
+
+    // HideAndClear 的待執行歸零：Key = 角色, Value = 該角色的等待協程（每個角色各自一條，互不影響）
+    private readonly Dictionary<TachieActor, Coroutine> pendingResets = new Dictionary<TachieActor, Coroutine>();
 
 
 
@@ -185,7 +191,13 @@ public class TachieController : MonoBehaviour
     public void SetVisibility(string id, bool isVisible, float duration = -1)
     {
         float dur = duration < 0 ? defaultFadeDuration : duration;
-        GetActor(id)?.Fade(isVisible ? 1f : 0f, dur);
+        var actor = GetActor(id);
+        if (actor == null) return;
+
+        // 又要顯示了 → 取消還沒跑完的歸零，免得淡入到一半被瞬間拉回原位
+        if (isVisible) CancelPendingReset(actor);
+
+        actor.Fade(isVisible ? 1f : 0f, dur);
     }
 
     // --- 2. 細分面部控制 API (有連動) ---
@@ -337,16 +349,100 @@ public class TachieController : MonoBehaviour
     }
 
     // --- 5. 全部消失並回到原位 (不連動，因為本來就是全部角色) ---
+    // 注意：這是「邊淡出邊移動回原位」，玩家看得到位移過程。
+    // 不希望被看到變化過程時請改用 HideAndClearAll。
     public void ClearAll(float duration = -1)
     {
         float dur = duration < 0 ? defaultFadeDuration : duration;
         foreach (var actor in actorDict.Values)
         {
+            CancelPendingReset(actor);
             actor.Fade(0, dur);
             actor.MoveX(0, dur);
             // 一併還原縮放與晃動位移，避免縮小狀態殘留到下一段劇情
             actor.StopShock();
             actor.SetSmall(false, 0f);
         }
+    }
+
+    // --- 5.5 先原地淡出，完全看不見之後才歸零 ---
+    // 流程：原地 Fade(0) → 等 fade 時間 + 緩衝秒數 → 瞬間把位置/縮放/晃動歸零。
+    // 因為歸零時 alpha 已經是 0，玩家不會看到任何位移或縮放的變化過程。
+
+    /// <summary>全部角色：先原地淡出，看不見之後才歸零。</summary>
+    public void HideAndClearAll(float duration = -1, float extraDelay = -1)
+    {
+        StartHideAndClear(new List<TachieActor>(actorDict.Values), duration, extraDelay);
+    }
+
+    /// <summary>指定角色或群組：先原地淡出，看不見之後才歸零。</summary>
+    public void HideAndClear(string id, float duration = -1, float extraDelay = -1)
+    {
+        var targets = new List<TachieActor>();
+        var members = ResolveIDs(id);
+
+        if (members != null)
+        {
+            foreach (var memberID in members)
+            {
+                var member = GetActor(memberID);
+                if (member != null) targets.Add(member);
+            }
+        }
+        else
+        {
+            var actor = GetActor(id);
+            if (actor != null) targets.Add(actor);
+        }
+
+        StartHideAndClear(targets, duration, extraDelay);
+    }
+
+    private void StartHideAndClear(List<TachieActor> targets, float duration, float extraDelay)
+    {
+        if (targets == null || targets.Count == 0) return;
+
+        float dur = duration < 0 ? defaultFadeDuration : duration;
+        float delay = extraDelay < 0 ? defaultClearBufferDelay : extraDelay;
+
+        foreach (var actor in targets)
+        {
+            if (actor == null) continue;
+
+            CancelPendingReset(actor);          // 蓋掉上一次還沒完成的排程
+            actor.Fade(0f, dur);                // 原地淡出，不移動、不縮放
+            pendingResets[actor] = StartCoroutine(HideThenResetRoutine(actor, dur + delay));
+        }
+    }
+
+    private IEnumerator HideThenResetRoutine(TachieActor actor, float waitSeconds)
+    {
+        // 用縮放時間 (WaitForSeconds) 與 DOTween 的預設一致：暫停遊戲時兩邊會一起停
+        yield return new WaitForSeconds(waitSeconds);
+
+        pendingResets.Remove(actor);
+        if (actor == null) yield break;
+
+        // 等待期間又被叫出來顯示 → 放棄歸零，避免玩家看到瞬移
+        if (actor.canvasGroup != null && actor.canvasGroup.alpha > 0.01f) yield break;
+
+        ResetActorInstant(actor);
+    }
+
+    /// <summary>瞬間把位置、縮放、晃動全部歸零（假設此時角色是看不見的）。</summary>
+    private void ResetActorInstant(TachieActor actor)
+    {
+        actor.StopShock();
+        actor.SetSmall(false, 0f);
+        actor.MoveX(0f, 0f);
+    }
+
+    private void CancelPendingReset(TachieActor actor)
+    {
+        if (actor == null) return;
+        if (!pendingResets.TryGetValue(actor, out var routine)) return;
+
+        if (routine != null) StopCoroutine(routine);
+        pendingResets.Remove(actor);
     }
 }

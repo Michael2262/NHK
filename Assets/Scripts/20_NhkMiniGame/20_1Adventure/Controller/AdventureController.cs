@@ -30,6 +30,9 @@ public class AdventureController : MonoBehaviour
     [Tooltip("StartDefaultAdventure() 用的預設地點，可留空")]
     [SerializeField] private AdventureDungeonData _defaultDungeon;
 
+    [Tooltip("用卡片 ID 發牌時的 Resources 資料夾路徑（卡片資產名 = ID）")]
+    [SerializeField] private string _cardResourcePath = "Adventure/AdvCard";
+
     /// <summary>目前進行中的 Run（尚未開始為 null）。</summary>
     public AdventureRunModel Run { get; private set; }
 
@@ -55,6 +58,10 @@ public class AdventureController : MonoBehaviour
     public AdventureIntEvent onMileageChanged;
     public AdventureIntEvent onTotalMileageChanged;
     public AdventureIntEvent onRestChanged;
+
+    [Tooltip("里程達標、Dungeon 的完成效果已跑完。時機在 onFlipResolved 之後、onRunEnded 之前")]
+    public AdventureChangeListEvent onDungeonCompleted;
+
     public UnityEvent onRunEnded;
 
     // ============================================================
@@ -109,6 +116,7 @@ public class AdventureController : MonoBehaviour
         Run.OnMileageChanged += HandleMileageChanged;
         Run.OnTotalMileageChanged += HandleTotalMileageChanged;
         Run.OnRestChanged += HandleRestChanged;
+        Run.OnDungeonCompleted += HandleDungeonCompleted;
         Run.OnRunEnded += HandleRunEnded;
 
         Run.StartRun(dungeon);
@@ -122,14 +130,49 @@ public class AdventureController : MonoBehaviour
 
     // ── 分階段（給 AdventureCardPresenter 這類演出層在對的時間點呼叫）──
 
-    /// <summary>只發牌，不翻。回傳發到的牌。</summary>
+    /// <summary>只發牌（依牌池抽），不翻。回傳發到的牌。</summary>
     public AdventureCardData DrawNext() => Run?.DrawCard();
+
+    /// <summary>只發「指定 ID」的牌（略過牌池），不翻。回傳發到的牌。</summary>
+    public AdventureCardData DrawNextByID(string cardID)
+    {
+        var card = ResolveCard(cardID);
+        return card == null ? null : Run?.DrawSpecificCard(card);
+    }
+
+    /// <summary>一次做完：發指定 ID 的牌並立刻觸發結果（不演出）。</summary>
+    public AdventureFlipResult DrawAndResolveByID(string cardID)
+    {
+        if (Run == null || Run.IsEnded) return null;
+        return DrawNextByID(cardID) == null ? null : Run.Flip();
+    }
+
+    /// <summary>依 ID 從 Resources 載入卡片資產（資產名 = ID）。</summary>
+    public AdventureCardData ResolveCard(string cardID)
+    {
+        if (string.IsNullOrEmpty(cardID)) return null;
+
+        string path = string.IsNullOrEmpty(_cardResourcePath) ? cardID : $"{_cardResourcePath}/{cardID}";
+        var card = Resources.Load<AdventureCardData>(path);
+        if (card == null)
+            Debug.LogWarning($"[AdventureController] 找不到卡片資源：Resources/{path}");
+        return card;
+    }
 
     /// <summary>階段①：立刻套用必有效果。</summary>
     public List<AdventureChangeRecord> ApplyAlways() => Run?.ApplyAlwaysEffects();
 
     /// <summary>階段②：立刻依 OutcomeMode 收尾（判成敗 / 必定成功 / 不判定）。</summary>
     public AdventureFlipResult ResolveOutcome() => Run?.ResolveOutcome();
+
+    /// <summary>里程已達標、Dungeon 的完成效果還沒跑（演出層用來判斷要不要進完成演出）。</summary>
+    public bool HasPendingCompletion => Run != null && Run.HasPendingCompletion;
+
+    /// <summary>階段③：立刻執行 Dungeon 的完成效果（不含結束）。</summary>
+    public List<AdventureChangeRecord> ApplyCompletionEffects() => Run?.ApplyCompletionEffects();
+
+    /// <summary>階段④：通關收尾，結束這趟大冒險。</summary>
+    public void CompleteRun() => Run?.CompleteRun();
 
     // ── 即時（不演出。Debug 面板或不需要演出的流程用）──
 
@@ -175,6 +218,9 @@ public class AdventureController : MonoBehaviour
     private void HandleTotalMileageChanged(int total) => onTotalMileageChanged?.Invoke(total);
     private void HandleRestChanged(int remaining) => onRestChanged?.Invoke(remaining);
 
+    private void HandleDungeonCompleted(List<AdventureChangeRecord> changes)
+        => onDungeonCompleted?.Invoke(changes);
+
     private void HandleRunEnded(AdventureEndReason reason)
     {
         onRunEnded?.Invoke();
@@ -190,6 +236,7 @@ public class AdventureController : MonoBehaviour
         Run.OnMileageChanged -= HandleMileageChanged;
         Run.OnTotalMileageChanged -= HandleTotalMileageChanged;
         Run.OnRestChanged -= HandleRestChanged;
+        Run.OnDungeonCompleted -= HandleDungeonCompleted;
         Run.OnRunEnded -= HandleRunEnded;
     }
 
