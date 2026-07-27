@@ -10,8 +10,8 @@ public class ShopService
     private readonly ShopStatusModel _shopStatusModel;
     private readonly PendingDeliveryModel _pendingDeliveryModel;
 
-    // 依賴的配置檔案 (從 GameStatusService 傳入)
-    private readonly ItemDatabase _itemDatabase;
+    // 道具設定來源 (從 GameStatusService 傳入)：查 ID → ItemConfigData
+    private readonly ItemCatalog _itemCatalog;
 
     // 用於取得當前天數（下單時需要）
     private readonly System.Func<int> _getCurrentDay;
@@ -24,14 +24,14 @@ public class ShopService
         ProtagonistInventoryModel inventory,
         ShopStatusModel shopStatus,
         PendingDeliveryModel pendingDelivery,
-        ItemDatabase itemDatabase,
+        ItemCatalog itemCatalog,
         System.Func<int> getCurrentDay)
     {
         _protagonistStatusModel = protagonistStatus;
         _inventoryModel = inventory;
         _shopStatusModel = shopStatus;
         _pendingDeliveryModel = pendingDelivery;
-        _itemDatabase = itemDatabase;
+        _itemCatalog = itemCatalog;
         _getCurrentDay = getCurrentDay;
     }
 
@@ -41,7 +41,7 @@ public class ShopService
     public PurchaseResult TryPurchaseItem(string itemID)
     {
         // 1. 驗證：商品是否存在？
-        ItemConfigData itemConfig = _itemDatabase.GetItemConfig(itemID);
+        ItemConfigData itemConfig = _itemCatalog.GetItemConfig(itemID);
         if (itemConfig == null)
         {
             Debug.LogError($"[ShopService] 嘗試購買一個不存在的商品 ID: {itemID}");

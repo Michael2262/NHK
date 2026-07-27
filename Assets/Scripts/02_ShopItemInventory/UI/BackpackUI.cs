@@ -243,13 +243,13 @@ public class BackpackUI : MonoBehaviour, IItemButtonHost
         _selectedButton = null; // 清除按鈕引用（物件已被銷毀）
 
         var inventory = GameStatusService.Instance.Inventory;
-        var database = GameStatusService.Instance.ItemDatabase;
+        var catalog = GameStatusService.Instance.ItemCatalog;
         var allOwnedItems = inventory.GetAllItems();
 
         foreach (var itemKVP in allOwnedItems)
         {
             if (itemKVP.Value <= 0) continue;
-            ItemConfigData itemConfig = database.GetItemConfig(itemKVP.Key);
+            ItemConfigData itemConfig = catalog.GetItemConfig(itemKVP.Key);
             if (itemConfig == null) continue;
             if (ShouldDisplayInFilter(itemConfig, _currentFilter))
             {

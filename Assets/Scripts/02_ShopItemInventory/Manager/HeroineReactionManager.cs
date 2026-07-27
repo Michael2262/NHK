@@ -51,9 +51,9 @@ public class HeroineReactionManager : MonoBehaviour
             return;
         }
 
-        // 從 ItemDatabase 取得物品設定
-        var database = GameStatusService.Instance?.ItemDatabase;
-        var config = database?.GetItemConfig(itemID);
+        // 從 ItemCatalog 取得物品設定
+        var catalog = GameStatusService.Instance?.ItemCatalog;
+        var config = catalog?.GetItemConfig(itemID);
 
         if (config == null)
         {

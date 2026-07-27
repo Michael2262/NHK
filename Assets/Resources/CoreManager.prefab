@@ -66,6 +66,7 @@ GameObject:
   - component: {fileID: 3678330288682224598}
   - component: {fileID: 7256248257919297805}
   - component: {fileID: 2128504928821022967}
+  - component: {fileID: 7220962431297692155}
   m_Layer: 0
   m_Name: CoreManager
   m_TagString: CoreSystem
@@ -125,8 +126,6 @@ MonoBehaviour:
   dayTriggerConfig: {fileID: 11400000, guid: 1ca2741aca3fd1548981225d377e5b09, type: 2}
   statChangePackageDatabase: {fileID: 11400000, guid: e2e13ab31941cad4d8352a181962cc8f, type: 2}
   saveNotification: {fileID: 0}
-  heroineTriggerContainers:
-  - {fileID: 11400000, guid: 7ba9269875f09fd4f906318e317e5549, type: 2}
   valueTriggerContainers:
   - {fileID: 11400000, guid: 10be3f854ff5a334c8c2ad4c6d2e3ae8, type: 2}
   progressUnlockConfigs:
@@ -209,6 +208,7 @@ MonoBehaviour:
   alertCharsPerSecond: 20
   minAlertDuration: 1.5
   alertSoundKey: alert_show
+  alertSoundWindow: 0
   customDelay: 3
 --- !u!114 &7256248257919297805
 MonoBehaviour:
@@ -234,3 +234,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7ca976ab7a0806f4c87f5be8f4d677d4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TimeLuaBridge
+--- !u!114 &7220962431297692155
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8658884883466889431}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e9bdc8960e219e348a5645803afe4b9f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InventoryLuaBridge

@@ -82,7 +82,11 @@ public class GameStatusService : MonoBehaviour
     // ==========================================================
     // 公開的 Config 存取點 (讓 Manager 讀取)
     // ==========================================================
-    public ItemDatabase ItemDatabase => itemDatabase; //讓外部可以安全地存取 ItemDatabase
+    public ItemDatabase ItemDatabase => itemDatabase; //讓外部可以安全地存取 ItemDatabase（僅供「商店貨架」用；查道具設定請用 ItemCatalog）
+
+    // 全域道具目錄：ID → ItemConfigData 的唯一來源（自動掃 Resources/SHOP/Item）。
+    // 所有「拿 ID 查設定」都走這裡，與商店貨架 ItemDatabase 解耦。
+    public ItemCatalog ItemCatalog { get; private set; }
 
     public HeroineStatusConfig HeroineConfig => heroineConfig;
     public LocationDatabase LocationDB => locationDatabase;
@@ -179,10 +183,13 @@ public class GameStatusService : MonoBehaviour
         TimeManager = new TimeSystemManager(Time, timeConfig);
         // SkillSystemManager: 注入 Protagonist Model, Skill Model 和 Skill Config
         SkillManager = new SkillSystemManager(Protagonist, Skills, skillConfig, ProgressFlags, Time);
+        // 全域道具目錄：自動掃 Resources/SHOP/Item，作為 ID → ItemConfigData 唯一來源。
+        // 需在依賴它的 Service 之前建立。
+        ItemCatalog = new ItemCatalog();
         // 實例化 ItemUseService
-        ItemUseService = new ItemUseService(itemDatabase, this);
+        ItemUseService = new ItemUseService(ItemCatalog, this);
         // 實例化 ShopService，將所有它需要的依賴項從上面已經創建好的實例中傳入
-        ShopService = new ShopService(Protagonist, Inventory, ShopStatus, PendingDelivery, itemDatabase, () => Time.DayIndex);
+        ShopService = new ShopService(Protagonist, Inventory, ShopStatus, PendingDelivery, ItemCatalog, () => Time.DayIndex);
         // 數值變化套組服務（套用時透過 Instance 取 Protagonist / Heroines）
         StatChangeService = new StatChangeService(statChangePackageDatabase);
 

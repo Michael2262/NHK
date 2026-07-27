@@ -276,14 +276,14 @@ public class GiftUI : MonoBehaviour, IItemButtonHost
         if (string.IsNullOrEmpty(_currentDisplayingHeroineID)) return;
 
         var inventory = GameStatusService.Instance.Inventory;
-        var database = GameStatusService.Instance.ItemDatabase;
+        var catalog = GameStatusService.Instance.ItemCatalog;
         var allOwnedItems = inventory.GetAllItems();
 
         _giftableItems.Clear();
         foreach (var itemKVP in allOwnedItems)
         {
             if (itemKVP.Value <= 0) continue;
-            ItemConfigData itemConfig = database.GetItemConfig(itemKVP.Key);
+            ItemConfigData itemConfig = catalog.GetItemConfig(itemKVP.Key);
             if (itemConfig == null) continue;
 
             var rule = itemConfig.TargetingRule;

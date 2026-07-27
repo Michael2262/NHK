@@ -40,41 +40,9 @@ public class ItemDatabase : ScriptableObject
              "每筆 Entry 包含道具引用、排序順位、解鎖條件。")]
     public List<ShopEntry> ShopEntries = new List<ShopEntry>();
 
-    // 快速查詢用的快取 (O(1) 查詢)
-    private Dictionary<string, ItemConfigData> _cache;
-
-    private void OnEnable()
-    {
-        RebuildCache();
-    }
-
-    /// <summary>
-    /// 重建 ItemID → ItemConfigData 的快取字典。
-    /// </summary>
-    public void RebuildCache()
-    {
-        _cache = new Dictionary<string, ItemConfigData>();
-        foreach (var entry in ShopEntries)
-        {
-            if (entry == null || entry.Item == null) continue;
-            if (_cache.ContainsKey(entry.Item.ItemID))
-            {
-                Debug.LogWarning($"[ItemDatabase] 重複的 ItemID: {entry.Item.ItemID}，已跳過後者。");
-                continue;
-            }
-            _cache[entry.Item.ItemID] = entry.Item;
-        }
-    }
-
-    /// <summary>
-    /// 取得道具的設定檔 (給 ShopService、ItemUseService 等用的)。
-    /// </summary>
-    public ItemConfigData GetItemConfig(string itemID)
-    {
-        if (_cache == null || _cache.Count == 0) RebuildCache();
-        _cache.TryGetValue(itemID, out var config);
-        return config;
-    }
+    // 註：ID → ItemConfigData 的全域查表已移至 ItemCatalog（自動掃 Resources/SHOP/Item）。
+    // ItemDatabase 只負責「這間商店的貨架」：賣哪些、排序、解鎖條件。
+    // 需要用 ID 查道具設定請改用 GameStatusService.Instance.ItemCatalog.GetItemConfig。
 
     /// <summary>
     /// 取得「已解鎖」的商店商品列表，依 SortOrder 由小到大排序。

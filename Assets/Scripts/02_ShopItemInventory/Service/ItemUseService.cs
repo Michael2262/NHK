@@ -11,7 +11,7 @@ using System.Collections.Generic;
 /// </summary>
 public class ItemUseService
 {
-    private readonly ItemDatabase itemDatabase;
+    private readonly ItemCatalog itemCatalog;
     private readonly GameStatusService gameStatus;
 
     // ==========================================================
@@ -22,9 +22,9 @@ public class ItemUseService
     private const string KEY_NO_SELF_EFFECT = "USE_FAIL_NO_SELF_EFFECT";
     private const string KEY_CONDITION_DEFAULT = "USE_FAIL_CONDITION_DEFAULT";
 
-    public ItemUseService(ItemDatabase itemDatabase, GameStatusService gameStatus)
+    public ItemUseService(ItemCatalog itemCatalog, GameStatusService gameStatus)
     {
-        this.itemDatabase = itemDatabase;
+        this.itemCatalog = itemCatalog;
         this.gameStatus = gameStatus;
     }
 
@@ -38,7 +38,7 @@ public class ItemUseService
     /// </summary>
     public UseItemResult UseItemOnSelf(string itemID)
     {
-        var config = itemDatabase.GetItemConfig(itemID);
+        var config = itemCatalog.GetItemConfig(itemID);
         if (config == null)
         {
             Debug.LogError($"[ItemUseService] 找不到道具: {itemID}");
@@ -111,7 +111,7 @@ public class ItemUseService
     /// </summary>
     public UseItemResult PreviewUseItemOnSelf(string itemID)
     {
-        var config = itemDatabase.GetItemConfig(itemID);
+        var config = itemCatalog.GetItemConfig(itemID);
         if (config == null) return UseItemResult.Failed("");
         if (!config.CanUseSelf) return UseItemResult.Failed("");
 
@@ -143,7 +143,7 @@ public class ItemUseService
     /// </summary>
     public GiftResult GiveGift(string itemID, string heroineID)
     {
-        var config = itemDatabase.GetItemConfig(itemID);
+        var config = itemCatalog.GetItemConfig(itemID);
         if (config == null)
         {
             Debug.LogError($"[ItemUseService] 找不到道具: {itemID}");
@@ -239,7 +239,7 @@ public class ItemUseService
     /// </summary>
     public GiftResult PreviewGiftResult(string itemID, string heroineID)
     {
-        var config = itemDatabase.GetItemConfig(itemID);
+        var config = itemCatalog.GetItemConfig(itemID);
         if (config == null) return GiftResult.InvalidTarget;
 
         if (!IsValidGiftTarget(config.TargetingRule, heroineID))
