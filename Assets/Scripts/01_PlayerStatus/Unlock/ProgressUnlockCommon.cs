@@ -59,7 +59,9 @@ public enum UnlockStatType
     LifePower,
     Sociality,
     Dependency,
-    RoomMessLevel
+    RoomMessLevel,
+    // 追加，放最後以免打亂既有 Rule / Mirror .asset 的列舉索引
+    BodyDirtyLevel
 }
 
 /// <summary>
@@ -185,6 +187,10 @@ public static class ProgressUnlockUtility
             case UnlockStatType.RoomMessLevel:
                 if (protagonist == null) return false;
                 value = protagonist.RoomMessLevel;
+                return true;
+            case UnlockStatType.BodyDirtyLevel:
+                if (protagonist == null) return false;
+                value = protagonist.BodyDirtyLevel;
                 return true;
 
             default:

@@ -26,6 +26,9 @@ public class StatusPreviewSequencer : MonoBehaviour
     public const int OrderLifePower = 1;
     public const int OrderSociality = 2;
     public const int OrderDependency = 3;
+    // 主角四項之後、女主角之前；先 Room 再 Body。
+    public const int OrderRoomClean = 4;
+    public const int OrderBodyClean = 5;
     public const int OrderHeroineTrust = 10;
     public const int OrderHeroineLibido = 11;
     public const int OrderHeroineEmotionAdded = 12;

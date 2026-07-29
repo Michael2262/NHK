@@ -21,7 +21,9 @@ public class ValueChangeResult : MonoBehaviour
         Dependency,
         Money,
         SkillPoints,
-        RoomMessLevel
+        RoomMessLevel,
+        // 追加，放最後以免打亂既有 ValueChangeReporter 等序列化元件的列舉索引
+        BodyDirtyLevel
     }
 
     // ==================================================
@@ -475,6 +477,9 @@ public class ValueChangeResult : MonoBehaviour
             case ResourceType.RoomMessLevel:
                 p.ReduceRoomMessLevel(amount);
                 break;
+            case ResourceType.BodyDirtyLevel:
+                p.ReduceBodyDirtyLevel(amount);
+                break;
         }
     }
 
@@ -504,6 +509,9 @@ public class ValueChangeResult : MonoBehaviour
                 break;
             case ResourceType.RoomMessLevel:
                 p.AddRoomMessLevel(amount);
+                break;
+            case ResourceType.BodyDirtyLevel:
+                p.AddBodyDirtyLevel(amount);
                 break;
         }
     }

@@ -31,7 +31,9 @@ public enum StatKind
     RoomMessLevel,
     // ── 女主角 ──
     Libido,
-    Trust
+    Trust,
+    // ── 主角（追加，放最後以免打亂既有套組 .asset 的列舉索引） ──
+    BodyDirtyLevel
 }
 
 /// <summary>

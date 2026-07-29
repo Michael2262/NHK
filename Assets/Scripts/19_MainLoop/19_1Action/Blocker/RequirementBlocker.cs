@@ -281,6 +281,7 @@ public class RequirementBlocker : MonoBehaviour
                 svc.Protagonist.OnSocialityChanged += OnAnyChanged;
                 svc.Protagonist.OnDependencyChanged += OnAnyChanged;
                 svc.Protagonist.OnRoomMessLevelChanged += OnAnyChanged;
+                svc.Protagonist.OnBodyDirtyLevelChanged += OnAnyChanged;
             }
         }
         else if (Conditions != null)
@@ -308,6 +309,7 @@ public class RequirementBlocker : MonoBehaviour
                     svc.Protagonist.OnSocialityChanged += OnAnyChanged;
                     svc.Protagonist.OnDependencyChanged += OnAnyChanged;
                     svc.Protagonist.OnRoomMessLevelChanged += OnAnyChanged;
+                    svc.Protagonist.OnBodyDirtyLevelChanged += OnAnyChanged;
                     protagonistSubscribed = true;
                 }
             }
@@ -343,6 +345,7 @@ public class RequirementBlocker : MonoBehaviour
                 svc.Protagonist.OnSocialityChanged -= OnAnyChanged;
                 svc.Protagonist.OnDependencyChanged -= OnAnyChanged;
                 svc.Protagonist.OnRoomMessLevelChanged -= OnAnyChanged;
+                svc.Protagonist.OnBodyDirtyLevelChanged -= OnAnyChanged;
             }
         }
         else if (Conditions != null)
@@ -369,6 +372,7 @@ public class RequirementBlocker : MonoBehaviour
                     svc.Protagonist.OnSocialityChanged -= OnAnyChanged;
                     svc.Protagonist.OnDependencyChanged -= OnAnyChanged;
                     svc.Protagonist.OnRoomMessLevelChanged -= OnAnyChanged;
+                    svc.Protagonist.OnBodyDirtyLevelChanged -= OnAnyChanged;
                     protagonistUnsubscribed = true;
                 }
             }

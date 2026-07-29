@@ -23,6 +23,9 @@ public class ProtagonistSaveData
     // ───── 房間髒亂度 ─────
     public int RoomMessLevel;
 
+    // ───── 身體髒污度（0～25；舊存檔缺欄位時反序列化為 0） ─────
+    public int BodyDirtyLevel;
+
     // ───── 狀態不好（換日自動解除；舊存檔缺欄位時反序列化預設 false） ─────
     public bool BadHealthy;
 }

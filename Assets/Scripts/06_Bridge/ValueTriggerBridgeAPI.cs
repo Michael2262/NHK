@@ -109,6 +109,20 @@ public class ValueTriggerBridgeAPI : MonoBehaviour
         Debug.Log($"[BridgeAPI] 執行降低房間髒亂度 {amount}");
     }
 
+    public void ExecuteAddBodyDirtyLevel(int amount)
+    {
+        var p = GameStatusService.Instance.Protagonist;
+        p.AddBodyDirtyLevel(amount);
+        Debug.Log($"[BridgeAPI] 執行增加身體髒污度 {amount}");
+    }
+
+    public void ExecuteReduceBodyDirtyLevel(int amount)
+    {
+        var p = GameStatusService.Instance.Protagonist;
+        p.ReduceBodyDirtyLevel(amount);
+        Debug.Log($"[BridgeAPI] 執行降低身體髒污度 {amount}");
+    }
+
     // ==========================================
     //
     // ==========================================

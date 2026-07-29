@@ -214,6 +214,7 @@ public class ProgressUnlockManager
             _protagonist.OnSocialityChanged += _protagonistHandler;
             _protagonist.OnDependencyChanged += _protagonistHandler;
             _protagonist.OnRoomMessLevelChanged += _protagonistHandler;
+            _protagonist.OnBodyDirtyLevelChanged += _protagonistHandler;
         }
     }
 
@@ -239,6 +240,7 @@ public class ProgressUnlockManager
             _protagonist.OnSocialityChanged -= _protagonistHandler;
             _protagonist.OnDependencyChanged -= _protagonistHandler;
             _protagonist.OnRoomMessLevelChanged -= _protagonistHandler;
+            _protagonist.OnBodyDirtyLevelChanged -= _protagonistHandler;
         }
         _protagonistHandler = null;
     }

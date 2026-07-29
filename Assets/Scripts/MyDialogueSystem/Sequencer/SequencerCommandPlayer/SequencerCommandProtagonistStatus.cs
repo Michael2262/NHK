@@ -21,6 +21,8 @@
 //   LifePower:   AddLifePower / ReduceLifePower / SetLifePower
 //   Sociality:  AddSociality / ReduceSociality / SetSociality
 //   Dependency:  AddDependency / ReduceDependency / SetDependency
+//   RoomMess:    AddRoomMess / ReduceRoomMess / SetRoomMess     (房間髒亂度 0~25)
+//   BodyDirty:   AddBodyDirty / ReduceBodyDirty / SetBodyDirty  (身體髒污度 0~25)
 //   ShootTimes:  AddShootTimes / ReduceShootTimes
 //   BadHealthy:  BadHealthy(on) / BadHealthy(off)
 // ============================================================
@@ -399,6 +401,100 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
             int prev = p.Dependency;
             p.SetDependency(parameter);
             return p.Dependency - prev;
+        }
+    }
+
+    // ========================================================
+    // RoomMess（房間髒亂度 0~25）
+    // ResourceTypeKey 用 "RoomMessLevel"，與 ResourceType 列舉一致。
+    // ========================================================
+    public class SequencerCommandAddRoomMess : SequencerCommandProtagonistResourceBase
+    {
+        protected override string ResourceTypeKey => "RoomMessLevel";
+        protected override string CommandName => "AddRoomMess";
+        protected override int GetCurrentValue(ProtagonistStatusModel p) => p.RoomMessLevel;
+
+        protected override int ApplyChange(ProtagonistStatusModel p, int parameter)
+        {
+            int prev = p.RoomMessLevel;
+            p.AddRoomMessLevel(parameter);
+            return p.RoomMessLevel - prev;
+        }
+    }
+
+    public class SequencerCommandReduceRoomMess : SequencerCommandProtagonistResourceBase
+    {
+        protected override string ResourceTypeKey => "RoomMessLevel";
+        protected override string CommandName => "ReduceRoomMess";
+        protected override int GetCurrentValue(ProtagonistStatusModel p) => p.RoomMessLevel;
+
+        protected override int ApplyChange(ProtagonistStatusModel p, int parameter)
+        {
+            int amount = Math.Max(0, parameter);
+            int prev = p.RoomMessLevel;
+            p.ReduceRoomMessLevel(amount);
+            return p.RoomMessLevel - prev;
+        }
+    }
+
+    public class SequencerCommandSetRoomMess : SequencerCommandProtagonistResourceBase
+    {
+        protected override string ResourceTypeKey => "RoomMessLevel";
+        protected override string CommandName => "SetRoomMess";
+        protected override int GetCurrentValue(ProtagonistStatusModel p) => p.RoomMessLevel;
+
+        protected override int ApplyChange(ProtagonistStatusModel p, int parameter)
+        {
+            int prev = p.RoomMessLevel;
+            p.SetRoomMessLevel(parameter);
+            return p.RoomMessLevel - prev;
+        }
+    }
+
+    // ========================================================
+    // BodyDirty（身體髒污度 0~25）
+    // ResourceTypeKey 用 "BodyDirtyLevel"，與 ResourceType 列舉一致。
+    // ========================================================
+    public class SequencerCommandAddBodyDirty : SequencerCommandProtagonistResourceBase
+    {
+        protected override string ResourceTypeKey => "BodyDirtyLevel";
+        protected override string CommandName => "AddBodyDirty";
+        protected override int GetCurrentValue(ProtagonistStatusModel p) => p.BodyDirtyLevel;
+
+        protected override int ApplyChange(ProtagonistStatusModel p, int parameter)
+        {
+            int prev = p.BodyDirtyLevel;
+            p.AddBodyDirtyLevel(parameter);
+            return p.BodyDirtyLevel - prev;
+        }
+    }
+
+    public class SequencerCommandReduceBodyDirty : SequencerCommandProtagonistResourceBase
+    {
+        protected override string ResourceTypeKey => "BodyDirtyLevel";
+        protected override string CommandName => "ReduceBodyDirty";
+        protected override int GetCurrentValue(ProtagonistStatusModel p) => p.BodyDirtyLevel;
+
+        protected override int ApplyChange(ProtagonistStatusModel p, int parameter)
+        {
+            int amount = Math.Max(0, parameter);
+            int prev = p.BodyDirtyLevel;
+            p.ReduceBodyDirtyLevel(amount);
+            return p.BodyDirtyLevel - prev;
+        }
+    }
+
+    public class SequencerCommandSetBodyDirty : SequencerCommandProtagonistResourceBase
+    {
+        protected override string ResourceTypeKey => "BodyDirtyLevel";
+        protected override string CommandName => "SetBodyDirty";
+        protected override int GetCurrentValue(ProtagonistStatusModel p) => p.BodyDirtyLevel;
+
+        protected override int ApplyChange(ProtagonistStatusModel p, int parameter)
+        {
+            int prev = p.BodyDirtyLevel;
+            p.SetBodyDirtyLevel(parameter);
+            return p.BodyDirtyLevel - prev;
         }
     }
 

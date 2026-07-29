@@ -45,6 +45,12 @@ public class ProtagonistStatusModel
     public const int ROOM_MESS_LEVEL_MIN = 0;
     public const int INITIAL_ROOM_MESS_LEVEL = ROOM_MESS_LEVEL_MAX;
 
+    // ───── BodyDirtyLevel（身體髒污度） ─────
+    // 與 RoomMessLevel 平行：0～25，越高代表身體越髒。顯示時反向換算成「整潔度百分比」。
+    public const int BODY_DIRTY_LEVEL_MAX = 25;
+    public const int BODY_DIRTY_LEVEL_MIN = 0;
+    public const int INITIAL_BODY_DIRTY_LEVEL = BODY_DIRTY_LEVEL_MAX;
+
     // ───── 數值範圍 ─────
     // 通用範圍（LifePower / Sociality 使用）
     public const int MIN_STATUS_VALUE = 0;
@@ -126,6 +132,23 @@ public class ProtagonistStatusModel
         }
     }
 
+    /// <summary>身體髒污度：0～25。越高代表身體越髒（顯示時反向換算成整潔度）。</summary>
+    public int BodyDirtyLevel { get; private set; } = INITIAL_BODY_DIRTY_LEVEL;
+
+    /// <summary>
+    /// 身體整潔度百分比：0～100（純衍生、不佔狀態、不進存檔）。
+    /// 由髒污度反向換算：髒污 Min（0）= 整潔 100%，髒污 Max（25）= 整潔 0%。
+    /// </summary>
+    public int BodyCleanPercent
+    {
+        get
+        {
+            int range = BODY_DIRTY_LEVEL_MAX - BODY_DIRTY_LEVEL_MIN;
+            if (range <= 0) return 100;
+            return (BODY_DIRTY_LEVEL_MAX - BodyDirtyLevel) * 100 / range;
+        }
+    }
+
     /// <summary>狀態不好：true 時「增加壓力會再多 +1、減少壓力會少 -1」。換日時自動解除。</summary>
     public bool BadHealthy { get; private set; } = false;
 
@@ -138,6 +161,7 @@ public class ProtagonistStatusModel
     public event Action<int> OnSkillPointsChanged;  // delta
     public event Action<int> OnShootTimesChanged;   // delta
     public event Action<int> OnRoomMessLevelChanged; // delta
+    public event Action<int> OnBodyDirtyLevelChanged; // delta
     public event Action<bool> OnBadHealthyChanged;   // 新狀態值
 
     public event Action<StatusGrade, StatusGrade> OnStressGradeChanged;
@@ -156,6 +180,7 @@ public class ProtagonistStatusModel
         SkillPoints = INITIAL_SKILL_POINTS;
         ShootTimes = INITIAL_SHOOT_TIMES;
         RoomMessLevel = INITIAL_ROOM_MESS_LEVEL;
+        BodyDirtyLevel = INITIAL_BODY_DIRTY_LEVEL;
         BadHealthy = false;
 
         NotifyAllCoreValues();
@@ -173,6 +198,7 @@ public class ProtagonistStatusModel
             SkillPoints = SkillPoints,
             ShootTimes = ShootTimes,
             RoomMessLevel = RoomMessLevel,
+            BodyDirtyLevel = BodyDirtyLevel,
             BadHealthy = BadHealthy
         };
     }
@@ -193,6 +219,7 @@ public class ProtagonistStatusModel
         SkillPoints = Math.Max(0, data.SkillPoints);
         ShootTimes = Math.Max(SHOOT_TIMES_MIN, Math.Min(data.ShootTimes, int.MaxValue));
         RoomMessLevel = ClampRoomMessLevel(data.RoomMessLevel);
+        BodyDirtyLevel = ClampBodyDirtyLevel(data.BodyDirtyLevel); // 舊存檔缺欄位時反序列化為 0（= 身體最乾淨）
         BadHealthy = data.BadHealthy; // 舊存檔沒有此欄位時，Newtonsoft 預設為 false
 
         NotifyAllCoreValues();
@@ -208,6 +235,7 @@ public class ProtagonistStatusModel
         OnSkillPointsChanged?.Invoke(0);
         OnShootTimesChanged?.Invoke(0);
         OnRoomMessLevelChanged?.Invoke(0);
+        OnBodyDirtyLevelChanged?.Invoke(0);
         OnBadHealthyChanged?.Invoke(BadHealthy);
     }
 
@@ -220,7 +248,8 @@ public class ProtagonistStatusModel
 
     public void OnDayEnd()
     {
-        AddRoomMessLevel(1);
+        //AddRoomMessLevel(1);
+        //AddBodyDirtyLevel(1); // 與房間同步：每日結束身體也會變髒一點。若不想要可移除此行。
         ApplyDependencyDailyGain();
     }
 
@@ -508,6 +537,35 @@ public class ProtagonistStatusModel
         if (RoomMessLevel != prev) OnRoomMessLevelChanged?.Invoke(RoomMessLevel - prev);
     }
 
+    // ───── BodyDirtyLevel（身體髒污度） ─────
+
+    /// <summary>查詢目前身體髒污度。</summary>
+    public int CheckBodyDirtyLevel() => BodyDirtyLevel;
+
+    /// <summary>增加髒污度。封頂於 Max，不會超過。</summary>
+    public void AddBodyDirtyLevel(int delta)
+    {
+        if (delta == 0) return;
+        int prev = BodyDirtyLevel;
+        BodyDirtyLevel = ClampBodyDirtyLevel(BodyDirtyLevel + delta);
+        if (BodyDirtyLevel != prev) OnBodyDirtyLevelChanged?.Invoke(BodyDirtyLevel - prev);
+    }
+
+    /// <summary>降低髒污度（delta 為正數）。保底於 Min，不會低於。</summary>
+    public void ReduceBodyDirtyLevel(int delta)
+    {
+        if (delta <= 0) return;
+        AddBodyDirtyLevel(-delta);
+    }
+
+    /// <summary>直接設定髒污度，會夾在 Min~Max。</summary>
+    public void SetBodyDirtyLevel(int value)
+    {
+        int prev = BodyDirtyLevel;
+        BodyDirtyLevel = ClampBodyDirtyLevel(value);
+        if (BodyDirtyLevel != prev) OnBodyDirtyLevelChanged?.Invoke(BodyDirtyLevel - prev);
+    }
+
     // ───── BadHealthy（狀態不好） ─────
 
     /// <summary>開啟「狀態不好」。開啟期間：增加壓力再 +1、減少壓力少 -1。</summary>
@@ -596,6 +654,13 @@ public class ProtagonistStatusModel
     {
         if (value < ROOM_MESS_LEVEL_MIN) return ROOM_MESS_LEVEL_MIN;
         if (value > ROOM_MESS_LEVEL_MAX) return ROOM_MESS_LEVEL_MAX;
+        return value;
+    }
+
+    private static int ClampBodyDirtyLevel(int value)
+    {
+        if (value < BODY_DIRTY_LEVEL_MIN) return BODY_DIRTY_LEVEL_MIN;
+        if (value > BODY_DIRTY_LEVEL_MAX) return BODY_DIRTY_LEVEL_MAX;
         return value;
     }
 }

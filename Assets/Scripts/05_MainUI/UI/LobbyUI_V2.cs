@@ -44,8 +44,15 @@ public class LobbyUI_V2 : MonoBehaviour
     [SerializeField] private TextMeshProUGUI textSociality;
     [SerializeField] private TextMeshProUGUI textSocialityPreview;
 
-    [Tooltip("房間整潔度顯示（百分比）。由髒亂度反向換算，無 preview。")]
+    [Tooltip("房間整潔度顯示（百分比）。由髒亂度反向換算。")]
     [SerializeField] private TextMeshProUGUI textRoomCleanLevel;
+    [Tooltip("房間整潔度變動飄字（顯示 +N% / -N%）。")]
+    [SerializeField] private TextMeshProUGUI textRoomCleanPreview;
+
+    [Tooltip("身體整潔度顯示（百分比）。由身體髒污度反向換算。")]
+    [SerializeField] private TextMeshProUGUI textBodyCleanLevel;
+    [Tooltip("身體整潔度變動飄字（顯示 +N% / -N%）。")]
+    [SerializeField] private TextMeshProUGUI textBodyCleanPreview;
 
     [SerializeField] private TextMeshProUGUI textDependency;
     [Tooltip("依賴度標題。平常顯示 Dependency；OverDependency Flag 成立時改顯示 OverDependency 並轉粉色。")]
@@ -60,6 +67,14 @@ public class LobbyUI_V2 : MonoBehaviour
     [Tooltip("正/負變動是否顯示飄字；播放間隔與淡入淡出時間改由 StatusPreviewSequencer 控制。")]
     [SerializeField] private bool showPositivePreview = true;
     [SerializeField] private bool showNegativePreview = true;
+    [Tooltip("開啟後：主角『生活力』的變動不跳飄字，hover 預先預覽也不顯示（數字本體仍會更新）。")]
+    [SerializeField] private bool hideLifePowerPreview = false;
+    [Tooltip("開啟後：主角『社會性』的變動不跳飄字，hover 預先預覽也不顯示（數字本體仍會更新）。")]
+    [SerializeField] private bool hideSocialityPreview = false;
+    [Tooltip("開啟後：『房間整潔度』的變動不跳飄字，hover 預先預覽也不顯示（數字本體仍會更新）。")]
+    [SerializeField] private bool hideRoomCleanPreview = false;
+    [Tooltip("開啟後：『身體整潔度』的變動不跳飄字，hover 預先預覽也不顯示（數字本體仍會更新）。")]
+    [SerializeField] private bool hideBodyCleanPreview = false;
     // 數字本體與飄字皆透過 StatusPreviewSequencer 依序播放（每隔固定秒數逐一跳）。
 
     // ==================================================
@@ -93,6 +108,10 @@ public class LobbyUI_V2 : MonoBehaviour
     private TimeSystemModel _timeModel;
     private ProgressFlagModel _progressFlagModel;
     private int _lastPhaseIndex = -1;
+
+    // 整潔度飄字用：事件傳來的是「髒亂度 delta」，這裡改用「整潔度百分比」的前後差來顯示 +N% / -N%。
+    private int _cachedRoomClean;
+    private int _cachedBodyClean;
 
     // 壓力標題的 Text Table Key（優先度由高到低：OverStress > BadHealthy > Stress）
     private const string TITLE_KEY_BAD_HEALTHY = "BadHealthy";
@@ -158,6 +177,7 @@ public class LobbyUI_V2 : MonoBehaviour
             _protagonistModel.OnSocialityChanged += HandleSocialityChanged;
             _protagonistModel.OnDependencyChanged += HandleDependencyChanged;
             _protagonistModel.OnRoomMessLevelChanged += HandleRoomMessLevelChanged;
+            _protagonistModel.OnBodyDirtyLevelChanged += HandleBodyDirtyLevelChanged;
             _protagonistModel.OnMoneyChanged += HandleMoneyChanged;
             _protagonistModel.OnBadHealthyChanged += HandleBadHealthyChanged;
         }
@@ -185,6 +205,7 @@ public class LobbyUI_V2 : MonoBehaviour
             _protagonistModel.OnSocialityChanged -= HandleSocialityChanged;
             _protagonistModel.OnDependencyChanged -= HandleDependencyChanged;
             _protagonistModel.OnRoomMessLevelChanged -= HandleRoomMessLevelChanged;
+            _protagonistModel.OnBodyDirtyLevelChanged -= HandleBodyDirtyLevelChanged;
             _protagonistModel.OnMoneyChanged -= HandleMoneyChanged;
             _protagonistModel.OnBadHealthyChanged -= HandleBadHealthyChanged;
         }
@@ -214,6 +235,13 @@ public class LobbyUI_V2 : MonoBehaviour
     private void InitializeAllUI()
     {
         _lastPhaseIndex = -1;
+
+        // 初始化整潔度快取（避免第一次事件觸發時 delta 計算錯誤）
+        if (_protagonistModel != null)
+        {
+            _cachedRoomClean = _protagonistModel.RoomCleanPercent;
+            _cachedBodyClean = _protagonistModel.BodyCleanPercent;
+        }
 
         // 兼容舊欄位：若新 stress 欄位沒接，就使用舊 suspicion 欄位。
         if (textStress == null) textStress = textSuspicion;
@@ -251,6 +279,11 @@ public class LobbyUI_V2 : MonoBehaviour
     private void HandleLifePowerChanged(int delta)
     {
         int v = _protagonistModel != null ? _protagonistModel.LifePower : 0;
+        if (hideLifePowerPreview)
+        {
+            SetText(textLifePower, v); // 有勾：不進 Sequencer、不排隊也不等間隔，數字即時更新
+            return;
+        }
         StatusPreviewSequencer.Instance.Enqueue(
             StatusPreviewSequencer.OrderLifePower,
             () => SetText(textLifePower, v),
@@ -261,6 +294,11 @@ public class LobbyUI_V2 : MonoBehaviour
     private void HandleSocialityChanged(int delta)
     {
         int v = _protagonistModel != null ? _protagonistModel.Sociality : 0;
+        if (hideSocialityPreview)
+        {
+            SetText(textSociality, v); // 有勾：不進 Sequencer、不排隊也不等間隔，數字即時更新
+            return;
+        }
         StatusPreviewSequencer.Instance.Enqueue(
             StatusPreviewSequencer.OrderSociality,
             () => SetText(textSociality, v),
@@ -278,10 +316,47 @@ public class LobbyUI_V2 : MonoBehaviour
             delta);
     }
 
-    // RoomMessLevel 沒有 preview：直接刷新整潔度百分比即可。
-    private void HandleRoomMessLevelChanged(int delta)
+    // 事件傳來的是「髒亂度 delta」；顯示改用「整潔度百分比」的前後差，飄字為 +N% / -N%。
+    private void HandleRoomMessLevelChanged(int messDelta)
     {
-        UpdateRoomCleanUI();
+        if (_protagonistModel == null) return;
+        int newClean = _protagonistModel.RoomCleanPercent;
+        int cleanDelta = newClean - _cachedRoomClean;
+        _cachedRoomClean = newClean;
+        if (hideRoomCleanPreview)
+        {
+            UpdateRoomCleanUI(); // 有勾：不進 Sequencer、不排隊也不等間隔，數字即時更新
+            return;
+        }
+        EnqueueCleanPreview(StatusPreviewSequencer.OrderRoomClean, textRoomCleanPreview, cleanDelta, UpdateRoomCleanUI);
+    }
+
+    private void HandleBodyDirtyLevelChanged(int dirtyDelta)
+    {
+        if (_protagonistModel == null) return;
+        int newClean = _protagonistModel.BodyCleanPercent;
+        int cleanDelta = newClean - _cachedBodyClean;
+        _cachedBodyClean = newClean;
+        if (hideBodyCleanPreview)
+        {
+            UpdateBodyCleanUI(); // 有勾：不進 Sequencer、不排隊也不等間隔，數字即時更新
+            return;
+        }
+        EnqueueCleanPreview(StatusPreviewSequencer.OrderBodyClean, textBodyCleanPreview, cleanDelta, UpdateBodyCleanUI);
+    }
+
+    // 整潔度飄字：格式為 +N% / -N%（單位是百分比，跟一般數值的飄字不同，所以走 EnqueueText 自訂文字）。
+    // 被正/負顯示設定擋掉時仍會更新數字本體，只是不冒飄字。
+    private void EnqueueCleanPreview(int order, TextMeshProUGUI preview, int cleanDelta, Action applyValue)
+    {
+        if (cleanDelta == 0)
+        {
+            applyValue?.Invoke();
+            return;
+        }
+        TextMeshProUGUI target = PreviewIfAllowed(preview, cleanDelta);
+        string text = target != null ? (cleanDelta > 0 ? $"+{cleanDelta}%" : $"{cleanDelta}%") : null;
+        StatusPreviewSequencer.Instance.EnqueueText(order, target, text, applyValue);
     }
 
     private void HandleMoneyChanged(int delta)
@@ -342,6 +417,7 @@ public class LobbyUI_V2 : MonoBehaviour
         UpdateSocialityUI();
         UpdateDependencyUI();
         UpdateRoomCleanUI();
+        UpdateBodyCleanUI();
     }
 
     // 整潔度＝由髒亂度反向換算的百分比（Model.RoomCleanPercent），顯示為「NN%」。
@@ -349,6 +425,13 @@ public class LobbyUI_V2 : MonoBehaviour
     {
         if (textRoomCleanLevel != null && _protagonistModel != null)
             textRoomCleanLevel.text = $"{_protagonistModel.RoomCleanPercent}%";
+    }
+
+    // 身體整潔度＝由身體髒污度反向換算的百分比（Model.BodyCleanPercent），顯示為「NN%」。
+    private void UpdateBodyCleanUI()
+    {
+        if (textBodyCleanLevel != null && _protagonistModel != null)
+            textBodyCleanLevel.text = $"{_protagonistModel.BodyCleanPercent}%";
     }
 
     /// <summary>
@@ -496,6 +579,8 @@ public class LobbyUI_V2 : MonoBehaviour
         HidePreviewText(textLifePowerPreview);
         HidePreviewText(textSocialityPreview);
         HidePreviewText(textDependencyPreview);
+        HidePreviewText(textRoomCleanPreview);
+        HidePreviewText(textBodyCleanPreview);
     }
 
     private void HidePreviewText(TextMeshProUGUI target)
@@ -611,9 +696,20 @@ public class LobbyUI_V2 : MonoBehaviour
             switch (it.kind)
             {
                 case StatKind.Stress: SetStaticPreview(textStressPreview, it.delta); break;
-                case StatKind.LifePower: SetStaticPreview(textLifePowerPreview, it.delta); break;
-                case StatKind.Sociality: SetStaticPreview(textSocialityPreview, it.delta); break;
+                case StatKind.LifePower: if (!hideLifePowerPreview) SetStaticPreview(textLifePowerPreview, it.delta); break;
+                case StatKind.Sociality: if (!hideSocialityPreview) SetStaticPreview(textSocialityPreview, it.delta); break;
                 case StatKind.Dependency: SetStaticPreview(textDependencyPreview, it.delta); break;
+                // Room / Body：套組給的是「髒污 delta」，換算成「整潔度 %」再顯示（+N% / -N%）。
+                case StatKind.RoomMessLevel:
+                    if (!hideRoomCleanPreview)
+                        SetStaticPreview(textRoomCleanPreview,
+                            MessToCleanDelta(it.delta, ProtagonistStatusModel.ROOM_MESS_LEVEL_MAX, ProtagonistStatusModel.ROOM_MESS_LEVEL_MIN), "%");
+                    break;
+                case StatKind.BodyDirtyLevel:
+                    if (!hideBodyCleanPreview)
+                        SetStaticPreview(textBodyCleanPreview,
+                            MessToCleanDelta(it.delta, ProtagonistStatusModel.BODY_DIRTY_LEVEL_MAX, ProtagonistStatusModel.BODY_DIRTY_LEVEL_MIN), "%");
+                    break;
                 // Libido / Trust 屬女主角，由 HeroineUI 處理，這裡忽略。
             }
         }
@@ -625,15 +721,24 @@ public class LobbyUI_V2 : MonoBehaviour
         HideAllPreviewTexts();
     }
 
-    // 靜態顯示：直接設 +X / -X 並把 alpha 拉滿（不透明），不做動畫。
-    private static void SetStaticPreview(TextMeshProUGUI target, int delta)
+    // 靜態顯示：直接設 +X / -X（可帶後綴如 "%"）並把 alpha 拉滿（不透明），不做動畫。
+    private static void SetStaticPreview(TextMeshProUGUI target, int delta, string suffix = "")
     {
         if (target == null) return;
-        target.text = delta > 0 ? $"+{delta}" : delta.ToString();
+        target.text = (delta > 0 ? $"+{delta}" : delta.ToString()) + suffix;
         var c = target.color;
         c.a = 1f;
         target.color = c;
         target.gameObject.SetActive(true);
+    }
+
+    // 把「髒污 delta」換算成「整潔度百分比 delta」：髒污越多整潔越少，故取負號。
+    // 與飄字採同一線性換算（範圍 25 時每點 = 4%）。
+    private static int MessToCleanDelta(int messDelta, int max, int min)
+    {
+        int range = max - min;
+        if (range <= 0) return 0;
+        return -messDelta * (100 / range);
     }
 
     // ==================================================
