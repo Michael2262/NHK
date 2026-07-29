@@ -44,6 +44,9 @@ public class LobbyUI_V2 : MonoBehaviour
     [SerializeField] private TextMeshProUGUI textSociality;
     [SerializeField] private TextMeshProUGUI textSocialityPreview;
 
+    [Tooltip("房間整潔度顯示（百分比）。由髒亂度反向換算，無 preview。")]
+    [SerializeField] private TextMeshProUGUI textRoomCleanLevel;
+
     [SerializeField] private TextMeshProUGUI textDependency;
     [Tooltip("依賴度標題。平常顯示 Dependency；OverDependency Flag 成立時改顯示 OverDependency 並轉粉色。")]
     [SerializeField] private TextMeshProUGUI textDependencyTitle;
@@ -154,6 +157,7 @@ public class LobbyUI_V2 : MonoBehaviour
             _protagonistModel.OnLifePowerChanged += HandleLifePowerChanged;
             _protagonistModel.OnSocialityChanged += HandleSocialityChanged;
             _protagonistModel.OnDependencyChanged += HandleDependencyChanged;
+            _protagonistModel.OnRoomMessLevelChanged += HandleRoomMessLevelChanged;
             _protagonistModel.OnMoneyChanged += HandleMoneyChanged;
             _protagonistModel.OnBadHealthyChanged += HandleBadHealthyChanged;
         }
@@ -180,6 +184,7 @@ public class LobbyUI_V2 : MonoBehaviour
             _protagonistModel.OnLifePowerChanged -= HandleLifePowerChanged;
             _protagonistModel.OnSocialityChanged -= HandleSocialityChanged;
             _protagonistModel.OnDependencyChanged -= HandleDependencyChanged;
+            _protagonistModel.OnRoomMessLevelChanged -= HandleRoomMessLevelChanged;
             _protagonistModel.OnMoneyChanged -= HandleMoneyChanged;
             _protagonistModel.OnBadHealthyChanged -= HandleBadHealthyChanged;
         }
@@ -273,6 +278,12 @@ public class LobbyUI_V2 : MonoBehaviour
             delta);
     }
 
+    // RoomMessLevel 沒有 preview：直接刷新整潔度百分比即可。
+    private void HandleRoomMessLevelChanged(int delta)
+    {
+        UpdateRoomCleanUI();
+    }
+
     private void HandleMoneyChanged(int delta)
     {
         UpdateMoneyUI();
@@ -330,6 +341,14 @@ public class LobbyUI_V2 : MonoBehaviour
         UpdateLifePowerUI();
         UpdateSocialityUI();
         UpdateDependencyUI();
+        UpdateRoomCleanUI();
+    }
+
+    // 整潔度＝由髒亂度反向換算的百分比（Model.RoomCleanPercent），顯示為「NN%」。
+    private void UpdateRoomCleanUI()
+    {
+        if (textRoomCleanLevel != null && _protagonistModel != null)
+            textRoomCleanLevel.text = $"{_protagonistModel.RoomCleanPercent}%";
     }
 
     /// <summary>
@@ -572,6 +591,49 @@ public class LobbyUI_V2 : MonoBehaviour
             case DayOfWeek.Sunday: return "SUN";
             default: return "???";
         }
+    }
+
+    // ==================================================
+    // Hover 預覽（靜態）：滑鼠懸停時常駐顯示 +X / -X，移開清掉。
+    // 不走 StatusPreviewSequencer（那是「數值真的變動」的飄字），
+    // 這裡直接把字塞進 preview 欄位並拉滿 alpha（不透明）。
+    // 由 StatPackagePreviewPresenter 呼叫，只處理主角四項。
+    // ==================================================
+
+    /// <summary>顯示主角數值的 hover 預覽（會先清掉上一輪）。</summary>
+    public void ShowStatPreview(IReadOnlyList<StatPreviewItem> items)
+    {
+        ClearStatPreview();
+        if (items == null) return;
+
+        foreach (var it in items)
+        {
+            switch (it.kind)
+            {
+                case StatKind.Stress: SetStaticPreview(textStressPreview, it.delta); break;
+                case StatKind.LifePower: SetStaticPreview(textLifePowerPreview, it.delta); break;
+                case StatKind.Sociality: SetStaticPreview(textSocialityPreview, it.delta); break;
+                case StatKind.Dependency: SetStaticPreview(textDependencyPreview, it.delta); break;
+                // Libido / Trust 屬女主角，由 HeroineUI 處理，這裡忽略。
+            }
+        }
+    }
+
+    /// <summary>清掉主角的 hover 預覽字。</summary>
+    public void ClearStatPreview()
+    {
+        HideAllPreviewTexts();
+    }
+
+    // 靜態顯示：直接設 +X / -X 並把 alpha 拉滿（不透明），不做動畫。
+    private static void SetStaticPreview(TextMeshProUGUI target, int delta)
+    {
+        if (target == null) return;
+        target.text = delta > 0 ? $"+{delta}" : delta.ToString();
+        var c = target.color;
+        c.a = 1f;
+        target.color = c;
+        target.gameObject.SetActive(true);
     }
 
     // ==================================================

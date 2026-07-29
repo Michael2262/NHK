@@ -394,6 +394,59 @@ public class HeroineUI : MonoBehaviour
     //  Preview 顯示（參考 LobbyUI_V2 寫法）
     // ==========================================================
 
+    // ==========================================================
+    //  Hover 預覽（靜態）：滑鼠懸停時常駐顯示 +X / -X，移開清掉。
+    //  只處理女主角兩項（Trust / Libido），對象為目前顯示中的女主角。
+    //  由 StatPackagePreviewPresenter 呼叫。
+    // ==========================================================
+
+    /// <summary>目前面板顯示中的女主角 ID；面板未開啟時回 null。</summary>
+    public string CurrentHeroineID
+    {
+        get
+        {
+            if (_currentModel == null) return null; // Hide() 會把 _currentModel 設回 null
+            if (heroineOrder == null || _currentOrderIndex < 0 || _currentOrderIndex >= heroineOrder.Count)
+                return null;
+            return heroineOrder[_currentOrderIndex];
+        }
+    }
+
+    /// <summary>顯示女主角數值的 hover 預覽（會先清掉上一輪）。</summary>
+    public void ShowStatPreview(IReadOnlyList<StatPreviewItem> items)
+    {
+        ClearStatPreview();
+        if (items == null) return;
+
+        foreach (var it in items)
+        {
+            switch (it.kind)
+            {
+                case StatKind.Trust: SetStaticPreview(textTrustPreview, it.delta); break;
+                case StatKind.Libido: SetStaticPreview(textLibidoPreview, it.delta); break;
+                // 其餘（主角數值）由 LobbyUI_V2 處理，這裡忽略。
+            }
+        }
+    }
+
+    /// <summary>清掉女主角的 hover 預覽字。</summary>
+    public void ClearStatPreview()
+    {
+        HidePreviewText(textTrustPreview);
+        HidePreviewText(textLibidoPreview);
+    }
+
+    // 靜態顯示：直接設 +X / -X 並把 alpha 拉滿（不透明），不做動畫。
+    private static void SetStaticPreview(TextMeshProUGUI target, int delta)
+    {
+        if (target == null) return;
+        target.text = delta > 0 ? $"+{delta}" : delta.ToString();
+        var c = target.color;
+        c.a = 1f;
+        target.color = c;
+        target.gameObject.SetActive(true);
+    }
+
     private void HideAllPreviewTexts()
     {
         HidePreviewText(textTrustPreview);

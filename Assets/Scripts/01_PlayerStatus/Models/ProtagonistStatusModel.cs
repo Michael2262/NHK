@@ -111,6 +111,21 @@ public class ProtagonistStatusModel
     /// <summary>房間髒亂度：0～25。每日結束自動 +1。越高代表房間越亂。</summary>
     public int RoomMessLevel { get; private set; } = INITIAL_ROOM_MESS_LEVEL;
 
+    /// <summary>
+    /// 房間整潔度百分比：0～100（純衍生、不佔狀態、不進存檔）。
+    /// 由髒亂度反向換算：髒亂 Min（0）= 整潔 100%，髒亂 Max（25）= 整潔 0%。
+    /// 範圍為 25 時剛好整除（每點髒亂 = 4%），無四捨五入誤差。
+    /// </summary>
+    public int RoomCleanPercent
+    {
+        get
+        {
+            int range = ROOM_MESS_LEVEL_MAX - ROOM_MESS_LEVEL_MIN;
+            if (range <= 0) return 100;
+            return (ROOM_MESS_LEVEL_MAX - RoomMessLevel) * 100 / range;
+        }
+    }
+
     /// <summary>狀態不好：true 時「增加壓力會再多 +1、減少壓力會少 -1」。換日時自動解除。</summary>
     public bool BadHealthy { get; private set; } = false;
 

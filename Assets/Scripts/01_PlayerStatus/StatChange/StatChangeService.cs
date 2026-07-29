@@ -19,6 +19,25 @@ using UnityEngine;
 // 由 GameStatusService.InitializeGameModels() 建立並持有。
 // ============================================================
 
+/// <summary>
+/// 單筆數值變化的「預覽項」。
+/// 只帶「哪個數值」與「會變多少（名目 delta）」，供 hover 預覽 UI 顯示 +X / -X。
+/// </summary>
+public struct StatPreviewItem
+{
+    public StatKind kind;
+    public int delta;
+
+    public StatPreviewItem(StatKind kind, int delta)
+    {
+        this.kind = kind;
+        this.delta = delta;
+    }
+
+    /// <summary>是否為女主角數值（Libido / Trust）。</summary>
+    public bool IsHeroine => kind == StatKind.Libido || kind == StatKind.Trust;
+}
+
 public class StatChangeService
 {
     private readonly StatChangePackageDatabase _database;
@@ -98,6 +117,70 @@ public class StatChangeService
         }
 
         return records;
+    }
+
+    /// <summary>
+    /// 試算指定 ID 的套組「會變多少」，但**不套用**任何變化（供 hover 預覽用）。
+    /// 回傳每個數值的名目 delta：Add 為 amount 本身；Set 為 (目標值 − 目前值)。
+    /// 注意：不模擬 Model 的 min/max 夾值，因此預覽為名目值（例如壓力已滿仍顯示 +10）。
+    /// </summary>
+    /// <param name="packageID">套組 ID。</param>
+    /// <param name="heroineID">女主角 ID。含 Libido / Trust 時需提供；找不到則跳過女主角項。</param>
+    /// <returns>delta != 0 的預覽項清單。永不為 null。</returns>
+    public List<StatPreviewItem> Preview(string packageID, string heroineID = null)
+    {
+        var items = new List<StatPreviewItem>();
+
+        if (_database == null) return items;
+
+        var entry = _database.GetEntry(packageID);
+        if (entry == null || entry.ops == null) return items;
+
+        var service = GameStatusService.Instance;
+        var protagonist = service?.Protagonist;
+
+        // 女主角延後查找：只有真的有女主角項時才需要（且靜默，不因預覽而洗警告）。
+        HeroineStatusModel heroine = null;
+        bool heroineResolved = false;
+
+        foreach (var op in entry.ops)
+        {
+            if (op == null) continue;
+
+            if (op.IsHeroineStat)
+            {
+                if (!heroineResolved)
+                {
+                    heroine = ResolveHeroineQuiet(service, heroineID);
+                    heroineResolved = true;
+                }
+                if (heroine == null) continue; // 沒有可預覽的女主角，跳過女主角項
+
+                int before = GetHeroineValue(heroine, op.kind);
+                int delta = op.op == StatOp.Set ? op.amount - before : op.amount;
+                if (delta != 0) items.Add(new StatPreviewItem(op.kind, delta));
+            }
+            else
+            {
+                if (protagonist == null) continue;
+
+                int before = GetProtagonistValue(protagonist, op.kind);
+                int delta = op.op == StatOp.Set ? op.amount - before : op.amount;
+                if (delta != 0) items.Add(new StatPreviewItem(op.kind, delta));
+            }
+        }
+
+        return items;
+    }
+
+    // 靜默版女主角查找：預覽用，找不到就回 null，不發警告。
+    private static HeroineStatusModel ResolveHeroineQuiet(GameStatusService service, string heroineID)
+    {
+        if (service == null || service.Heroines == null || string.IsNullOrWhiteSpace(heroineID))
+            return null;
+
+        service.Heroines.TryGetValue(heroineID, out var heroine);
+        return heroine;
     }
 
     // ==========================================================
