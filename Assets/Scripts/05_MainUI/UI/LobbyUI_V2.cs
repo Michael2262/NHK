@@ -355,7 +355,7 @@ public class LobbyUI_V2 : MonoBehaviour
             return;
         }
         TextMeshProUGUI target = PreviewIfAllowed(preview, cleanDelta);
-        string text = target != null ? (cleanDelta > 0 ? $"+{cleanDelta}%" : $"{cleanDelta}%") : null;
+        string text = target != null ? (cleanDelta > 0 ? $"+{cleanDelta}" : cleanDelta.ToString()) : null;
         StatusPreviewSequencer.Instance.EnqueueText(order, target, text, applyValue);
     }
 
@@ -424,14 +424,14 @@ public class LobbyUI_V2 : MonoBehaviour
     private void UpdateRoomCleanUI()
     {
         if (textRoomCleanLevel != null && _protagonistModel != null)
-            textRoomCleanLevel.text = $"{_protagonistModel.RoomCleanPercent}%";
+            textRoomCleanLevel.text = _protagonistModel.RoomCleanPercent.ToString();
     }
 
     // 身體整潔度＝由身體髒污度反向換算的百分比（Model.BodyCleanPercent），顯示為「NN%」。
     private void UpdateBodyCleanUI()
     {
         if (textBodyCleanLevel != null && _protagonistModel != null)
-            textBodyCleanLevel.text = $"{_protagonistModel.BodyCleanPercent}%";
+            textBodyCleanLevel.text = _protagonistModel.BodyCleanPercent.ToString();
     }
 
     /// <summary>
@@ -703,12 +703,12 @@ public class LobbyUI_V2 : MonoBehaviour
                 case StatKind.RoomMessLevel:
                     if (!hideRoomCleanPreview)
                         SetStaticPreview(textRoomCleanPreview,
-                            MessToCleanDelta(it.delta, ProtagonistStatusModel.ROOM_MESS_LEVEL_MAX, ProtagonistStatusModel.ROOM_MESS_LEVEL_MIN), "%");
+                            MessToCleanDelta(it.delta, ProtagonistStatusModel.ROOM_MESS_LEVEL_MAX, ProtagonistStatusModel.ROOM_MESS_LEVEL_MIN));
                     break;
                 case StatKind.BodyDirtyLevel:
                     if (!hideBodyCleanPreview)
                         SetStaticPreview(textBodyCleanPreview,
-                            MessToCleanDelta(it.delta, ProtagonistStatusModel.BODY_DIRTY_LEVEL_MAX, ProtagonistStatusModel.BODY_DIRTY_LEVEL_MIN), "%");
+                            MessToCleanDelta(it.delta, ProtagonistStatusModel.BODY_DIRTY_LEVEL_MAX, ProtagonistStatusModel.BODY_DIRTY_LEVEL_MIN));
                     break;
                 // Libido / Trust 屬女主角，由 HeroineUI 處理，這裡忽略。
             }
