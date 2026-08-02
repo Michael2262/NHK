@@ -1,16 +1,16 @@
 /******************************************************************************
  * Spine Runtimes License Agreement
- * Last updated July 28, 2023. Replaces all prior versions.
+ * Last updated April 5, 2025. Replaces all prior versions.
  *
- * Copyright (c) 2013-2023, Esoteric Software LLC
+ * Copyright (c) 2013-2026, Esoteric Software LLC
  *
  * Integration of the Spine Runtimes into software or otherwise creating
  * derivative works of the Spine Runtimes is permitted under the terms and
  * conditions of Section 2 of the Spine Editor License Agreement:
  * http://esotericsoftware.com/spine-editor-license
  *
- * Otherwise, it is permitted to integrate the Spine Runtimes into software or
- * otherwise create derivative works of the Spine Runtimes (collectively,
+ * Otherwise, it is permitted to integrate the Spine Runtimes into software
+ * or otherwise create derivative works of the Spine Runtimes (collectively,
  * "Products"), provided that each user of the Products must obtain their own
  * Spine Editor license and redistribution of the Products in any form must
  * include this license and copyright notice.
@@ -23,14 +23,13 @@
  * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES,
  * BUSINESS INTERRUPTION, OR LOSS OF USE, DATA, OR PROFITS) HOWEVER CAUSED AND
  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THE
- * SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THE SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 
 using Spine;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using UnityEngine;
 
 namespace Spine.Unity {
@@ -58,11 +57,14 @@ namespace Spine.Unity {
 
 		public BlendMode BlendModeForMaterial (Material material) {
 			foreach (ReplacementMaterial pair in multiplyMaterials)
-				if (pair.material == material) return BlendMode.Multiply;
+				if (pair.material == material || (pair.material != null && pair.material.shader == material.shader))
+					return BlendMode.Multiply;
 			foreach (ReplacementMaterial pair in additiveMaterials)
-				if (pair.material == material) return BlendMode.Additive;
+				if (pair.material == material || (pair.material != null && pair.material.shader == material.shader))
+					return BlendMode.Additive;
 			foreach (ReplacementMaterial pair in screenMaterials)
-				if (pair.material == material) return BlendMode.Screen;
+				if (pair.material == material || (pair.material != null && pair.material.shader == material.shader))
+					return BlendMode.Screen;
 			return BlendMode.Normal;
 		}
 
@@ -89,7 +91,7 @@ namespace Spine.Unity {
 					skin.GetAttachments(slotIndex, skinEntries);
 
 				foreach (Skin.SkinEntry entry in skinEntries) {
-					if (entry.Attachment is IHasTextureRegion) {
+					if (entry.Attachment is IHasSequence) {
 						requiresBlendModeMaterials = true;
 						return true;
 					}
@@ -166,22 +168,15 @@ namespace Spine.Unity {
 					skin.GetAttachments(slotIndex, skinEntries);
 
 				foreach (Skin.SkinEntry entry in skinEntries) {
-					IHasTextureRegion renderableAttachment = entry.Attachment as IHasTextureRegion;
+					IHasSequence renderableAttachment = entry.Attachment as IHasSequence;
 					if (renderableAttachment != null) {
-						AtlasRegion originalRegion = (AtlasRegion)renderableAttachment.Region;
-						if (originalRegion != null) {
-							anyCreationFailed |= createForRegionFunc(
-								ref replacementMaterials, ref anyReplacementMaterialsChanged,
-								originalRegion, materialTemplate, materialSuffix, skeletonDataAsset);
-						} else {
-							Sequence sequence = renderableAttachment.Sequence;
-							if (sequence != null && sequence.Regions != null) {
-								for (int i = 0, count = sequence.Regions.Length; i < count; ++i) {
-									originalRegion = (AtlasRegion)sequence.Regions[i];
-									anyCreationFailed |= createForRegionFunc(
-										ref replacementMaterials, ref anyReplacementMaterialsChanged,
-										originalRegion, materialTemplate, materialSuffix, skeletonDataAsset);
-								}
+						Sequence sequence = renderableAttachment.Sequence;
+						if (sequence != null && sequence.Regions != null) {
+							for (int i = 0, count = sequence.Regions.Length; i < count; ++i) {
+								AtlasRegion originalRegion = (AtlasRegion)sequence.Regions[i];
+								anyCreationFailed |= createForRegionFunc(
+									ref replacementMaterials, ref anyReplacementMaterialsChanged,
+									originalRegion, materialTemplate, materialSuffix, skeletonDataAsset);
 							}
 						}
 					}
@@ -269,19 +264,12 @@ namespace Spine.Unity {
 					skin.GetAttachments(slotIndex, skinEntries);
 
 				foreach (Skin.SkinEntry entry in skinEntries) {
-					IHasTextureRegion renderableAttachment = entry.Attachment as IHasTextureRegion;
+					IHasSequence renderableAttachment = entry.Attachment as IHasSequence;
 					if (renderableAttachment != null) {
-						if (renderableAttachment.Region != null) {
-							renderableAttachment.Region = CloneAtlasRegionWithMaterial(
-							(AtlasRegion)renderableAttachment.Region, replacementMaterials);
-						} else {
-							if (renderableAttachment.Sequence != null) {
-								TextureRegion[] regions = renderableAttachment.Sequence.Regions;
-								for (int i = 0; i < regions.Length; ++i) {
-									regions[i] = CloneAtlasRegionWithMaterial(
-										(AtlasRegion)regions[i], replacementMaterials);
-								}
-							}
+						TextureRegion[] regions = renderableAttachment.Sequence.Regions;
+						for (int i = 0; i < regions.Length; ++i) {
+							regions[i] = CloneAtlasRegionWithMaterial(
+								(AtlasRegion)regions[i], replacementMaterials);
 						}
 					}
 				}

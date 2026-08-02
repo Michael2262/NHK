@@ -1,16 +1,16 @@
 /******************************************************************************
  * Spine Runtimes License Agreement
- * Last updated July 28, 2023. Replaces all prior versions.
+ * Last updated April 5, 2025. Replaces all prior versions.
  *
- * Copyright (c) 2013-2023, Esoteric Software LLC
+ * Copyright (c) 2013-2026, Esoteric Software LLC
  *
  * Integration of the Spine Runtimes into software or otherwise creating
  * derivative works of the Spine Runtimes is permitted under the terms and
  * conditions of Section 2 of the Spine Editor License Agreement:
  * http://esotericsoftware.com/spine-editor-license
  *
- * Otherwise, it is permitted to integrate the Spine Runtimes into software or
- * otherwise create derivative works of the Spine Runtimes (collectively,
+ * Otherwise, it is permitted to integrate the Spine Runtimes into software
+ * or otherwise create derivative works of the Spine Runtimes (collectively,
  * "Products"), provided that each user of the Products must obtain their own
  * Spine Editor license and redistribution of the Products in any form must
  * include this license and copyright notice.
@@ -23,8 +23,8 @@
  * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES,
  * BUSINESS INTERRUPTION, OR LOSS OF USE, DATA, OR PROFITS) HOWEVER CAUSED AND
  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THE
- * SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THE SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 
 // Optimization option: Allows faster BuildMeshWithArrays call and avoids calling SetTriangles at the cost of
@@ -104,18 +104,18 @@ namespace Spine.Unity {
 			attachments.Resize(attachmentCount);
 			Attachment[] attachmentsItems = attachments.Items;
 
-			Slot[] drawOrderItems = instructionsItems[0].skeleton.DrawOrder.Items;
+			Slot[] drawOrderItems = instructionsItems[0].skeleton.DrawOrder.AppliedPose.Items;
 			for (int i = 0; i < attachmentCount; i++) {
 				Slot slot = drawOrderItems[startSlot + i];
 				if (!slot.Bone.Active
 #if SLOT_ALPHA_DISABLES_ATTACHMENT
-					|| slot.A == 0f
+					|| slot.AppliedPose.GetColor().a == 0f
 #endif
 					) {
 					attachmentsItems[i] = null;
 					continue;
 				}
-				attachmentsItems[i] = slot.Attachment;
+				attachmentsItems[i] = slot.AppliedPose.Attachment;
 			}
 
 #endif
@@ -139,19 +139,21 @@ namespace Spine.Unity {
 			other.submeshInstructions.CopyTo(this.submeshInstructions.Items);
 		}
 
-		public static bool GeometryNotEqual (SkeletonRendererInstruction a, SkeletonRendererInstruction b) {
+		public static bool GeometryNotEqual (SkeletonRendererInstruction a, SkeletonRendererInstruction b,
+			bool calledFromMainThread = true) {
+
 #if SPINE_TRIANGLECHECK
 #if UNITY_EDITOR
-			if (!Application.isPlaying)
+			if (calledFromMainThread && !Application.isPlaying)
 				return true;
 #endif
-
 			if (a.hasActiveClipping || b.hasActiveClipping) return true; // Triangles are unpredictable when clipping is active.
+
+			if (a.immutableTriangles != b.immutableTriangles) return true;
+			if (a.immutableTriangles) return false;
 
 			// Everything below assumes the raw vertex and triangle counts were used. (ie, no clipping was done)
 			if (a.rawVertexCount != b.rawVertexCount) return true;
-
-			if (a.immutableTriangles != b.immutableTriangles) return true;
 
 			int attachmentCountB = b.attachments.Count;
 			if (a.attachments.Count != attachmentCountB) return true; // Bounds check for the looped storedAttachments count below.

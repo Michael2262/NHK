@@ -1,16 +1,16 @@
 /******************************************************************************
  * Spine Runtimes License Agreement
- * Last updated July 28, 2023. Replaces all prior versions.
+ * Last updated April 5, 2025. Replaces all prior versions.
  *
- * Copyright (c) 2013-2023, Esoteric Software LLC
+ * Copyright (c) 2013-2026, Esoteric Software LLC
  *
  * Integration of the Spine Runtimes into software or otherwise creating
  * derivative works of the Spine Runtimes is permitted under the terms and
  * conditions of Section 2 of the Spine Editor License Agreement:
  * http://esotericsoftware.com/spine-editor-license
  *
- * Otherwise, it is permitted to integrate the Spine Runtimes into software or
- * otherwise create derivative works of the Spine Runtimes (collectively,
+ * Otherwise, it is permitted to integrate the Spine Runtimes into software
+ * or otherwise create derivative works of the Spine Runtimes (collectively,
  * "Products"), provided that each user of the Products must obtain their own
  * Spine Editor license and redistribution of the Products in any form must
  * include this license and copyright notice.
@@ -23,12 +23,16 @@
  * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES,
  * BUSINESS INTERRUPTION, OR LOSS OF USE, DATA, OR PROFITS) HOWEVER CAUSED AND
  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THE
- * SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THE SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 
 #if UNITY_2018_3 || UNITY_2019 || UNITY_2018_3_OR_NEWER
 #define NEW_PREFAB_SYSTEM
+#endif
+
+#if UNITY_2023_1_OR_NEWER
+#define USE_COLLIDER_COMPOSITE_OPERATION
 #endif
 
 using System.Collections.Generic;
@@ -41,7 +45,7 @@ namespace Spine.Unity {
 #else
 	[ExecuteInEditMode]
 #endif
-	[HelpURL("http://esotericsoftware.com/spine-unity#BoundingBoxFollowerGraphic")]
+	[HelpURL("http://esotericsoftware.com/spine-unity-utility-components#BoundingBoxFollowerGraphic")]
 	public class BoundingBoxFollowerGraphic : MonoBehaviour {
 		internal static bool DebugMessages = true;
 
@@ -80,7 +84,7 @@ namespace Spine.Unity {
 			Initialize();
 		}
 
-		void HandleRebuild (SkeletonGraphic sr) {
+		void HandleRebuild (ISkeletonRenderer sr) {
 			//if (BoundingBoxFollowerGraphic.DebugMessages) Debug.Log("Skeleton was rebuilt. Repopulating BoundingBoxFollowerGraphic.");
 			Initialize();
 		}
@@ -99,7 +103,6 @@ namespace Spine.Unity {
 			// Don't reinitialize if the setup did not change.
 			if (!overwrite &&
 				colliderTable.Count > 0 && slot != null &&   // Slot is set and colliders already populated.
-				skeletonGraphic.Skeleton == slot.Skeleton && // Skeleton object did not change.
 				slotName == slot.Data.Name                   // Slot object did not change.
 			)
 				return;
@@ -127,10 +130,10 @@ namespace Spine.Unity {
 			if (this.gameObject.activeInHierarchy) {
 				float scale = skeletonGraphic.MeshScale;
 				foreach (Skin skin in skeleton.Data.Skins)
-					AddCollidersForSkin(skin, slotIndex, colliders, scale, ref requiredCollidersCount);
+					AddCollidersForSkin(skin, skeleton, slotIndex, colliders, scale, ref requiredCollidersCount);
 
 				if (skeleton.Skin != null)
-					AddCollidersForSkin(skeleton.Skin, slotIndex, colliders, scale, ref requiredCollidersCount);
+					AddCollidersForSkin(skeleton.Skin, skeleton, slotIndex, colliders, scale, ref requiredCollidersCount);
 			}
 			DisposeExcessCollidersAfter(requiredCollidersCount);
 			skinBoneEnabled = slot.Bone.Active;
@@ -146,13 +149,13 @@ namespace Spine.Unity {
 			}
 		}
 
-		void AddCollidersForSkin (Skin skin, int slotIndex, PolygonCollider2D[] previousColliders, float scale, ref int collidersCount) {
+		void AddCollidersForSkin (Skin skin, Skeleton skeleton, int slotIndex, PolygonCollider2D[] previousColliders, float scale, ref int collidersCount) {
 			if (skin == null) return;
 			List<Skin.SkinEntry> skinEntries = new List<Skin.SkinEntry>();
 			skin.GetAttachments(slotIndex, skinEntries);
 
 			foreach (Skin.SkinEntry entry in skinEntries) {
-				Attachment attachment = skin.GetAttachment(slotIndex, entry.Name);
+				Attachment attachment = skin.GetAttachment(slotIndex, entry.Placeholder);
 				BoundingBoxAttachment boundingBoxAttachment = attachment as BoundingBoxAttachment;
 
 				if (BoundingBoxFollowerGraphic.DebugMessages && attachment != null && boundingBoxAttachment == null)
@@ -163,14 +166,19 @@ namespace Spine.Unity {
 						PolygonCollider2D bbCollider = collidersCount < previousColliders.Length ?
 							previousColliders[collidersCount] : gameObject.AddComponent<PolygonCollider2D>();
 						++collidersCount;
-						SkeletonUtility.SetColliderPointsLocal(bbCollider, slot, boundingBoxAttachment, scale);
+						SkeletonUtility.SetColliderPointsLocal(bbCollider, skeleton, slot, boundingBoxAttachment, scale);
 						bbCollider.isTrigger = isTrigger;
 						bbCollider.usedByEffector = usedByEffector;
+#if USE_COLLIDER_COMPOSITE_OPERATION
+						bbCollider.compositeOperation = usedByComposite ?
+							Collider2D.CompositeOperation.Merge : Collider2D.CompositeOperation.None;
+#else
 						bbCollider.usedByComposite = usedByComposite;
+#endif
 						bbCollider.enabled = false;
 						bbCollider.hideFlags = HideFlags.NotEditable;
 						colliderTable.Add(boundingBoxAttachment, bbCollider);
-						nameTable.Add(boundingBoxAttachment, entry.Name);
+						nameTable.Add(boundingBoxAttachment, entry.Placeholder);
 					}
 				}
 			}
@@ -212,9 +220,11 @@ namespace Spine.Unity {
 		}
 
 		void LateUpdate () {
-			if (slot != null && (slot.Attachment != currentAttachment || skinBoneEnabled != slot.Bone.Active)) {
+			if (slot == null) return;
+			SlotPose slotPose = slot.AppliedPose;
+			if (slotPose.Attachment != currentAttachment || skinBoneEnabled != slot.Bone.Active) {
 				skinBoneEnabled = slot.Bone.Active;
-				MatchAttachment(slot.Attachment);
+				MatchAttachment(slotPose.Attachment);
 			}
 		}
 

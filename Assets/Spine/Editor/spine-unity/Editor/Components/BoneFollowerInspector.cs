@@ -1,16 +1,16 @@
 /******************************************************************************
  * Spine Runtimes License Agreement
- * Last updated July 28, 2023. Replaces all prior versions.
+ * Last updated April 5, 2025. Replaces all prior versions.
  *
- * Copyright (c) 2013-2023, Esoteric Software LLC
+ * Copyright (c) 2013-2026, Esoteric Software LLC
  *
  * Integration of the Spine Runtimes into software or otherwise creating
  * derivative works of the Spine Runtimes is permitted under the terms and
  * conditions of Section 2 of the Spine Editor License Agreement:
  * http://esotericsoftware.com/spine-editor-license
  *
- * Otherwise, it is permitted to integrate the Spine Runtimes into software or
- * otherwise create derivative works of the Spine Runtimes (collectively,
+ * Otherwise, it is permitted to integrate the Spine Runtimes into software
+ * or otherwise create derivative works of the Spine Runtimes (collectively,
  * "Products"), provided that each user of the Products must obtain their own
  * Spine Editor license and redistribution of the Products in any form must
  * include this license and copyright notice.
@@ -23,8 +23,8 @@
  * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES,
  * BUSINESS INTERRUPTION, OR LOSS OF USE, DATA, OR PROFITS) HOWEVER CAUSED AND
  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THE
- * SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THE SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 
 using UnityEditor;
@@ -37,8 +37,8 @@ namespace Spine.Unity.Editor {
 
 	[CustomEditor(typeof(BoneFollower)), CanEditMultipleObjects]
 	public class BoneFollowerInspector : Editor {
-		SerializedProperty boneName, skeletonRenderer, followXYPosition, followZPosition, followBoneRotation,
-			followLocalScale, followParentWorldScale, followSkeletonFlip, maintainedAxisOrientation;
+		SerializedProperty boneName, skeletonRenderer, followXYPosition, followZPosition, followAttachmentZSpacing, 
+			followBoneRotation, followLocalScale, followParentWorldScale, followSkeletonFlip, maintainedAxisOrientation;
 		BoneFollower targetBoneFollower;
 		bool needsReset;
 
@@ -63,7 +63,7 @@ namespace Spine.Unity.Editor {
 		[MenuItem("CONTEXT/SkeletonRenderer/Add BoneFollower GameObject", true)]
 		static bool ValidateAddBoneFollowerGameObject (MenuCommand cmd) {
 			SkeletonRenderer skeletonRenderer = cmd.context as SkeletonRenderer;
-			return skeletonRenderer.valid;
+			return skeletonRenderer.IsValid;
 		}
 
 		[MenuItem("CONTEXT/BoneFollower/Rename BoneFollower GameObject")]
@@ -85,6 +85,7 @@ namespace Spine.Unity.Editor {
 			followBoneRotation = serializedObject.FindProperty("followBoneRotation");
 			followXYPosition = serializedObject.FindProperty("followXYPosition");
 			followZPosition = serializedObject.FindProperty("followZPosition");
+			followAttachmentZSpacing = serializedObject.FindProperty("followAttachmentZSpacing");
 			followLocalScale = serializedObject.FindProperty("followLocalScale");
 			followParentWorldScale = serializedObject.FindProperty("followParentWorldScale");
 			followSkeletonFlip = serializedObject.FindProperty("followSkeletonFlip");
@@ -108,7 +109,7 @@ namespace Spine.Unity.Editor {
 			if (skeletonRendererComponent == null) return;
 
 			Transform transform = skeletonRendererComponent.transform;
-			Skeleton skeleton = skeletonRendererComponent.skeleton;
+			Skeleton skeleton = skeletonRendererComponent.Skeleton;
 
 			if (string.IsNullOrEmpty(boneName.stringValue)) {
 				SpineHandles.DrawBones(transform, skeleton);
@@ -178,6 +179,10 @@ namespace Spine.Unity.Editor {
 				EditorGUILayout.PropertyField(followBoneRotation);
 				EditorGUILayout.PropertyField(followXYPosition);
 				EditorGUILayout.PropertyField(followZPosition);
+				if (followZPosition.boolValue == true) {
+					using (new SpineInspectorUtility.IndentScope())
+						EditorGUILayout.PropertyField(followAttachmentZSpacing, new GUIContent("Attachment Z Spacing"));
+				}
 				EditorGUILayout.PropertyField(followLocalScale);
 				EditorGUILayout.PropertyField(followParentWorldScale);
 				EditorGUILayout.PropertyField(followSkeletonFlip);
@@ -195,10 +200,10 @@ namespace Spine.Unity.Editor {
 				} else {
 					boneFollowerSkeletonRenderer.Initialize(false);
 
-					if (boneFollowerSkeletonRenderer.skeletonDataAsset == null)
+					if (boneFollowerSkeletonRenderer.SkeletonDataAsset == null)
 						EditorGUILayout.HelpBox("Assigned SkeletonRenderer does not have SkeletonData assigned to it.", MessageType.Warning);
 
-					if (!boneFollowerSkeletonRenderer.valid)
+					if (!boneFollowerSkeletonRenderer.IsValid)
 						EditorGUILayout.HelpBox("Assigned SkeletonRenderer is invalid. Check target SkeletonRenderer, its SkeletonData asset or the console for other errors.", MessageType.Warning);
 				}
 			}

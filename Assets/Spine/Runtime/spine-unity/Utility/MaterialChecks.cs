@@ -1,16 +1,16 @@
 /******************************************************************************
  * Spine Runtimes License Agreement
- * Last updated July 28, 2023. Replaces all prior versions.
+ * Last updated April 5, 2025. Replaces all prior versions.
  *
- * Copyright (c) 2013-2023, Esoteric Software LLC
+ * Copyright (c) 2013-2026, Esoteric Software LLC
  *
  * Integration of the Spine Runtimes into software or otherwise creating
  * derivative works of the Spine Runtimes is permitted under the terms and
  * conditions of Section 2 of the Spine Editor License Agreement:
  * http://esotericsoftware.com/spine-editor-license
  *
- * Otherwise, it is permitted to integrate the Spine Runtimes into software or
- * otherwise create derivative works of the Spine Runtimes (collectively,
+ * Otherwise, it is permitted to integrate the Spine Runtimes into software
+ * or otherwise create derivative works of the Spine Runtimes (collectively,
  * "Products"), provided that each user of the Products must obtain their own
  * Spine Editor license and redistribution of the Products in any form must
  * include this license and copyright notice.
@@ -23,8 +23,8 @@
  * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES,
  * BUSINESS INTERRUPTION, OR LOSS OF USE, DATA, OR PROFITS) HOWEVER CAUSED AND
  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THE
- * SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THE SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 
 using System.Collections.Generic;
@@ -50,6 +50,7 @@ namespace Spine.Unity {
 			};
 		static readonly string NORMALMAP_KEYWORD = "_NORMALMAP";
 		static readonly string CANVAS_GROUP_COMPATIBLE_KEYWORD = "_CANVAS_GROUP_COMPATIBLE";
+		static readonly string TINT_BLACK_KEYWORD = "_TINT_BLACK_ON";
 
 		public static readonly string kPMANotSupportedLinearMessage =
 			"\nWarning: Premultiply-alpha atlas textures not supported in Linear color space!"
@@ -139,7 +140,7 @@ namespace Spine.Unity {
 			bool isProblematic = false;
 			if (material) {
 				isProblematic |= IsMaterialSetupProblematic(material, ref errorMessage);
-				MeshGenerator.Settings settings = skeletonGraphic.MeshGenerator.settings;
+				MeshGenerator.Settings settings = skeletonGraphic.MeshSettings;
 				if (settings.zSpacing == 0) {
 					isProblematic |= IsZSpacingRequired(material, ref errorMessage);
 				}
@@ -327,8 +328,8 @@ namespace Spine.Unity {
 
 		static bool RequiresTintBlack (Material material) {
 			bool isTintBlackShader =
-				material.shader.name.Contains("Spine") &&
-				material.shader.name.Contains("Tint Black");
+				(material.shader.name.Contains("Spine") && material.shader.name.Contains("Tint Black")) ||
+				material.IsKeywordEnabled(TINT_BLACK_KEYWORD);
 			return isTintBlackShader;
 		}
 
@@ -343,7 +344,7 @@ namespace Spine.Unity {
 			Canvas canvas = skeletonGraphic.canvas;
 			if (!canvas)
 				return false;
-			var requiredChannels =
+			AdditionalCanvasShaderChannels requiredChannels =
 				AdditionalCanvasShaderChannels.TexCoord1 |
 				AdditionalCanvasShaderChannels.TexCoord2;
 			return (canvas.additionalShaderChannels & requiredChannels) != requiredChannels;

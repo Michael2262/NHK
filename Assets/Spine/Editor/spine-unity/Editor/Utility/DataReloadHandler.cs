@@ -1,16 +1,16 @@
 /******************************************************************************
  * Spine Runtimes License Agreement
- * Last updated July 28, 2023. Replaces all prior versions.
+ * Last updated April 5, 2025. Replaces all prior versions.
  *
- * Copyright (c) 2013-2023, Esoteric Software LLC
+ * Copyright (c) 2013-2026, Esoteric Software LLC
  *
  * Integration of the Spine Runtimes into software or otherwise creating
  * derivative works of the Spine Runtimes is permitted under the terms and
  * conditions of Section 2 of the Spine Editor License Agreement:
  * http://esotericsoftware.com/spine-editor-license
  *
- * Otherwise, it is permitted to integrate the Spine Runtimes into software or
- * otherwise create derivative works of the Spine Runtimes (collectively,
+ * Otherwise, it is permitted to integrate the Spine Runtimes into software
+ * or otherwise create derivative works of the Spine Runtimes (collectively,
  * "Products"), provided that each user of the Products must obtain their own
  * Spine Editor license and redistribution of the Products in any form must
  * include this license and copyright notice.
@@ -23,8 +23,8 @@
  * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES,
  * BUSINESS INTERRUPTION, OR LOSS OF USE, DATA, OR PROFITS) HOWEVER CAUSED AND
  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THE
- * SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THE SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 
 #pragma warning disable 0219
@@ -33,6 +33,14 @@
 
 #if UNITY_2017_2_OR_NEWER
 #define NEWPLAYMODECALLBACKS
+#endif
+
+#if UNITY_2022_2_OR_NEWER
+#define USE_FIND_OBJECTS_BY_TYPE
+#endif
+
+#if UNITY_6000_3_OR_NEWER
+#define USES_ENTITY_ID
 #endif
 
 using System.Collections.Generic;
@@ -49,7 +57,11 @@ namespace Spine.Unity.Editor {
 	public partial class SpineEditorUtilities {
 		public static class DataReloadHandler {
 
+#if USES_ENTITY_ID
+			internal static Dictionary<EntityId, string> savedSkeletonDataAssetAtSKeletonGraphicID = new Dictionary<EntityId, string>();
+#else
 			internal static Dictionary<int, string> savedSkeletonDataAssetAtSKeletonGraphicID = new Dictionary<int, string>();
+#endif
 
 #if NEWPLAYMODECALLBACKS
 			internal static void OnPlaymodeStateChanged (PlayModeStateChange stateChange) {
@@ -68,7 +80,11 @@ namespace Spine.Unity.Editor {
 
 				HashSet<SkeletonDataAsset> skeletonDataAssetsToReload = new HashSet<SkeletonDataAsset>();
 
+#if USE_FIND_OBJECTS_BY_TYPE
+				SkeletonRenderer[] activeSkeletonRenderers = GameObject.FindObjectsByType<SkeletonRenderer>(FindObjectsSortMode.None);
+#else
 				SkeletonRenderer[] activeSkeletonRenderers = GameObject.FindObjectsOfType<SkeletonRenderer>();
+#endif
 				foreach (SkeletonRenderer sr in activeSkeletonRenderers) {
 					SkeletonDataAsset skeletonDataAsset = sr.skeletonDataAsset;
 					if (skeletonDataAsset != null) skeletonDataAssetsToReload.Add(skeletonDataAsset);
@@ -79,12 +95,20 @@ namespace Spine.Unity.Editor {
 				// by the instance of the ScriptableObject being destroyed but still assigned.
 				// Here we save the skeletonGraphic.skeletonDataAsset asset path in order
 				// to restore it later.
+#if USE_FIND_OBJECTS_BY_TYPE
+				SkeletonGraphic[] activeSkeletonGraphics = GameObject.FindObjectsByType<SkeletonGraphic>(FindObjectsSortMode.None);
+#else
 				SkeletonGraphic[] activeSkeletonGraphics = GameObject.FindObjectsOfType<SkeletonGraphic>();
+#endif
 				foreach (SkeletonGraphic skeletonGraphic in activeSkeletonGraphics) {
 					SkeletonDataAsset skeletonDataAsset = skeletonGraphic.skeletonDataAsset;
 					if (skeletonDataAsset != null) {
 						string assetPath = AssetDatabase.GetAssetPath(skeletonDataAsset);
+#if USES_ENTITY_ID
+						EntityId sgID = skeletonGraphic.GetEntityId();
+#else
 						int sgID = skeletonGraphic.GetInstanceID();
+#endif
 						savedSkeletonDataAssetAtSKeletonGraphicID[sgID] = assetPath;
 						skeletonDataAssetsToReload.Add(skeletonDataAsset);
 					}
@@ -106,12 +130,20 @@ namespace Spine.Unity.Editor {
 				if (EditorApplication.isCompiling) return;
 				if (EditorApplication.isPlayingOrWillChangePlaymode) return;
 
+#if USE_FIND_OBJECTS_BY_TYPE
+				SkeletonRenderer[] activeSkeletonRenderers = GameObject.FindObjectsByType<SkeletonRenderer>(FindObjectsSortMode.None);
+#else
 				SkeletonRenderer[] activeSkeletonRenderers = GameObject.FindObjectsOfType<SkeletonRenderer>();
+#endif
 				foreach (SkeletonRenderer renderer in activeSkeletonRenderers) {
 					if (renderer.isActiveAndEnabled && renderer.skeletonDataAsset == skeletonDataAsset) renderer.Initialize(true);
 				}
 
+#if USE_FIND_OBJECTS_BY_TYPE
+				SkeletonGraphic[] activeSkeletonGraphics = GameObject.FindObjectsByType<SkeletonGraphic>(FindObjectsSortMode.None);
+#else
 				SkeletonGraphic[] activeSkeletonGraphics = GameObject.FindObjectsOfType<SkeletonGraphic>();
+#endif
 				foreach (SkeletonGraphic graphic in activeSkeletonGraphics) {
 					if (graphic.isActiveAndEnabled && graphic.skeletonDataAsset == skeletonDataAsset)
 						graphic.Initialize(true);
@@ -132,9 +164,11 @@ namespace Spine.Unity.Editor {
 				string[] guids = UnityEditor.AssetDatabase.FindAssets("t:AnimationReferenceAsset");
 				foreach (string guid in guids) {
 					string path = UnityEditor.AssetDatabase.GUIDToAssetPath(guid);
-					if (!string.IsNullOrEmpty(path)) {
-						AnimationReferenceAsset referenceAsset = UnityEditor.AssetDatabase.LoadAssetAtPath<AnimationReferenceAsset>(path);
-						if (referenceAsset.SkeletonDataAsset == skeletonDataAsset)
+					if (string.IsNullOrEmpty(path)) continue;
+					UnityEngine.Object[] allAssets = UnityEditor.AssetDatabase.LoadAllAssetsAtPath(path);
+					foreach (UnityEngine.Object obj in allAssets) {
+						AnimationReferenceAsset referenceAsset = obj as AnimationReferenceAsset;
+						if (referenceAsset != null && referenceAsset.SkeletonDataAsset == skeletonDataAsset)
 							func(referenceAsset);
 					}
 				}
