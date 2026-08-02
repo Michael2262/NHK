@@ -529,9 +529,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2a852015ed21d2642859a85240362c08, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ActionOverlayTrigger
+  actionId: 
   duration: 1
   actionSprite: {fileID: 0}
   localizationKey: 
+  overlayPosition: 0
+  enableOutcomeResult: 0
+  successChance: 0.5
+  chanceProvider: {fileID: 0}
+  autoApplyChanceProviderOnExecute: 1
+  successLocalizationKey: Result.Success
+  failureLocalizationKey: Result.Failure
+  resultHoldSeconds: 2
+  successSoundKey: action_success
+  failureSoundKey: action_failure
   onCompleteEvents:
     m_PersistentCalls:
       m_Calls:
@@ -547,6 +558,15 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
+  onSuccessEvents:
+    m_PersistentCalls:
+      m_Calls: []
+  onFailureEvents:
+    m_PersistentCalls:
+      m_Calls: []
+  onStartEvents:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &4778158877182675459
 GameObject:
   m_ObjectHideFlags: 0
@@ -596,9 +616,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2a852015ed21d2642859a85240362c08, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ActionOverlayTrigger
+  actionId: 
   duration: 1
   actionSprite: {fileID: 0}
   localizationKey: 
+  overlayPosition: 0
+  enableOutcomeResult: 0
+  successChance: 0.5
+  chanceProvider: {fileID: 0}
+  autoApplyChanceProviderOnExecute: 1
+  successLocalizationKey: Result.Success
+  failureLocalizationKey: Result.Failure
+  resultHoldSeconds: 2
+  successSoundKey: action_success
+  failureSoundKey: action_failure
   onCompleteEvents:
     m_PersistentCalls:
       m_Calls:
@@ -614,6 +645,15 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
+  onSuccessEvents:
+    m_PersistentCalls:
+      m_Calls: []
+  onFailureEvents:
+    m_PersistentCalls:
+      m_Calls: []
+  onStartEvents:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &5253209537691732241
 GameObject:
   m_ObjectHideFlags: 0
@@ -1011,6 +1051,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6e8b12bee42e8aa45bc35d52f71819e1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FsmTrigge
+  fsmName: 
   eventName: TRIGGER
 --- !u!1 &5803865140457351774
 GameObject:
@@ -1064,9 +1105,12 @@ MonoBehaviour:
   manualDeductions: []
   resourceGains: []
   deductTime: 0
+  timeUnit: 0
   manualTimeAmount: 0
   targetHeroineID: 
   heroineResourceChanges: []
+  statPackageIDs: []
+  flagChanges: []
   autoReport: 1
   onGoodEffect:
     m_PersistentCalls:
@@ -1474,6 +1518,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6e8b12bee42e8aa45bc35d52f71819e1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FsmTrigge
+  fsmName: 
   eventName: TRIGGER
 --- !u!1 &7015651814054091509
 GameObject:
@@ -1653,9 +1698,12 @@ MonoBehaviour:
   manualDeductions: []
   resourceGains: []
   deductTime: 0
+  timeUnit: 0
   manualTimeAmount: 0
   targetHeroineID: 
   heroineResourceChanges: []
+  statPackageIDs: []
+  flagChanges: []
   autoReport: 1
   onGoodEffect:
     m_PersistentCalls:

@@ -88,7 +88,7 @@ public class SpineTrackDebugger : MonoBehaviour
         var skeletonGraphic = GetComponent<SkeletonGraphic>();
         if (skeletonGraphic != null)
         {
-            _state = skeletonGraphic.AnimationState;
+            _state = (skeletonGraphic.Animation as IAnimationStateComponent)?.AnimationState;
         }
     }
 
@@ -228,7 +228,7 @@ public class SpineTrackDebugger : MonoBehaviour
         foreach (AnimationTrack trackEnum in System.Enum.GetValues(typeof(AnimationTrack)))
         {
             int trackIndex = (int)trackEnum;
-            TrackEntry currentTrackEntry = _state.GetCurrent(trackIndex);
+            TrackEntry currentTrackEntry = _state.GetTrack(trackIndex);
 
             string lastAnimName = _lastAnimationNames.ContainsKey(trackIndex)
                 ? _lastAnimationNames[trackIndex].last1

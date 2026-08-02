@@ -128,7 +128,7 @@ public class SpineAnimationController : MonoBehaviour
         if (skeletonGraphic == null) skeletonGraphic = GetComponent<SkeletonGraphic>();
 
         if (skeletonAnimation != null) _state = skeletonAnimation.AnimationState;
-        else if (skeletonGraphic != null) _state = skeletonGraphic.AnimationState;
+        else if (skeletonGraphic != null) _state = (skeletonGraphic.Animation as IAnimationStateComponent)?.AnimationState;
         else
         {
             Debug.LogError($"[{nameof(SpineAnimationController)}] 找不到 SkeletonAnimation 或 SkeletonGraphic。", this);
@@ -178,7 +178,7 @@ public class SpineAnimationController : MonoBehaviour
         // 若是 Loop 模式，且該 track 已在播同名動畫，直接跳過不重啟
         if (mode == ClearMode.Loop)
         {
-            var current = _state.GetCurrent(t);
+            var current = _state.GetTrack(t);
             if (current != null && current.Animation?.Name == animationName)
             {
                 if (_entryPolicies.TryGetValue(current, out var existingPolicy) && existingPolicy.mode == ClearMode.Loop)
@@ -257,7 +257,7 @@ public class SpineAnimationController : MonoBehaviour
             case ClearMode.Loop:
                 _entryPolicies.Remove(entry);
                 // 確認此 Track 沒有被新動畫佔用才重播
-                var currentEntry = _state.GetCurrent(entry.TrackIndex);
+                var currentEntry = _state.GetTrack(entry.TrackIndex);
                 if (currentEntry == null || currentEntry == entry)
                 {
                     var loopEntry = _state.SetAnimation(entry.TrackIndex, entry.Animation.Name, false);
@@ -272,7 +272,7 @@ public class SpineAnimationController : MonoBehaviour
         if (delay > 0f)
             yield return new WaitForSeconds(delay);
 
-        var current = _state?.GetCurrent(trackIndex);
+        var current = _state?.GetTrack(trackIndex);
         if (current == sourceEntry)
         {
             _state.ClearTrack(trackIndex);

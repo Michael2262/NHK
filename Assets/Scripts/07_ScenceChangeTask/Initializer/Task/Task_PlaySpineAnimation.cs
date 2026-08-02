@@ -30,7 +30,7 @@ public class Task_PlaySpineAnimation : SceneReadyTaskBase
         Debug.Log($"[SceneTask] 正在播放固定 Spine 動畫: {animationName}");
         isAnimationComplete = false;
 
-        TrackEntry trackEntry = spineAnimation.state.SetAnimation(trackIndex, animationName, loop);
+        TrackEntry trackEntry = spineAnimation.AnimationState.SetAnimation(trackIndex, animationName, loop);
 
         if (loop)
         {

@@ -83,7 +83,7 @@ public class SpineSkinPresetController : MonoBehaviour
 
     private void Start()
     {
-        if (skeletonAnimation != null && (skeletonAnimation.Skeleton == null || !skeletonAnimation.valid))
+        if (skeletonAnimation != null && (skeletonAnimation.Skeleton == null || !skeletonAnimation.IsValid))
             skeletonAnimation.Initialize(false);
 
         // 初始套用時，不使用 SetSlotsToSetupPose，維持原樣
@@ -139,7 +139,7 @@ public class SpineSkinPresetController : MonoBehaviour
         var composite = new Skin("COMPOSITE_PRESET");
 
         if (withDefault && data.DefaultSkin != null) composite.AddSkin(data.DefaultSkin);
-        if (withInitial) { var initName = skeletonAnimation.initialSkinName; if (!string.IsNullOrEmpty(initName) && data.FindSkin(initName) is { } initSkin) composite.AddSkin(initSkin); }
+        if (withInitial) { var initName = skeletonAnimation.Renderer.InitialSkinName; if (!string.IsNullOrEmpty(initName) && data.FindSkin(initName) is { } initSkin) composite.AddSkin(initSkin); }
         foreach (var name in _activeSkinOrder) { if (data.FindSkin(name) is { } skin) composite.AddSkin(skin); }
 
         skeleton.SetSkin(composite);
@@ -147,7 +147,7 @@ public class SpineSkinPresetController : MonoBehaviour
         // 根據 useSetSlotsToSetupPose 決定是直接重設姿勢，還是播放設置動畫
         if (useSetSlotsToSetupPose)
         {
-            skeleton.SetSlotsToSetupPose();
+            skeleton.SetupPoseSlots();
         }
 
         skeletonAnimation.AnimationState.Apply(skeleton);

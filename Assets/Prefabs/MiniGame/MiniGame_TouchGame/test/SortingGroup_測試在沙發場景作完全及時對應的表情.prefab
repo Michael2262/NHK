@@ -60,6 +60,7 @@ GameObject:
   - component: {fileID: 3556978877293501147}
   - component: {fileID: 6150172378622613863}
   - component: {fileID: 3015446463295529014}
+  - component: {fileID: 3799874398340462259}
   m_Layer: 0
   m_Name: G2_Spine Face
   m_TagString: Untagged
@@ -95,6 +96,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SpineTrackDebugger
   verticalOffset: 7.12
+  alwaysShowInSceneView: 1
+  enableConsoleLog: 0
+  logTracks: 
 --- !u!33 &8208451027979113768
 MeshFilter:
   m_ObjectHideFlags: 0
@@ -163,39 +167,31 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d247ba06193faa74d9335f5481b2b56c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: spine-unity::Spine.Unity.SkeletonAnimation
-  skeletonDataAsset: {fileID: 11400000, guid: 63e3a583081d41741aafdb3bc21726dc, type: 2}
-  initialSkinName: 
-  fixPrefabOverrideViaMeshFilter: 2
-  initialFlipX: 0
-  initialFlipY: 0
-  updateWhenInvisible: 3
-  separatorSlotNames: []
-  zSpacing: 0
-  useClipping: 1
-  immutableTriangles: 0
-  pmaVertexColors: 1
-  clearStateOnDisable: 0
-  tintBlack: 0
-  singleSubmesh: 0
-  fixDrawOrder: 0
-  addNormals: 0
-  calculateTangents: 0
-  maskInteraction: 1
-  maskMaterials:
-    materialsMaskDisabled:
-    - {fileID: 2100000, guid: 86988d3a8059f344d86b2568805bb4d1, type: 2}
-    materialsInsideMask:
-    - {fileID: 2100000, guid: 5844ad3e27ed77740baf9dc1f8af94ca, type: 2}
-    materialsOutsideMask: []
-  disableRenderingOnOverride: 1
-  physicsPositionInheritanceFactor: {x: 1, y: 1}
-  physicsRotationInheritanceFactor: 1
-  physicsMovementRelativeTo: {fileID: 0}
   updateTiming: 1
-  unscaledTime: 0
-  _animationName: 
+  threadedAnimation: 2
+  animationName: 
   loop: 1
   timeScale: 1
+  unscaledTime: 0
+  wasDeprecatedTransferred: 1
+  skeletonDataAssetDeprecated: {fileID: 11400000, guid: 63e3a583081d41741aafdb3bc21726dc, type: 2}
+  initialSkinNameDeprecated: 
+  editorSkipSkinSyncDeprecated: 0
+  initialFlipXDeprecated: 0
+  initialFlipYDeprecated: 0
+  updateModeDeprecated: 3
+  updateWhenInvisibleDeprecated: 3
+  separatorSlotNamesDeprecated: []
+  zSpacingDeprecated: 0
+  useClippingDeprecated: 1
+  immutableTrianglesDeprecated: 0
+  pmaVertexColorsDeprecated: 1
+  clearStateOnDisableDeprecated: 0
+  tintBlackDeprecated: 0
+  singleSubmeshDeprecated: 0
+  addNormalsDeprecated: 0
+  calculateTangentsDeprecated: 0
+  maskInteractionDeprecated: 1
 --- !u!114 &3015446463295529014
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -208,9 +204,58 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7b48639466b9d574da693373812f8296, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SpineAnimationController
+  controllerID: 
   skeletonAnimation: {fileID: 0}
   skeletonGraphic: {fileID: 0}
   defaultClearDelaySeconds: 2
+--- !u!114 &3799874398340462259
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4928410949764636024}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e075b9a3e08e2f74fbd651c858ab16ed, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: spine-unity::Spine.Unity.SkeletonRenderer
+  skeletonDataAsset: {fileID: 11400000, guid: 63e3a583081d41741aafdb3bc21726dc, type: 2}
+  initialSkinName: 
+  initialFlipX: 0
+  initialFlipY: 0
+  meshSettings:
+    useClipping: 1
+    zSpacing: 0
+    tintBlack: 0
+    canvasGroupCompatible: 0
+    pmaVertexColors: 1
+    addNormals: 0
+    calculateTangents: 0
+    immutableTriangles: 0
+  updateWhenInvisible: 3
+  clearStateOnDisable: 0
+  separatorSlotNames: []
+  enableSeparatorSlots: 0
+  disableRenderingOnOverride: 1
+  physicsPositionInheritanceFactor: {x: 1, y: 1}
+  physicsRotationInheritanceFactor: 1
+  physicsPositionInheritanceLimit: {x: Infinity, y: Infinity}
+  physicsRotationInheritanceLimit: 3.4028235e+38
+  physicsMovementRelativeTo: {fileID: 0}
+  threadedMeshGeneration: 2
+  singleSubmesh: 0
+  fixDrawOrder: 0
+  maskInteraction: 1
+  fixPrefabOverrideViaMeshFilter: 2
+  wasDeprecatedTransferred: 1
+  zSpacingDeprecated: 0
+  useClippingDeprecated: 1
+  immutableTrianglesDeprecated: 0
+  pmaVertexColorsDeprecated: 1
+  tintBlackDeprecated: 0
+  addNormalsDeprecated: 0
+  calculateTangentsDeprecated: 0
 --- !u!1 &7231874854886977471
 GameObject:
   m_ObjectHideFlags: 0

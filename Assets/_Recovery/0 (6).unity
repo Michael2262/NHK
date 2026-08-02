@@ -790,6 +790,7 @@ GameObject:
   - component: {fileID: 100274486}
   - component: {fileID: 100274489}
   - component: {fileID: 100274491}
+  - component: {fileID: 100274492}
   m_Layer: 0
   m_Name: G1_Spine
   m_TagString: Untagged
@@ -826,37 +827,31 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d247ba06193faa74d9335f5481b2b56c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: spine-unity::Spine.Unity.SkeletonAnimation
-  skeletonDataAsset: {fileID: 11400000, guid: 68ad10302316e614090521aa3e7e7a99, type: 2}
-  initialSkinName: 
-  fixPrefabOverrideViaMeshFilter: 2
-  initialFlipX: 0
-  initialFlipY: 0
-  updateWhenInvisible: 3
-  separatorSlotNames: []
-  zSpacing: 0
-  useClipping: 1
-  immutableTriangles: 0
-  pmaVertexColors: 1
-  clearStateOnDisable: 0
-  tintBlack: 0
-  singleSubmesh: 0
-  fixDrawOrder: 0
-  addNormals: 0
-  calculateTangents: 0
-  maskInteraction: 0
-  maskMaterials:
-    materialsMaskDisabled: []
-    materialsInsideMask: []
-    materialsOutsideMask: []
-  disableRenderingOnOverride: 1
-  physicsPositionInheritanceFactor: {x: 1, y: 1}
-  physicsRotationInheritanceFactor: 1
-  physicsMovementRelativeTo: {fileID: 0}
   updateTiming: 1
-  unscaledTime: 0
-  _animationName: 
+  threadedAnimation: 2
+  animationName: 
   loop: 1
   timeScale: 1
+  unscaledTime: 0
+  wasDeprecatedTransferred: 1
+  skeletonDataAssetDeprecated: {fileID: 11400000, guid: 68ad10302316e614090521aa3e7e7a99, type: 2}
+  initialSkinNameDeprecated: 
+  editorSkipSkinSyncDeprecated: 0
+  initialFlipXDeprecated: 0
+  initialFlipYDeprecated: 0
+  updateModeDeprecated: 3
+  updateWhenInvisibleDeprecated: 3
+  separatorSlotNamesDeprecated: []
+  zSpacingDeprecated: 0
+  useClippingDeprecated: 1
+  immutableTrianglesDeprecated: 0
+  pmaVertexColorsDeprecated: 1
+  clearStateOnDisableDeprecated: 0
+  tintBlackDeprecated: 0
+  singleSubmeshDeprecated: 0
+  addNormalsDeprecated: 0
+  calculateTangentsDeprecated: 0
+  maskInteractionDeprecated: 0
 --- !u!23 &100274487
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -1002,12 +997,60 @@ MonoBehaviour:
     clips:
     - animationName: BreathLoop
       repeatCount: 0
+      isLoop: 0
+      isRandom: 0
     track: 1
-    isLoop: 1
-    isRandom: 0
     nextGroupName: 
     checkGroupName: 
   simulateConditionalTransitionCheck: 0
+--- !u!114 &100274492
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 100274484}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e075b9a3e08e2f74fbd651c858ab16ed, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: spine-unity::Spine.Unity.SkeletonRenderer
+  skeletonDataAsset: {fileID: 11400000, guid: 68ad10302316e614090521aa3e7e7a99, type: 2}
+  initialSkinName: 
+  initialFlipX: 0
+  initialFlipY: 0
+  meshSettings:
+    useClipping: 1
+    zSpacing: 0
+    tintBlack: 0
+    canvasGroupCompatible: 0
+    pmaVertexColors: 1
+    addNormals: 0
+    calculateTangents: 0
+    immutableTriangles: 0
+  updateWhenInvisible: 3
+  clearStateOnDisable: 0
+  separatorSlotNames: []
+  enableSeparatorSlots: 0
+  disableRenderingOnOverride: 1
+  physicsPositionInheritanceFactor: {x: 1, y: 1}
+  physicsRotationInheritanceFactor: 1
+  physicsPositionInheritanceLimit: {x: Infinity, y: Infinity}
+  physicsRotationInheritanceLimit: 3.4028235e+38
+  physicsMovementRelativeTo: {fileID: 0}
+  threadedMeshGeneration: 2
+  singleSubmesh: 0
+  fixDrawOrder: 0
+  maskInteraction: 0
+  fixPrefabOverrideViaMeshFilter: 2
+  wasDeprecatedTransferred: 1
+  zSpacingDeprecated: 0
+  useClippingDeprecated: 1
+  immutableTrianglesDeprecated: 0
+  pmaVertexColorsDeprecated: 1
+  tintBlackDeprecated: 0
+  addNormalsDeprecated: 0
+  calculateTangentsDeprecated: 0
 --- !u!1001 &106551608
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -10604,6 +10647,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   soundKey: ui_button_click
+  hoverSoundKey: ui_button_hover
 --- !u!114 &347183251
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -13641,6 +13685,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   soundKey: ui_button_click
+  hoverSoundKey: ui_button_hover
 --- !u!114 &469296712
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -14970,13 +15015,21 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TimeVisualController
   timeVisualRules:
-  - phaseIndex: 0
+  - visualName: 
+    phaseIndex: 0
+    dayType: 0
     objectToActivate: {fileID: 208162452}
-  - phaseIndex: 1
+  - visualName: 
+    phaseIndex: 1
+    dayType: 0
     objectToActivate: {fileID: 208162452}
-  - phaseIndex: 2
+  - visualName: 
+    phaseIndex: 2
+    dayType: 0
     objectToActivate: {fileID: 1551074289}
-  - phaseIndex: 3
+  - visualName: 
+    phaseIndex: 3
+    dayType: 0
     objectToActivate: {fileID: 1551074289}
 --- !u!4 &555290932
 Transform:
@@ -15629,6 +15682,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   soundKey: ui_button_click
+  hoverSoundKey: ui_button_hover
 --- !u!114 &567643551
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -16340,6 +16394,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   sceneTasks: []
+  autoRunWhenPlayedDirectly: 0
 --- !u!4 &616557966
 Transform:
   m_ObjectHideFlags: 0
@@ -18837,6 +18892,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   soundKey: ui_button_click
+  hoverSoundKey: ui_button_hover
 --- !u!114 &809142433
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -21098,6 +21154,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6e8b12bee42e8aa45bc35d52f71819e1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FsmTrigge
+  fsmName: 
   eventName: TRIGGER
 --- !u!114 &1000178454
 MonoBehaviour:
@@ -25027,6 +25084,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   soundKey: ui_button_click
+  hoverSoundKey: ui_button_hover
 --- !u!114 &1291007818
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -35846,6 +35904,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2995ec2768b6ba14d839587eb9526b6d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  newGameStartScene: MyRoom
 --- !u!1 &2128985943
 GameObject:
   m_ObjectHideFlags: 0

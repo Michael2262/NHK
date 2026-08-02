@@ -341,16 +341,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a1fd8daaed7b64148a34acb96ba14ce1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  skeletonRenderer: {fileID: 1435539335}
+  skeletonRenderer: {fileID: 1435539349}
   boneName: "\u6574\u9846\u982D\u4F4D\u7F6E\u63A7\u5236"
   followXYPosition: 1
   followZPosition: 1
+  followAttachmentZSpacing: 0
   followBoneRotation: 1
   followSkeletonFlip: 1
   followLocalScale: 0
   followParentWorldScale: 0
   maintainedAxisOrientation: 1
   initializeOnAwake: 1
+  previousSkeletonRenderer: {fileID: 1435539335}
+  wasUpgradedTo43: 1
 --- !u!114 &88159768
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -892,16 +895,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a1fd8daaed7b64148a34acb96ba14ce1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  skeletonRenderer: {fileID: 1435539335}
+  skeletonRenderer: {fileID: 1435539349}
   boneName: "\u6574\u9846\u982D\u4F4D\u7F6E\u63A7\u5236"
   followXYPosition: 1
   followZPosition: 1
+  followAttachmentZSpacing: 0
   followBoneRotation: 1
   followSkeletonFlip: 1
   followLocalScale: 0
   followParentWorldScale: 0
   maintainedAxisOrientation: 1
   initializeOnAwake: 1
+  previousSkeletonRenderer: {fileID: 1435539335}
+  wasUpgradedTo43: 1
 --- !u!114 &358412284
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1543,6 +1549,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   sceneTasks:
   - {fileID: 1324304711}
+  autoRunWhenPlayedDirectly: 0
 --- !u!4 &616557966
 Transform:
   m_ObjectHideFlags: 0
@@ -1746,16 +1753,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a1fd8daaed7b64148a34acb96ba14ce1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  skeletonRenderer: {fileID: 1435539335}
+  skeletonRenderer: {fileID: 1435539349}
   boneName: "\u6574\u9846\u982D\u4F4D\u7F6E\u63A7\u5236"
   followXYPosition: 1
   followZPosition: 1
+  followAttachmentZSpacing: 0
   followBoneRotation: 1
   followSkeletonFlip: 1
   followLocalScale: 0
   followParentWorldScale: 0
   maintainedAxisOrientation: 1
   initializeOnAwake: 1
+  previousSkeletonRenderer: {fileID: 1435539335}
+  wasUpgradedTo43: 1
 --- !u!1 &826339254
 GameObject:
   m_ObjectHideFlags: 0
@@ -2563,16 +2573,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a1fd8daaed7b64148a34acb96ba14ce1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  skeletonRenderer: {fileID: 1435539335}
+  skeletonRenderer: {fileID: 1435539349}
   boneName: "\u982D\u9802"
   followXYPosition: 1
   followZPosition: 1
+  followAttachmentZSpacing: 0
   followBoneRotation: 1
   followSkeletonFlip: 1
   followLocalScale: 0
   followParentWorldScale: 0
   maintainedAxisOrientation: 1
   initializeOnAwake: 1
+  previousSkeletonRenderer: {fileID: 1435539335}
+  wasUpgradedTo43: 1
 --- !u!61 &1004444082
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -2756,16 +2769,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a1fd8daaed7b64148a34acb96ba14ce1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  skeletonRenderer: {fileID: 1435539335}
+  skeletonRenderer: {fileID: 1435539349}
   boneName: "\u982D\u9802"
   followXYPosition: 1
   followZPosition: 1
+  followAttachmentZSpacing: 0
   followBoneRotation: 1
   followSkeletonFlip: 1
   followLocalScale: 0
   followParentWorldScale: 0
   maintainedAxisOrientation: 1
   initializeOnAwake: 1
+  previousSkeletonRenderer: {fileID: 1435539335}
+  wasUpgradedTo43: 1
 --- !u!61 &1074399261
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -3687,6 +3703,7 @@ GameObject:
   - component: {fileID: 1435539346}
   - component: {fileID: 1435539345}
   - component: {fileID: 1435539348}
+  - component: {fileID: 1435539349}
   m_Layer: 0
   m_Name: SpineGameObject(oralToilet)
   m_TagString: Spine
@@ -3706,37 +3723,31 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d247ba06193faa74d9335f5481b2b56c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  skeletonDataAsset: {fileID: 11400000, guid: d3379649e3d5a804596cd5eb4cdba6fb, type: 2}
-  initialSkinName: 
-  fixPrefabOverrideViaMeshFilter: 2
-  initialFlipX: 0
-  initialFlipY: 0
-  updateWhenInvisible: 3
-  separatorSlotNames: []
-  zSpacing: 0
-  useClipping: 1
-  immutableTriangles: 0
-  pmaVertexColors: 1
-  clearStateOnDisable: 0
-  tintBlack: 0
-  singleSubmesh: 0
-  fixDrawOrder: 0
-  addNormals: 0
-  calculateTangents: 0
-  maskInteraction: 0
-  maskMaterials:
-    materialsMaskDisabled: []
-    materialsInsideMask: []
-    materialsOutsideMask: []
-  disableRenderingOnOverride: 1
-  physicsPositionInheritanceFactor: {x: 1, y: 1}
-  physicsRotationInheritanceFactor: 1
-  physicsMovementRelativeTo: {fileID: 0}
   updateTiming: 1
-  unscaledTime: 0
-  _animationName: 
+  threadedAnimation: 2
+  animationName: 
   loop: 1
   timeScale: 1
+  unscaledTime: 0
+  wasDeprecatedTransferred: 1
+  skeletonDataAssetDeprecated: {fileID: 11400000, guid: d3379649e3d5a804596cd5eb4cdba6fb, type: 2}
+  initialSkinNameDeprecated: 
+  editorSkipSkinSyncDeprecated: 0
+  initialFlipXDeprecated: 0
+  initialFlipYDeprecated: 0
+  updateModeDeprecated: 3
+  updateWhenInvisibleDeprecated: 3
+  separatorSlotNamesDeprecated: []
+  zSpacingDeprecated: 0
+  useClippingDeprecated: 1
+  immutableTrianglesDeprecated: 0
+  pmaVertexColorsDeprecated: 1
+  clearStateOnDisableDeprecated: 0
+  tintBlackDeprecated: 0
+  singleSubmeshDeprecated: 0
+  addNormalsDeprecated: 0
+  calculateTangentsDeprecated: 0
+  maskInteractionDeprecated: 0
 --- !u!23 &1435539336
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -3903,8 +3914,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7b48639466b9d574da693373812f8296, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SpineAnimationController
+  controllerID: 
   skeletonAnimation: {fileID: 0}
   skeletonGraphic: {fileID: 0}
+  defaultClearDelaySeconds: 2
 --- !u!114 &1435539346
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3917,29 +3930,27 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d1d1b4531e6729744b34f38b7d3fdc39, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SpinePlayByList
-  skeletonAnimation: {fileID: 0}
-  skeletonGraphic: {fileID: 0}
+  _controller: {fileID: 0}
   groups:
   - groupName: 11
     clips:
     - animationName: HandJob1
       repeatCount: 0
-    trackIndex: 0
-    isLoop: 1
-    isRandom: 0
+      isLoop: 0
+      isRandom: 0
+    track: 0
     nextGroupName: 
-    needCheck: 1
-    conditionGroupName: 12
+    checkGroupName: 
   - groupName: 12
     clips:
     - animationName: HandJob2
       repeatCount: 0
-    trackIndex: 0
-    isLoop: 1
-    isRandom: 0
+      isLoop: 0
+      isRandom: 0
+    track: 0
     nextGroupName: 
-    needCheck: 0
-    conditionGroupName: 
+    checkGroupName: 
+  simulateConditionalTransitionCheck: 0
 --- !u!114 &1435539347
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3953,6 +3964,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SpineTrackDebugger
   verticalOffset: 7.5
+  alwaysShowInSceneView: 1
+  enableConsoleLog: 0
+  logTracks: 
 --- !u!114 &1435539348
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3967,6 +3981,54 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CharacterAnimationManager
   spinePlayer: {fileID: 1435539346}
   targetHeroineID: saya
+--- !u!114 &1435539349
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1435539334}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e075b9a3e08e2f74fbd651c858ab16ed, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: spine-unity::Spine.Unity.SkeletonRenderer
+  skeletonDataAsset: {fileID: 11400000, guid: d3379649e3d5a804596cd5eb4cdba6fb, type: 2}
+  initialSkinName: 
+  initialFlipX: 0
+  initialFlipY: 0
+  meshSettings:
+    useClipping: 1
+    zSpacing: 0
+    tintBlack: 0
+    canvasGroupCompatible: 0
+    pmaVertexColors: 1
+    addNormals: 0
+    calculateTangents: 0
+    immutableTriangles: 0
+  updateWhenInvisible: 3
+  clearStateOnDisable: 0
+  separatorSlotNames: []
+  enableSeparatorSlots: 0
+  disableRenderingOnOverride: 1
+  physicsPositionInheritanceFactor: {x: 1, y: 1}
+  physicsRotationInheritanceFactor: 1
+  physicsPositionInheritanceLimit: {x: Infinity, y: Infinity}
+  physicsRotationInheritanceLimit: 3.4028235e+38
+  physicsMovementRelativeTo: {fileID: 0}
+  threadedMeshGeneration: 2
+  singleSubmesh: 0
+  fixDrawOrder: 0
+  maskInteraction: 0
+  fixPrefabOverrideViaMeshFilter: 2
+  wasDeprecatedTransferred: 1
+  zSpacingDeprecated: 0
+  useClippingDeprecated: 1
+  immutableTrianglesDeprecated: 0
+  pmaVertexColorsDeprecated: 1
+  tintBlackDeprecated: 0
+  addNormalsDeprecated: 0
+  calculateTangentsDeprecated: 0
 --- !u!1 &1443681378
 GameObject:
   m_ObjectHideFlags: 0
@@ -4028,16 +4090,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a1fd8daaed7b64148a34acb96ba14ce1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  skeletonRenderer: {fileID: 1435539335}
+  skeletonRenderer: {fileID: 1435539349}
   boneName: "\u9396\u9AA8\u4E2D\u592E"
   followXYPosition: 1
   followZPosition: 1
+  followAttachmentZSpacing: 0
   followBoneRotation: 1
   followSkeletonFlip: 1
   followLocalScale: 0
   followParentWorldScale: 0
   maintainedAxisOrientation: 1
   initializeOnAwake: 1
+  previousSkeletonRenderer: {fileID: 1435539335}
+  wasUpgradedTo43: 1
 --- !u!114 &1443681382
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4207,16 +4272,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a1fd8daaed7b64148a34acb96ba14ce1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  skeletonRenderer: {fileID: 1435539335}
+  skeletonRenderer: {fileID: 1435539349}
   boneName: "\u9396\u9AA8\u4E2D\u592E"
   followXYPosition: 1
   followZPosition: 1
+  followAttachmentZSpacing: 0
   followBoneRotation: 1
   followSkeletonFlip: 1
   followLocalScale: 0
   followParentWorldScale: 0
   maintainedAxisOrientation: 1
   initializeOnAwake: 1
+  previousSkeletonRenderer: {fileID: 1435539335}
+  wasUpgradedTo43: 1
 --- !u!114 &1451329044
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6006,6 +6074,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetScene: MainScene
+  updateScenario: 1
   entryID: DefaultEntry
 --- !u!114 &2025075218
 MonoBehaviour:
@@ -6020,6 +6089,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   soundKey: ui_button_click
+  hoverSoundKey: ui_button_hover
 --- !u!1 &2058254158
 GameObject:
   m_ObjectHideFlags: 0
@@ -6136,16 +6206,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a1fd8daaed7b64148a34acb96ba14ce1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  skeletonRenderer: {fileID: 1435539335}
+  skeletonRenderer: {fileID: 1435539349}
   boneName: "\u982D\u9802"
   followXYPosition: 1
   followZPosition: 1
+  followAttachmentZSpacing: 0
   followBoneRotation: 1
   followSkeletonFlip: 1
   followLocalScale: 0
   followParentWorldScale: 0
   maintainedAxisOrientation: 1
   initializeOnAwake: 1
+  previousSkeletonRenderer: {fileID: 1435539335}
+  wasUpgradedTo43: 1
 --- !u!114 &2058254164
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6244,16 +6317,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a1fd8daaed7b64148a34acb96ba14ce1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  skeletonRenderer: {fileID: 1435539335}
+  skeletonRenderer: {fileID: 1435539349}
   boneName: "\u6574\u9846\u982D\u4F4D\u7F6E\u63A7\u5236"
   followXYPosition: 1
   followZPosition: 1
+  followAttachmentZSpacing: 0
   followBoneRotation: 1
   followSkeletonFlip: 1
   followLocalScale: 0
   followParentWorldScale: 0
   maintainedAxisOrientation: 1
   initializeOnAwake: 1
+  previousSkeletonRenderer: {fileID: 1435539335}
+  wasUpgradedTo43: 1
 --- !u!114 &2096831811
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6420,6 +6496,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2995ec2768b6ba14d839587eb9526b6d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  newGameStartScene: MyRoom
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

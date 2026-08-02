@@ -716,6 +716,7 @@ GameObject:
   - component: {fileID: 100274487}
   - component: {fileID: 100274486}
   - component: {fileID: 100274489}
+  - component: {fileID: 100274490}
   m_Layer: 0
   m_Name: G1_Spine
   m_TagString: Untagged
@@ -752,39 +753,31 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d247ba06193faa74d9335f5481b2b56c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: spine-unity::Spine.Unity.SkeletonAnimation
-  skeletonDataAsset: {fileID: 11400000, guid: d3379649e3d5a804596cd5eb4cdba6fb, type: 2}
-  initialSkinName: boyTouchHand
-  fixPrefabOverrideViaMeshFilter: 2
-  initialFlipX: 0
-  initialFlipY: 0
-  updateWhenInvisible: 3
-  separatorSlotNames: []
-  zSpacing: 0
-  useClipping: 1
-  immutableTriangles: 0
-  pmaVertexColors: 1
-  clearStateOnDisable: 0
-  tintBlack: 0
-  singleSubmesh: 0
-  fixDrawOrder: 0
-  addNormals: 0
-  calculateTangents: 0
-  maskInteraction: 1
-  maskMaterials:
-    materialsMaskDisabled:
-    - {fileID: 2100000, guid: 5a77145e3ecdb3b43aeae3ef9a75d6c4, type: 2}
-    materialsInsideMask:
-    - {fileID: 2100000, guid: 6f5a648fcce5e3e4f8cb6a59e435224f, type: 2}
-    materialsOutsideMask: []
-  disableRenderingOnOverride: 1
-  physicsPositionInheritanceFactor: {x: 1, y: 1}
-  physicsRotationInheritanceFactor: 1
-  physicsMovementRelativeTo: {fileID: 0}
   updateTiming: 1
-  unscaledTime: 0
-  _animationName: 
+  threadedAnimation: 2
+  animationName: 
   loop: 1
   timeScale: 1
+  unscaledTime: 0
+  wasDeprecatedTransferred: 1
+  skeletonDataAssetDeprecated: {fileID: 11400000, guid: d3379649e3d5a804596cd5eb4cdba6fb, type: 2}
+  initialSkinNameDeprecated: boyTouchHand
+  editorSkipSkinSyncDeprecated: 0
+  initialFlipXDeprecated: 0
+  initialFlipYDeprecated: 0
+  updateModeDeprecated: 3
+  updateWhenInvisibleDeprecated: 3
+  separatorSlotNamesDeprecated: []
+  zSpacingDeprecated: 0
+  useClippingDeprecated: 1
+  immutableTrianglesDeprecated: 0
+  pmaVertexColorsDeprecated: 1
+  clearStateOnDisableDeprecated: 0
+  tintBlackDeprecated: 0
+  singleSubmeshDeprecated: 0
+  addNormalsDeprecated: 0
+  calculateTangentsDeprecated: 0
+  maskInteractionDeprecated: 1
 --- !u!23 &100274487
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -853,9 +846,58 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7b48639466b9d574da693373812f8296, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SpineAnimationController
+  controllerID: 
   skeletonAnimation: {fileID: 0}
   skeletonGraphic: {fileID: 0}
   defaultClearDelaySeconds: 2
+--- !u!114 &100274490
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 100274484}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e075b9a3e08e2f74fbd651c858ab16ed, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: spine-unity::Spine.Unity.SkeletonRenderer
+  skeletonDataAsset: {fileID: 11400000, guid: d3379649e3d5a804596cd5eb4cdba6fb, type: 2}
+  initialSkinName: boyTouchHand
+  initialFlipX: 0
+  initialFlipY: 0
+  meshSettings:
+    useClipping: 1
+    zSpacing: 0
+    tintBlack: 0
+    canvasGroupCompatible: 0
+    pmaVertexColors: 1
+    addNormals: 0
+    calculateTangents: 0
+    immutableTriangles: 0
+  updateWhenInvisible: 3
+  clearStateOnDisable: 0
+  separatorSlotNames: []
+  enableSeparatorSlots: 0
+  disableRenderingOnOverride: 1
+  physicsPositionInheritanceFactor: {x: 1, y: 1}
+  physicsRotationInheritanceFactor: 1
+  physicsPositionInheritanceLimit: {x: Infinity, y: Infinity}
+  physicsRotationInheritanceLimit: 3.4028235e+38
+  physicsMovementRelativeTo: {fileID: 0}
+  threadedMeshGeneration: 2
+  singleSubmesh: 0
+  fixDrawOrder: 0
+  maskInteraction: 1
+  fixPrefabOverrideViaMeshFilter: 2
+  wasDeprecatedTransferred: 1
+  zSpacingDeprecated: 0
+  useClippingDeprecated: 1
+  immutableTrianglesDeprecated: 0
+  pmaVertexColorsDeprecated: 1
+  tintBlackDeprecated: 0
+  addNormalsDeprecated: 0
+  calculateTangentsDeprecated: 0
 --- !u!1 &129580655
 GameObject:
   m_ObjectHideFlags: 0
@@ -909,6 +951,7 @@ MonoBehaviour:
   clearDelaySeconds: -1
   minRemoteCount: 2
   maxRemoteCount: 3
+  playbackMode: 0
 --- !u!1 &151106067
 GameObject:
   m_ObjectHideFlags: 0
@@ -11636,6 +11679,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   soundKey: ui_button_click
+  hoverSoundKey: ui_button_hover
 --- !u!114 &469296712
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -11936,17 +11980,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 61dd0ef5d22287547ad9ca710a7f3880, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WoodenMan.WoodenManGameManager
-  ghosts:
-  - {fileID: 330991200}
-  - {fileID: 0}
-  autoStartGhostTimer: 1
-  autoStartDelay: 0
+  ghostMappings: []
   orgasmTriggerProbability: 0.5
   ghostOrgasmCooldown: 2
   OnGameOver:
     m_PersistentCalls:
       m_Calls: []
-  testMode: 0
+  testDontDie: 0
 --- !u!114 &493352944
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -12216,6 +12256,7 @@ MonoBehaviour:
   clearDelaySeconds: -1
   minRemoteCount: 1
   maxRemoteCount: 2
+  playbackMode: 0
 --- !u!1 &529988496
 GameObject:
   m_ObjectHideFlags: 0
@@ -12490,6 +12531,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   sceneTasks: []
+  autoRunWhenPlayedDirectly: 0
 --- !u!4 &616557966
 Transform:
   m_ObjectHideFlags: 0
@@ -13513,6 +13555,7 @@ GameObject:
   - component: {fileID: 710132689}
   - component: {fileID: 710132688}
   - component: {fileID: 710132687}
+  - component: {fileID: 710132691}
   m_Layer: 0
   m_Name: G2_Spine
   m_TagString: Untagged
@@ -13549,6 +13592,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7b48639466b9d574da693373812f8296, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SpineAnimationController
+  controllerID: 
   skeletonAnimation: {fileID: 0}
   skeletonGraphic: {fileID: 0}
   defaultClearDelaySeconds: 2
@@ -13564,37 +13608,31 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d247ba06193faa74d9335f5481b2b56c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: spine-unity::Spine.Unity.SkeletonAnimation
-  skeletonDataAsset: {fileID: 11400000, guid: b192071e4e381f54396a62d17b6837b9, type: 2}
-  initialSkinName: face
-  fixPrefabOverrideViaMeshFilter: 2
-  initialFlipX: 0
-  initialFlipY: 0
-  updateWhenInvisible: 3
-  separatorSlotNames: []
-  zSpacing: 0
-  useClipping: 1
-  immutableTriangles: 0
-  pmaVertexColors: 1
-  clearStateOnDisable: 0
-  tintBlack: 0
-  singleSubmesh: 0
-  fixDrawOrder: 0
-  addNormals: 0
-  calculateTangents: 0
-  maskInteraction: 0
-  maskMaterials:
-    materialsMaskDisabled: []
-    materialsInsideMask: []
-    materialsOutsideMask: []
-  disableRenderingOnOverride: 1
-  physicsPositionInheritanceFactor: {x: 1, y: 1}
-  physicsRotationInheritanceFactor: 1
-  physicsMovementRelativeTo: {fileID: 0}
   updateTiming: 1
-  unscaledTime: 0
-  _animationName: 
+  threadedAnimation: 2
+  animationName: 
   loop: 1
   timeScale: 1
+  unscaledTime: 0
+  wasDeprecatedTransferred: 1
+  skeletonDataAssetDeprecated: {fileID: 11400000, guid: b192071e4e381f54396a62d17b6837b9, type: 2}
+  initialSkinNameDeprecated: face
+  editorSkipSkinSyncDeprecated: 0
+  initialFlipXDeprecated: 0
+  initialFlipYDeprecated: 0
+  updateModeDeprecated: 3
+  updateWhenInvisibleDeprecated: 3
+  separatorSlotNamesDeprecated: []
+  zSpacingDeprecated: 0
+  useClippingDeprecated: 1
+  immutableTrianglesDeprecated: 0
+  pmaVertexColorsDeprecated: 1
+  clearStateOnDisableDeprecated: 0
+  tintBlackDeprecated: 0
+  singleSubmeshDeprecated: 0
+  addNormalsDeprecated: 0
+  calculateTangentsDeprecated: 0
+  maskInteractionDeprecated: 0
 --- !u!23 &710132689
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -13651,6 +13689,54 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 710132685}
   m_Mesh: {fileID: 0}
+--- !u!114 &710132691
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 710132685}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e075b9a3e08e2f74fbd651c858ab16ed, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: spine-unity::Spine.Unity.SkeletonRenderer
+  skeletonDataAsset: {fileID: 11400000, guid: b192071e4e381f54396a62d17b6837b9, type: 2}
+  initialSkinName: face
+  initialFlipX: 0
+  initialFlipY: 0
+  meshSettings:
+    useClipping: 1
+    zSpacing: 0
+    tintBlack: 0
+    canvasGroupCompatible: 0
+    pmaVertexColors: 1
+    addNormals: 0
+    calculateTangents: 0
+    immutableTriangles: 0
+  updateWhenInvisible: 3
+  clearStateOnDisable: 0
+  separatorSlotNames: []
+  enableSeparatorSlots: 0
+  disableRenderingOnOverride: 1
+  physicsPositionInheritanceFactor: {x: 1, y: 1}
+  physicsRotationInheritanceFactor: 1
+  physicsPositionInheritanceLimit: {x: Infinity, y: Infinity}
+  physicsRotationInheritanceLimit: 3.4028235e+38
+  physicsMovementRelativeTo: {fileID: 0}
+  threadedMeshGeneration: 2
+  singleSubmesh: 0
+  fixDrawOrder: 0
+  maskInteraction: 0
+  fixPrefabOverrideViaMeshFilter: 2
+  wasDeprecatedTransferred: 1
+  zSpacingDeprecated: 0
+  useClippingDeprecated: 1
+  immutableTrianglesDeprecated: 0
+  pmaVertexColorsDeprecated: 1
+  tintBlackDeprecated: 0
+  addNormalsDeprecated: 0
+  calculateTangentsDeprecated: 0
 --- !u!1 &715912844
 GameObject:
   m_ObjectHideFlags: 0
@@ -13779,6 +13865,9 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 1464070932}
   - {fileID: 0}
+  resultHandler: {fileID: 0}
+  endReasonConfig: {fileID: 0}
+  _advanceTimeOnFinish: 0
 --- !u!1 &791549166
 GameObject:
   m_ObjectHideFlags: 0
@@ -13908,6 +13997,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   soundKey: ui_button_click
+  hoverSoundKey: ui_button_hover
 --- !u!114 &879694425
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -13921,6 +14011,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetScene: OralToiletScene
+  updateScenario: 1
   entryID: DefaultEntry
 --- !u!114 &879694426
 MonoBehaviour:
@@ -15113,6 +15204,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 46f2f5ae8f713564eb378aa33d51243d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Collider2DManager
+  groupEntries: []
+  onRegistrationComplete:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &1219099448
 GameObject:
   m_ObjectHideFlags: 0
@@ -18563,6 +18658,7 @@ MonoBehaviour:
   sceneClickTexture: {fileID: 2800000, guid: cd66eb2788f383c4a8cf40bb3c5af2ff, type: 3}
   sceneClickHotspot: {x: 0, y: 0}
   scenePhysicsRaycaster: {fileID: 1723299514}
+  sceneEventSystem: {fileID: 0}
 --- !u!1 &1725067081
 GameObject:
   m_ObjectHideFlags: 0
@@ -20384,6 +20480,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   soundKey: ui_button_click
+  hoverSoundKey: ui_button_hover
 --- !u!114 &2035752990
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -21373,6 +21470,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2080638560}
   - component: {fileID: 2080638561}
+  - component: {fileID: 2080638562}
   m_Layer: 0
   m_Name: AutoRecordedLastTouch
   m_TagString: Untagged
@@ -21407,12 +21505,148 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0aeecefeb8ac33247b0b573c1fd5cabe, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AutoRecordedLastTouch
-  isRepeat: 0
-  repeatDelay: 0.2
-  _statusLeftHand: {fileID: 0}
-  _statusRightHand: {fileID: 0}
-  _statusSpecial1: {fileID: 0}
-  _statusSpecial2: {fileID: 0}
+  lastLeftHand: {fileID: 0}
+  lastRightHand: {fileID: 0}
+  lastSpecial1: {fileID: 0}
+  lastSpecial2: {fileID: 0}
+--- !u!114 &2080638562
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2080638559}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 1384774831, guid: e743331561ef77147ae48cda9bcb8209, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: PlayMaker.dll::PlayMakerFSM
+  fsm:
+    dataVersion: 2
+    usedInTemplate: {fileID: 0}
+    name: FSM
+    startState: State 1
+    states:
+    - name: State 1
+      description: 
+      colorIndex: 0
+      position:
+        serializedVersion: 2
+        x: 50
+        y: 100
+        width: 100
+        height: 16
+      isBreakpoint: 0
+      isSequence: 0
+      hideUnused: 0
+      transitions: []
+      actionData:
+        actionNames: []
+        customNames: []
+        actionEnabled: 
+        actionIsOpen: 
+        actionStartIndex: 
+        actionHashCodes: 
+        unityObjectParams: []
+        fsmGameObjectParams: []
+        fsmOwnerDefaultParams: []
+        animationCurveParams: []
+        functionCallParams: []
+        fsmTemplateControlParams: []
+        fsmEventTargetParams: []
+        fsmPropertyParams: []
+        layoutOptionParams: []
+        fsmStringParams: []
+        fsmObjectParams: []
+        fsmVarParams: []
+        fsmArrayParams: []
+        fsmEnumParams: []
+        fsmFloatParams: []
+        fsmIntParams: []
+        fsmBoolParams: []
+        fsmVector2Params: []
+        fsmVector3Params: []
+        fsmColorParams: []
+        fsmRectParams: []
+        fsmQuaternionParams: []
+        stringParams: []
+        byteData: 
+        arrayParamSizes: 
+        arrayParamTypes: []
+        customTypeSizes: 
+        customTypeNames: []
+        paramDataType: 
+        paramName: []
+        paramDataPos: 
+        paramByteDataSize: 
+    events: []
+    globalTransitions: []
+    variables:
+      floatVariables: []
+      intVariables: []
+      boolVariables: []
+      stringVariables: []
+      vector2Variables: []
+      vector3Variables: []
+      colorVariables: []
+      rectVariables: []
+      quaternionVariables: []
+      gameObjectVariables: []
+      objectVariables: []
+      materialVariables: []
+      textureVariables: []
+      arrayVariables: []
+      enumVariables: []
+      categories:
+      - 
+      variableCategoryIDs: 
+    description: 
+    docUrl: 
+    showStateLabel: 0
+    maxLoopCount: 0
+    watermark: 
+    password: 
+    locked: 0
+    manualUpdate: 0
+    outVariableIndices: 
+    keepDelayedEventsOnStateExit: 0
+    preprocessed: 0
+    ExposedEvents: []
+    OutputEvents: []
+    RestartOnEnable: 1
+    ResetVariablesOnEnable: 0
+    EnableDebugFlow: 0
+    EnableBreakpoints: 1
+    editorFlags: 225
+    activeStateName: 
+    mouseEvents: 0
+    handleLevelLoaded: 0
+    handleTriggerEnter2D: 0
+    handleTriggerExit2D: 0
+    handleTriggerStay2D: 0
+    handleCollisionEnter2D: 0
+    handleCollisionExit2D: 0
+    handleCollisionStay2D: 0
+    handleTriggerEnter: 0
+    handleTriggerExit: 0
+    handleTriggerStay: 0
+    handleCollisionEnter: 0
+    handleCollisionExit: 0
+    handleCollisionStay: 0
+    handleParticleCollision: 0
+    handleControllerColliderHit: 0
+    handleJointBreak: 0
+    handleJointBreak2D: 0
+    handleOnGUI: 0
+    handleFixedUpdate: 0
+    handleLateUpdate: 0
+    handleApplicationEvents: 0
+    handleUiEvents: 0
+    handleLegacyNetworking: 0
+    handleAnimatorMove: 0
+    handleAnimatorIK: 0
+  fsmTemplate: {fileID: 0}
+  eventHandlerComponentsAdded: 0
 --- !u!1 &2092370055
 GameObject:
   m_ObjectHideFlags: 0
@@ -21697,6 +21931,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2995ec2768b6ba14d839587eb9526b6d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  newGameStartScene: MyRoom
 --- !u!1 &2125678208
 GameObject:
   m_ObjectHideFlags: 0

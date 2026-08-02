@@ -209,6 +209,10 @@ MonoBehaviour:
     onTimeFailure:
       m_PersistentCalls:
         m_Calls: []
+    restPreviewMode: 1
+    onRestClicked:
+      m_PersistentCalls:
+        m_Calls: []
   - buttonType: 0
     localizationKey: Rest.NextDay
     conditionMode: 1
@@ -230,6 +234,10 @@ MonoBehaviour:
       m_PersistentCalls:
         m_Calls: []
     onTimeFailure:
+      m_PersistentCalls:
+        m_Calls: []
+    restPreviewMode: 1
+    onRestClicked:
       m_PersistentCalls:
         m_Calls: []
 --- !u!114 &3029308652830951291
@@ -369,9 +377,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2a852015ed21d2642859a85240362c08, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ActionOverlayTrigger
+  actionId: 
   duration: 2
   actionSprite: {fileID: 0}
   localizationKey: 
+  overlayPosition: 0
+  enableOutcomeResult: 0
+  successChance: 0.5
+  chanceProvider: {fileID: 0}
+  autoApplyChanceProviderOnExecute: 1
+  successLocalizationKey: Result.Success
+  failureLocalizationKey: Result.Failure
+  resultHoldSeconds: 2
+  successSoundKey: action_success
+  failureSoundKey: action_failure
   onCompleteEvents:
     m_PersistentCalls:
       m_Calls:
@@ -387,6 +406,15 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
+  onSuccessEvents:
+    m_PersistentCalls:
+      m_Calls: []
+  onFailureEvents:
+    m_PersistentCalls:
+      m_Calls: []
+  onStartEvents:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!114 &8020747852878767434
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -403,9 +431,12 @@ MonoBehaviour:
   manualDeductions: []
   resourceGains: []
   deductTime: 0
+  timeUnit: 0
   manualTimeAmount: 0
   targetHeroineID: 
   heroineResourceChanges: []
+  statPackageIDs: []
+  flagChanges: []
   autoReport: 1
   onGoodEffect:
     m_PersistentCalls:

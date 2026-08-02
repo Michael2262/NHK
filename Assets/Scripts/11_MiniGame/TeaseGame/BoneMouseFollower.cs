@@ -127,8 +127,8 @@ public class BoneMouseFollower : MonoBehaviour
         // 覆寫中被停用：把骨頭放回原位，避免沒 key 的骨頭永久停在偏移處
         if (_overrideActive && _bone != null)
         {
-            _bone.X = _basePos.x;
-            _bone.Y = _basePos.y;
+            _bone.AppliedPose.X = _basePos.x;
+            _bone.AppliedPose.Y = _basePos.y;
         }
 
         _following = false;
@@ -164,12 +164,12 @@ public class BoneMouseFollower : MonoBehaviour
     // 核心：在 UpdateLocal 時機覆寫骨頭 local 位置
     // ─────────────────────────────────────────────
 
-    private void HandleUpdateLocal(ISkeletonAnimation animated)
+    private void HandleUpdateLocal(ISkeletonRenderer skeletonRenderer)
     {
         if (!_following && !_overrideActive) return;
         if (!TryResolveBone()) return;
 
-        Vector2 boneNow = new Vector2(_bone.X, _bone.Y);
+        Vector2 boneNow = new Vector2(_bone.AppliedPose.X, _bone.AppliedPose.Y);
         Vector2 animatedPos;
 
         // 判斷此刻的骨頭值是「動畫寫入的原位」還是「我們上幀寫入的殘留值」：
@@ -240,16 +240,16 @@ public class BoneMouseFollower : MonoBehaviour
             if ((_currentLocalPos - animatedPos).sqrMagnitude < ARRIVE_EPSILON_SQR)
             {
                 // 沒 key 的骨頭動畫不會幫忙歸位，交還前先寫回原位
-                _bone.X = animatedPos.x;
-                _bone.Y = animatedPos.y;
+                _bone.AppliedPose.X = animatedPos.x;
+                _bone.AppliedPose.Y = animatedPos.y;
                 _overrideActive = false;
                 _hasLastWritten = false;
                 return;
             }
         }
 
-        _bone.X = _currentLocalPos.x;
-        _bone.Y = _currentLocalPos.y;
+        _bone.AppliedPose.X = _currentLocalPos.x;
+        _bone.AppliedPose.Y = _currentLocalPos.y;
         _lastWritten = _currentLocalPos;
         _hasLastWritten = true;
     }
@@ -301,7 +301,7 @@ public class BoneMouseFollower : MonoBehaviour
 
         if (_bone.Parent != null)
         {
-            _bone.Parent.WorldToLocal(skeletonSpace.x, skeletonSpace.y, out float lx, out float ly);
+            _bone.Parent.AppliedPose.WorldToLocal(skeletonSpace.x, skeletonSpace.y, out float lx, out float ly);
             return new Vector2(lx, ly);
         }
 
@@ -319,7 +319,7 @@ public class BoneMouseFollower : MonoBehaviour
         // 父層 local → skeleton 空間 → Unity 世界
         float sx, sy;
         if (_bone.Parent != null)
-            _bone.Parent.LocalToWorld(targetLocal.x, targetLocal.y, out sx, out sy);
+            _bone.Parent.AppliedPose.LocalToWorld(targetLocal.x, targetLocal.y, out sx, out sy);
         else
         {
             sx = targetLocal.x;
@@ -353,7 +353,7 @@ public class BoneMouseFollower : MonoBehaviour
     }
 
     /// <summary>Skeleton 重建（換 Skin / 重載）後骨頭引用會失效，清掉下次重抓。</summary>
-    private void HandleRebuild(SkeletonRenderer renderer)
+    private void HandleRebuild(ISkeletonRenderer skeletonRenderer)
     {
         _bone = null;
         _overrideActive = false;

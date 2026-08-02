@@ -56,7 +56,7 @@ public class SpinePlayNonLoopClean : MonoBehaviour
         var state = targetSkeleton.AnimationState;
         var skeleton = targetSkeleton.Skeleton;
         state.ClearTrack(trackIndex);
-        skeleton.SetToSetupPose();
+        skeleton.SetupPose();
         state.Apply(skeleton);
     }
 }

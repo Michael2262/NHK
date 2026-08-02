@@ -56,7 +56,7 @@ public class Task_PlaySpineByEntry : SceneReadyTaskBase
 
         Debug.Log($"[SceneTask] 根據入口 '{entryID}'，播放 Spine 動畫: {animToPlay}");
         isAnimationComplete = false;
-        var trackEntry = spineAnimation.state.SetAnimation(trackIndex, animToPlay, shouldLoop);
+        var trackEntry = spineAnimation.AnimationState.SetAnimation(trackIndex, animToPlay, shouldLoop);
 
         if (shouldLoop)
         {

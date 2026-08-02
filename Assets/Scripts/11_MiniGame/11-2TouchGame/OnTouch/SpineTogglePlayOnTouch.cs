@@ -130,7 +130,7 @@ public class SpineTogglePlayOnTouch : ConditionalTouchReactionBase
 
             if (targetSkeleton != null && targetSkeleton.skeleton != null)
             {
-                targetSkeleton.skeleton.SetToSetupPose();
+                targetSkeleton.skeleton.SetupPose();
                 targetSkeleton.AnimationState.Apply(targetSkeleton.skeleton);
             }
         }

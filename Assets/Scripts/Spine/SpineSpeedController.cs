@@ -64,7 +64,7 @@ public class SpineSpeedController : MonoBehaviour
         else
         {
             // 1) 立即影響當前 TrackEntry
-            var entry = skeleton.AnimationState?.GetCurrent(trackIndex);
+            var entry = skeleton.AnimationState?.GetTrack(trackIndex);
             if (entry != null) entry.TimeScale = targetScale;
 
             // 2) 登記「之後新播的 entry 也要用此速度」
@@ -98,7 +98,7 @@ public class SpineSpeedController : MonoBehaviour
         else
         {
             // 1) 立即還原當前 TrackEntry
-            var entry = skeleton.AnimationState?.GetCurrent(trackIndex);
+            var entry = skeleton.AnimationState?.GetTrack(trackIndex);
             if (entry != null) entry.TimeScale = Mathf.Max(0f, baseScale);
 
             // 2) 取消持續加速的登記

@@ -626,6 +626,7 @@ GameObject:
   - component: {fileID: 100274487}
   - component: {fileID: 100274486}
   - component: {fileID: 100274489}
+  - component: {fileID: 100274490}
   m_Layer: 0
   m_Name: G1_Spine
   m_TagString: Untagged
@@ -662,37 +663,31 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d247ba06193faa74d9335f5481b2b56c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: spine-unity::Spine.Unity.SkeletonAnimation
-  skeletonDataAsset: {fileID: 11400000, guid: d3379649e3d5a804596cd5eb4cdba6fb, type: 2}
-  initialSkinName: boyTouchHand
-  fixPrefabOverrideViaMeshFilter: 2
-  initialFlipX: 0
-  initialFlipY: 0
-  updateWhenInvisible: 3
-  separatorSlotNames: []
-  zSpacing: 0
-  useClipping: 1
-  immutableTriangles: 0
-  pmaVertexColors: 1
-  clearStateOnDisable: 0
-  tintBlack: 0
-  singleSubmesh: 0
-  fixDrawOrder: 0
-  addNormals: 0
-  calculateTangents: 0
-  maskInteraction: 1
-  maskMaterials:
-    materialsMaskDisabled: []
-    materialsInsideMask: []
-    materialsOutsideMask: []
-  disableRenderingOnOverride: 1
-  physicsPositionInheritanceFactor: {x: 1, y: 1}
-  physicsRotationInheritanceFactor: 1
-  physicsMovementRelativeTo: {fileID: 0}
   updateTiming: 1
-  unscaledTime: 0
-  _animationName: 
+  threadedAnimation: 2
+  animationName: 
   loop: 1
   timeScale: 1
+  unscaledTime: 0
+  wasDeprecatedTransferred: 1
+  skeletonDataAssetDeprecated: {fileID: 11400000, guid: d3379649e3d5a804596cd5eb4cdba6fb, type: 2}
+  initialSkinNameDeprecated: boyTouchHand
+  editorSkipSkinSyncDeprecated: 0
+  initialFlipXDeprecated: 0
+  initialFlipYDeprecated: 0
+  updateModeDeprecated: 3
+  updateWhenInvisibleDeprecated: 3
+  separatorSlotNamesDeprecated: []
+  zSpacingDeprecated: 0
+  useClippingDeprecated: 1
+  immutableTrianglesDeprecated: 0
+  pmaVertexColorsDeprecated: 1
+  clearStateOnDisableDeprecated: 0
+  tintBlackDeprecated: 0
+  singleSubmeshDeprecated: 0
+  addNormalsDeprecated: 0
+  calculateTangentsDeprecated: 0
+  maskInteractionDeprecated: 1
 --- !u!23 &100274487
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -765,6 +760,54 @@ MonoBehaviour:
   skeletonAnimation: {fileID: 0}
   skeletonGraphic: {fileID: 0}
   defaultClearDelaySeconds: 2
+--- !u!114 &100274490
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 100274484}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e075b9a3e08e2f74fbd651c858ab16ed, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: spine-unity::Spine.Unity.SkeletonRenderer
+  skeletonDataAsset: {fileID: 11400000, guid: d3379649e3d5a804596cd5eb4cdba6fb, type: 2}
+  initialSkinName: boyTouchHand
+  initialFlipX: 0
+  initialFlipY: 0
+  meshSettings:
+    useClipping: 1
+    zSpacing: 0
+    tintBlack: 0
+    canvasGroupCompatible: 0
+    pmaVertexColors: 1
+    addNormals: 0
+    calculateTangents: 0
+    immutableTriangles: 0
+  updateWhenInvisible: 3
+  clearStateOnDisable: 0
+  separatorSlotNames: []
+  enableSeparatorSlots: 0
+  disableRenderingOnOverride: 1
+  physicsPositionInheritanceFactor: {x: 1, y: 1}
+  physicsRotationInheritanceFactor: 1
+  physicsPositionInheritanceLimit: {x: Infinity, y: Infinity}
+  physicsRotationInheritanceLimit: 3.4028235e+38
+  physicsMovementRelativeTo: {fileID: 0}
+  threadedMeshGeneration: 2
+  singleSubmesh: 0
+  fixDrawOrder: 0
+  maskInteraction: 1
+  fixPrefabOverrideViaMeshFilter: 2
+  wasDeprecatedTransferred: 1
+  zSpacingDeprecated: 0
+  useClippingDeprecated: 1
+  immutableTrianglesDeprecated: 0
+  pmaVertexColorsDeprecated: 1
+  tintBlackDeprecated: 0
+  addNormalsDeprecated: 0
+  calculateTangentsDeprecated: 0
 --- !u!1 &129580655
 GameObject:
   m_ObjectHideFlags: 0
@@ -818,6 +861,7 @@ MonoBehaviour:
   clearDelaySeconds: -1
   minRemoteCount: 2
   maxRemoteCount: 3
+  playbackMode: 0
 --- !u!1 &203688339
 GameObject:
   m_ObjectHideFlags: 0
@@ -10477,6 +10521,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   soundKey: ui_button_click
+  hoverSoundKey: ui_button_hover
 --- !u!114 &469296712
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -11191,6 +11236,7 @@ MonoBehaviour:
   clearDelaySeconds: -1
   minRemoteCount: 1
   maxRemoteCount: 2
+  playbackMode: 0
 --- !u!1 &529988496
 GameObject:
   m_ObjectHideFlags: 0
@@ -11427,6 +11473,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   sceneTasks: []
+  autoRunWhenPlayedDirectly: 0
 --- !u!4 &616557966
 Transform:
   m_ObjectHideFlags: 0
@@ -12041,6 +12088,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayMakerMinigameAdapter_Multi2
   targetFSMs:
   - {fileID: 641924219}
+  resultHandler: {fileID: 0}
+  endReasonConfig: {fileID: 0}
+  _advanceTimeOnFinish: 0
 --- !u!1 &791549166
 GameObject:
   m_ObjectHideFlags: 0
@@ -12139,6 +12189,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   soundKey: ui_button_click
+  hoverSoundKey: ui_button_hover
 --- !u!114 &879694425
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -12926,6 +12977,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 46f2f5ae8f713564eb378aa33d51243d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Collider2DManager
+  groupEntries: []
+  onRegistrationComplete:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &1219099448
 GameObject:
   m_ObjectHideFlags: 0
@@ -17349,6 +17404,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   soundKey: ui_button_click
+  hoverSoundKey: ui_button_hover
 --- !u!114 &2035752990
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -18869,6 +18925,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2995ec2768b6ba14d839587eb9526b6d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  newGameStartScene: MyRoom
 --- !u!1 &2125678208
 GameObject:
   m_ObjectHideFlags: 0
