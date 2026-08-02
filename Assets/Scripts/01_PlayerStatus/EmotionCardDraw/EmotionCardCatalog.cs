@@ -21,10 +21,9 @@ public class EmotionDrawFace
 /// 情緒卡對照表（重構版）。
 ///
 /// 每種 HeroineEmotionCardType 對應：
-/// 1. EmotionCard prefab（保留向下相容）
-/// 2. EmotionNameTextKey（情緒名稱的 TextTable Key，用於 Emotion.Change 的 {1}）
-/// 3. SmallDrawFace — 小/中抽選用的考慮臉（表情 ID + 身體）
-/// 4. BigDrawFace — 大抽選第二段用的猶豫臉（表情 ID + 身體）
+/// 1. EmotionNameTextKey（情緒名稱的 TextTable Key，用於 Emotion.Change 的 {1}）
+/// 2. SmallDrawFace — 小/中抽選用的考慮臉（表情 ID + 身體）
+/// 3. BigDrawFace — 大抽選第二段用的猶豫臉（表情 ID + 身體）
 ///
 /// ★ 表情一律以 TachieExpressionConfig 的 preset 名稱（ID）填寫，
 ///   實際各部位內容定義在各 TachieActor 掛載的 TachieExpressionConfig 上，
@@ -42,9 +41,6 @@ public class EmotionCardCatalog : ScriptableObject
     public class Entry
     {
         public HeroineEmotionCardType Type;
-
-        [Tooltip("（保留）EmotionCard prefab。新表演不再使用。")]
-        public EmotionCard Prefab;
 
         [Tooltip("該情緒的 TextTable Key，例如 Emotion.Angry。用於 Emotion.Change 的 {1}。")]
         public string EmotionNameTextKey;
@@ -83,15 +79,6 @@ public class EmotionCardCatalog : ScriptableObject
     {
         EnsureMap();
         return map.TryGetValue(type, out var entry) ? entry : null;
-    }
-
-    /// <summary>
-    /// 取得指定情緒對應的 prefab（保留向下相容）。
-    /// </summary>
-    public EmotionCard GetPrefab(HeroineEmotionCardType type)
-    {
-        var entry = GetEntry(type);
-        return entry?.Prefab;
     }
 
     /// <summary>

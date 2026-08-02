@@ -90,25 +90,33 @@ public class EmotionCardDrawMachine : MonoBehaviour
     [Tooltip("目前抽選用女主角 ID。")]
     [SerializeField] private string currentHeroineID;
 
-    [Header("Global Draw View")]
-    [Tooltip("全域抽選演出 View。")]
-    [SerializeField] private EmotionCardDrawView drawView;
+    [Header("Emotion Card Catalog")]
+    [Tooltip("情緒卡對照表。抽選表演的表情 ID / 身體從這裡讀。")]
+    [SerializeField] private EmotionCardCatalog catalog;
+
+    [Tooltip("Tachie 切換用的 groupID 覆寫。留空 = 用 Catalog 的 DefaultTachieGroupID。")]
+    [SerializeField] private string tachieGroupIDOverride = "";
 
     [Header("Show Duration Settings")]
     [SerializeField, Min(0f)] private float smallDrawDuration = 0.45f;
     [SerializeField, Min(0f)] private float mediumDrawDuration = 1.0f;
     [SerializeField, Min(0f)] private float bigDrawPhase1Duration = 1.0f;
     [SerializeField, Min(0f)] private float bigDrawPhase2Duration = 1.5f;
+    [SerializeField, Min(0f)] private float completeHoldSeconds = 0.25f;
 
     [Header("Optional Config Override")]
     [SerializeField] private HeroineStatusConfig heroineStatusConfig;
 
     private Coroutine currentDrawRoutine;
+    private Coroutine currentResultRoutine;
     private bool isDrawing;
 
     public bool IsDrawing => isDrawing;
     public string CurrentHeroineID => currentHeroineID;
-    public EmotionCardDrawView CurrentDrawView => drawView;
+
+    private string TachieGroupID =>
+        !string.IsNullOrEmpty(tachieGroupIDOverride) ? tachieGroupIDOverride :
+        catalog != null ? catalog.DefaultTachieGroupID : "Sister";
 
     private float SmallDrawDuration => heroineStatusConfig != null ? heroineStatusConfig.SmallDrawDuration : smallDrawDuration;
     private float MediumDrawDuration => mediumDrawDuration;
@@ -133,7 +141,7 @@ public class EmotionCardDrawMachine : MonoBehaviour
 
     public void SetCurrentHeroineID(string heroineID) => currentHeroineID = heroineID;
     public void ClearCurrentHeroineID() => currentHeroineID = string.Empty;
-    public void SetDrawView(EmotionCardDrawView view) => drawView = view;
+    public void SetCatalog(EmotionCardCatalog value) => catalog = value;
 
     // ─────────────────────────────────────────────────────────────
     // 統一入口
@@ -423,49 +431,102 @@ public class EmotionCardDrawMachine : MonoBehaviour
     {
         isDrawing = true;
 
-        if (drawView != null)
+        switch (result.ShowMode)
         {
-            bool completed = false;
+            case EmotionShowMode.Big:
+                // 第一段：考慮中（表演用情緒的 SmallDrawFace）。
+                ApplySmallDrawFace(result.PerformanceEmotion);
+                if (BigDrawPhase1Duration > 0f)
+                    yield return new WaitForSeconds(BigDrawPhase1Duration);
 
-            switch (result.ShowMode)
-            {
-                case EmotionShowMode.Big:
-                    drawView.PlayBigDrawShow(
-                        result.HeroineID,
-                        result.PerformanceEmotion,
-                        result.ResultEmotion,
-                        BigDrawPhase1Duration,
-                        BigDrawPhase2Duration,
-                        () => completed = true);
-                    break;
+                // 第二段：猶豫（真正結果的 BigDrawFace）。
+                ApplyBigDrawFace(result.ResultEmotion);
+                yield return new WaitForSeconds(Mathf.Max(BigDrawPhase2Duration, completeHoldSeconds));
+                break;
 
-                case EmotionShowMode.Medium:
-                    drawView.PlayMediumDrawShow(result.HeroineID, result.ResultEmotion, MediumDrawDuration, () => completed = true);
-                    break;
+            case EmotionShowMode.Medium:
+                ApplySmallDrawFace(result.ResultEmotion);
+                yield return new WaitForSeconds(Mathf.Max(MediumDrawDuration, completeHoldSeconds));
+                break;
 
-                case EmotionShowMode.Small:
-                default:
-                    drawView.PlaySmallDrawShow(result.HeroineID, result.ResultEmotion, SmallDrawDuration, () => completed = true);
-                    break;
-            }
-
-            while (!completed) yield return null;
-        }
-        else
-        {
-            float duration;
-            switch (result.ShowMode)
-            {
-                case EmotionShowMode.Big: duration = BigDrawPhase1Duration + BigDrawPhase2Duration; break;
-                case EmotionShowMode.Medium: duration = MediumDrawDuration; break;
-                default: duration = SmallDrawDuration; break;
-            }
-            if (duration > 0f) yield return new WaitForSeconds(duration);
+            case EmotionShowMode.Small:
+            default:
+                ApplySmallDrawFace(result.ResultEmotion);
+                yield return new WaitForSeconds(Mathf.Max(SmallDrawDuration, completeHoldSeconds));
+                break;
         }
 
         isDrawing = false;
         currentDrawRoutine = null;
         onComplete?.Invoke(result);
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // 情緒結果等待（保留給 EmotionResultMessage；目前無額外立繪演出，僅維持等待語意）
+    // ─────────────────────────────────────────────────────────────
+
+    public void ShowEmotionResult(string heroineID, HeroineEmotionCardType emotion, float duration, Action onComplete)
+    {
+        if (currentResultRoutine != null)
+        {
+            StopCoroutine(currentResultRoutine);
+            currentResultRoutine = null;
+        }
+        currentResultRoutine = StartCoroutine(EmotionResultRoutine(duration, onComplete));
+    }
+
+    private IEnumerator EmotionResultRoutine(float duration, Action onComplete)
+    {
+        if (duration > 0f)
+            yield return new WaitForSeconds(duration);
+
+        currentResultRoutine = null;
+        onComplete?.Invoke();
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Tachie 立繪套用（原 EmotionCardDrawView 的職責，內化到 Machine）
+    // 表情走 TachieController.ChangeExpression（吃 TachieExpressionConfig preset 名稱），
+    // 身體走 TachieController.ChangeBody。兩者皆留空則不動該部位。
+    // ─────────────────────────────────────────────────────────────
+
+    private void ApplySmallDrawFace(HeroineEmotionCardType emotion)
+        => ApplyDrawFace(catalog?.GetSmallDrawFace(emotion), emotion, "SmallDraw");
+
+    private void ApplyBigDrawFace(HeroineEmotionCardType emotion)
+        => ApplyDrawFace(catalog?.GetBigDrawFace(emotion), emotion, "BigDraw");
+
+    private void ApplyDrawFace(EmotionDrawFace face, HeroineEmotionCardType emotion, string label)
+    {
+        if (face == null)
+        {
+            Debug.LogWarning($"[EmotionCardDrawMachine] {label} face not set for: {emotion}");
+            return;
+        }
+
+        bool hasExpression = !string.IsNullOrEmpty(face.ExpressionID);
+        bool hasBody = !string.IsNullOrEmpty(face.Body);
+        if (!hasExpression && !hasBody) return;
+
+        var tc = TachieController.Instance;
+        if (tc == null)
+        {
+            Debug.LogWarning("[EmotionCardDrawMachine] TachieController.Instance is null.");
+            return;
+        }
+
+        // ★ 立繪套用失敗（找不到 preset / 圖層 / 例外）只記錄，絕不讓表演協程中斷，
+        //   否則 onComplete 不會被呼叫，RequestDone / EmotionDrawDone 不會發出，對話會永久卡住。
+        try
+        {
+            if (hasExpression) tc.ChangeExpression(TachieGroupID, face.ExpressionID);
+            if (hasBody) tc.ChangeBody(TachieGroupID, face.Body);
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[EmotionCardDrawMachine] {label} 套用表情/身體失敗（emotion={emotion}, " +
+                           $"expr='{face.ExpressionID}', body='{face.Body}'）: {e}");
+        }
     }
 
     // ─────────────────────────────────────────────────────────────

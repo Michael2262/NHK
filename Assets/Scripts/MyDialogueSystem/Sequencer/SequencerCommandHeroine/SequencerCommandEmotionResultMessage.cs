@@ -53,21 +53,19 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
                 emotion = ParseEmotion(emotionRaw, HeroineEmotionCardType.Angry);
             }
 
-            // 找 EmotionCardDrawView
-            if (EmotionCardDrawMachine.Instance == null || EmotionCardDrawMachine.Instance.CurrentDrawView == null)
+            // 找 EmotionCardDrawMachine（立繪演出已內化到 Machine，不再經由 DrawView）
+            if (EmotionCardDrawMachine.Instance == null)
             {
-                Debug.LogWarning("Dialogue System: EmotionResultMessage 找不到 EmotionCardDrawMachine 或 DrawView。", this);
+                Debug.LogWarning("Dialogue System: EmotionResultMessage 找不到 EmotionCardDrawMachine。", this);
                 Stop();
                 return;
             }
-
-            var drawView = EmotionCardDrawMachine.Instance.CurrentDrawView;
 
             // 如果 heroineID 沒填，用 Machine 上的 currentHeroineID
             if (string.IsNullOrEmpty(heroineID))
                 heroineID = EmotionCardDrawMachine.Instance.CurrentHeroineID;
 
-            drawView.ShowEmotionResult(heroineID, emotion, duration, () =>
+            EmotionCardDrawMachine.Instance.ShowEmotionResult(heroineID, emotion, duration, () =>
             {
                 if (wait && !stopped)
                 {
