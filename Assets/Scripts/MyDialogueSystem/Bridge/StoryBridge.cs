@@ -5,7 +5,20 @@ public class StoryBridge : MonoBehaviour
     //--------------------------------------------------------------
     // 公告橋接方法
 
-    public void ShowAlert(string message)
+    /// <summary>
+    /// 顯示一般系統公告:傳入本地化 Key (查 Text Table)。
+    /// 查不到時 fallback 顯示原字串,故直接傳純文字也可運作。
+    /// </summary>
+    public void ShowAlert(string key)
+    {
+        if (StoryManager.Instance != null)
+            StoryManager.Instance.ShowLocalizedMessage(key);
+    }
+
+    /// <summary>
+    /// 顯示一般系統公告:傳入「已本地化好的純文字」,不查表直接顯示。
+    /// </summary>
+    public void ShowAlertRaw(string message)
     {
         if (StoryManager.Instance != null)
             StoryManager.Instance.ShowSystemMessage(message);

@@ -10041,7 +10041,7 @@ MonoBehaviour:
           TachieControl(Right,
           Sister, 0.5);
 
-          PlayMusic(Adventure, 1,Q);'
+'
         type: 0
         typeString: CustomFieldType_Text
       - title: zh-TW
@@ -11550,7 +11550,7 @@ MonoBehaviour:
         width: 160
         height: 30
     entryGroups: []
-    canvasScrollPosition: {x: 0, y: 0}
+    canvasScrollPosition: {x: 0, y: 175}
     canvasZoom: 1
   - id: 196
     fields:
@@ -22873,7 +22873,6 @@ MonoBehaviour:
           Sister, Normal);
 
 
-          ReduceRoomMess(2);
 
 
           Delay({{end}});
@@ -48202,7 +48201,7 @@ MonoBehaviour:
         width: 160
         height: 30
     entryGroups: []
-    canvasScrollPosition: {x: 1.9417725, y: 0}
+    canvasScrollPosition: {x: 561.165, y: 166.0195}
     canvasZoom: 1.03
   - id: 160
     fields:
@@ -68247,7 +68246,7 @@ MonoBehaviour:
         width: 160
         height: 30
     entryGroups: []
-    canvasScrollPosition: {x: 144, y: 0}
+    canvasScrollPosition: {x: 15, y: 0}
     canvasZoom: 1
   - id: 168
     fields:
@@ -105586,7 +105585,7 @@ MonoBehaviour:
         destinationDialogueID: 102
         isConnector: 0
         priority: 2
-      conditionsString: Variable["LastEmotionDraw"] ~= "Worried"
+      conditionsString: GetCurrentEmotion("sister") ~= "Worried"
       userScript: 
       onExecute:
         m_PersistentCalls:
@@ -105743,7 +105742,17 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: 
+        value: 'TachieControl(Brow, Sister, Angry1);
+
+          TachieControl(Eye,
+          Sister, Close_Sad);
+
+          TachieControl(Blush, Sister, BlushL2);
+
+          TachieControl(Mouth,
+          Sister, Small2);
+
+          Delay({{end}});'
         type: 0
         typeString: CustomFieldType_Text
       - title: zh-TW
@@ -108727,15 +108736,15 @@ MonoBehaviour:
         destinationDialogueID: 102
         isConnector: 0
         priority: 2
-      conditionsString: Variable["LastEmotionDraw"] == "Worried"
+      conditionsString: GetCurrentEmotion("sister") == "Worried"
       userScript: 
       onExecute:
         m_PersistentCalls:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 1147.0374
-        y: 498.9244
+        x: 1135.2727
+        y: 481.27737
         width: 160
         height: 30
     - id: 131
@@ -109334,7 +109343,7 @@ MonoBehaviour:
         width: 160
         height: 30
     entryGroups: []
-    canvasScrollPosition: {x: 248.67035, y: 222.90085}
+    canvasScrollPosition: {x: 61.176514, y: 10.588196}
     canvasZoom: 0.84999996
   - id: 134
     fields:
@@ -210985,7 +210994,8 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Dialogue Text
-        value: "\u2026\u2026\u600E\u9EBC\u4E86\uFF1F"
+        value: "\u2026\u2026\u600E\u9EBC\u4E86\uFF1F\u6709\u751A\u9EBC\u9700\u8981\u6211\u5E6B\u5FD9\u7684\u55CE
+          ?"
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
@@ -314258,6 +314268,8 @@ MonoBehaviour:
 
           TachieControl(Mouth, Sister, Smile3);
 
+          TachieControl(Eye,
+          Sister, Normal);
 
           Delay({{end}});'
         type: 0
@@ -314628,7 +314640,7 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Dialogue Text
-        value: "\u800C\u4E14\u4E5F\u53EF\u4EE5\u8D81\u9019\u500B\u6A5F\u6703\u8B93\u4F60\u5403\u5065\u5EB7\u4E00\u9EDE\u3002"
+        value: "\u800C\u4E14\u4E5F\u53EF\u4EE5\u8D81\u9019\u500B\u6A5F\u6703\u8B93\u54E5\u54E5\u5403\u5065\u5EB7\u4E00\u9EDE\u3002"
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
@@ -382686,7 +382698,7 @@ MonoBehaviour:
         width: 160
         height: 30
     entryGroups: []
-    canvasScrollPosition: {x: 5.319153, y: 199.99951}
+    canvasScrollPosition: {x: 4.25531, y: 106.38254}
     canvasZoom: 0.94000006
   - id: 200
     fields:

@@ -248,8 +248,8 @@ public class ProtagonistStatusModel
 
     public void OnDayEnd()
     {
-        //AddRoomMessLevel(1);
-        //AddBodyDirtyLevel(1); // 與房間同步：每日結束身體也會變髒一點。若不想要可移除此行。
+        AddRoomMessLevel(1);
+        AddBodyDirtyLevel(1); // 與房間同步：每日結束身體也會變髒一點。若不想要可移除此行。
         ApplyDependencyDailyGain();
     }
 

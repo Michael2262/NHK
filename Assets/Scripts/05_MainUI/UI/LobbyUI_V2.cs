@@ -75,6 +75,8 @@ public class LobbyUI_V2 : MonoBehaviour
     [SerializeField] private bool hideRoomCleanPreview = false;
     [Tooltip("開啟後：『身體整潔度』的變動不跳飄字，hover 預先預覽也不顯示（數字本體仍會更新）。")]
     [SerializeField] private bool hideBodyCleanPreview = false;
+    [Tooltip("總開關：關閉整個『hover 預先預覽』效果（滑鼠懸停時不顯示預估變化）。變動飄字不受影響。")]
+    [SerializeField] private bool disableHoverPreview = false;
     // 數字本體與飄字皆透過 StatusPreviewSequencer 依序播放（每隔固定秒數逐一跳）。
 
     // ==================================================
@@ -235,6 +237,9 @@ public class LobbyUI_V2 : MonoBehaviour
     private void InitializeAllUI()
     {
         _lastPhaseIndex = -1;
+
+        // 總開關：把 Inspector 的設定套到 hover 預先預覽的 Presenter。
+        StatPackagePreviewPresenter.Enabled = !disableHoverPreview;
 
         // 初始化整潔度快取（避免第一次事件觸發時 delta 計算錯誤）
         if (_protagonistModel != null)

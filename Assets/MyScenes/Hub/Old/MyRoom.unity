@@ -483,14 +483,26 @@ MonoBehaviour:
     riskObjectToShow: {fileID: 0}
     objectsToClose: []
   timeVisualRules:
-  - phaseIndex: 0
+  - visualName: 
+    phaseIndex: 0
+    dayType: 0
     objectToActivate: {fileID: 338231103}
-  - phaseIndex: 1
+    canvasGroupsToActivate: []
+  - visualName: 
+    phaseIndex: 1
+    dayType: 0
     objectToActivate: {fileID: 1020271126}
-  - phaseIndex: 2
+    canvasGroupsToActivate: []
+  - visualName: 
+    phaseIndex: 2
+    dayType: 0
     objectToActivate: {fileID: 1822962853}
-  - phaseIndex: 3
+    canvasGroupsToActivate: []
+  - visualName: 
+    phaseIndex: 3
+    dayType: 0
     objectToActivate: {fileID: 12881971}
+    canvasGroupsToActivate: []
 --- !u!4 &279857463
 Transform:
   m_ObjectHideFlags: 0
@@ -951,6 +963,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b002296926ddaa74c8df0ffbc89fe36a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RestButtonController
+  stressRecoveryPerSlot: 10
+  nightlyStressRecovery: 20
 --- !u!1 &475570420
 GameObject:
   m_ObjectHideFlags: 0
@@ -2721,8 +2735,9 @@ MonoBehaviour:
         actionEnabled: 01
         actionIsOpen: 01
         actionStartIndex: 00000000
-        actionHashCodes: 29811e03
-        unityObjectParams: []
+        actionHashCodes: 1ac58f02
+        unityObjectParams:
+        - {fileID: 0}
         fsmGameObjectParams: []
         fsmOwnerDefaultParams: []
         animationCurveParams: []
@@ -2731,13 +2746,7 @@ MonoBehaviour:
         fsmEventTargetParams: []
         fsmPropertyParams: []
         layoutOptionParams: []
-        fsmStringParams:
-        - useVariable: 0
-          name: 
-          tooltip: 
-          showInInspector: 0
-          networkSync: 0
-          value: Value_IntroMood
+        fsmStringParams: []
         fsmObjectParams: []
         fsmVarParams: []
         fsmArrayParams: []
@@ -2776,9 +2785,9 @@ MonoBehaviour:
         arrayParamTypes: []
         customTypeSizes: 
         customTypeNames: []
-        paramDataType: 1200000007000000100000001700000017000000100000001100000001000000
+        paramDataType: 0500000007000000100000001700000017000000100000001100000001000000
         paramName:
-        - key
+        - valueDef
         - compareType
         - compareValue
         - trueEvent
@@ -4473,6 +4482,8 @@ MonoBehaviour:
   Mode: 0
   Conditions:
   - Type: 2
+    Stat: 0
+    Op: 0
     HeroineID: sister
     RequiredLevel: 0
     FlagID: 
@@ -4575,9 +4586,12 @@ MonoBehaviour:
   manualDeductions: []
   resourceGains: []
   deductTime: 1
+  timeUnit: 0
   manualTimeAmount: 1
   targetHeroineID: 
   heroineResourceChanges: []
+  statPackageIDs: []
+  flagChanges: []
   autoReport: 1
   onGoodEffect:
     m_PersistentCalls:
@@ -4732,9 +4746,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2a852015ed21d2642859a85240362c08, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ActionOverlayTrigger
+  actionId: 
   duration: 2
   actionSprite: {fileID: 0}
   localizationKey: 
+  overlayPosition: 0
+  enableOutcomeResult: 0
+  successChance: 0.5
+  chanceProvider: {fileID: 0}
+  autoApplyChanceProviderOnExecute: 1
+  successLocalizationKey: Result.Success
+  failureLocalizationKey: Result.Failure
+  resultHoldSeconds: 2
+  successSoundKey: action_success
+  failureSoundKey: action_failure
   onCompleteEvents:
     m_PersistentCalls:
       m_Calls:
@@ -4750,6 +4775,15 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
+  onSuccessEvents:
+    m_PersistentCalls:
+      m_Calls: []
+  onFailureEvents:
+    m_PersistentCalls:
+      m_Calls: []
+  onStartEvents:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!224 &6769195320354489541
 RectTransform:
   m_ObjectHideFlags: 0

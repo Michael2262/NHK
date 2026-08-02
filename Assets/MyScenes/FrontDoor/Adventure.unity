@@ -3842,6 +3842,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AdventureController
   _database: {fileID: 11400000, guid: 6593a874ea8b2d741a8b1c34e8e8d576, type: 2}
   _defaultDungeon: {fileID: 11400000, guid: 7256f911a9b27f743b073d58b136bd26, type: 2}
+  _cardResourcePath: Adventure/AdvCard
   onCardDrawn:
     m_PersistentCalls:
       m_Calls: []
@@ -13941,24 +13942,112 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6353174468877080760, guid: 66f3ae415ae504b4784f85330ad3a09f, type: 3}
+      propertyPath: phaseFlagMusic.Array.size
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 6353174468877080760, guid: 66f3ae415ae504b4784f85330ad3a09f, type: 3}
       propertyPath: 'phaseMusicKeys.Array.data[0]'
-      value: LazySundayMorning
+      value: Adventure
       objectReference: {fileID: 0}
     - target: {fileID: 6353174468877080760, guid: 66f3ae415ae504b4784f85330ad3a09f, type: 3}
       propertyPath: 'phaseMusicKeys.Array.data[1]'
-      value: LazySundayMorning
+      value: Adventure
       objectReference: {fileID: 0}
     - target: {fileID: 6353174468877080760, guid: 66f3ae415ae504b4784f85330ad3a09f, type: 3}
       propertyPath: 'phaseMusicKeys.Array.data[2]'
-      value: LazySundayMorning
+      value: Adventure
       objectReference: {fileID: 0}
     - target: {fileID: 6353174468877080760, guid: 66f3ae415ae504b4784f85330ad3a09f, type: 3}
       propertyPath: 'phaseMusicKeys.Array.data[3]'
-      value: LazySundayMorning
+      value: Adventure
+      objectReference: {fileID: 0}
+    - target: {fileID: 6353174468877080760, guid: 66f3ae415ae504b4784f85330ad3a09f, type: 3}
+      propertyPath: flagMusicPriorities.Array.size
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6353174468877080760, guid: 66f3ae415ae504b4784f85330ad3a09f, type: 3}
       propertyPath: weekendPhaseMusicKeys.Array.size
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6353174468877080760, guid: 66f3ae415ae504b4784f85330ad3a09f, type: 3}
+      propertyPath: flagMusicPriorities.Array.data[1].flag
+      value: 
+      objectReference: {fileID: 11400000, guid: e33e13f9cd9f37948a7ed70a3640e811, type: 2}
+    - target: {fileID: 6353174468877080760, guid: 66f3ae415ae504b4784f85330ad3a09f, type: 3}
+      propertyPath: flagMusicPriorities.Array.data[1].musicKey
+      value: AdventureTired
+      objectReference: {fileID: 0}
+    - target: {fileID: 6353174468877080760, guid: 66f3ae415ae504b4784f85330ad3a09f, type: 3}
+      propertyPath: phaseFlagMusic.Array.data[0].rules.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6353174468877080760, guid: 66f3ae415ae504b4784f85330ad3a09f, type: 3}
+      propertyPath: phaseFlagMusic.Array.data[1].rules.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6353174468877080760, guid: 66f3ae415ae504b4784f85330ad3a09f, type: 3}
+      propertyPath: phaseFlagMusic.Array.data[2].rules.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6353174468877080760, guid: 66f3ae415ae504b4784f85330ad3a09f, type: 3}
+      propertyPath: phaseFlagMusic.Array.data[3].rules.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6353174468877080760, guid: 66f3ae415ae504b4784f85330ad3a09f, type: 3}
+      propertyPath: phaseFlagMusic.Array.data[0].rules.Array.data[0].flag
+      value: 
+      objectReference: {fileID: 11400000, guid: e33e13f9cd9f37948a7ed70a3640e811, type: 2}
+    - target: {fileID: 6353174468877080760, guid: 66f3ae415ae504b4784f85330ad3a09f, type: 3}
+      propertyPath: phaseFlagMusic.Array.data[0].rules.Array.data[1].flag
+      value: 
+      objectReference: {fileID: 11400000, guid: e33e13f9cd9f37948a7ed70a3640e811, type: 2}
+    - target: {fileID: 6353174468877080760, guid: 66f3ae415ae504b4784f85330ad3a09f, type: 3}
+      propertyPath: phaseFlagMusic.Array.data[0].rules.Array.data[2].flag
+      value: 
+      objectReference: {fileID: 11400000, guid: e33e13f9cd9f37948a7ed70a3640e811, type: 2}
+    - target: {fileID: 6353174468877080760, guid: 66f3ae415ae504b4784f85330ad3a09f, type: 3}
+      propertyPath: phaseFlagMusic.Array.data[0].rules.Array.data[3].flag
+      value: 
+      objectReference: {fileID: 11400000, guid: e33e13f9cd9f37948a7ed70a3640e811, type: 2}
+    - target: {fileID: 6353174468877080760, guid: 66f3ae415ae504b4784f85330ad3a09f, type: 3}
+      propertyPath: phaseFlagMusic.Array.data[1].rules.Array.data[0].flag
+      value: 
+      objectReference: {fileID: 11400000, guid: e33e13f9cd9f37948a7ed70a3640e811, type: 2}
+    - target: {fileID: 6353174468877080760, guid: 66f3ae415ae504b4784f85330ad3a09f, type: 3}
+      propertyPath: phaseFlagMusic.Array.data[2].rules.Array.data[0].flag
+      value: 
+      objectReference: {fileID: 11400000, guid: e33e13f9cd9f37948a7ed70a3640e811, type: 2}
+    - target: {fileID: 6353174468877080760, guid: 66f3ae415ae504b4784f85330ad3a09f, type: 3}
+      propertyPath: phaseFlagMusic.Array.data[3].rules.Array.data[0].flag
+      value: 
+      objectReference: {fileID: 11400000, guid: e33e13f9cd9f37948a7ed70a3640e811, type: 2}
+    - target: {fileID: 6353174468877080760, guid: 66f3ae415ae504b4784f85330ad3a09f, type: 3}
+      propertyPath: phaseFlagMusic.Array.data[0].rules.Array.data[0].musicKey
+      value: AdventureTired
+      objectReference: {fileID: 0}
+    - target: {fileID: 6353174468877080760, guid: 66f3ae415ae504b4784f85330ad3a09f, type: 3}
+      propertyPath: phaseFlagMusic.Array.data[0].rules.Array.data[1].musicKey
+      value: AdventureTired
+      objectReference: {fileID: 0}
+    - target: {fileID: 6353174468877080760, guid: 66f3ae415ae504b4784f85330ad3a09f, type: 3}
+      propertyPath: phaseFlagMusic.Array.data[0].rules.Array.data[2].musicKey
+      value: AdventureTired
+      objectReference: {fileID: 0}
+    - target: {fileID: 6353174468877080760, guid: 66f3ae415ae504b4784f85330ad3a09f, type: 3}
+      propertyPath: phaseFlagMusic.Array.data[0].rules.Array.data[3].musicKey
+      value: AdventureTired
+      objectReference: {fileID: 0}
+    - target: {fileID: 6353174468877080760, guid: 66f3ae415ae504b4784f85330ad3a09f, type: 3}
+      propertyPath: phaseFlagMusic.Array.data[1].rules.Array.data[0].musicKey
+      value: AdventureTired
+      objectReference: {fileID: 0}
+    - target: {fileID: 6353174468877080760, guid: 66f3ae415ae504b4784f85330ad3a09f, type: 3}
+      propertyPath: phaseFlagMusic.Array.data[2].rules.Array.data[0].musicKey
+      value: AdventureTired
+      objectReference: {fileID: 0}
+    - target: {fileID: 6353174468877080760, guid: 66f3ae415ae504b4784f85330ad3a09f, type: 3}
+      propertyPath: phaseFlagMusic.Array.data[3].rules.Array.data[0].musicKey
+      value: AdventureTired
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

@@ -17,9 +17,16 @@ using System.Collections.Generic;
 
 public static class StatPackagePreviewPresenter
 {
+    /// <summary>
+    /// 總開關：關閉後，整個「hover 預先預覽」不顯示（變動飄字不受影響）。
+    /// 由 LobbyUI_V2 的 Inspector 選項驅動。預設開啟。
+    /// </summary>
+    public static bool Enabled = true;
+
     /// <summary>顯示指定套組的預覽。找不到套組或無變化時等同 Hide()。</summary>
     public static void Show(string packageID)
     {
+        if (!Enabled) return; // 總開關關閉：不顯示任何預先預覽
         if (string.IsNullOrEmpty(packageID)) { Hide(); return; }
 
         var service = GameStatusService.Instance;
