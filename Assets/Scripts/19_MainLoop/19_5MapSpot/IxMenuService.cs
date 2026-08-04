@@ -58,6 +58,14 @@ public class IxMenuService : MonoBehaviour
     //  資料結構
     // ══════════════════════════════════════════
 
+    /// <summary>此選項顯示於哪個地圖模式（MapScope）。用 enum 下拉，避免字串填錯。</summary>
+    public enum IxScope
+    {
+        [InspectorName("兩者皆顯示")] Both,
+        [InspectorName("僅拜訪模式")] VisitOnly,
+        [InspectorName("僅挑戰模式")] UnlockOnly,
+    }
+
     /// <summary>
     /// 單一互動選項的資料。
     /// 顯示由 IxOptionDrawer 控制，請勿在此加 Header / Tooltip。
@@ -66,7 +74,8 @@ public class IxMenuService : MonoBehaviour
     public class IxOption
     {
         public string labelKey;
-        public string requiredFlag;
+        public IxScope scope = IxScope.Both;          // 地圖模式條件
+        public ProgressFlagDefinition conditionFlag;  // 額外進度條件（未設=不限）
         public int priority;
         public int staminaDelta;
 
@@ -246,6 +255,16 @@ public class IxMenuService : MonoBehaviour
     //  內部邏輯：Flag 條件篩選 + 優先次序
     // ══════════════════════════════════════════
 
+    /// <summary>依當前 scope 場景旗標，判斷此選項是否該顯示。</summary>
+    private bool IsScopeMatched(IxScope scope, ProgressFlagModel flags)
+    {
+        if (scope == IxScope.Both) return true;
+        if (flags == null) return true; // 無 scope 資訊（非地圖情境）時不擋
+
+        bool unlockScope = flags.Contains(MapScopeFlags.Unlock);
+        return scope == IxScope.UnlockOnly ? unlockScope : !unlockScope;
+    }
+
     private List<IxOption> FilterAndSortOptions(List<IxOption> allOptions)
     {
         if (allOptions == null) return new List<IxOption>();
@@ -255,18 +274,16 @@ public class IxMenuService : MonoBehaviour
 
         foreach (var opt in allOptions)
         {
-            // 無條件 → 直接通過
-            if (string.IsNullOrEmpty(opt.requiredFlag))
-            {
-                eligible.Add(opt);
+            // 1) 地圖模式條件
+            if (!IsScopeMatched(opt.scope, flags))
                 continue;
-            }
 
-            // 有條件 → 檢查 Flag
-            if (flags != null && flags.Contains(opt.requiredFlag))
-            {
-                eligible.Add(opt);
-            }
+            // 2) 額外進度條件（未設=不限）
+            if (opt.conditionFlag != null
+                && (flags == null || !flags.Contains(opt.conditionFlag.FlagID)))
+                continue;
+
+            eligible.Add(opt);
         }
 
         // 依優先次序排序（數字越小越優先）

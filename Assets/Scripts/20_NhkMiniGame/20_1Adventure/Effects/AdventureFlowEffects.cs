@@ -77,6 +77,63 @@ public class AdvPlayConversationEffect : AdventureEffect
 }
 
 /// <summary>
+/// 調用立繪變化：依指定女主角目前的情緒（CurrentEmotion），從其表情組隨機挑一個變體，
+/// 把那組 Sequencer 命令字串交給對話系統的 Sequencer 執行（跟 TachieControl(...) 同一套 parser）。
+/// </summary>
+[Serializable]
+public class AdvTachieEmotionEffect : AdventureEffect
+{
+    [Tooltip("要變化立繪的女主角表情組（SO 內含 HeroineID 與各情緒的變體）")]
+    public AdventureTachieEmotionSet EmotionSet;
+
+    public override void Apply(AdventureContext ctx)
+    {
+        if (EmotionSet == null)
+        {
+            Debug.LogWarning("[AdvTachieEmotion] EmotionSet 未指定，跳過。");
+            return;
+        }
+
+        // 讀該女主角目前的情緒（找不到女主角就用 Normal 當預設）
+        var emotion = HeroineEmotionCardType.Normal;
+        var gss = GameStatusService.Instance;
+        bool heroineFound = false;
+        if (gss != null && gss.Heroines != null && !string.IsNullOrEmpty(EmotionSet.HeroineID)
+            && gss.Heroines.TryGetValue(EmotionSet.HeroineID, out var heroine) && heroine != null)
+        {
+            emotion = heroine.CurrentEmotion;
+            heroineFound = true;
+        }
+
+        string sequence = EmotionSet.PickVariant(emotion);
+
+        // ── 診斷 log（確認流程後可刪）──
+        Debug.Log($"[AdvTachieEmotion] HeroineID='{EmotionSet.HeroineID}' 找到女主角={heroineFound} " +
+                  $"目前情緒={emotion} 挑到的Sequence={(string.IsNullOrWhiteSpace(sequence) ? "(空)" : sequence)}");
+
+        if (string.IsNullOrWhiteSpace(sequence))
+        {
+            Debug.LogWarning($"[AdvTachieEmotion] 情緒 {emotion} 沒挑到任何變體，" +
+                             "請確認 EmotionSet 裡有該情緒的 Entry 且 Variants 不為空（或第一筆有內容）。");
+            return;
+        }
+
+        // {actor} → HeroineID，然後交給對話系統的 Sequencer 跑（同一套 parser）
+        sequence = sequence.Replace("{actor}", EmotionSet.HeroineID);
+
+        if (PixelCrushers.DialogueSystem.DialogueManager.Instance != null)
+        {
+            Debug.Log($"[AdvTachieEmotion] 送出 PlaySequence：{sequence}");
+            PixelCrushers.DialogueSystem.DialogueManager.PlaySequence(sequence);
+        }
+        else
+        {
+            Debug.LogWarning("[AdvTachieEmotion] 找不到 DialogueManager，無法播放立繪 Sequence。");
+        }
+    }
+}
+
+/// <summary>
 /// 通用：設一個 persistent 進度旗標。可拿來觸發劇情、解鎖其他系統等。
 /// </summary>
 [Serializable]

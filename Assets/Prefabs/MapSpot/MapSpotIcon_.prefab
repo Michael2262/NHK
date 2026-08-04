@@ -108,10 +108,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 4500228167424874838}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 200, y: 50}
+  m_SizeDelta: {x: 239.82, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1548347170308488473
 CanvasRenderer:
@@ -141,7 +141,9 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Store
+  m_text: 'Storeeeee
+
+'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: f86d8b1a89647a54eb7049575e8b9553, type: 2}
   m_sharedMaterial: {fileID: -4147588894626420378, guid: f86d8b1a89647a54eb7049575e8b9553, type: 2}
@@ -375,7 +377,8 @@ MonoBehaviour:
     image: {fileID: 0}
   options:
   - labelKey: Leave
-    requiredFlag: 
+    scope: 0
+    conditionFlag: {fileID: 0}
     priority: 0
     staminaDelta: 0
     useResourceCheck: 0
@@ -404,6 +407,25 @@ MonoBehaviour:
     onTimeFailure:
       m_PersistentCalls:
         m_Calls: []
+  - labelKey: Spotaction.Challenge
+    scope: 2
+    conditionFlag: {fileID: 0}
+    priority: 0
+    staminaDelta: 0
+    useResourceCheck: 0
+    checkType: 0
+    amount: 0
+    checkTime: 0
+    timeAmount: 0
+    onSelected:
+      m_PersistentCalls:
+        m_Calls: []
+    onFailure:
+      m_PersistentCalls:
+        m_Calls: []
+    onTimeFailure:
+      m_PersistentCalls:
+        m_Calls: []
 --- !u!1 &2841329542406466481
 GameObject:
   m_ObjectHideFlags: 0
@@ -415,6 +437,8 @@ GameObject:
   - component: {fileID: 4500228167424874838}
   - component: {fileID: 1970924828947769609}
   - component: {fileID: 1921565127102313703}
+  - component: {fileID: 2822071846625874351}
+  - component: {fileID: 8414864816614237968}
   m_Layer: 5
   m_Name: NameBox
   m_TagString: Untagged
@@ -440,7 +464,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: -86}
-  m_SizeDelta: {x: 198.36, y: 66.61}
+  m_SizeDelta: {x: 0, y: 66.61}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1970924828947769609
 CanvasRenderer:
@@ -480,6 +504,46 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &2822071846625874351
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2841329542406466481}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 30649d3a9faa99c48a7b1166b86bf2a0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.HorizontalLayoutGroup
+  m_Padding:
+    m_Left: 2
+    m_Right: 2
+    m_Top: 5
+    m_Bottom: 5
+  m_ChildAlignment: 4
+  m_Spacing: 0
+  m_ChildForceExpandWidth: 0
+  m_ChildForceExpandHeight: 0
+  m_ChildControlWidth: 0
+  m_ChildControlHeight: 0
+  m_ChildScaleWidth: 0
+  m_ChildScaleHeight: 0
+  m_ReverseArrangement: 0
+--- !u!114 &8414864816614237968
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2841329542406466481}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3245ec927659c4140ac4f8d17403cc18, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.ContentSizeFitter
+  m_HorizontalFit: 2
+  m_VerticalFit: 0
 --- !u!1 &3450464565380054612
 GameObject:
   m_ObjectHideFlags: 0
@@ -1531,6 +1595,8 @@ GameObject:
   - component: {fileID: 3212853596553731150}
   - component: {fileID: 6657420819566875389}
   - component: {fileID: 6976155764609966412}
+  - component: {fileID: 4671167862025924444}
+  - component: {fileID: 8723242073415918929}
   m_Layer: 5
   m_Name: MapSpotIcon_
   m_TagString: Untagged
@@ -1598,6 +1664,32 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!225 &4671167862025924444
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7015651814054091509}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
+--- !u!114 &8723242073415918929
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7015651814054091509}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 856915a8feecc8347a8e1a00f4b0f8e2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MapSpotView
+  unlockFlag: {fileID: 0}
+  dimAlpha: 0.4
 --- !u!1 &8928233075746488329
 GameObject:
   m_ObjectHideFlags: 0

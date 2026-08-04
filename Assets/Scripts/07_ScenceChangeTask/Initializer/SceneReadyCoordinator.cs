@@ -28,6 +28,11 @@ public class SceneReadyCoordinator : MonoBehaviour, ISceneReadyHandler
              "會在 Start 時自動補跑一次 OnSceneReady。正式轉場進場則不會重複執行。")]
     [SerializeField] private bool autoRunWhenPlayedDirectly = false;
 
+    [Header("除錯：用指定 entryID 手動觸發")]
+    [Tooltip("填入想測試的入口ID（例如 Map_Challenge / Map_Visit）。用元件右鍵選單或綁按鈕呼叫 " +
+             "ReRunWithDebugID()，會忽略 GameDataManager，直接用這個字串跑一遍任務列表。")]
+    [SerializeField] private string debugEntryID = "Map_Challenge";
+
     // 已經執行過（不論是 SceneController 呼叫，還是自動補跑），用來防止重複執行。
     private bool _hasRun;
 
@@ -51,8 +56,18 @@ public class SceneReadyCoordinator : MonoBehaviour, ISceneReadyHandler
 
     public IEnumerator OnSceneReady()
     {
+        yield return OnSceneReady(null);
+    }
+
+    /// <summary>
+    /// 執行任務列表。overrideEntryID 非空時直接採用它（除錯用），否則讀 GameDataManager.SceneEntryID。
+    /// </summary>
+    public IEnumerator OnSceneReady(string overrideEntryID)
+    {
         _hasRun = true;
-        string entryID = GameDataManager.Instance?.SceneEntryID ?? "Unknown";
+        string entryID = !string.IsNullOrEmpty(overrideEntryID)
+            ? overrideEntryID
+            : (GameDataManager.Instance?.SceneEntryID ?? "Unknown");
         Debug.Log($"--- Coordinator: 開始準備場景，入口ID: [{entryID}] ---");
 
         if (sceneTasks.Count == 0)
@@ -103,9 +118,35 @@ public class SceneReadyCoordinator : MonoBehaviour, ISceneReadyHandler
 
     private IEnumerator RunFromUIRoutine()
     {
+        yield return RunGuarded(null);
+    }
+
+    private IEnumerator RunGuarded(string overrideEntryID)
+    {
         _isRunning = true;
-        yield return OnSceneReady();
+        yield return OnSceneReady(overrideEntryID);
         _isRunning = false;
+    }
+
+    /// <summary>
+    /// 除錯用：忽略 GameDataManager，改用 Inspector 的 debugEntryID 跑一遍任務列表。
+    /// 可綁在除錯按鈕的 OnClick，或用元件右鍵選單觸發。執行中再次呼叫會被忽略。
+    /// </summary>
+    [ContextMenu("▶ 用 debugEntryID 觸發 OnSceneReady（限 Play 中）")]
+    public void ReRunWithDebugID()
+    {
+        if (!Application.isPlaying)
+        {
+            Debug.LogWarning("--- Coordinator: 此功能僅能在 Play Mode 中使用 ---");
+            return;
+        }
+        if (_isRunning)
+        {
+            Debug.LogWarning("--- Coordinator: OnSceneReady 尚在執行中，忽略此次觸發 ---");
+            return;
+        }
+        Debug.Log($"--- Coordinator: 除錯觸發，entryID=[{debugEntryID}] ---");
+        StartCoroutine(RunGuarded(debugEntryID));
     }
 
     // ============================================================
