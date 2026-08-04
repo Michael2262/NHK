@@ -2,26 +2,33 @@
 // SequencerCommandRequest.cs
 // ============================================================
 // 用法：
-//   Request(heroineID, performanceType)
+//   Request(heroineID, performanceName)
+//   Request(heroineID, performanceName, arg1, arg2, ...)
 //
-// performanceType（目前只有 Think）：
-//   Think → 固定跑 Big + Current 的兩段式立繪表演（掂量 → 猶豫）
+// - performanceName：對應 Resources/RequestPerformance/{performanceName}.asset
+//   （一顆 RequestPerformanceConfig 子類資產）。
+// - arg1.. ：額外參數，交給該表演自行解讀（例：CatalogPhase 用它當情緒名）。
 //
 // 範例：
-//   Request(sister, Think)
-//     → sister 播兩段式「掂量」表演，演完發訊息 RequestDone，並結束本指令
+//   Request(sister, ThinkPhase1, Normal)   → Normal 的 phase1 掂量臉，停 phase1 秒數
+//   Request(sister, ThinkPhase2, Angry)    → Angry 的 phase2 猶豫臉，停 phase2 秒數
+//   Request(sister, Ponder)                → 三階段沉思（讀 Flag_RequestPass 決定停點）
 //
-// 特性（相對 HeroineEmotionDraw 的精簡版）：
-//   - 純表演。不做任何情緒抽選、不使用結果、不寫入任何 Lua 變數。
-//   - 表演結束時發送 Sequencer Message "RequestDone" 通知對話系統。
-//   - 指令會阻塞到表演結束才 Stop()，方便對話端等待。
+// 特性：
+// - 指令只把表演丟進 RequestPerformanceManager 佇列，然後立即結束（不各自發 RequestDone）。
+// - 同一批（連續排入、中間不斷播）的表演全部演完，才由「批次擁有者」發一次 RequestDone。
+// - 成敗一律讀 Flag_RequestPass 傳給表演（不需要的表演會忽略）。
 //
-// 對話端等待表演結束的寫法（擇一）：
-//   Request(sister,Think);
+// 典型：
+//   RequestRoll(sister,Kiss);
+//   Request(sister, ThinkPhase1, Normal);
+//   Request(sister, ThinkPhase2, Angry);
+//   Request(sister, Ponder);
 //   Continue()@Message(RequestDone)
 // ============================================================
 
-using System;
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using PixelCrushers.DialogueSystem;
 
@@ -29,91 +36,77 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
 {
     public class SequencerCommandRequest : SequencerCommand
     {
+        private const string ResourcesFolder = "RequestPerformance/";
+        private const string FlagName = "Flag_RequestPass";
         private const string DoneMessage = "RequestDone";
-
-        private bool finished;
 
         public void Awake()
         {
             string heroineID = GetParameter(0, string.Empty).Trim();
-            string performanceText = GetParameter(1, "Think").Trim();
+            string performanceName = GetParameter(1, string.Empty).Trim();
 
-            if (string.IsNullOrEmpty(heroineID))
+            if (string.IsNullOrEmpty(performanceName))
             {
-                Debug.LogError("[Request] 缺少 heroineID，指令中止。", this);
-                Complete();
+                Debug.LogError("[Request] 缺少表演名，指令中止。", this);
+                FailSafe();
                 return;
             }
 
-            if (!TryParsePerformance(performanceText, out RequestPerformance performance))
+            var config = Resources.Load<RequestPerformanceConfig>(ResourcesFolder + performanceName);
+            if (config == null)
             {
-                Debug.LogWarning($"[Request] 未知的表演類型 '{performanceText}'，改用 Think。", this);
-                performance = RequestPerformance.Think;
-            }
-
-            if (EmotionCardDrawMachine.Instance == null)
-            {
-                Debug.LogWarning("[Request] 找不到 EmotionCardDrawMachine，指令中止。", this);
-                Complete();
+                Debug.LogError($"[Request] 找不到表演 Resources/{ResourcesFolder}{performanceName}.asset，指令中止。", this);
+                FailSafe();
                 return;
             }
 
-            PlayPerformance(heroineID, performance);
+            string[] args = GetExtraArgs();
+            bool pass = ReadPass();
+
+            bool owner = RequestPerformanceManager.Instance.Enqueue(config, heroineID, pass, args);
+
+            if (owner)
+                StartCoroutine(WaitDrainThenDone());   // 這批的第一個 → 負責整批演完發 RequestDone
+            else
+                Stop();                                 // 併入進行中的表演批次
         }
 
-        // ─────────────────────────────────────────────────────────
-        // 表演
-        // ─────────────────────────────────────────────────────────
-
-        private void PlayPerformance(string heroineID, RequestPerformance performance)
+        private IEnumerator WaitDrainThenDone()
         {
-            Action<EmotionDrawResult> onComplete = _ => Complete();
+            yield return null; // 先等一幀，確保同幀後續的 Request 都已排進佇列
 
-            switch (performance)
-            {
-                case RequestPerformance.Think:
-                default:
-                    // 固定 Big 表演 + Current 結果模式：純演出，不使用抽選結果。
-                    EmotionCardDrawMachine.Instance.StartBigDraw(heroineID, onComplete);
-                    break;
-            }
-        }
-
-        /// <summary>表演結束（或提前中止）：通知對話系統並結束指令，保證只執行一次。</summary>
-        private void Complete()
-        {
-            if (finished) return;
-            finished = true;
+            var mgr = RequestPerformanceManager.Instance;
+            while (!mgr.IsIdle) yield return null;
 
             Sequencer.Message(DoneMessage);
             Stop();
         }
 
-        // ─────────────────────────────────────────────────────────
-        // 表演類型（保留擴充空間，目前只有 Think）
-        // ─────────────────────────────────────────────────────────
-
-        private enum RequestPerformance
+        /// <summary>錯誤路徑：照樣發 RequestDone 收尾，避免對話永久卡住。</summary>
+        private void FailSafe()
         {
-            Think
+            Sequencer.Message(DoneMessage);
+            Stop();
         }
 
-        private static bool TryParsePerformance(string text, out RequestPerformance performance)
+        private bool ReadPass()
         {
-            performance = RequestPerformance.Think;
-            if (string.IsNullOrEmpty(text)) return false;
+            var svc = GameStatusService.Instance;
+            if (svc == null || svc.ProgressFlags == null) return false;
+            return svc.ProgressFlags.Contains(FlagName);
+        }
 
-            switch (text.ToLowerInvariant())
+        /// <summary>取第 3 個起的額外參數（給表演自行解讀）。</summary>
+        private string[] GetExtraArgs()
+        {
+            var list = new List<string>();
+            for (int i = 2; ; i++)
             {
-                case "think":
-                case "掂量":
-                case "思考":
-                case "猶豫":
-                    performance = RequestPerformance.Think;
-                    return true;
-                default:
-                    return false;
+                string p = GetParameter(i, null);
+                if (p == null) break;
+                list.Add(p.Trim());
             }
+            return list.ToArray();
         }
     }
 }

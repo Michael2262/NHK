@@ -3,14 +3,21 @@
 // ============================================================
 // 用法：
 //   RequestRoll(heroineID, archetypeID)
-//   RequestRoll(heroineID, archetypeID, flagName)
+//   RequestRoll(heroineID, archetypeID, bonus)
+//   RequestRoll(heroineID, archetypeID, bonus, flagName)
+//
+// bonus：本次臨時對「主驅動數值」加減（可正可負，不影響數值本身）。
 //
 // 範例：
 //   RequestRoll(sister, 邀約)
 //     → 用 Resources/RequestRoll/邀約.asset 對 sister 擲骰，
 //       過:加 Flag_RequestPass；敗:移除 Flag_RequestPass（Scene 生命週期）
-//   RequestRoll(sister, 邀約, Flag_MyResult)
-//     → 同上，但結果寫到 Flag_MyResult
+//   RequestRoll(sister, 邀約, +10)
+//     → 驅動值臨時 +10 再判定（例：非常強烈的請求）
+//   RequestRoll(sister, 邀約, -10)
+//     → 驅動值臨時 -10 再判定（例：女主心情不好）
+//   RequestRoll(sister, 邀約, 0, Flag_MyResult)
+//     → 無加減，結果改寫到 Flag_MyResult
 //
 // 說明：
 // - 原型從 Resources/RequestRoll/{archetypeID} 載入（檔名即 id）。
@@ -38,7 +45,16 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
         {
             string heroineID = GetParameter(0, string.Empty).Trim();
             string archetypeID = GetParameter(1, string.Empty).Trim();
-            string flagName = GetParameter(2, DefaultFlagName).Trim();
+
+            string bonusRaw = GetParameter(2, string.Empty).Trim();
+            int bonus = 0;
+            if (!string.IsNullOrEmpty(bonusRaw) && !int.TryParse(bonusRaw, out bonus))
+            {
+                Debug.LogWarning($"[RequestRoll] 無法解析臨時加減值 '{bonusRaw}'，當作 0。", this);
+                bonus = 0;
+            }
+
+            string flagName = GetParameter(3, DefaultFlagName).Trim();
             if (string.IsNullOrEmpty(flagName)) flagName = DefaultFlagName;
 
             if (string.IsNullOrEmpty(archetypeID))
@@ -64,7 +80,7 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
                 return;
             }
 
-            RequestRollResult r = RequestRoller.Roll(archetype, heroineID);
+            RequestRollResult r = RequestRoller.Roll(archetype, heroineID, bonus);
 
             if (r.Pass)
                 svc.ProgressFlags.AddSceneFlag(flagName);   // 過 → flag 存在
@@ -76,9 +92,13 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
                 : "<color=#FF5A5A><b>失敗</b></color>";
             string guaranteedNote = r.Guaranteed ? "　（達穩過線・保證過）" : "";
 
+            string valueText = r.Bonus != 0
+                ? $"{r.RawDriverValue}（臨時 {(r.Bonus > 0 ? "+" : "")}{r.Bonus} → {r.DriverValue}）"
+                : $"{r.DriverValue}";
+
             Debug.Log(
                 $"【請求擲骰】{archetypeID}　{outcome}{guaranteedNote}\n" +
-                $"　驅動：{DriverLabel(archetype.Driver)} ＝ {r.DriverValue}\n" +
+                $"　驅動：{DriverLabel(archetype.Driver)} ＝ {valueText}\n" +
                 $"　成功率：{r.SuccessRate:0.#}%　（低標 {archetype.TLow}／穩過線 {archetype.THigh}）\n" +
                 $"　旗標：{flagName} → {(r.Pass ? "已設定" : "已清除")}");
 

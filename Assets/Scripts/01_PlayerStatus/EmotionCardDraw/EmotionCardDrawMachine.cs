@@ -496,7 +496,7 @@ public class EmotionCardDrawMachine : MonoBehaviour
     private void ApplyBigDrawFace(HeroineEmotionCardType emotion)
         => ApplyDrawFace(catalog?.GetBigDrawFace(emotion), emotion, "BigDraw");
 
-    private void ApplyDrawFace(EmotionDrawFace face, HeroineEmotionCardType emotion, string label)
+    private void ApplyDrawFace(TachieFace face, HeroineEmotionCardType emotion, string label)
     {
         if (face == null)
         {

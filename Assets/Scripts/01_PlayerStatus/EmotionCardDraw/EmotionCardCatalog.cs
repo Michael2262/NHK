@@ -3,21 +3,6 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// 抽選表演用的一組臉部設定：表情一欄、身體一欄。
-/// - ExpressionID：TachieExpressionConfig 的 preset 名稱（ID），留空 = 不變更表情。
-/// - Body：TachieActor 的身體圖片名稱，留空 = 不變更身體。
-/// </summary>
-[Serializable]
-public class EmotionDrawFace
-{
-    [Tooltip("表情：TachieExpressionConfig 的 preset 名稱（ID）。留空 = 不變更表情。")]
-    public string ExpressionID = "";
-
-    [Tooltip("身體：TachieActor 的身體圖片名稱。留空 = 不變更身體。")]
-    public string Body = "";
-}
-
-/// <summary>
 /// 情緒卡對照表（重構版）。
 ///
 /// 每種 HeroineEmotionCardType 對應：
@@ -46,15 +31,22 @@ public class EmotionCardCatalog : ScriptableObject
         public string EmotionNameTextKey;
 
         [Tooltip("小/中抽選表演時套用的臉：表情 ID + 身體。")]
-        public EmotionDrawFace SmallDrawFace = new EmotionDrawFace();
+        public TachieFace SmallDrawFace = new TachieFace();
 
         [Tooltip("大抽選第二段表演時套用的臉：表情 ID + 身體。")]
-        public EmotionDrawFace BigDrawFace = new EmotionDrawFace();
+        public TachieFace BigDrawFace = new TachieFace();
     }
 
     [Header("Tachie Group ID")]
     [Tooltip("Tachie 切換時使用的預設 groupID（例如 Sister）。可在 View 層覆寫。")]
     [SerializeField] private string defaultTachieGroupID = "Sister";
+
+    [Header("Think 表演秒數")]
+    [Tooltip("Think / ThinkPhase1 第一段（掂量，SmallDrawFace）停留秒數。")]
+    [SerializeField, Min(0f)] private float phase1Duration = 2f;
+
+    [Tooltip("Think / ThinkPhase2 第二段（猶豫，BigDrawFace）停留秒數。")]
+    [SerializeField, Min(0f)] private float phase2Duration = 3f;
 
     [Header("Normal 情緒設定")]
     [Tooltip("Normal 情緒的 TextTable Key（entries 未配置 Normal 或其 Key 留空時的 fallback）。")]
@@ -67,6 +59,8 @@ public class EmotionCardCatalog : ScriptableObject
 
     public IReadOnlyList<Entry> Entries => entries;
     public string DefaultTachieGroupID => defaultTachieGroupID;
+    public float Phase1Duration => phase1Duration;
+    public float Phase2Duration => phase2Duration;
 
     private void OnEnable() => RebuildMap();
     private void OnValidate() => RebuildMap();
@@ -103,7 +97,7 @@ public class EmotionCardCatalog : ScriptableObject
     /// 取得小/中抽選用的臉（表情 ID + 身體）。
     /// Normal 未配置 Entry 時回傳 null。
     /// </summary>
-    public EmotionDrawFace GetSmallDrawFace(HeroineEmotionCardType type)
+    public TachieFace GetSmallDrawFace(HeroineEmotionCardType type)
     {
         var entry = GetEntry(type);
         return entry?.SmallDrawFace;
@@ -113,7 +107,7 @@ public class EmotionCardCatalog : ScriptableObject
     /// 取得大抽選第二段用的臉（表情 ID + 身體）。
     /// Normal 未配置 Entry 時回傳 null。
     /// </summary>
-    public EmotionDrawFace GetBigDrawFace(HeroineEmotionCardType type)
+    public TachieFace GetBigDrawFace(HeroineEmotionCardType type)
     {
         var entry = GetEntry(type);
         return entry?.BigDrawFace;

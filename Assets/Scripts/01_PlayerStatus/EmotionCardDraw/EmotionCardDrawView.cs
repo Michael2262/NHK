@@ -129,7 +129,7 @@ public class EmotionCardDrawView : MonoBehaviour
     /// 套用一組抽選臉：表情走 TachieController.ChangeExpression（吃 TachieExpressionConfig 的 preset 名稱），
     /// 身體走 TachieController.ChangeBody。兩者皆留空時不動該部位。皆套到目前 group（支援連動）。
     /// </summary>
-    private void ApplyDrawFace(EmotionDrawFace face, HeroineEmotionCardType emotion, string label)
+    private void ApplyDrawFace(TachieFace face, HeroineEmotionCardType emotion, string label)
     {
         if (face == null)
         {
