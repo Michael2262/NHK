@@ -40,6 +40,11 @@ public class GlobalCursorManager : MonoBehaviour
     [Header("Hover 縮放的補間設定 (倍率由各 CursorArea 決定)")]
     public Ease hoverScaleEase = Ease.OutBack;
 
+    [Header("離開遊戲畫面時的行為")]
+    [Tooltip("勾選後，滑鼠離開遊戲畫面(失焦或超出畫面範圍)會叫回系統游標並藏起軟體游標，方便在 Editor 操作。")]
+    public bool showSystemCursorWhenOutside = true;
+    private bool systemCursorShown = false;
+
     // --- 軟體游標載體 (執行期自動建立，不需在場景拉) ---
     private Canvas cursorCanvas;
     private Image cursorImage;
@@ -145,6 +150,25 @@ public class GlobalCursorManager : MonoBehaviour
 
     void Update()
     {
+        // 滑鼠離開遊戲畫面時，叫回系統游標、藏起軟體游標（方便在 Editor 操作）
+        if (showSystemCursorWhenOutside && IsPointerOutsideGameView())
+        {
+            if (!systemCursorShown)
+            {
+                systemCursorShown = true;
+                Cursor.visible = true;
+                if (cursorImage != null) cursorImage.enabled = false;
+            }
+            return; // 停止跟隨與壓游標
+        }
+
+        // 剛回到畫面內：切回軟體游標
+        if (systemCursorShown)
+        {
+            systemCursorShown = false;
+            ApplyCurrentCursor(); // 依當前狀態重新套用圖案並重新啟用 Image
+        }
+
         // 壓回系統游標：對話系統等第三方會偷偷把它打開，這裡每幀確保維持隱藏
         if (Cursor.visible) Cursor.visible = false;
 
@@ -155,6 +179,29 @@ public class GlobalCursorManager : MonoBehaviour
         float scaleFactor = cursorCanvas != null ? cursorCanvas.scaleFactor : 1f;
         if (scaleFactor <= 0f) scaleFactor = 1f;
         cursorRect.anchoredPosition = mousePos / scaleFactor;
+    }
+
+    /// <summary>
+    /// 滑鼠是否離開了遊戲畫面：視窗失焦，或座標超出畫面範圍。
+    /// </summary>
+    private bool IsPointerOutsideGameView()
+    {
+        if (!Application.isFocused) return true;
+        if (Mouse.current == null) return false;
+
+        Vector2 p = Mouse.current.position.ReadValue();
+        return p.x < 0f || p.y < 0f || p.x >= Screen.width || p.y >= Screen.height;
+    }
+
+    /// <summary>依當前狀態(Override / Click held)重新把正確的游標圖套到 Image。</summary>
+    private void ApplyCurrentCursor()
+    {
+        if (isCursorLocked)
+            SetCursor(isClickHeld ? overrideClickTexture : overrideNormalTexture,
+                      isClickHeld ? overrideClickHotspot : overrideNormalHotspot);
+        else
+            SetCursor(isClickHeld ? currentClickTexture : currentNormalTexture,
+                      isClickHeld ? currentClickHotspot : currentNormalHotspot);
     }
 
     private void OnEnable()
