@@ -19269,7 +19269,7 @@ MonoBehaviour:
         x: 203
         y: 154
         width: 100
-        height: 96
+        height: 128
       isBreakpoint: 0
       isSequence: 0
       hideUnused: 0
@@ -19319,8 +19319,28 @@ MonoBehaviour:
         linkConstraint: 0
         linkTarget: 0
         colorIndex: 0
+      - fsmEvent:
+          name: Worried
+          isSystemEvent: 0
+          isGlobal: 0
+        toState: Worried
+        linkStyle: 0
+        linkConstraint: 0
+        linkTarget: 0
+        colorIndex: 0
+      - fsmEvent:
+          name: InHeat
+          isSystemEvent: 0
+          isGlobal: 0
+        toState: "\u97F3\u6548\u7B49\u5F85 8"
+        linkStyle: 0
+        linkConstraint: 0
+        linkTarget: 0
+        colorIndex: 0
       actionData:
         actionNames:
+        - CheckInHeat
+        - CheckCurrentEmotion
         - CheckTrust
         - CheckTrust
         - CheckTrust
@@ -19332,10 +19352,12 @@ MonoBehaviour:
         - 
         - 
         - 
-        actionEnabled: 0101010100
-        actionIsOpen: 0000000000
-        actionStartIndex: 00000000060000000c0000001200000018000000
-        actionHashCodes: 5eb560015eb560015eb560015eb560015eb56001
+        - 
+        - 
+        actionEnabled: 01010101010000
+        actionIsOpen: 01000101010001
+        actionStartIndex: 000000000400000010000000160000001c0000002200000028000000
+        actionHashCodes: 5fdc5e013a0403015eb560015eb560015eb560015eb560015eb56001
         unityObjectParams: []
         fsmGameObjectParams: []
         fsmOwnerDefaultParams: []
@@ -19346,6 +19368,24 @@ MonoBehaviour:
         fsmPropertyParams: []
         layoutOptionParams: []
         fsmStringParams:
+        - useVariable: 0
+          name: 
+          tooltip: 
+          showInInspector: 0
+          networkSync: 0
+          value: sister
+        - useVariable: 0
+          name: 
+          tooltip: 
+          showInInspector: 0
+          networkSync: 0
+          value: sister
+        - useVariable: 1
+          name: 
+          tooltip: 
+          showInInspector: 0
+          networkSync: 0
+          value: 
         - useVariable: 0
           name: 
           tooltip: 
@@ -19380,41 +19420,48 @@ MonoBehaviour:
         fsmVarParams: []
         fsmArrayParams: []
         fsmEnumParams:
+        - useVariable: 1
+          name: 
+          tooltip: 
+          showInInspector: 0
+          networkSync: 0
+          enumName: HeroineEmotionCardType
+          intValue: 0
         - useVariable: 0
           name: 
           tooltip: 
           showInInspector: 0
           networkSync: 0
           enumName: HeroineCompareOp
-          intValue: 4
+          intValue: 3
         - useVariable: 0
           name: 
           tooltip: 
           showInInspector: 0
           networkSync: 0
           enumName: HeroineCompareOp
-          intValue: 4
+          intValue: 3
         - useVariable: 0
           name: 
           tooltip: 
           showInInspector: 0
           networkSync: 0
           enumName: HeroineCompareOp
-          intValue: 4
+          intValue: 3
         - useVariable: 0
           name: 
           tooltip: 
           showInInspector: 0
           networkSync: 0
           enumName: HeroineCompareOp
-          intValue: 4
+          intValue: 3
         - useVariable: 0
           name: 
           tooltip: 
           showInInspector: 0
           networkSync: 0
           enumName: HeroineCompareOp
-          intValue: 4
+          intValue: 3
         fsmFloatParams: []
         fsmIntParams:
         - useVariable: 1
@@ -19422,7 +19469,7 @@ MonoBehaviour:
           tooltip: 
           showInInspector: 1
           networkSync: 0
-          value: 20
+          value: 50
         - useVariable: 1
           name: 
           tooltip: 
@@ -19434,7 +19481,7 @@ MonoBehaviour:
           tooltip: 
           showInInspector: 1
           networkSync: 0
-          value: 40
+          value: 80
         - useVariable: 1
           name: 
           tooltip: 
@@ -19446,7 +19493,7 @@ MonoBehaviour:
           tooltip: 
           showInInspector: 1
           networkSync: 0
-          value: 60
+          value: 120
         - useVariable: 1
           name: 
           tooltip: 
@@ -19458,7 +19505,7 @@ MonoBehaviour:
           tooltip: 
           showInInspector: 1
           networkSync: 0
-          value: 80
+          value: 9998
         - useVariable: 1
           name: 
           tooltip: 
@@ -19470,20 +19517,37 @@ MonoBehaviour:
           tooltip: 
           showInInspector: 1
           networkSync: 0
-          value: 0
+          value: 9999
         - useVariable: 1
           name: 
           tooltip: 
           showInInspector: 0
           networkSync: 0
           value: 0
-        fsmBoolParams: []
+        fsmBoolParams:
+        - useVariable: 1
+          name: 
+          tooltip: 
+          showInInspector: 0
+          networkSync: 0
+          value: 0
         fsmVector2Params: []
         fsmVector3Params: []
         fsmColorParams: []
         fsmRectParams: []
         fsmQuaternionParams: []
         stringParams:
+        - InHeat
+        - 
+        - 
+        - 
+        - Worried
+        - 
+        - 
+        - 
+        - 
+        - 
+        - 
         - TrustL1
         - 
         - TrustL2
@@ -19499,14 +19563,24 @@ MonoBehaviour:
         arrayParamTypes: []
         customTypeSizes: 
         customTypeNames: []
-        paramDataType: 120000002a00000010000000100000001700000017000000120000002a00000010000000100000001700000017000000120000002a00000010000000100000001700000017000000120000002a00000010000000100000001700000017000000120000002a00000010000000100000001700000017000000
+        paramDataType: 12000000110000001700000017000000120000002a00000012000000170000001700000017000000170000001700000017000000170000001700000017000000120000002a00000010000000100000001700000017000000120000002a00000010000000100000001700000017000000120000002a00000010000000100000001700000017000000120000002a00000010000000100000001700000017000000120000002a00000010000000100000001700000017000000
         paramName:
         - heroineID
-        - compareOperator
-        - threshold
         - storeValue
-        - passEvent
-        - failEvent
+        - inHeatEvent
+        - notInHeatEvent
+        - heroineID
+        - storeCurrent
+        - storeCurrentString
+        - angryEvent
+        - shyEvent
+        - worriedEvent
+        - maternalEvent
+        - relaxedEvent
+        - disappointedEvent
+        - normalEvent
+        - defaultEvent
+        - failedEvent
         - heroineID
         - compareOperator
         - threshold
@@ -19531,8 +19605,14 @@ MonoBehaviour:
         - storeValue
         - passEvent
         - failEvent
-        paramDataPos: 000000000000000000000000010000000000000001000000010000000100000002000000030000000200000003000000020000000200000004000000050000000400000005000000030000000300000006000000070000000600000007000000040000000400000008000000090000000800000009000000
-        paramByteDataSize: 000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+        - heroineID
+        - compareOperator
+        - threshold
+        - storeValue
+        - passEvent
+        - failEvent
+        paramDataPos: 0000000000000000000000000100000001000000000000000200000002000000030000000400000005000000060000000700000008000000090000000a000000030000000100000000000000010000000b0000000c000000040000000200000002000000030000000d0000000e000000050000000300000004000000050000000f00000010000000060000000400000006000000070000001100000012000000070000000500000008000000090000001300000014000000
+        paramByteDataSize: 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
     - name: "\u532F\u96C6"
       description: 
       colorIndex: 0
@@ -20359,6 +20439,570 @@ MonoBehaviour:
         - mode
         paramDataPos: 0000000000000000
         paramByteDataSize: 0000000004000000
+    - name: Worried
+      description: 
+      colorIndex: 0
+      position:
+        serializedVersion: 2
+        x: 236.5
+        y: 558
+        width: 100
+        height: 48
+      isBreakpoint: 0
+      isSequence: 0
+      hideUnused: 0
+      transitions:
+      - fsmEvent:
+          name: WorriedL1
+          isSystemEvent: 0
+          isGlobal: 0
+        toState: "\u97F3\u6548\u7B49\u5F85 6"
+        linkStyle: 0
+        linkConstraint: 0
+        linkTarget: 0
+        colorIndex: 0
+      - fsmEvent:
+          name: WorriedL2
+          isSystemEvent: 0
+          isGlobal: 0
+        toState: "\u97F3\u6548\u7B49\u5F85 7"
+        linkStyle: 0
+        linkConstraint: 0
+        linkTarget: 0
+        colorIndex: 0
+      actionData:
+        actionNames:
+        - CheckTrust
+        customNames:
+        - 
+        actionEnabled: 01
+        actionIsOpen: 01
+        actionStartIndex: 00000000
+        actionHashCodes: 5eb56001
+        unityObjectParams: []
+        fsmGameObjectParams: []
+        fsmOwnerDefaultParams: []
+        animationCurveParams: []
+        functionCallParams: []
+        fsmTemplateControlParams: []
+        fsmEventTargetParams: []
+        fsmPropertyParams: []
+        layoutOptionParams: []
+        fsmStringParams:
+        - useVariable: 0
+          name: 
+          tooltip: 
+          showInInspector: 0
+          networkSync: 0
+          value: sister
+        fsmObjectParams: []
+        fsmVarParams: []
+        fsmArrayParams: []
+        fsmEnumParams:
+        - useVariable: 0
+          name: 
+          tooltip: 
+          showInInspector: 0
+          networkSync: 0
+          enumName: HeroineCompareOp
+          intValue: 4
+        fsmFloatParams: []
+        fsmIntParams:
+        - useVariable: 1
+          name: TrustL3
+          tooltip: 
+          showInInspector: 1
+          networkSync: 0
+          value: 60
+        - useVariable: 1
+          name: 
+          tooltip: 
+          showInInspector: 0
+          networkSync: 0
+          value: 0
+        fsmBoolParams: []
+        fsmVector2Params: []
+        fsmVector3Params: []
+        fsmColorParams: []
+        fsmRectParams: []
+        fsmQuaternionParams: []
+        stringParams:
+        - WorriedL1
+        - WorriedL2
+        byteData: 
+        arrayParamSizes: 
+        arrayParamTypes: []
+        customTypeSizes: 
+        customTypeNames: []
+        paramDataType: 120000002a00000010000000100000001700000017000000
+        paramName:
+        - heroineID
+        - compareOperator
+        - threshold
+        - storeValue
+        - passEvent
+        - failEvent
+        paramDataPos: 000000000000000000000000010000000000000001000000
+        paramByteDataSize: 000000000000000000000000000000000000000000000000
+    - name: "\u97F3\u6548\u7B49\u5F85 7"
+      description: 
+      colorIndex: 0
+      position:
+        serializedVersion: 2
+        x: 407
+        y: 589.5
+        width: 100
+        height: 32
+      isBreakpoint: 0
+      isSequence: 0
+      hideUnused: 0
+      transitions:
+      - fsmEvent:
+          name: FINISHED
+          isSystemEvent: 1
+          isGlobal: 0
+        toState: "\u5C0D\u8A71 7"
+        linkStyle: 0
+        linkConstraint: 0
+        linkTarget: 0
+        colorIndex: 0
+      actionData:
+        actionNames:
+        - MyGame.Actions.PlaySound
+        - HutongGames.PlayMaker.Actions.Wait
+        customNames:
+        - 
+        - 
+        actionEnabled: 0101
+        actionIsOpen: 0101
+        actionStartIndex: 0000000001000000
+        actionHashCodes: 1322710048c01101
+        unityObjectParams: []
+        fsmGameObjectParams: []
+        fsmOwnerDefaultParams: []
+        animationCurveParams: []
+        functionCallParams: []
+        fsmTemplateControlParams: []
+        fsmEventTargetParams: []
+        fsmPropertyParams: []
+        layoutOptionParams: []
+        fsmStringParams:
+        - useVariable: 0
+          name: 
+          tooltip: 
+          showInInspector: 0
+          networkSync: 0
+          value: action_success
+        fsmObjectParams: []
+        fsmVarParams: []
+        fsmArrayParams: []
+        fsmEnumParams: []
+        fsmFloatParams:
+        - useVariable: 0
+          name: 
+          tooltip: 
+          showInInspector: 0
+          networkSync: 0
+          value: 0.1
+        fsmIntParams: []
+        fsmBoolParams: []
+        fsmVector2Params: []
+        fsmVector3Params: []
+        fsmColorParams: []
+        fsmRectParams: []
+        fsmQuaternionParams: []
+        stringParams:
+        - FINISHED
+        byteData: 00
+        arrayParamSizes: 
+        arrayParamTypes: []
+        customTypeSizes: 
+        customTypeNames: []
+        paramDataType: 120000000f0000001700000001000000
+        paramName:
+        - soundKey
+        - time
+        - finishEvent
+        - realTime
+        paramDataPos: 00000000000000000000000000000000
+        paramByteDataSize: 00000000000000000000000001000000
+    - name: "\u5C0D\u8A71 7"
+      description: 
+      colorIndex: 0
+      position:
+        serializedVersion: 2
+        x: 561
+        y: 599.5
+        width: 100
+        height: 32
+      isBreakpoint: 0
+      isSequence: 0
+      hideUnused: 0
+      transitions:
+      - fsmEvent:
+          name: FINISHED
+          isSystemEvent: 1
+          isGlobal: 0
+        toState: "\u532F\u96C6"
+        linkStyle: 0
+        linkConstraint: 0
+        linkTarget: 0
+        colorIndex: 0
+      actionData:
+        actionNames:
+        - PlayStoryConversation
+        customNames:
+        - 
+        actionEnabled: 01
+        actionIsOpen: 01
+        actionStartIndex: 00000000
+        actionHashCodes: a4345405
+        unityObjectParams: []
+        fsmGameObjectParams: []
+        fsmOwnerDefaultParams: []
+        animationCurveParams: []
+        functionCallParams: []
+        fsmTemplateControlParams: []
+        fsmEventTargetParams: []
+        fsmPropertyParams: []
+        layoutOptionParams: []
+        fsmStringParams:
+        - useVariable: 0
+          name: 
+          tooltip: 
+          showInInspector: 0
+          networkSync: 0
+          value: Tease1/TouchHeadSuccess/L1
+        fsmObjectParams: []
+        fsmVarParams: []
+        fsmArrayParams: []
+        fsmEnumParams: []
+        fsmFloatParams: []
+        fsmIntParams: []
+        fsmBoolParams: []
+        fsmVector2Params: []
+        fsmVector3Params: []
+        fsmColorParams: []
+        fsmRectParams: []
+        fsmQuaternionParams: []
+        stringParams: []
+        byteData: 02000000
+        arrayParamSizes: 
+        arrayParamTypes: []
+        customTypeSizes: 
+        customTypeNames: []
+        paramDataType: 1200000007000000
+        paramName:
+        - title
+        - mode
+        paramDataPos: 0000000000000000
+        paramByteDataSize: 0000000004000000
+    - name: "\u97F3\u6548\u7B49\u5F85 8"
+      description: 
+      colorIndex: 0
+      position:
+        serializedVersion: 2
+        x: 410
+        y: 697.5
+        width: 100
+        height: 32
+      isBreakpoint: 0
+      isSequence: 0
+      hideUnused: 0
+      transitions:
+      - fsmEvent:
+          name: FINISHED
+          isSystemEvent: 1
+          isGlobal: 0
+        toState: "\u5C0D\u8A71 8"
+        linkStyle: 0
+        linkConstraint: 0
+        linkTarget: 0
+        colorIndex: 0
+      actionData:
+        actionNames:
+        - MyGame.Actions.PlaySound
+        - HutongGames.PlayMaker.Actions.Wait
+        customNames:
+        - 
+        - 
+        actionEnabled: 0101
+        actionIsOpen: 0101
+        actionStartIndex: 0000000001000000
+        actionHashCodes: 1322710048c01101
+        unityObjectParams: []
+        fsmGameObjectParams: []
+        fsmOwnerDefaultParams: []
+        animationCurveParams: []
+        functionCallParams: []
+        fsmTemplateControlParams: []
+        fsmEventTargetParams: []
+        fsmPropertyParams: []
+        layoutOptionParams: []
+        fsmStringParams:
+        - useVariable: 0
+          name: 
+          tooltip: 
+          showInInspector: 0
+          networkSync: 0
+          value: action_success
+        fsmObjectParams: []
+        fsmVarParams: []
+        fsmArrayParams: []
+        fsmEnumParams: []
+        fsmFloatParams:
+        - useVariable: 0
+          name: 
+          tooltip: 
+          showInInspector: 0
+          networkSync: 0
+          value: 0.1
+        fsmIntParams: []
+        fsmBoolParams: []
+        fsmVector2Params: []
+        fsmVector3Params: []
+        fsmColorParams: []
+        fsmRectParams: []
+        fsmQuaternionParams: []
+        stringParams:
+        - FINISHED
+        byteData: 00
+        arrayParamSizes: 
+        arrayParamTypes: []
+        customTypeSizes: 
+        customTypeNames: []
+        paramDataType: 120000000f0000001700000001000000
+        paramName:
+        - soundKey
+        - time
+        - finishEvent
+        - realTime
+        paramDataPos: 00000000000000000000000000000000
+        paramByteDataSize: 00000000000000000000000001000000
+    - name: "\u5C0D\u8A71 8"
+      description: 
+      colorIndex: 0
+      position:
+        serializedVersion: 2
+        x: 557
+        y: 699.5
+        width: 100
+        height: 32
+      isBreakpoint: 0
+      isSequence: 0
+      hideUnused: 0
+      transitions:
+      - fsmEvent:
+          name: FINISHED
+          isSystemEvent: 1
+          isGlobal: 0
+        toState: "\u532F\u96C6"
+        linkStyle: 0
+        linkConstraint: 0
+        linkTarget: 0
+        colorIndex: 0
+      actionData:
+        actionNames:
+        - PlayStoryConversation
+        customNames:
+        - 
+        actionEnabled: 01
+        actionIsOpen: 01
+        actionStartIndex: 00000000
+        actionHashCodes: a4345405
+        unityObjectParams: []
+        fsmGameObjectParams: []
+        fsmOwnerDefaultParams: []
+        animationCurveParams: []
+        functionCallParams: []
+        fsmTemplateControlParams: []
+        fsmEventTargetParams: []
+        fsmPropertyParams: []
+        layoutOptionParams: []
+        fsmStringParams:
+        - useVariable: 0
+          name: 
+          tooltip: 
+          showInInspector: 0
+          networkSync: 0
+          value: Tease1/TouchHeadSuccess/L1
+        fsmObjectParams: []
+        fsmVarParams: []
+        fsmArrayParams: []
+        fsmEnumParams: []
+        fsmFloatParams: []
+        fsmIntParams: []
+        fsmBoolParams: []
+        fsmVector2Params: []
+        fsmVector3Params: []
+        fsmColorParams: []
+        fsmRectParams: []
+        fsmQuaternionParams: []
+        stringParams: []
+        byteData: 02000000
+        arrayParamSizes: 
+        arrayParamTypes: []
+        customTypeSizes: 
+        customTypeNames: []
+        paramDataType: 1200000007000000
+        paramName:
+        - title
+        - mode
+        paramDataPos: 0000000000000000
+        paramByteDataSize: 0000000004000000
+    - name: "\u97F3\u6548\u7B49\u5F85 6"
+      description: 
+      colorIndex: 0
+      position:
+        serializedVersion: 2
+        x: 401.5
+        y: 519.5
+        width: 100
+        height: 32
+      isBreakpoint: 0
+      isSequence: 0
+      hideUnused: 0
+      transitions:
+      - fsmEvent:
+          name: FINISHED
+          isSystemEvent: 1
+          isGlobal: 0
+        toState: "\u5C0D\u8A71 6"
+        linkStyle: 0
+        linkConstraint: 0
+        linkTarget: 0
+        colorIndex: 0
+      actionData:
+        actionNames:
+        - MyGame.Actions.PlaySound
+        - HutongGames.PlayMaker.Actions.Wait
+        customNames:
+        - 
+        - 
+        actionEnabled: 0101
+        actionIsOpen: 0101
+        actionStartIndex: 0000000001000000
+        actionHashCodes: 1322710048c01101
+        unityObjectParams: []
+        fsmGameObjectParams: []
+        fsmOwnerDefaultParams: []
+        animationCurveParams: []
+        functionCallParams: []
+        fsmTemplateControlParams: []
+        fsmEventTargetParams: []
+        fsmPropertyParams: []
+        layoutOptionParams: []
+        fsmStringParams:
+        - useVariable: 0
+          name: 
+          tooltip: 
+          showInInspector: 0
+          networkSync: 0
+          value: action_success
+        fsmObjectParams: []
+        fsmVarParams: []
+        fsmArrayParams: []
+        fsmEnumParams: []
+        fsmFloatParams:
+        - useVariable: 0
+          name: 
+          tooltip: 
+          showInInspector: 0
+          networkSync: 0
+          value: 0.1
+        fsmIntParams: []
+        fsmBoolParams: []
+        fsmVector2Params: []
+        fsmVector3Params: []
+        fsmColorParams: []
+        fsmRectParams: []
+        fsmQuaternionParams: []
+        stringParams:
+        - FINISHED
+        byteData: 00
+        arrayParamSizes: 
+        arrayParamTypes: []
+        customTypeSizes: 
+        customTypeNames: []
+        paramDataType: 120000000f0000001700000001000000
+        paramName:
+        - soundKey
+        - time
+        - finishEvent
+        - realTime
+        paramDataPos: 00000000000000000000000000000000
+        paramByteDataSize: 00000000000000000000000001000000
+    - name: "\u5C0D\u8A71 6"
+      description: 
+      colorIndex: 0
+      position:
+        serializedVersion: 2
+        x: 559.5
+        y: 516.5
+        width: 100
+        height: 32
+      isBreakpoint: 0
+      isSequence: 0
+      hideUnused: 0
+      transitions:
+      - fsmEvent:
+          name: FINISHED
+          isSystemEvent: 1
+          isGlobal: 0
+        toState: "\u532F\u96C6"
+        linkStyle: 0
+        linkConstraint: 0
+        linkTarget: 0
+        colorIndex: 0
+      actionData:
+        actionNames:
+        - PlayStoryConversation
+        customNames:
+        - 
+        actionEnabled: 01
+        actionIsOpen: 01
+        actionStartIndex: 00000000
+        actionHashCodes: a4345405
+        unityObjectParams: []
+        fsmGameObjectParams: []
+        fsmOwnerDefaultParams: []
+        animationCurveParams: []
+        functionCallParams: []
+        fsmTemplateControlParams: []
+        fsmEventTargetParams: []
+        fsmPropertyParams: []
+        layoutOptionParams: []
+        fsmStringParams:
+        - useVariable: 0
+          name: 
+          tooltip: 
+          showInInspector: 0
+          networkSync: 0
+          value: Tease1/TouchHeadSuccess/L1
+        fsmObjectParams: []
+        fsmVarParams: []
+        fsmArrayParams: []
+        fsmEnumParams: []
+        fsmFloatParams: []
+        fsmIntParams: []
+        fsmBoolParams: []
+        fsmVector2Params: []
+        fsmVector3Params: []
+        fsmColorParams: []
+        fsmRectParams: []
+        fsmQuaternionParams: []
+        stringParams: []
+        byteData: 02000000
+        arrayParamSizes: 
+        arrayParamTypes: []
+        customTypeSizes: 
+        customTypeNames: []
+        paramDataType: 1200000007000000
+        paramName:
+        - title
+        - mode
+        paramDataPos: 0000000000000000
+        paramByteDataSize: 0000000004000000
     events:
     - name: FINISHED
       isSystemEvent: 1
@@ -20384,6 +21028,18 @@ MonoBehaviour:
     - name: TrustL5
       isSystemEvent: 0
       isGlobal: 0
+    - name: WorriedL1
+      isSystemEvent: 0
+      isGlobal: 0
+    - name: WorriedL2
+      isSystemEvent: 0
+      isGlobal: 0
+    - name: Worried
+      isSystemEvent: 0
+      isGlobal: 0
+    - name: InHeat
+      isSystemEvent: 0
+      isGlobal: 0
     globalTransitions: []
     variables:
       floatVariables: []
@@ -20393,31 +21049,31 @@ MonoBehaviour:
         tooltip: 
         showInInspector: 1
         networkSync: 0
-        value: 20
+        value: 50
       - useVariable: 1
         name: TrustL2
         tooltip: 
         showInInspector: 1
         networkSync: 0
-        value: 40
+        value: 80
       - useVariable: 1
         name: TrustL3
         tooltip: 
         showInInspector: 1
         networkSync: 0
-        value: 60
+        value: 120
       - useVariable: 1
         name: TrustL4
         tooltip: 
         showInInspector: 1
         networkSync: 0
-        value: 80
+        value: 9998
       - useVariable: 1
         name: TrustL5
         tooltip: 
         showInInspector: 1
         networkSync: 0
-        value: 0
+        value: 9999
       boolVariables: []
       stringVariables: []
       vector2Variables: []
@@ -23621,7 +24277,7 @@ MonoBehaviour:
         x: 215
         y: 99
         width: 100
-        height: 128
+        height: 144
       isBreakpoint: 0
       isSequence: 0
       hideUnused: 0
@@ -23670,7 +24326,7 @@ MonoBehaviour:
         linkStyle: 0
         linkConstraint: 0
         linkTarget: 0
-        colorIndex: 0
+        colorIndex: 6
       - fsmEvent:
           name: TrustL5
           isSystemEvent: 0
@@ -23679,7 +24335,7 @@ MonoBehaviour:
         linkStyle: 0
         linkConstraint: 0
         linkTarget: 0
-        colorIndex: 0
+        colorIndex: 6
       - fsmEvent:
           name: Worried
           isSystemEvent: 0
@@ -23689,8 +24345,18 @@ MonoBehaviour:
         linkConstraint: 0
         linkTarget: 0
         colorIndex: 0
+      - fsmEvent:
+          name: InHeat
+          isSystemEvent: 0
+          isGlobal: 0
+        toState: "\u97F3\u6548\u7B49\u5F85 8"
+        linkStyle: 0
+        linkConstraint: 0
+        linkTarget: 0
+        colorIndex: 0
       actionData:
         actionNames:
+        - CheckInHeat
         - CheckCurrentEmotion
         - MyGame.Actions.CheckProgressFlag
         - CheckTrust
@@ -23706,10 +24372,11 @@ MonoBehaviour:
         - 
         - 
         - 
-        actionEnabled: 01010101010100
-        actionIsOpen: 01010000000000
-        actionStartIndex: 000000000c00000011000000170000001d0000002300000029000000
-        actionHashCodes: 3a040301a14180025eb560015eb560015eb560015eb560015eb56001
+        - 
+        actionEnabled: 0101010101010000
+        actionIsOpen: 0100010001010101
+        actionStartIndex: 000000000400000010000000150000001b00000021000000270000002d000000
+        actionHashCodes: 5fdc5e013a040301a14180025eb560015eb560015eb560015eb560015eb56001
         unityObjectParams:
         - {fileID: 11400000, guid: c67e80f8388c6cb4b988d0d18b3aac1f, type: 2}
         fsmGameObjectParams: []
@@ -23721,6 +24388,12 @@ MonoBehaviour:
         fsmPropertyParams: []
         layoutOptionParams: []
         fsmStringParams:
+        - useVariable: 0
+          name: 
+          tooltip: 
+          showInInspector: 0
+          networkSync: 0
+          value: sister
         - useVariable: 0
           name: 
           tooltip: 
@@ -23780,35 +24453,35 @@ MonoBehaviour:
           showInInspector: 0
           networkSync: 0
           enumName: HeroineCompareOp
-          intValue: 4
+          intValue: 3
         - useVariable: 0
           name: 
           tooltip: 
           showInInspector: 0
           networkSync: 0
           enumName: HeroineCompareOp
-          intValue: 4
+          intValue: 3
         - useVariable: 0
           name: 
           tooltip: 
           showInInspector: 0
           networkSync: 0
           enumName: HeroineCompareOp
-          intValue: 4
+          intValue: 3
         - useVariable: 0
           name: 
           tooltip: 
           showInInspector: 0
           networkSync: 0
           enumName: HeroineCompareOp
-          intValue: 4
+          intValue: 3
         - useVariable: 0
           name: 
           tooltip: 
           showInInspector: 0
           networkSync: 0
           enumName: HeroineCompareOp
-          intValue: 4
+          intValue: 3
         fsmFloatParams: []
         fsmIntParams:
         - useVariable: 1
@@ -23816,7 +24489,7 @@ MonoBehaviour:
           tooltip: 
           showInInspector: 1
           networkSync: 0
-          value: 20
+          value: 30
         - useVariable: 1
           name: 
           tooltip: 
@@ -23828,7 +24501,7 @@ MonoBehaviour:
           tooltip: 
           showInInspector: 1
           networkSync: 0
-          value: 40
+          value: 70
         - useVariable: 1
           name: 
           tooltip: 
@@ -23840,7 +24513,7 @@ MonoBehaviour:
           tooltip: 
           showInInspector: 1
           networkSync: 0
-          value: 60
+          value: 110
         - useVariable: 1
           name: 
           tooltip: 
@@ -23852,7 +24525,7 @@ MonoBehaviour:
           tooltip: 
           showInInspector: 1
           networkSync: 0
-          value: 80
+          value: 9998
         - useVariable: 1
           name: 
           tooltip: 
@@ -23864,7 +24537,7 @@ MonoBehaviour:
           tooltip: 
           showInInspector: 1
           networkSync: 0
-          value: 0
+          value: 9999
         - useVariable: 1
           name: 
           tooltip: 
@@ -23878,12 +24551,20 @@ MonoBehaviour:
           showInInspector: 0
           networkSync: 0
           value: 0
+        - useVariable: 1
+          name: 
+          tooltip: 
+          showInInspector: 0
+          networkSync: 0
+          value: 0
         fsmVector2Params: []
         fsmVector3Params: []
         fsmColorParams: []
         fsmRectParams: []
         fsmQuaternionParams: []
         stringParams:
+        - InHeat
+        - 
         - 
         - 
         - Worried
@@ -23910,8 +24591,12 @@ MonoBehaviour:
         arrayParamTypes: []
         customTypeSizes: 
         customTypeNames: []
-        paramDataType: 120000002a000000120000001700000017000000170000001700000017000000170000001700000017000000170000000500000017000000170000001100000001000000120000002a00000010000000100000001700000017000000120000002a00000010000000100000001700000017000000120000002a00000010000000100000001700000017000000120000002a00000010000000100000001700000017000000120000002a00000010000000100000001700000017000000
+        paramDataType: 12000000110000001700000017000000120000002a000000120000001700000017000000170000001700000017000000170000001700000017000000170000000500000017000000170000001100000001000000120000002a00000010000000100000001700000017000000120000002a00000010000000100000001700000017000000120000002a00000010000000100000001700000017000000120000002a00000010000000100000001700000017000000120000002a00000010000000100000001700000017000000
         paramName:
+        - heroineID
+        - storeValue
+        - inHeatEvent
+        - notInHeatEvent
         - heroineID
         - storeCurrent
         - storeCurrentString
@@ -23959,8 +24644,8 @@ MonoBehaviour:
         - storeValue
         - passEvent
         - failEvent
-        paramDataPos: 00000000000000000100000000000000010000000200000003000000040000000500000006000000070000000800000000000000090000000a0000000000000000000000020000000100000000000000010000000b0000000c000000030000000200000002000000030000000d0000000e000000040000000300000004000000050000000f00000010000000050000000400000006000000070000001100000012000000060000000500000008000000090000001300000014000000
-        paramByteDataSize: 0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+        paramDataPos: 0000000000000000000000000100000001000000000000000200000002000000030000000400000005000000060000000700000008000000090000000a000000000000000b0000000c0000000100000000000000030000000100000000000000010000000d0000000e000000040000000200000002000000030000000f00000010000000050000000300000004000000050000001100000012000000060000000400000006000000070000001300000014000000070000000500000008000000090000001500000016000000
+        paramByteDataSize: 000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
     - name: "\u97F3\u6548\u7B49\u5F85 0"
       description: 
       colorIndex: 0
@@ -24303,7 +24988,7 @@ MonoBehaviour:
           tooltip: 
           showInInspector: 0
           networkSync: 0
-          value: Tease1/TouchHeadSuccess/L1
+          value: Tease1/TouchHeadSuccess/L2
         fsmObjectParams: []
         fsmVarParams: []
         fsmArrayParams: []
@@ -24636,7 +25321,7 @@ MonoBehaviour:
         paramByteDataSize: 0000000004000000
     - name: "\u97F3\u6548\u7B49\u5F85 4"
       description: 
-      colorIndex: 0
+      colorIndex: 6
       position:
         serializedVersion: 2
         x: 402.5
@@ -24718,7 +25403,7 @@ MonoBehaviour:
         paramByteDataSize: 00000000000000000000000001000000
     - name: "\u5C0D\u8A71 4"
       description: 
-      colorIndex: 0
+      colorIndex: 6
       position:
         serializedVersion: 2
         x: 565.5
@@ -24789,7 +25474,7 @@ MonoBehaviour:
         paramByteDataSize: 0000000004000000
     - name: "\u97F3\u6548\u7B49\u5F85 5"
       description: 
-      colorIndex: 0
+      colorIndex: 6
       position:
         serializedVersion: 2
         x: 400.5
@@ -24871,7 +25556,7 @@ MonoBehaviour:
         paramByteDataSize: 00000000000000000000000001000000
     - name: "\u5C0D\u8A71 5"
       description: 
-      colorIndex: 0
+      colorIndex: 6
       position:
         serializedVersion: 2
         x: 563.5
@@ -25098,8 +25783,8 @@ MonoBehaviour:
       colorIndex: 0
       position:
         serializedVersion: 2
-        x: 210
-        y: 313
+        x: 209
+        y: 311
         width: 100
         height: 48
       isBreakpoint: 0
@@ -25351,6 +26036,159 @@ MonoBehaviour:
         - mode
         paramDataPos: 0000000000000000
         paramByteDataSize: 0000000004000000
+    - name: "\u97F3\u6548\u7B49\u5F85 8"
+      description: 
+      colorIndex: 0
+      position:
+        serializedVersion: 2
+        x: 417.5
+        y: 691.5
+        width: 100
+        height: 32
+      isBreakpoint: 0
+      isSequence: 0
+      hideUnused: 0
+      transitions:
+      - fsmEvent:
+          name: FINISHED
+          isSystemEvent: 1
+          isGlobal: 0
+        toState: "\u5C0D\u8A71 8"
+        linkStyle: 0
+        linkConstraint: 0
+        linkTarget: 0
+        colorIndex: 0
+      actionData:
+        actionNames:
+        - MyGame.Actions.PlaySound
+        - HutongGames.PlayMaker.Actions.Wait
+        customNames:
+        - 
+        - 
+        actionEnabled: 0101
+        actionIsOpen: 0101
+        actionStartIndex: 0000000001000000
+        actionHashCodes: 1322710048c01101
+        unityObjectParams: []
+        fsmGameObjectParams: []
+        fsmOwnerDefaultParams: []
+        animationCurveParams: []
+        functionCallParams: []
+        fsmTemplateControlParams: []
+        fsmEventTargetParams: []
+        fsmPropertyParams: []
+        layoutOptionParams: []
+        fsmStringParams:
+        - useVariable: 0
+          name: 
+          tooltip: 
+          showInInspector: 0
+          networkSync: 0
+          value: action_success
+        fsmObjectParams: []
+        fsmVarParams: []
+        fsmArrayParams: []
+        fsmEnumParams: []
+        fsmFloatParams:
+        - useVariable: 0
+          name: 
+          tooltip: 
+          showInInspector: 0
+          networkSync: 0
+          value: 0.1
+        fsmIntParams: []
+        fsmBoolParams: []
+        fsmVector2Params: []
+        fsmVector3Params: []
+        fsmColorParams: []
+        fsmRectParams: []
+        fsmQuaternionParams: []
+        stringParams:
+        - FINISHED
+        byteData: 00
+        arrayParamSizes: 
+        arrayParamTypes: []
+        customTypeSizes: 
+        customTypeNames: []
+        paramDataType: 120000000f0000001700000001000000
+        paramName:
+        - soundKey
+        - time
+        - finishEvent
+        - realTime
+        paramDataPos: 00000000000000000000000000000000
+        paramByteDataSize: 00000000000000000000000001000000
+    - name: "\u5C0D\u8A71 8"
+      description: 
+      colorIndex: 0
+      position:
+        serializedVersion: 2
+        x: 579.5
+        y: 689.5
+        width: 100
+        height: 32
+      isBreakpoint: 0
+      isSequence: 0
+      hideUnused: 0
+      transitions:
+      - fsmEvent:
+          name: FINISHED
+          isSystemEvent: 1
+          isGlobal: 0
+        toState: "\u532F\u96C6"
+        linkStyle: 0
+        linkConstraint: 0
+        linkTarget: 0
+        colorIndex: 0
+      actionData:
+        actionNames:
+        - PlayStoryConversation
+        customNames:
+        - 
+        actionEnabled: 01
+        actionIsOpen: 01
+        actionStartIndex: 00000000
+        actionHashCodes: a4345405
+        unityObjectParams: []
+        fsmGameObjectParams: []
+        fsmOwnerDefaultParams: []
+        animationCurveParams: []
+        functionCallParams: []
+        fsmTemplateControlParams: []
+        fsmEventTargetParams: []
+        fsmPropertyParams: []
+        layoutOptionParams: []
+        fsmStringParams:
+        - useVariable: 0
+          name: 
+          tooltip: 
+          showInInspector: 0
+          networkSync: 0
+          value: Tease1/TouchHeadSuccess/L1
+        fsmObjectParams: []
+        fsmVarParams: []
+        fsmArrayParams: []
+        fsmEnumParams: []
+        fsmFloatParams: []
+        fsmIntParams: []
+        fsmBoolParams: []
+        fsmVector2Params: []
+        fsmVector3Params: []
+        fsmColorParams: []
+        fsmRectParams: []
+        fsmQuaternionParams: []
+        stringParams: []
+        byteData: 02000000
+        arrayParamSizes: 
+        arrayParamTypes: []
+        customTypeSizes: 
+        customTypeNames: []
+        paramDataType: 1200000007000000
+        paramName:
+        - title
+        - mode
+        paramDataPos: 0000000000000000
+        paramByteDataSize: 0000000004000000
     events:
     - name: FINISHED
       isSystemEvent: 1
@@ -25385,6 +26223,9 @@ MonoBehaviour:
     - name: WorriedL2
       isSystemEvent: 0
       isGlobal: 0
+    - name: InHeat
+      isSystemEvent: 0
+      isGlobal: 0
     globalTransitions: []
     variables:
       floatVariables: []
@@ -25394,31 +26235,31 @@ MonoBehaviour:
         tooltip: 
         showInInspector: 1
         networkSync: 0
-        value: 20
+        value: 30
       - useVariable: 1
         name: TrustL2
         tooltip: 
         showInInspector: 1
         networkSync: 0
-        value: 40
+        value: 70
       - useVariable: 1
         name: TrustL3
         tooltip: 
         showInInspector: 1
         networkSync: 0
-        value: 60
+        value: 110
       - useVariable: 1
         name: TrustL4
         tooltip: 
         showInInspector: 1
         networkSync: 0
-        value: 80
+        value: 200
       - useVariable: 1
         name: TrustL5
         tooltip: 
         showInInspector: 1
         networkSync: 0
-        value: 0
+        value: 9999
       boolVariables: []
       stringVariables: []
       vector2Variables: []
