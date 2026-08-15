@@ -9,9 +9,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6477005964482731747}
-  - component: {fileID: 1089014823513777295}
   - component: {fileID: 5684387269870668}
   - component: {fileID: 7143101813003447735}
+  - component: {fileID: 1089014823513777295}
   - component: {fileID: 8015851969540202922}
   - component: {fileID: 7524494211810127473}
   m_Layer: 0
@@ -36,58 +36,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1089014823513777295
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5435185486249109931}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2973619789d7a8344a89e9e2c751d982, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TeaseZone
-  gesture: 0
-  allowedDirections: 
-  swipeThreshold: 50
-  tapMaxDuration: 0.4
-  tapMoveTolerance: 20
-  mode: Hand
-  requiredFlag: {fileID: 0}
-  duration: 2
-  hint: {fileID: 0}
-  onTouch:
-    m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 0}
-        m_TargetAssemblyTypeName: FsmTrigge, Assembly-CSharp
-        m_MethodName: Trigger
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-  onComplete:
-    m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 0}
-        m_TargetAssemblyTypeName: FsmTrigge, Assembly-CSharp
-        m_MethodName: Trigger
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-  logDebug: 0
 --- !u!61 &5684387269870668
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -192,6 +140,58 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!114 &1089014823513777295
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5435185486249109931}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2973619789d7a8344a89e9e2c751d982, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TeaseZone
+  gesture: 0
+  allowedDirections: 
+  swipeThreshold: 50
+  tapMaxDuration: 0.4
+  tapMoveTolerance: 20
+  mode: 0
+  requiredFlag: {fileID: 0}
+  duration: 2
+  hint: {fileID: 0}
+  onTouch:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 0}
+        m_TargetAssemblyTypeName: FsmTrigge, Assembly-CSharp
+        m_MethodName: Trigger
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+  onComplete:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 0}
+        m_TargetAssemblyTypeName: FsmTrigge, Assembly-CSharp
+        m_MethodName: Trigger
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+  logDebug: 0
 --- !u!114 &8015851969540202922
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -209,6 +209,7 @@ MonoBehaviour:
   enableHoverScale: 1
   hoverScale: 1.2
   hoverDuration: 0.12
+  hoverTarget: {fileID: 0}
 --- !u!114 &7524494211810127473
 MonoBehaviour:
   m_ObjectHideFlags: 0

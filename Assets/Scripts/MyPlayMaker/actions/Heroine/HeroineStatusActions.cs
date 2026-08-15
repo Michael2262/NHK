@@ -814,16 +814,26 @@ public class AddTrustAction : FsmStateAction
 [Tooltip("檢查女主角的信賴值是否符合條件（>, >=, ==, <, <=）。")]
 public class CheckTrust : FsmStateAction
 {
-    [RequiredField] public FsmString heroineID;
+    [RequiredField]
+    [Tooltip("要檢查的女主角 ID。")]
+    public FsmString heroineID;
 
     [ObjectType(typeof(HeroineCompareOp))]
+    [Tooltip("比較運算子：拿「目前信賴值」跟下方 threshold 做比較。可選 >, >=, ==, <=, <。")]
     public FsmEnum compareOperator;
 
-    [RequiredField] public FsmInt threshold;
+    [RequiredField]
+    [Tooltip("比較門檻值（要拿來對照的目標數字）。例：compareOperator 選 >=、threshold 填 50，代表「信賴 >= 50 時算通過」。信賴範圍 0~150，預設 50。")]
+    public FsmInt threshold;
 
-    [UIHint(UIHint.Variable)] public FsmInt storeValue;
+    [UIHint(UIHint.Variable)]
+    [Tooltip("（選填）把「目前讀到的信賴值」存進這個 FSM 變數，方便後續狀態直接使用或顯示。不需要就留空，不影響 pass/fail 判斷。")]
+    public FsmInt storeValue;
 
+    [Tooltip("比較「成立」時送出的 Event（信賴達標分支）。")]
     public FsmEvent passEvent;
+
+    [Tooltip("比較「不成立」時送出的 Event（信賴不足分支）；找不到該女主角時也會走這裡。")]
     public FsmEvent failEvent;
 
     public override void Reset()

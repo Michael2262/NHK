@@ -54,6 +54,9 @@ public class HeroineStatusModel
 
     public int HCount { get; private set; }
 
+    /// <summary>發情狀態：獨立開關，存入存檔，由劇情/FSM 明確 SetInHeat 控制。</summary>
+    public bool IsInHeat { get; private set; }
+
     private readonly HeroineStatusConfig cfg;
     private readonly HeroineStat sourceStat;
     private readonly List<HeroineEmotionCardSaveData> emotionDeck = new List<HeroineEmotionCardSaveData>();
@@ -75,6 +78,7 @@ public class HeroineStatusModel
     public event Action<int> OnLibidoChanged;
     public event Action<int> OnTrustChanged;
     public event Action<int> OnHCountChanged;
+    public event Action<bool> OnInHeatChanged;
 
     // 向下相容：舊的 OnEmotionChanged 對應新的 OnCurrentEmotionChanged
     public event Action<HeroineEmotionCardType> OnEmotionChanged
@@ -99,7 +103,6 @@ public class HeroineStatusModel
     public event Action OnPersonalSuspicionReachedMax;
     public event Action<VirginityState> OnVirginityChanged;
     public event Action<int> OnExcitementDecayAmountChanged;
-    public event Action<bool> OnInHeatChanged;
     public event Action<bool> OnEnragedChanged;
     public event Action OnHeroineFlagsChanged;
     public event Action<int> OnAttackChanged;
@@ -497,6 +500,7 @@ public class HeroineStatusModel
             Libido = Libido,
             Trust = Trust,
             HCount = HCount,
+            IsInHeat = IsInHeat,
             NextEmotionCardOrder = nextEmotionCardOrder,
             EmotionDeckData = emotionDeck
                 .Select(c => new HeroineEmotionCardSaveData { Type = c.Type, AddedOrder = c.AddedOrder })
@@ -521,6 +525,7 @@ public class HeroineStatusModel
         CurrentEmotion = data.Emotion;
         Libido = Mathf.Clamp(data.Libido, 0, LibidoMax);
         Trust = Mathf.Clamp(data.Trust, 0, TrustMax);
+        IsInHeat = data.IsInHeat;
         nextEmotionCardOrder = Mathf.Max(0, data.NextEmotionCardOrder);
 
         emotionDeck.Clear();
@@ -553,6 +558,7 @@ public class HeroineStatusModel
         OnHCountChanged?.Invoke(HCount);
         OnLibidoChanged?.Invoke(Libido);
         OnTrustChanged?.Invoke(Trust);
+        OnInHeatChanged?.Invoke(IsInHeat);
         OnCurrentEmotionChanged?.Invoke(CurrentEmotion);
         NotifyDeckChanged(oldDominant, forceNotify: true);
     }
@@ -596,7 +602,6 @@ public class HeroineStatusModel
     public int Spirit => 100;
     public int SpiritMax => 100;
     public int ExcitementDecayAmount => 0;
-    public bool IsInHeat => false;
     public bool IsEnraged => false;
 
     public bool IsGoneForever => false;
@@ -680,7 +685,12 @@ public class HeroineStatusModel
 
     public void SetVirginity(VirginityState state, string firstPartnerId = null) => OnVirginityChanged?.Invoke(state);
     public void SetExcitementDecayAmount(int amount) => OnExcitementDecayAmountChanged?.Invoke(amount);
-    public void SetInHeat(bool value) => OnInHeatChanged?.Invoke(value);
+    public void SetInHeat(bool value)
+    {
+        if (IsInHeat == value) return;
+        IsInHeat = value;
+        OnInHeatChanged?.Invoke(value);
+    }
     public void SetEnraged(bool value) => OnEnragedChanged?.Invoke(value);
     public void ApplyExcitementDecay() => OnExcitementChanged?.Invoke(0);
 

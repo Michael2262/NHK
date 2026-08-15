@@ -13,6 +13,7 @@ public class HeroineSaveData
     public int Libido;
     public int Trust;
     public int HCount;
+    public bool IsInHeat;
 
     public int NextEmotionCardOrder;
     public List<HeroineEmotionCardSaveData> EmotionDeckData = new List<HeroineEmotionCardSaveData>();

@@ -31,6 +31,10 @@ using PixelCrushers.DialogueSystem;
 ///
 /// ── H 次數 ──
 ///   GetHCount("sister")                            → H 次數
+///
+/// ── 發情 ──
+///   IsInHeat("sister")                             → 是否正在發情（存檔獨立開關）
+///   SetInHeat("sister", true)                      → 設定發情開關
 /// </summary>
 public class HeroineLuaBridge : MonoBehaviour
 {
@@ -94,6 +98,12 @@ public class HeroineLuaBridge : MonoBehaviour
         // ── H 次數 ──
         Lua.RegisterFunction("GetHCount", this,
             SymbolExtensions.GetMethodInfo(() => GetHCount(string.Empty)));
+
+        // ── 發情 ──
+        Lua.RegisterFunction("IsInHeat", this,
+            SymbolExtensions.GetMethodInfo(() => IsInHeat(string.Empty)));
+        Lua.RegisterFunction("SetInHeat", this,
+            SymbolExtensions.GetMethodInfo(() => SetInHeat(string.Empty, false)));
     }
 
     void OnDisable()
@@ -120,6 +130,9 @@ public class HeroineLuaBridge : MonoBehaviour
         Lua.UnregisterFunction("AddTrust");
 
         Lua.UnregisterFunction("GetHCount");
+
+        Lua.UnregisterFunction("IsInHeat");
+        Lua.UnregisterFunction("SetInHeat");
     }
 
     // ─────────────────────────────────────────────
@@ -265,5 +278,24 @@ public class HeroineLuaBridge : MonoBehaviour
     public double GetHCount(string heroineID)
     {
         return GetModel(heroineID)?.HCount ?? 0;
+    }
+
+    // ─────────────────────────────────────────────
+    // 發情
+    // ─────────────────────────────────────────────
+
+    /// <summary>
+    /// 是否正在發情。
+    /// Lua: IsInHeat("sister")
+    /// </summary>
+    public bool IsInHeat(string heroineID) => GetModel(heroineID)?.IsInHeat ?? false;
+
+    /// <summary>
+    /// 設定發情開關。
+    /// Lua: SetInHeat("sister", true) / SetInHeat("sister", false)
+    /// </summary>
+    public void SetInHeat(string heroineID, bool value)
+    {
+        GetModel(heroineID)?.SetInHeat(value);
     }
 }
