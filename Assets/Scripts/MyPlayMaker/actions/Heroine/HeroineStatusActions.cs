@@ -969,3 +969,68 @@ public class CheckHCount : FsmStateAction
         Finish();
     }
 }
+
+// ############################################################
+//  發情（InHeat）
+// ############################################################
+
+[ActionCategory("Heroine Status")]
+[Tooltip("設定女主角的發情開關（獨立狀態，會存檔）。")]
+public class SetInHeatAction : FsmStateAction
+{
+    [RequiredField] public FsmString heroineID;
+
+    [RequiredField]
+    [Tooltip("true = 進入發情；false = 解除發情。")]
+    public FsmBool value;
+
+    public override void Reset() { heroineID = null; value = false; }
+
+    public override void OnEnter()
+    {
+        if (HeroineActionHelper.TryGetHeroine(heroineID.Value, out var h, "SetInHeatAction"))
+            h.SetInHeat(value.Value);
+        Finish();
+    }
+}
+
+[ActionCategory("Heroine Status")]
+[Tooltip("檢查女主角是否正在發情，依結果送出 inHeat / notInHeat 事件。")]
+public class CheckInHeat : FsmStateAction
+{
+    [RequiredField] public FsmString heroineID;
+
+    [UIHint(UIHint.Variable)]
+    [Tooltip("（選填）把目前發情狀態存進這個 FSM Bool 變數。")]
+    public FsmBool storeValue;
+
+    [Tooltip("發情中送出的 Event。")]
+    public FsmEvent inHeatEvent;
+
+    [Tooltip("非發情送出的 Event；找不到該女主角時也走這裡。")]
+    public FsmEvent notInHeatEvent;
+
+    public override void Reset()
+    {
+        heroineID = null;
+        storeValue = null;
+        inHeatEvent = null;
+        notInHeatEvent = null;
+    }
+
+    public override void OnEnter()
+    {
+        if (!HeroineActionHelper.TryGetHeroine(heroineID.Value, out var h, "CheckInHeat"))
+        {
+            Fsm.Event(notInHeatEvent);
+            Finish();
+            return;
+        }
+
+        bool inHeat = h.IsInHeat;
+        if (storeValue != null && !storeValue.IsNone) storeValue.Value = inHeat;
+
+        Fsm.Event(inHeat ? inHeatEvent : notInHeatEvent);
+        Finish();
+    }
+}

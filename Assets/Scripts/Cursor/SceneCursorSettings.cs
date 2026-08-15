@@ -6,10 +6,9 @@ using System.Collections;
 public class SceneCursorSettings : MonoBehaviour
 {
     [Header("此場景的預設鼠標")]
+    [Tooltip("只換圖案；hotspot（對位點/縮放軸心）沿用 GlobalCursorManager 的 default 設定。")]
     public Texture2D sceneNormalTexture;
-    public Vector2 sceneNormalHotspot = Vector2.zero;
     public Texture2D sceneClickTexture;
-    public Vector2 sceneClickHotspot = Vector2.zero;
 
     [Header("此場景的 Raycaster (可選)")]
     [Tooltip("如果留空，會自動嘗試尋找 Camera.main 上的 Physics2DRaycaster")]
@@ -32,12 +31,10 @@ public class SceneCursorSettings : MonoBehaviour
             yield return null;
         }
 
-        // --- 1. 設定預設鼠標 ---
+        // --- 1. 設定預設鼠標（只換圖，hotspot 沿用 GlobalCursorManager 既有設定）---
         GlobalCursorManager.Instance.SetDefaultCursors(
             sceneNormalTexture,
-            sceneNormalHotspot,
-            sceneClickTexture,
-            sceneClickHotspot
+            sceneClickTexture
         );
 
         // --- 2. 註冊 Physics Raycaster (Collider) ---

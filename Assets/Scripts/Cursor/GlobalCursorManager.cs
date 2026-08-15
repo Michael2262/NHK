@@ -354,6 +354,17 @@ public class GlobalCursorManager : MonoBehaviour
         SetCursorArea(defaultNormalTexture, defaultNormalHotspot, defaultClickTexture, defaultClickHotspot);
     }
 
+    /// <summary>
+    /// 只換預設圖、沿用 GlobalCursorManager 既有的 default hotspot。
+    /// SceneCursorSettings 用這個版本，各場景不必自己填 hotspot。
+    /// </summary>
+    public void SetDefaultCursors(Texture2D normal, Texture2D click)
+    {
+        defaultNormalTexture = normal;
+        defaultClickTexture = click;
+        ResetToDefaultCursor();
+    }
+
     public void SetDefaultCursors(Texture2D normal, Vector2 normalHotspot, Texture2D click, Vector2 clickHotspot)
     {
         defaultNormalTexture = normal;
