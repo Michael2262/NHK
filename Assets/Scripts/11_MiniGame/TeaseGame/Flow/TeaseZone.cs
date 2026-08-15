@@ -54,8 +54,8 @@ public class TeaseZone : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
     [SerializeField] private float tapMoveTolerance = 20f;
 
     [Header("出現條件")]
-    [Tooltip("此觸碰點屬於哪個操作模式（對應 TeaseModeController 的模式字串）。留空 = 不受模式限制。")]
-    [SerializeField] private string mode = "";
+    [Tooltip("此觸碰點屬於哪個操作模式。")]
+    [SerializeField] private TeaseMode mode = TeaseMode.Hand;
 
     [Tooltip("需要此進度旗標才出現；留空 = 不看旗標。拖入 Flag Definition SO。")]
     [SerializeField] private ProgressFlagDefinition requiredFlag;
@@ -146,8 +146,8 @@ public class TeaseZone : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
         _subscribed = false;
     }
 
-    private void HandleModeChanged(string _) => Refresh();
-    private void HandleHintPreview(string _) => RefreshHint();
+    private void HandleModeChanged(TeaseMode _) => Refresh();
+    private void HandleHintPreview(TeaseMode? _) => RefreshHint();
 
     /// <summary>重算啟用狀態與提示（模式或 flag 改變時）。</summary>
     public void Refresh()
@@ -164,7 +164,6 @@ public class TeaseZone : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
     {
         get
         {
-            if (string.IsNullOrEmpty(mode)) return true;
             var mc = TeaseModeController.Instance;
             return mc != null && mc.IsMode(mode);
         }

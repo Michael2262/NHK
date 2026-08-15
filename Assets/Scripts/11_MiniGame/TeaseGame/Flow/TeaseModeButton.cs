@@ -19,8 +19,8 @@ public class TeaseModeButton : MonoBehaviour,
     IPointerDownHandler,
     IPointerUpHandler
 {
-    [Tooltip("這顆按鈕對應的操作模式字串。")]
-    [SerializeField] private string mode = "";
+    [Tooltip("這顆按鈕對應的操作模式。")]
+    [SerializeField] private TeaseMode mode = TeaseMode.Hand;
 
     private bool _over;      // 滑鼠是否懸浮在按鈕上
     private bool _pressed;   // 是否按住中（尚未放開）

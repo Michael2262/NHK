@@ -294595,8 +294595,8 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 461.659
-        y: 99
+        x: 463.78662
+        y: 97.93617
         width: 160
         height: 30
     - id: 56
@@ -294837,12 +294837,6 @@ MonoBehaviour:
       - originConversationID: 110
         originDialogueID: 57
         destinationConversationID: 110
-        destinationDialogueID: 56
-        isConnector: 0
-        priority: 3
-      - originConversationID: 110
-        originDialogueID: 57
-        destinationConversationID: 110
         destinationDialogueID: 58
         isConnector: 0
         priority: 2
@@ -294870,6 +294864,12 @@ MonoBehaviour:
         destinationDialogueID: 77
         isConnector: 0
         priority: 2
+      - originConversationID: 110
+        originDialogueID: 57
+        destinationConversationID: 110
+        destinationDialogueID: 56
+        isConnector: 0
+        priority: 3
       conditionsString: 'Flag("Flag_Event_SleepTease") '
       userScript: 
       onExecute:
@@ -294877,7 +294877,7 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 258.17792
+        x: 259.24173
         y: 183.06331
         width: 160
         height: 30
@@ -295004,7 +295004,7 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 465.8354
+        x: 464.77155
         y: 330.88245
         width: 160
         height: 30
@@ -295165,7 +295165,10 @@ MonoBehaviour:
       - title: Sequence
         value: '{{wait}} ;
 
-          SpinePlay(sister, Mouth, Mouth_Smile2);'
+          SpinePlay(sister, Mouth, Mouth_Smile2);
+
+          SpinePlay(sister,
+          Brow, Brow_Normal1);'
         type: 0
         typeString: CustomFieldType_Text
       - title: zh-TW
@@ -295629,7 +295632,7 @@ MonoBehaviour:
       canvasRect:
         serializedVersion: 2
         x: 460.659
-        y: 242
+        y: 243.06381
         width: 160
         height: 30
     - id: 64
@@ -295792,8 +295795,12 @@ MonoBehaviour:
           SpinePlay(sister,
           FaceAll, FaceVFX_SweatL1);
 
+          SpinePlay(sister, Eye, Eye_Close_Sad);
 
-          SpineStop(sister, Body);
+          SpineStop(sister,
+          Body);
+
+          SpinePlay(sister, Eye, Eye_Close_Sad);
 
           SpinePlay(sister,
           LeftHand, AllBoyHandOff_L);
@@ -296013,7 +296020,7 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 678.6592
+        x: 681.85065
         y: 547.0002
         width: 160
         height: 30
@@ -296046,11 +296053,13 @@ MonoBehaviour:
       - title: Sequence
         value: 'SpinePlay(sister, Eye, Eye_Normal);
 
-
           SpinePlay(sister,
-          Mouth, Mouth_Open4);
+          Body, A_Normal);
 
-          {{wait}} ;'
+          SpinePlay(sister, Mouth, Mouth_Small3);
+
+          {{wait}}
+          ;'
         type: 0
         typeString: CustomFieldType_Text
       - title: zh-TW
@@ -296574,9 +296583,11 @@ MonoBehaviour:
           SpinePlay(sister,
           Mouth, Mouth_Smile3);
 
+          SpinePlay(sister, Eye, Eye_Narrow);
 
 
-          {{wait}} ;'
+          {{wait}}
+          ;'
         type: 0
         typeString: CustomFieldType_Text
       - title: zh-TW
@@ -296668,7 +296679,7 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 480.36975
+        x: 479.3059
         y: 671.59344
         width: 160
         height: 30
@@ -296702,7 +296713,7 @@ MonoBehaviour:
         value: 'SpinePlay(sister, Eye, Eye_Close_Happy);
 
           SpinePlay(sister,
-          Mouth, Mouth_Smile4);
+          Mouth, Mouth_Smile3);
 
 
           StatPackage(TrustTalk2, sister);
@@ -296800,7 +296811,7 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 676.7766
+        x: 692.734
         y: 675.70605
         width: 160
         height: 30
@@ -296925,8 +296936,8 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 277.3061
-        y: 524.353
+        x: 296.45502
+        y: 531.7998
         width: 160
         height: 30
     - id: 74
@@ -297052,8 +297063,8 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 883.365
-        y: 553.4708
+        x: 874.8544
+        y: 547.0878
         width: 160
         height: 30
     - id: 75
@@ -297087,17 +297098,16 @@ MonoBehaviour:
 
 
           SpinePlay(sister,
-          Mouth, Mouth_Smile3);
+          Mouth, Mouth_Small3);
 
 
           SpinePlay(sister, FaceAll, FaceVFX_SweatL0);
 
 
-          SpinePlay(sister,
-          Brow, Brow_Normal2);
 
 
-          {{wait}} ;'
+          {{wait}}
+          ;'
         type: 0
         typeString: CustomFieldType_Text
       - title: zh-TW
@@ -297189,8 +297199,8 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 680.83594
-        y: 611.9415
+        x: 681.8998
+        y: 613.0053
         width: 160
         height: 30
     - id: 76
@@ -297319,8 +297329,8 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 885.01184
-        y: 658.6473
+        x: 890.33093
+        y: 676.73236
         width: 160
         height: 30
     - id: 77
@@ -297628,7 +297638,7 @@ MonoBehaviour:
 
 
 
-          SpinePlay(sister, Brow, Brow_Sad);
+          SpinePlay(sister, Brow, Brow_Sad1);
 
 
           {{wait}}
