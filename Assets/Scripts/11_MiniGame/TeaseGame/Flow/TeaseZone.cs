@@ -60,13 +60,16 @@ public class TeaseZone : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
     [Tooltip("需要此進度旗標才出現；留空 = 不看旗標。拖入 Flag Definition SO。")]
     [SerializeField] private ProgressFlagDefinition requiredFlag;
 
+    [Tooltip("反向：勾選後改成「沒有此旗標時才出現」。requiredFlag 留空則此項無效。")]
+    [SerializeField] private bool invertFlag = false;
+
     [Header("跑條")]
     [Tooltip("這一點的跑條時長（秒）。留 0 = 使用 TeaseActionGate 的預設時長。")]
     [SerializeField] private float duration = 0f;
 
     [Header("提示")]
-    [Tooltip("這一點的提示愛心（懸浮對應模式按鈕、且已解鎖時顯示）。")]
-    [SerializeField] private GameObject hint;
+    [Tooltip("這一點的提示愛心（懸浮對應模式按鈕、且已解鎖時顯示）。可多個。")]
+    [SerializeField] private GameObject[] hints;
 
     [Header("成功時的回呼")]
     [Tooltip("觸碰成功、跑條「開始」當下觸發（播觸碰表演）。")]
@@ -158,7 +161,15 @@ public class TeaseZone : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
 
     // ───── 啟用條件 ─────
 
-    private bool FlagOk => requiredFlag == null || HasFlag(requiredFlag.FlagID);
+    private bool FlagOk
+    {
+        get
+        {
+            if (requiredFlag == null) return true;
+            bool has = HasFlag(requiredFlag.FlagID);
+            return invertFlag ? !has : has;
+        }
+    }
 
     private bool ModeOk
     {
@@ -183,11 +194,13 @@ public class TeaseZone : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
 
     private void RefreshHint()
     {
-        if (hint == null) return;
+        if (hints == null || hints.Length == 0) return;
 
         var mc = TeaseModeController.Instance;
-        bool hovered = mc != null && mc.IsHovered(mode);
-        hint.SetActive(hovered && FlagOk);
+        bool visible = mc != null && mc.IsHovered(mode) && FlagOk;
+
+        foreach (var h in hints)
+            if (h != null) h.SetActive(visible);
     }
 
     // ───── 手勢偵測 ─────
