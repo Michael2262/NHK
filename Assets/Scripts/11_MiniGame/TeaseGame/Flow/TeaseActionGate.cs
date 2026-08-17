@@ -65,22 +65,29 @@ public class TeaseActionGate : MonoBehaviour
         IsBusy = true;
         Progress = 0f;
 
-        onStart?.Invoke();
-
-        float elapsed = 0f;
-        while (elapsed < duration)
+        // try/finally 確保就算 onStart / onComplete 丟例外，IsBusy 也一定會被還原，
+        // 不會讓閘門永遠卡在忙碌狀態（把所有後續操作、含 -1 直達 onComplete 都擋死）。
+        try
         {
-            elapsed += Time.deltaTime;
-            Progress = Mathf.Clamp01(elapsed / duration);
-            yield return null;
+            onStart?.Invoke();
+
+            float elapsed = 0f;
+            while (elapsed < duration)
+            {
+                elapsed += Time.deltaTime;
+                Progress = Mathf.Clamp01(elapsed / duration);
+                yield return null;
+            }
+
+            Progress = 1f;
+            onComplete?.Invoke();
         }
-
-        Progress = 1f;
-        onComplete?.Invoke();
-
-        IsBusy = false;
-        Progress = 0f;
-        _running = null;
+        finally
+        {
+            IsBusy = false;
+            Progress = 0f;
+            _running = null;
+        }
     }
 
     /// <summary>

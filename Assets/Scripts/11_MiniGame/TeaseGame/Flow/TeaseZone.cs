@@ -57,6 +57,9 @@ public class TeaseZone : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
     [Tooltip("此觸碰點屬於哪個操作模式。")]
     [SerializeField] private TeaseMode mode = TeaseMode.Hand;
 
+    [Tooltip("無視模式：勾選後不管目前切到哪個模式，此點都保持存在（不會被模式關掉）。上面的 mode 只剩「提示要對應哪顆按鈕」的作用；仍受 flag 條件影響。")]
+    [SerializeField] private bool ignoreMode = false;
+
     [Tooltip("需要此進度旗標才出現；留空 = 不看旗標。拖入 Flag Definition SO。")]
     [SerializeField] private ProgressFlagDefinition requiredFlag;
 
@@ -64,7 +67,7 @@ public class TeaseZone : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
     [SerializeField] private bool invertFlag = false;
 
     [Header("跑條")]
-    [Tooltip("這一點的跑條時長（秒）。留 0 = 使用 TeaseActionGate 的預設時長。")]
+    [Tooltip("這一點的跑條時長（秒）。\n0 = 使用 TeaseActionGate 的預設時長。\n-1 = 不跑跑條、也不觸發 onTouch，成功後直接觸發 onComplete。\n其他正值 = 該秒數。")]
     [SerializeField] private float duration = 0f;
 
     [Header("提示")]
@@ -175,6 +178,7 @@ public class TeaseZone : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
     {
         get
         {
+            if (ignoreMode) return true;
             var mc = TeaseModeController.Instance;
             return mc != null && mc.IsMode(mode);
         }
@@ -255,15 +259,32 @@ public class TeaseZone : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
 
     private void Perform()
     {
+        float d = _nextDurationOverride > 0f ? _nextDurationOverride : duration;
+        _nextDurationOverride = -1f; // 用完即棄
+
+        // duration = -1：不跑跑條、不觸發 onTouch，直接觸發 onComplete（但仍受 busy 鎖影響）
+        if (d < 0f)
+        {
+            var g = TeaseActionGate.Instance;
+            if (g != null && g.IsBusy)
+            {
+                if (logDebug)
+                    Debug.Log($"[TeaseZone] {name} Perform → duration<0，但跑條忙碌中，丟棄", this);
+                return;
+            }
+
+            onComplete?.Invoke();
+            if (logDebug)
+                Debug.Log($"[TeaseZone] {name} Perform → duration<0，略過跑條與 onTouch，直接 onComplete", this);
+            return;
+        }
+
         var gate = TeaseActionGate.Instance;
         if (gate == null)
         {
             Debug.LogWarning($"[TeaseZone] {name} 找不到 TeaseActionGate，無法觸發。", this);
             return;
         }
-
-        float d = _nextDurationOverride > 0f ? _nextDurationOverride : duration;
-        _nextDurationOverride = -1f; // 用完即棄
 
         bool began = gate.TryBegin(d, onTouch, onComplete);
         if (logDebug)
