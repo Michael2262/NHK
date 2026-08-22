@@ -99,5 +99,75 @@ namespace PixelCrushers.DialogueSystem
             }
             if (narrationContainer != null) narrationContainer.SetActive(false);
         }
+
+        // ===================== 繼續鈕暫時鎖（給 Sequencer / 劇情演出期間用）=====================
+        //
+        // 用途：行動演出跑條、動畫過場等「不希望玩家中途按繼續跳過」的期間，暫時壓住繼續鈕。
+        //
+        // 為什麼需要它（而不是只用 SetContinueMode(false)）：
+        //   SetContinueMode 只在「字幕開始顯示」那一刻套用繼續鈕狀態，且套用的是「當前有顯示字幕」的那句。
+        //   若演出節點本身沒有對白文字（例如只有 ActionOverlay 的空句），它不會顯示字幕、DS 不會為它重設
+        //   繼續鈕，於是畫面上仍停留前一句遺留、還亮著的繼續鈕，玩家一點就把還在跑的演出跳過去。
+        //   本鎖直接從「顯示繼續鈕」的所有路徑攔截，不依賴當前句有沒有字幕，因此擋得住上述情況。
+        //
+        // 可重入：用計數配對，每個 Push 都要有對應的 Pop。
+        private static int s_continueLockCount = 0;
+
+        /// <summary>繼續鈕是否正被鎖定（鎖定期間所有 NhkUISubtitlePanel 都不顯示繼續鈕）。</summary>
+        public static bool IsContinueButtonLocked => s_continueLockCount > 0;
+
+        /// <summary>
+        /// 壓住繼續鈕：鎖定期間，任何來源（換句、typewriter 完成、SetContinueMode 重刷、endOfFrame 延遲顯示…）
+        /// 想顯示繼續鈕都會被吞掉，玩家因而無法在此期間按繼續前進。與 <see cref="PopContinueButtonLock"/> 配對。
+        /// </summary>
+        public static void PushContinueButtonLock()
+        {
+            s_continueLockCount++;
+            if (s_continueLockCount != 1) return;
+
+            // 由「不鎖」轉為「鎖」的當下：把目前已顯示的繼續鈕立刻藏起來（含前一句遺留的那顆）。
+            var panels = FindObjectsByType<NhkUISubtitlePanel>(FindObjectsSortMode.None);
+            for (int i = 0; i < panels.Length; i++)
+            {
+                if (panels[i] != null) panels[i].HideContinueButton();
+            }
+        }
+
+        /// <summary>
+        /// 解除一層繼續鈕鎖（與 <see cref="PushContinueButtonLock"/> 配對）。計數歸零後不主動顯示繼續鈕，
+        /// 交還 DS，由後續換句 / SetContinueMode 依當前繼續模式自然重刷。
+        /// </summary>
+        public static void PopContinueButtonLock()
+        {
+            if (s_continueLockCount <= 0) return;
+            s_continueLockCount--;
+        }
+
+        /// <summary>保底：強制清空鎖計數（例如對話異常中斷、擔心 Push/Pop 沒配對時）。一般不需手動呼叫。</summary>
+        public static void ResetContinueButtonLock()
+        {
+            s_continueLockCount = 0;
+        }
+
+        public override void ShowContinueButton()
+        {
+            if (IsContinueButtonLocked)
+            {
+                HideContinueButton();
+                return;
+            }
+            base.ShowContinueButton();
+        }
+
+        protected override void ShowContinueButtonNow()
+        {
+            // 攔截「延遲到 endOfFrame 才顯示」等繞過 ShowContinueButton() 的路徑，確保鎖定期間絕不冒出繼續鈕。
+            if (IsContinueButtonLocked)
+            {
+                Tools.SetGameObjectActive(continueButton, false);
+                return;
+            }
+            base.ShowContinueButtonNow();
+        }
     }
 }

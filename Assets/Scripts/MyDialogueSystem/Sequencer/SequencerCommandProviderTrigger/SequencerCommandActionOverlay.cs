@@ -25,12 +25,17 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
     /// 對話條件式範例：Variable["LastActionResult"] == true
     /// 注意：要讀得到結果，必須用 Blocking（wait = true）等演出跑完，否則對話會在結果寫入前就跑過去。
     ///
-    /// === Blocking 用法（搭配對話腳本的 Continue Mode）===
-    /// 演出結束時本命令會 Sequencer.Message(doneMessage)。要讓對話「等演出」，在對話腳本這樣寫：
-    ///   SetContinueMode(false);
-    ///   SetContinueMode(Optional)@Message(ActionOverlayDone);
-    ///   ActionOverlay(myAction, true);
-    /// 不寫 SetContinueMode 兩行時，發出的 Message 沒人接收，等同 Fire-and-forget（無害）。
+    /// === Blocking 用法（繼續模式現在由本命令自理，對話腳本不用再處理）===
+    /// Blocking（wait = true）時，本命令會：
+    ///   1. 在 Awake 主動把繼續模式鎖成 Never（不顯示繼續鈕），這樣行動演出跑條期間玩家無法用
+    ///      「繼續」把這句台詞跳過去，整段 Sequence 會一直卡到演出真的跑完才結束。
+    ///   2. 演出結束時把繼續模式還原成 Optional，發出 doneMessage，然後結束本命令；此時 Sequence
+    ///      結束會自動前進「剛好一次」到下一句（不會早退、不會斷鍊）。
+    /// 因此對話腳本現在「只要一行」即可：
+    ///   ActionOverlay(myAction);
+    /// 不必再自己寫 SetContinueMode(false) / SetContinueMode(Optional)@Message / Continue()@Message。
+    /// 舊節點若仍保留那幾行也相容：doneMessage 仍會照發，`@Message(ActionOverlayDone)` 照樣接得到
+    /// （多前進的部分被 Dialogue System 的 notifyOnFinishSubtitle 擋成一次，無害）。
     ///
     /// === 使用限制（務必遵守）===
     /// 1.【不能跨場景】ActionOverlayTrigger 在會卸載的一般場景上，只有「目前已載入且 enable」的
@@ -44,7 +49,16 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
         private const string DefaultDoneMessage = "ActionOverlayDone";
         private const string DefaultResultVariable = "LastActionResult";
 
+        // 演出跑條期間鎖住的繼續模式：不顯示繼續鈕、玩家無法跳過，Sequence 會卡到演出跑完才結束。
+        private const DisplaySettings.SubtitleSettings.ContinueButtonMode HoldMode =
+            DisplaySettings.SubtitleSettings.ContinueButtonMode.Never;
+
+        // 演出結束後還原的繼續模式（依需求固定還原成 Optional）。
+        private const DisplaySettings.SubtitleSettings.ContinueButtonMode RestoreMode =
+            DisplaySettings.SubtitleSettings.ContinueButtonMode.Optional;
+
         private bool stopped;
+        private bool heldContinueMode;
 
         public void Awake()
         {
@@ -73,18 +87,35 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
             string resultVariable = GetParameter(3, DefaultResultVariable).Trim();
             if (string.IsNullOrEmpty(resultVariable)) resultVariable = DefaultResultVariable;
 
+            // Blocking：雙管齊下確保演出期間玩家無法跳過、且演出後會自動前進一次。
+            //   1. PushContinueButtonLock：直接壓住繼續鈕（連「本節點沒有對白文字、DS 不重設繼續鈕、
+            //      前一句遺留的繼續鈕還亮著」這種情況也擋得住）。這是真正防玩家提前點的關鍵。
+            //   2. SetContinueMode(Never)：讓 waitForContinue = false，本命令 Stop() 使 Sequence 結束時
+            //      會自動前進「一次」；否則若繼續模式是 Always 又鎖住繼續鈕，會變成沒人能前進的死鎖。
+            // 兩者都不依賴對話腳本先寫 SetContinueMode(false)，因此不再受「前一句留下什麼」影響。
+            if (wait)
+            {
+                NhkUISubtitlePanel.PushContinueButtonLock();
+                DialogueManager.SetContinueMode(HoldMode);
+                heldContinueMode = true;
+            }
+
             bool ok = ActionOverlayManager.Instance.ExecuteById(actionId, (hasOutcome, isSuccess) =>
             {
                 // 只有有做成功/失敗判定的 Trigger 才寫結果變數，供後續對話條件分支。
+                // 必須在前進之前寫入，下一句的分岐條件才讀得到正確結果。
                 if (hasOutcome)
                 {
                     DialogueLua.SetVariable(resultVariable, isSuccess);
                 }
 
-                // 演出結束：發出完成 Message，讓有掛 @Message 的對話放行。
+                // 演出結束：先還原繼續模式成 Optional，再發完成 Message、結束本命令。
+                RestoreContinueModeIfHeld();
+
+                // 相容舊節點：仍發出完成 Message，讓還掛著 @Message(ActionOverlayDone) 的節點接得到。
                 Sequencer.Message(doneMessage);
 
-                // Blocking 模式下，等到此刻才結束本命令。
+                // Blocking：結束本命令 → Sequence 結束 → Optional(waitForContinue=false) 自動前進「一次」。
                 if (wait && !stopped)
                 {
                     stopped = true;
@@ -96,19 +127,35 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
             {
                 Debug.LogWarning($"[ActionOverlay] 找不到已註冊的 actionId「{actionId}」。" +
                     "請確認目標 ActionOverlayTrigger 與本對話在同一場景、已啟用，且 actionId 一致。");
-                // 安全降級：即使找不到 Trigger，也發出完成 Message，讓有掛 @Message 的對話不會永久卡死，
-                // 而是直接跳過演出繼續往下。
+                // 安全降級：找不到 Trigger 時，還原繼續模式並發出完成 Message，避免因為鎖了 Never
+                // 又沒有演出來結束 Sequence 而永久卡住；直接跳過演出繼續往下。
+                RestoreContinueModeIfHeld();
                 Sequencer.Message(doneMessage);
                 Stop();
                 return;
             }
 
-            // Fire-and-forget 模式：不等演出，立即結束本命令（onComplete 仍會在演出結束時發 Message）。
+            // Fire-and-forget 模式：不動繼續模式，不等演出，立即結束本命令
+            //（onComplete 仍會在演出結束時發 Message）。
             if (!wait)
             {
                 stopped = true;
                 Stop();
             }
+        }
+
+        /// <summary>
+        /// 解除 blocking 期間的壓制：放開繼續鈕鎖，並把繼續模式從 Never 還原成 Optional
+        /// （只在確實壓制過時執行，且只做一次，確保 Push/Pop 配對不外洩）。
+        /// </summary>
+        private void RestoreContinueModeIfHeld()
+        {
+            if (!heldContinueMode) return;
+            heldContinueMode = false;
+            // 先在「鎖仍生效」時還原繼續模式（此刻任何顯示繼續鈕的嘗試仍被吞掉），再放開鎖，
+            // 避免還原模式的瞬間閃一下繼續鈕。放開後不主動顯示，交給換到下一句時自然重刷。
+            DialogueManager.SetContinueMode(RestoreMode);
+            NhkUISubtitlePanel.PopContinueButtonLock();
         }
     }
 }
