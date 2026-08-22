@@ -43,6 +43,22 @@ public class CoreSystemBridge : MonoBehaviour
     public void SetDependency(int value) => Model?.SetDependency(value);
 
     // ==========================================================
+    // 狀態不好（BadHealthy）
+    // ==========================================================
+    /// <summary>開啟「狀態不好」：加壓再 +1、減壓少 -1，換日自動解除。</summary>
+    public void EnableBadHealthy() => Model?.EnableBadHealthy();
+
+    /// <summary>關閉「狀態不好」。</summary>
+    public void DisableBadHealthy() => Model?.DisableBadHealthy();
+
+    /// <summary>切換「狀態不好」：點一次開、再點一次關。</summary>
+    public void ToggleBadHealthy()
+    {
+        if (Model == null) return;
+        Model.SetBadHealthy(!Model.BadHealthy);
+    }
+
+    // ==========================================================
     // Money / SkillPoints
     // ==========================================================
     public void AddMoney(int amount)
