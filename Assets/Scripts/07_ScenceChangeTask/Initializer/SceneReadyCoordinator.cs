@@ -29,9 +29,9 @@ public class SceneReadyCoordinator : MonoBehaviour, ISceneReadyHandler
     [SerializeField] private bool autoRunWhenPlayedDirectly = false;
 
     [Header("除錯：用指定 entryID 手動觸發")]
-    [Tooltip("填入想測試的入口ID（例如 Map_Challenge / Map_Visit）。用元件右鍵選單或綁按鈕呼叫 " +
+    [Tooltip("填入想測試的入口ID。用元件右鍵選單或綁按鈕呼叫 " +
              "ReRunWithDebugID()，會忽略 GameDataManager，直接用這個字串跑一遍任務列表。")]
-    [SerializeField] private string debugEntryID = "Map_Challenge";
+    [SerializeField] private string debugEntryID = "";
 
     // 已經執行過（不論是 SceneController 呼叫，還是自動補跑），用來防止重複執行。
     private bool _hasRun;

@@ -24,7 +24,7 @@ public class SceneActionQueueModel
 {
     public enum TimeAdvanceType { Slot, Phase, Day }
 
-    private enum ActionType { TimeChange, HeroineMove, RiskMove, FlagChange }
+    private enum ActionType { TimeChange, HeroineMove, RiskMove, FlagChange, SendEvent }
 
     private class QueuedAction
     {
@@ -44,6 +44,10 @@ public class SceneActionQueueModel
         public string FlagID;
         public bool ShouldAdd;
         public FlagLifetime Lifetime;
+
+        // SendEvent（透過 FsmValueManager 對下一場景註冊的 FSM 發 PlayMaker Event）
+        public string EventName;
+        public bool UseGroup; // true = 以 Group 發送（TargetID 當 group 名），false = 以單一 ID 發送
     }
 
     private readonly List<QueuedAction> _queue = new List<QueuedAction>();
@@ -127,6 +131,26 @@ public class SceneActionQueueModel
     }
 
     /// <summary>
+    /// 佇列一個「透過 FsmValueManager 發送 PlayMaker Event」的命令。
+    /// 執行時機在下一場景 Ready、淡入前，屆時 FsmValueManager.Instance 已是新場景那份，
+    /// 因此 targetIdentifier（ID 或 Group 名）指向的是新場景註冊的 FSM。
+    /// </summary>
+    public void EnqueueSendEvent(string targetIdentifier, bool useGroup, string eventName)
+    {
+        if (string.IsNullOrEmpty(targetIdentifier) || string.IsNullOrEmpty(eventName)) return;
+
+        _queue.Add(new QueuedAction
+        {
+            Type = ActionType.SendEvent,
+            EnqueueGeneration = _generation,
+            TargetID = targetIdentifier,
+            UseGroup = useGroup,
+            EventName = eventName
+        });
+        Debug.Log($"[SceneActionQueue] 佇列 FSM 事件: {(useGroup ? "Group" : "ID")}={targetIdentifier} → 「{eventName}」");
+    }
+
+    /// <summary>
     /// 清除所有待執行命令（不影響暫停狀態——小遊戲中途取消佇列時，串關暫停必須維持）。
     /// </summary>
     public void Clear()
@@ -205,6 +229,7 @@ public class SceneActionQueueModel
         ExecuteCategory(ActionType.HeroineMove);
         ExecuteCategory(ActionType.RiskMove);
         ExecuteCategory(ActionType.FlagChange);
+        ExecuteCategory(ActionType.SendEvent); // 最後發事件，讓 FSM 能依已套用的時間/Flag 狀態反應
 
         _queue.Clear();
         Debug.Log("[SceneActionQueue] 全部命令執行完畢。");
@@ -226,6 +251,7 @@ public class SceneActionQueueModel
                 case ActionType.HeroineMove: ExecuteHeroineMove(action); break;
                 case ActionType.RiskMove: ExecuteRiskMove(action); break;
                 case ActionType.FlagChange: ExecuteFlagChange(action); break;
+                case ActionType.SendEvent: ExecuteSendEvent(action); break;
             }
         }
     }
@@ -307,5 +333,20 @@ public class SceneActionQueueModel
             Debug.Log($"[SceneActionQueue] 移除 Flag: {action.FlagID}");
             _progressFlags.RemoveFlag(action.FlagID);
         }
+    }
+
+    private void ExecuteSendEvent(QueuedAction action)
+    {
+        if (FsmValueManager.Instance == null)
+        {
+            Debug.LogWarning($"[SceneActionQueue] 找不到 FsmValueManager，事件「{action.EventName}」（target={action.TargetID}）已跳過！");
+            return;
+        }
+
+        Debug.Log($"[SceneActionQueue] 執行 FSM 事件: {(action.UseGroup ? "Group" : "ID")}={action.TargetID} → 「{action.EventName}」");
+        if (action.UseGroup)
+            FsmValueManager.Instance.SendEventByGroup(action.TargetID, action.EventName);
+        else
+            FsmValueManager.Instance.SendEventById(action.TargetID, action.EventName);
     }
 }

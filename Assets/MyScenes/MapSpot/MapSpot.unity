@@ -426,6 +426,11 @@ MonoBehaviour:
     targetObject: {fileID: 274661712}
     fsmName: FSM
     resolvedFsm: {fileID: 0}
+  - id: FSM_ExitSystem
+    group: 
+    targetObject: {fileID: 612711751}
+    fsmName: FSM
+    resolvedFsm: {fileID: 0}
 --- !u!4 &16946993
 Transform:
   m_ObjectHideFlags: 0
@@ -2264,18 +2269,18 @@ PrefabInstance:
     - target: {fileID: 1304398653079268389, guid: 6b091bea91879b74aae5411df74f8ddf, type: 3}
       propertyPath: options.Array.data[1].onSelected.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
-      objectReference: {fileID: 1611424192}
+      objectReference: {fileID: 612711753}
     - target: {fileID: 1304398653079268389, guid: 6b091bea91879b74aae5411df74f8ddf, type: 3}
       propertyPath: options.Array.data[1].onSelected.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
       value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 1304398653079268389, guid: 6b091bea91879b74aae5411df74f8ddf, type: 3}
       propertyPath: options.Array.data[1].onSelected.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
-      value: SwitchScene
+      value: Trigger
       objectReference: {fileID: 0}
     - target: {fileID: 1304398653079268389, guid: 6b091bea91879b74aae5411df74f8ddf, type: 3}
       propertyPath: options.Array.data[1].onSelected.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
-      value: SceneChangeButton, Assembly-CSharp
+      value: FsmTrigge, Assembly-CSharp
       objectReference: {fileID: 0}
     - target: {fileID: 1304398653079268389, guid: 6b091bea91879b74aae5411df74f8ddf, type: 3}
       propertyPath: options.Array.data[1].onSelected.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
@@ -2421,13 +2426,14 @@ PrefabInstance:
       propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
+    m_RemovedComponents:
+    - {fileID: 8723242073415918929, guid: 6b091bea91879b74aae5411df74f8ddf, type: 3}
+    m_RemovedGameObjects:
+    - {fileID: 8928233075746488329, guid: 6b091bea91879b74aae5411df74f8ddf, type: 3}
+    - {fileID: 6392953531304581806, guid: 6b091bea91879b74aae5411df74f8ddf, type: 3}
+    - {fileID: 5253209537691732241, guid: 6b091bea91879b74aae5411df74f8ddf, type: 3}
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 4778158877182675459, guid: 6b091bea91879b74aae5411df74f8ddf, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1611424192}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 6b091bea91879b74aae5411df74f8ddf, type: 3}
 --- !u!224 &340603009 stripped
 RectTransform:
@@ -4307,6 +4313,399 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 3212853596553731150, guid: 6b091bea91879b74aae5411df74f8ddf, type: 3}
   m_PrefabInstance: {fileID: 584375385}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &612711751
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 612711752}
+  - component: {fileID: 612711754}
+  - component: {fileID: 612711753}
+  m_Layer: 0
+  m_Name: FSM_ExitSystem
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &612711752
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 612711751}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 14.66012, y: -2.3325899, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1283838906}
+  m_Father: {fileID: 1887624132}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &612711753
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 612711751}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e8b12bee42e8aa45bc35d52f71819e1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::FsmTrigge
+  fsmName: FSM
+  eventName: BACK
+--- !u!114 &612711754
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 612711751}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 1384774831, guid: e743331561ef77147ae48cda9bcb8209, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: PlayMaker.dll::PlayMakerFSM
+  fsm:
+    dataVersion: 2
+    usedInTemplate: {fileID: 0}
+    name: FSM
+    startState: waitTrigger
+    states:
+    - name: waitTrigger
+      description: 
+      colorIndex: 0
+      position:
+        serializedVersion: 2
+        x: 144
+        y: 99
+        width: 100
+        height: 32
+      isBreakpoint: 0
+      isSequence: 0
+      hideUnused: 0
+      transitions:
+      - fsmEvent:
+          name: BACK
+          isSystemEvent: 0
+          isGlobal: 0
+        toState: QueueFsmManagerSendEvent
+        linkStyle: 0
+        linkConstraint: 0
+        linkTarget: 0
+        colorIndex: 0
+      actionData:
+        actionNames: []
+        customNames: []
+        actionEnabled: 
+        actionIsOpen: 
+        actionStartIndex: 
+        actionHashCodes: 
+        unityObjectParams: []
+        fsmGameObjectParams: []
+        fsmOwnerDefaultParams: []
+        animationCurveParams: []
+        functionCallParams: []
+        fsmTemplateControlParams: []
+        fsmEventTargetParams: []
+        fsmPropertyParams: []
+        layoutOptionParams: []
+        fsmStringParams: []
+        fsmObjectParams: []
+        fsmVarParams: []
+        fsmArrayParams: []
+        fsmEnumParams: []
+        fsmFloatParams: []
+        fsmIntParams: []
+        fsmBoolParams: []
+        fsmVector2Params: []
+        fsmVector3Params: []
+        fsmColorParams: []
+        fsmRectParams: []
+        fsmQuaternionParams: []
+        stringParams: []
+        byteData: 
+        arrayParamSizes: 
+        arrayParamTypes: []
+        customTypeSizes: 
+        customTypeNames: []
+        paramDataType: 
+        paramName: []
+        paramDataPos: 
+        paramByteDataSize: 
+    - name: SceneChangeButton
+      description: 
+      colorIndex: 0
+      position:
+        serializedVersion: 2
+        x: 128
+        y: 344
+        width: 150.22
+        height: 16
+      isBreakpoint: 0
+      isSequence: 0
+      hideUnused: 0
+      transitions: []
+      actionData:
+        actionNames:
+        - HutongGames.PlayMaker.Actions.CallMethod
+        customNames:
+        - 
+        actionEnabled: 01
+        actionIsOpen: 01
+        actionStartIndex: 00000000
+        actionHashCodes: ca51e900
+        unityObjectParams: []
+        fsmGameObjectParams: []
+        fsmOwnerDefaultParams: []
+        animationCurveParams: []
+        functionCallParams: []
+        fsmTemplateControlParams: []
+        fsmEventTargetParams: []
+        fsmPropertyParams: []
+        layoutOptionParams: []
+        fsmStringParams:
+        - useVariable: 0
+          name: 
+          tooltip: 
+          showInInspector: 0
+          networkSync: 0
+          value: SwitchScene
+        fsmObjectParams:
+        - useVariable: 1
+          name: SceneChangeButton
+          tooltip: 
+          showInInspector: 0
+          networkSync: 0
+          typeName: SceneChangeButton
+          value: {fileID: 1283838907}
+        fsmVarParams:
+        - variableName: 
+          objectType: 
+          useVariable: 0
+          type: -1
+          floatValue: 0
+          intValue: 0
+          boolValue: 0
+          stringValue: 
+          vector4Value: {x: 0, y: 0, z: 0, w: 0}
+          objectReference: {fileID: 0}
+          arrayValue:
+            useVariable: 0
+            name: 
+            tooltip: 
+            showInInspector: 0
+            networkSync: 0
+            type: -1
+            objectTypeName: 
+            floatValues: []
+            intValues: 
+            boolValues: 
+            stringValues: []
+            vector4Values: []
+            objectReferences: []
+        fsmArrayParams: []
+        fsmEnumParams: []
+        fsmFloatParams: []
+        fsmIntParams: []
+        fsmBoolParams: []
+        fsmVector2Params: []
+        fsmVector3Params: []
+        fsmColorParams: []
+        fsmRectParams: []
+        fsmQuaternionParams: []
+        stringParams: []
+        byteData: 0000
+        arrayParamSizes: 00000000
+        arrayParamTypes:
+        - HutongGames.PlayMaker.FsmVar
+        customTypeSizes: 
+        customTypeNames: []
+        paramDataType: 18000000120000000c000000270000000100000001000000
+        paramName:
+        - behaviour
+        - methodName
+        - parameters
+        - storeResult
+        - everyFrame
+        - manualUI
+        paramDataPos: 000000000000000000000000000000000000000001000000
+        paramByteDataSize: 000000000000000000000000000000000100000001000000
+    - name: QueueFsmManagerSendEvent
+      description: "\u4F47\u5217\u89F8\u767C\u4E0B\u4E00\u5834\u666F\u7684FsmValueManager\u7684SendEvent"
+      colorIndex: 0
+      position:
+        serializedVersion: 2
+        x: 58
+        y: 197
+        width: 267.68
+        height: 32
+      isBreakpoint: 0
+      isSequence: 0
+      hideUnused: 0
+      transitions:
+      - fsmEvent:
+          name: FINISHED
+          isSystemEvent: 1
+          isGlobal: 0
+        toState: SceneChangeButton
+        linkStyle: 0
+        linkConstraint: 0
+        linkTarget: 0
+        colorIndex: 0
+      actionData:
+        actionNames:
+        - HutongGames.PlayMaker.Actions.QueueFsmManagerSendEvent
+        customNames:
+        - 
+        actionEnabled: 01
+        actionIsOpen: 01
+        actionStartIndex: 00000000
+        actionHashCodes: c7959c02
+        unityObjectParams: []
+        fsmGameObjectParams: []
+        fsmOwnerDefaultParams: []
+        animationCurveParams: []
+        functionCallParams: []
+        fsmTemplateControlParams: []
+        fsmEventTargetParams: []
+        fsmPropertyParams: []
+        layoutOptionParams: []
+        fsmStringParams:
+        - useVariable: 0
+          name: 
+          tooltip: 
+          showInInspector: 0
+          networkSync: 0
+          value: TriggerCome
+        - useVariable: 0
+          name: 
+          tooltip: 
+          showInInspector: 0
+          networkSync: 0
+          value: RETRIGGER
+        fsmObjectParams: []
+        fsmVarParams: []
+        fsmArrayParams: []
+        fsmEnumParams: []
+        fsmFloatParams: []
+        fsmIntParams: []
+        fsmBoolParams: []
+        fsmVector2Params: []
+        fsmVector3Params: []
+        fsmColorParams: []
+        fsmRectParams: []
+        fsmQuaternionParams: []
+        stringParams: []
+        byteData: 01
+        arrayParamSizes: 
+        arrayParamTypes: []
+        customTypeSizes: 
+        customTypeNames: []
+        paramDataType: 120000000100000012000000
+        paramName:
+        - targetIdentifier
+        - useGroupMode
+        - eventName
+        paramDataPos: 000000000000000001000000
+        paramByteDataSize: 000000000100000000000000
+    events:
+    - name: FINISHED
+      isSystemEvent: 1
+      isGlobal: 0
+    - name: LEAVE
+      isSystemEvent: 0
+      isGlobal: 0
+    - name: EXCAPE
+      isSystemEvent: 0
+      isGlobal: 0
+    - name: NextAction
+      isSystemEvent: 0
+      isGlobal: 0
+    - name: BACK
+      isSystemEvent: 0
+      isGlobal: 0
+    globalTransitions: []
+    variables:
+      floatVariables: []
+      intVariables: []
+      boolVariables: []
+      stringVariables: []
+      vector2Variables: []
+      vector3Variables: []
+      colorVariables: []
+      rectVariables: []
+      quaternionVariables: []
+      gameObjectVariables: []
+      objectVariables:
+      - useVariable: 1
+        name: SceneChangeButton
+        tooltip: 
+        showInInspector: 0
+        networkSync: 0
+        typeName: SceneChangeButton
+        value: {fileID: 1283838907}
+      materialVariables: []
+      textureVariables: []
+      arrayVariables: []
+      enumVariables: []
+      categories:
+      - 
+      variableCategoryIDs: 00000000
+    description: 
+    docUrl: 
+    showStateLabel: 0
+    maxLoopCount: 0
+    watermark: 
+    password: 
+    locked: 0
+    manualUpdate: 0
+    outVariableIndices: 
+    keepDelayedEventsOnStateExit: 0
+    preprocessed: 0
+    ExposedEvents: []
+    OutputEvents: []
+    RestartOnEnable: 1
+    ResetVariablesOnEnable: 0
+    EnableDebugFlow: 0
+    EnableBreakpoints: 1
+    editorFlags: 225
+    activeStateName: 
+    mouseEvents: 0
+    handleLevelLoaded: 0
+    handleTriggerEnter2D: 0
+    handleTriggerExit2D: 0
+    handleTriggerStay2D: 0
+    handleCollisionEnter2D: 0
+    handleCollisionExit2D: 0
+    handleCollisionStay2D: 0
+    handleTriggerEnter: 0
+    handleTriggerExit: 0
+    handleTriggerStay: 0
+    handleCollisionEnter: 0
+    handleCollisionExit: 0
+    handleCollisionStay: 0
+    handleParticleCollision: 0
+    handleControllerColliderHit: 0
+    handleJointBreak: 0
+    handleJointBreak2D: 0
+    handleOnGUI: 0
+    handleFixedUpdate: 0
+    handleLateUpdate: 0
+    handleApplicationEvents: 0
+    handleUiEvents: 0
+    handleLegacyNetworking: 0
+    handleAnimatorMove: 0
+    handleAnimatorIK: 0
+  fsmTemplate: {fileID: 0}
+  eventHandlerComponentsAdded: 0
 --- !u!1001 &615498820
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -8016,6 +8415,57 @@ RectTransform:
   m_AnchoredPosition: {x: 495.9901, y: 0.010132}
   m_SizeDelta: {x: 1092, y: 1173.7}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!1 &1283838905
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1283838906}
+  - component: {fileID: 1283838907}
+  m_Layer: 0
+  m_Name: SceneChangeButton
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &1283838906
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1283838905}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 0.00926, y: 0.00926, z: 0.00926}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 612711752}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 4.1829977, y: -2.5781746}
+  m_SizeDelta: {x: 100, y: 100}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1283838907
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1283838905}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8233784672146cb439ef66d510c53f48, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SceneChangeButton
+  targetScene: Room
+  updateScenario: 1
+  entryID: DefaultEntry
 --- !u!1 &1295420000
 GameObject:
   m_ObjectHideFlags: 0
@@ -9503,26 +9953,6 @@ MonoBehaviour:
   m_ChildScaleWidth: 0
   m_ChildScaleHeight: 0
   m_ReverseArrangement: 0
---- !u!1 &1611424190 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 4778158877182675459, guid: 6b091bea91879b74aae5411df74f8ddf, type: 3}
-  m_PrefabInstance: {fileID: 340603008}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &1611424192
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1611424190}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8233784672146cb439ef66d510c53f48, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SceneChangeButton
-  targetScene: Room
-  updateScenario: 1
-  entryID: DefaultEntry
 --- !u!1 &1640611018
 GameObject:
   m_ObjectHideFlags: 0
@@ -10058,9 +10488,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SceneCursorSettings
   sceneNormalTexture: {fileID: 2800000, guid: 475d22a582730664c912c898f834939b, type: 3}
-  sceneNormalHotspot: {x: 0, y: 0}
   sceneClickTexture: {fileID: 2800000, guid: cd66eb2788f383c4a8cf40bb3c5af2ff, type: 3}
-  sceneClickHotspot: {x: 0, y: 0}
   scenePhysicsRaycaster: {fileID: 0}
   sceneEventSystem: {fileID: 0}
 --- !u!114 &1723299515
@@ -10697,6 +11125,7 @@ Transform:
   - {fileID: 1710782050}
   - {fileID: 274661715}
   - {fileID: 1319963077}
+  - {fileID: 612711752}
   - {fileID: 1933063392}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}

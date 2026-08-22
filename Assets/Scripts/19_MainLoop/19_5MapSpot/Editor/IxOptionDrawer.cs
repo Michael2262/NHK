@@ -20,8 +20,7 @@ public class IxOptionDrawer : PropertyDrawer
     private static readonly (string label, string tooltip, string field)[] BasicFields =
     {
         ("文字 Key",     "多語系翻譯用的 key",                              "labelKey"),
-        ("顯示模式",     "此選項出現在哪個地圖模式：兩者 / 僅拜訪 / 僅挑戰", "scope"),
-        ("進度條件旗標", "額外條件：拖入 ProgressFlagDefinition，留空=不受進度限制", "conditionFlag"),
+        ("進度條件旗標", "拖入 ProgressFlagDefinition，留空=不受進度限制",   "conditionFlag"),
         ("優先次序",     "數字越小越優先",                                   "priority"),
         ("體力預覽",     "負數=消耗, 正數=回復, 0=不預覽",                  "staminaDelta"),
     };
