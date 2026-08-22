@@ -44,6 +44,7 @@ public class ProtagonistStatusModel
     public const int ROOM_MESS_LEVEL_MAX = 25;
     public const int ROOM_MESS_LEVEL_MIN = 0;
     public const int INITIAL_ROOM_MESS_LEVEL = ROOM_MESS_LEVEL_MAX;
+    public const float ROOM_MESS_DAILY_GAIN_CHANCE = 0.5f;
 
     // ───── BodyDirtyLevel（身體髒污度） ─────
     // 與 RoomMessLevel 平行：0～25，越高代表身體越髒。顯示時反向換算成「整潔度百分比」。
@@ -248,8 +249,14 @@ public class ProtagonistStatusModel
 
     public void OnDayEnd()
     {
-        AddRoomMessLevel(1);
-        AddBodyDirtyLevel(1); // 與房間同步：每日結束身體也會變髒一點。若不想要可移除此行。
+        if (UnityEngine.Random.value < ROOM_MESS_DAILY_GAIN_CHANCE)
+        {
+            AddRoomMessLevel(1);
+
+        }
+
+        //AddBodyDirtyLevel(1); // 與房間同步：每日結束身體也會變髒一點。若不想要可移除此行。
+
         ApplyDependencyDailyGain();
     }
 
