@@ -32,7 +32,9 @@ public class ValueChangeResult : MonoBehaviour
     public enum HeroineResourceType
     {
         Libido,
-        Trust
+        Trust,
+        // 追加，放最後以免打亂既有 prefab / 場景上此元件的列舉索引
+        Affinity
     }
 
     [Serializable]
@@ -404,6 +406,9 @@ public class ValueChangeResult : MonoBehaviour
                 break;
             case HeroineResourceType.Trust:
                 heroine.AddTrust(amount);
+                break;
+            case HeroineResourceType.Affinity:
+                heroine.AddAffinity(amount);
                 break;
         }
     }

@@ -157,5 +157,12 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
             DialogueManager.SetContinueMode(RestoreMode);
             NhkUISubtitlePanel.PopContinueButtonLock();
         }
+
+        // 保底：對話中途被打斷（場景切換、強制結束）時，完成 callback 可能沒機會執行。
+        // 命令物件被銷毀時在此補做一次解除，避免繼續鈕鎖永久外洩。
+        private void OnDestroy()
+        {
+            RestoreContinueModeIfHeld();
+        }
     }
 }

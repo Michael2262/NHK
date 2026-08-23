@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
@@ -23,7 +24,14 @@ public struct ValueChangeRecord
 /// 資源變動報告器
 /// 負責將 ValueChangeResult 的執行結果轉換成本地化文字並顯示
 /// 支援透過 ValueChangeReportConfig 進行配置
+///
+/// ⚠️ 【過渡中 — 已標記 Obsolete】
+/// 「提示玩家數值改變」的功能，目前已由 UI 提示直接顯示（各數值 UI 自身的跳動提示），
+/// 本報告器（alert toast 的 Report / 覆寫字幕的 ReportToSubtitle 兩條）都不再是必要路徑。
+/// 暫時保留程式以免既有調用端編譯錯誤，但暫時不往內做更新／維護；
+/// 待確認新 UI 提示完全取代後，再連同 caller 一併移除。
 /// </summary>
+[Obsolete("提示玩家數值改變的功能已由 UI 提示直接顯示，本報告器為過渡保留、暫時不往內做更新。待新 UI 提示確認取代後再移除。")]
 public static class ValueChangeReporter
 {
     // ==================================================

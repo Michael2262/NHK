@@ -12,6 +12,7 @@ public class HeroineSaveData
     public HeroineEmotionCardType DominantEmotion;
     public int Libido;
     public int Trust;
+    public int Affinity;
     public int HCount;
     public bool IsInHeat;
 

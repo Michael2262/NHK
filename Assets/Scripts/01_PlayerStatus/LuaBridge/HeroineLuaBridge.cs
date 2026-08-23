@@ -29,6 +29,11 @@ using PixelCrushers.DialogueSystem;
 ///   SetTrust("sister", 50)                         → 設定信賴值
 ///   AddTrust("sister", 10)                         → 增減信賴值
 ///
+/// ── 好感度 ──
+///   GetAffinity("sister")                          → 好感度 (0~150)
+///   SetAffinity("sister", 50)                      → 設定好感度
+///   AddAffinity("sister", 10)                      → 增減好感度
+///
 /// ── H 次數 ──
 ///   GetHCount("sister")                            → H 次數
 ///
@@ -95,6 +100,14 @@ public class HeroineLuaBridge : MonoBehaviour
         Lua.RegisterFunction("AddTrust", this,
             SymbolExtensions.GetMethodInfo(() => AddTrust(string.Empty, (double)0)));
 
+        // ── 好感度 ──
+        Lua.RegisterFunction("GetAffinity", this,
+            SymbolExtensions.GetMethodInfo(() => GetAffinity(string.Empty)));
+        Lua.RegisterFunction("SetAffinity", this,
+            SymbolExtensions.GetMethodInfo(() => SetAffinity(string.Empty, (double)0)));
+        Lua.RegisterFunction("AddAffinity", this,
+            SymbolExtensions.GetMethodInfo(() => AddAffinity(string.Empty, (double)0)));
+
         // ── H 次數 ──
         Lua.RegisterFunction("GetHCount", this,
             SymbolExtensions.GetMethodInfo(() => GetHCount(string.Empty)));
@@ -128,6 +141,10 @@ public class HeroineLuaBridge : MonoBehaviour
         Lua.UnregisterFunction("GetTrust");
         Lua.UnregisterFunction("SetTrust");
         Lua.UnregisterFunction("AddTrust");
+
+        Lua.UnregisterFunction("GetAffinity");
+        Lua.UnregisterFunction("SetAffinity");
+        Lua.UnregisterFunction("AddAffinity");
 
         Lua.UnregisterFunction("GetHCount");
 
@@ -269,6 +286,37 @@ public class HeroineLuaBridge : MonoBehaviour
     public void AddTrust(string heroineID, double amount)
     {
         GetModel(heroineID)?.AddTrust((int)amount);
+    }
+
+    // ─────────────────────────────────────────────
+    // 好感度
+    // ─────────────────────────────────────────────
+
+    /// <summary>
+    /// 取得好感度。
+    /// Lua: GetAffinity("sister") >= 50
+    /// </summary>
+    public double GetAffinity(string heroineID)
+    {
+        return GetModel(heroineID)?.Affinity ?? 0;
+    }
+
+    /// <summary>
+    /// 設定好感度（0~150）。
+    /// Lua: SetAffinity("sister", 50)
+    /// </summary>
+    public void SetAffinity(string heroineID, double value)
+    {
+        GetModel(heroineID)?.SetAffinity((int)value);
+    }
+
+    /// <summary>
+    /// 增減好感度。
+    /// Lua: AddAffinity("sister", 10) / AddAffinity("sister", -5)
+    /// </summary>
+    public void AddAffinity(string heroineID, double amount)
+    {
+        GetModel(heroineID)?.AddAffinity((int)amount);
     }
 
     // ─────────────────────────────────────────────

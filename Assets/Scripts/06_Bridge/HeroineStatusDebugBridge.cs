@@ -8,8 +8,8 @@ using UnityEngine;
 /// 女主角 ID 直接在 Inspector 中指定。
 ///
 /// 已對齊 NHK 版 HeroineStatusModel：操作情緒卡池、主導情緒（CurrentEmotion）、
-/// 性慾（Libido）、信賴（Trust）、H 次數（HCount）。
-/// 不再使用舊專案遺留的 Lewdness / Affinity stub。
+/// 性慾（Libido）、信賴（Trust）、好感度（Affinity）、H 次數（HCount）。
+/// 不再使用舊專案遺留的 Lewdness stub（Affinity 已是現役獨立數值）。
 ///
 /// 為了讓 Button.onClick / UnityEvent 能無參數呼叫，多數操作同時提供：
 /// - 帶 int 參數的版本（int 為 HeroineEmotionCardType 列舉索引）
@@ -215,6 +215,36 @@ public class HeroineStatusDebugBridge : MonoBehaviour
     }
 
     // ==========================================================
+    // 好感度 (Affinity)
+    // ==========================================================
+
+    /// <summary>增減好感度（正增負減，自動 Clamp 0~150）。</summary>
+    public void AddAffinity(int amount)
+    {
+        var m = Model;
+        if (m == null) return;
+        m.AddAffinity(amount);
+        Debug.Log($"[HeroineStatusDebugBridge] ({heroineID}) Affinity {(amount >= 0 ? "+" : "")}{amount} → {m.Affinity}");
+    }
+
+    /// <summary>直接設定好感度（自動 Clamp 0~150）。</summary>
+    public void SetAffinity(int value)
+    {
+        var m = Model;
+        if (m == null) return;
+        m.SetAffinity(value);
+        Debug.Log($"[HeroineStatusDebugBridge] ({heroineID}) 設定 Affinity = {m.Affinity}");
+    }
+
+    /// <summary>輸出目前好感度到 Console。</summary>
+    public void LogAffinity()
+    {
+        var m = Model;
+        if (m == null) return;
+        Debug.Log($"[HeroineStatusDebugBridge] ({heroineID}) Affinity = {m.Affinity} / {HeroineStatusModel.AffinityMax}");
+    }
+
+    // ==========================================================
     // H 次數 (HCount)
     // ==========================================================
 
@@ -260,6 +290,7 @@ public class HeroineStatusDebugBridge : MonoBehaviour
             $"  EmotionDeck     : {m.GetEmotionDeckCount()} / {m.EmotionDeckMaxCount}\n" +
             $"  Libido          : {m.Libido} / {HeroineStatusModel.LibidoMax}\n" +
             $"  Trust           : {m.Trust} / {HeroineStatusModel.TrustMax}\n" +
+            $"  Affinity        : {m.Affinity} / {HeroineStatusModel.AffinityMax}\n" +
             $"  HCount          : {m.HCount}"
         );
     }

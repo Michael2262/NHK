@@ -34,8 +34,8 @@ public struct StatPreviewItem
         this.delta = delta;
     }
 
-    /// <summary>是否為女主角數值（Libido / Trust）。</summary>
-    public bool IsHeroine => kind == StatKind.Libido || kind == StatKind.Trust;
+    /// <summary>是否為女主角數值（Libido / Trust / Affinity）。</summary>
+    public bool IsHeroine => kind == StatKind.Libido || kind == StatKind.Trust || kind == StatKind.Affinity;
 }
 
 public class StatChangeService
@@ -231,6 +231,9 @@ public class StatChangeService
             case StatKind.Trust:
                 if (op.op == StatOp.Set) heroine.SetTrust(op.amount); else heroine.AddTrust(op.amount);
                 break;
+            case StatKind.Affinity:
+                if (op.op == StatOp.Set) heroine.SetAffinity(op.amount); else heroine.AddAffinity(op.amount);
+                break;
             default:
                 Debug.LogWarning($"[StatChangeService] ApplyHeroineOp 收到非女主角數值：{op.kind}");
                 return 0;
@@ -259,6 +262,7 @@ public class StatChangeService
         {
             case StatKind.Libido: return heroine.Libido;
             case StatKind.Trust: return heroine.Trust;
+            case StatKind.Affinity: return heroine.Affinity;
             default: return 0;
         }
     }

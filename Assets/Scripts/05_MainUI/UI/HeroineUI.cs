@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
-using PixelCrushers;
 
 // 常駐顯示設計說明：
 //   HeroineUI 用單一 int Variable（VAR_VISIBLE）同時記錄「要不要顯示」與「顯示哪位」。
@@ -18,9 +17,13 @@ using PixelCrushers;
 /// 顯示三項資料：
 ///   1. Trust（信任）— 目前值 + Preview 變動量
 ///   2. Libido（性慾）— 目前值 + Preview 變動量
-///   3. CurrentEmotion（主導情緒）— 查 EmotionCardCatalog 取 TextTable Key，再本地化顯示
+///   3. Affinity（好感度）— 目前值 + Preview 變動量
 ///
-/// 注意：HeroineStatusModel 的 OnLibidoChanged / OnTrustChanged
+/// Affinity 特殊過渡：affinityRoot 這個 GameObject 一開始隱藏，
+///   當某女主角的好感度第一次從 0 變成 >0 後才首次顯示，之後永久維持顯示。
+///   解鎖狀態以 per-heroine 的 Persistent Flag 記錄（存檔後讀檔可還原）。
+///
+/// 注意：HeroineStatusModel 的 OnLibidoChanged / OnTrustChanged / OnAffinityChanged
 ///       傳入的是「新值（newValue）」，不是 delta。
 ///       Preview delta 由 handler 自行計算（newValue − 舊快取值）。
 ///
@@ -55,16 +58,11 @@ public class HeroineUI : MonoBehaviour
     [SerializeField] private TextMeshProUGUI textLibido;
     [SerializeField] private TextMeshProUGUI textLibidoPreview;
 
-    [Header("=== 主導情緒 ===")]
-    [SerializeField] private TextMeshProUGUI textCurrentEmotion;
-    [Tooltip("情緒卡池新增情緒時，冒出『情緒名稱 ↑』的飄字。")]
-    [SerializeField] private TextMeshProUGUI textEmotionAddedPreview;
-    [Tooltip("CurrentEmotion 變化時閃一下的提示。文字固定（在此元件上自行填好），只做開關、不改內容。")]
-    [SerializeField] private TextMeshProUGUI textCurrentEmotionChangedPreview;
-
-    [Header("=== 情緒查表 ===")]
-    [Tooltip("EmotionCardCatalog ScriptableObject，用於查詢情緒對應的 TextTable Key。")]
-    [SerializeField] private EmotionCardCatalog emotionCatalog;
+    [Header("=== 好感度數值 ===")]
+    [Tooltip("好感度整組的容器 GameObject。一開始隱藏；該女主角好感度第一次從 0 變成 >0 後首次顯示，之後永久維持（狀態存檔）。")]
+    [SerializeField] private GameObject affinityRoot;
+    [SerializeField] private TextMeshProUGUI textAffinity;
+    [SerializeField] private TextMeshProUGUI textAffinityPreview;
 
     [Header("=== Preview 顯示設定 ===")]
     [Tooltip("正/負變動是否顯示飄字；播放間隔與淡入淡出時間改由 StatusPreviewSequencer 控制。")]
@@ -72,9 +70,9 @@ public class HeroineUI : MonoBehaviour
     [SerializeField] private bool showNegativePreview = true;
 
     [Header("=== 顯示設定（暫時性） ===")]
-    [Tooltip("開啟後：女主角不顯示主導情緒（textCurrentEmotion），" +
-             "也不顯示情緒相關的兩種 preview（新增情緒飄字、情緒轉變提示）。")]
-    [SerializeField] private bool hideEmotionDisplay = false;
+    [Tooltip("開啟後：女主角不顯示好感度（affinityRoot），" +
+             "也不做好感度的數值/preview 更新、hover 預覽與首次解鎖顯示。")]
+    [SerializeField] private bool hideAffinityDisplay = false;
 
     [Header("=== 按鈕綁定 ===")]
     [SerializeField] private UnityEngine.UI.Button nextButton;
@@ -88,15 +86,20 @@ public class HeroineUI : MonoBehaviour
     // 單一 Variable 同時記錄顯示狀態與角色順位，存檔後讀檔可自動還原
     private const string VAR_VISIBLE = "Value_System_HeroineUIVisible";
 
+    // Affinity 顯示解鎖旗標（per-heroine）。key = 前綴 + HeroineID。
+    // 女主角好感度第一次 0→>0 時寫入，之後 affinityRoot 永久顯示；存檔後讀檔可還原。
+    private const string FLAG_AFFINITY_SHOWN_PREFIX = "Flag_System_AffinityShown_";
+
     // ==========================================================
     //  內部狀態
     // ==========================================================
     private int _currentOrderIndex = 0;
     private HeroineStatusModel _currentModel;
 
-    // 用於計算 Preview delta（OnLibidoChanged / OnTrustChanged 傳入的是 newValue）
+    // 用於計算 Preview delta（OnLibidoChanged / OnTrustChanged / OnAffinityChanged 傳入的是 newValue）
     private int _cachedTrust;
     private int _cachedLibido;
+    private int _cachedAffinity;
 
     // ==========================================================
     //  生命週期
@@ -240,9 +243,50 @@ public class HeroineUI : MonoBehaviour
         // 初始化快取值（避免第一次事件觸發時 delta 計算錯誤）
         _cachedTrust = _currentModel.Trust;
         _cachedLibido = _currentModel.Libido;
+        _cachedAffinity = _currentModel.Affinity;
+
+        // 好感度顯示：hideAffinityDisplay 時一律隱藏；否則「已解鎖（曾 0→>0）或目前已有數值」才顯示。
+        // 目前已有數值卻還沒寫解鎖旗標時，補寫一次（相容舊檔 / 非顯示中才增值的情況）。
+        if (hideAffinityDisplay)
+        {
+            SetAffinityRootVisible(false);
+        }
+        else
+        {
+            bool affinityUnlocked = IsAffinityUnlocked(_currentModel.HeroineID) || _currentModel.Affinity > 0;
+            if (_currentModel.Affinity > 0) MarkAffinityUnlocked(_currentModel.HeroineID);
+            SetAffinityRootVisible(affinityUnlocked);
+        }
 
         SubscribeToModel();
         RefreshAllUI();
+    }
+
+    // ==========================================================
+    //  Affinity 顯示解鎖（per-heroine，Persistent Flag）
+    // ==========================================================
+
+    private static string AffinityShownFlagKey(string heroineID) => FLAG_AFFINITY_SHOWN_PREFIX + heroineID;
+
+    private bool IsAffinityUnlocked(string heroineID)
+    {
+        var flags = GameStatusService.Instance?.ProgressFlags;
+        return flags != null
+            && !string.IsNullOrEmpty(heroineID)
+            && flags.Contains(AffinityShownFlagKey(heroineID));
+    }
+
+    private void MarkAffinityUnlocked(string heroineID)
+    {
+        var flags = GameStatusService.Instance?.ProgressFlags;
+        if (flags == null || string.IsNullOrEmpty(heroineID)) return;
+        flags.AddPersistentFlag(AffinityShownFlagKey(heroineID));
+    }
+
+    private void SetAffinityRootVisible(bool visible)
+    {
+        if (affinityRoot != null && affinityRoot.activeSelf != visible)
+            affinityRoot.SetActive(visible);
     }
 
     // ==========================================================
@@ -254,8 +298,7 @@ public class HeroineUI : MonoBehaviour
         if (_currentModel == null) return;
         _currentModel.OnTrustChanged += HandleTrustChanged;
         _currentModel.OnLibidoChanged += HandleLibidoChanged;
-        _currentModel.OnCurrentEmotionChanged += HandleCurrentEmotionChanged;
-        _currentModel.OnEmotionCardAdded += HandleEmotionCardAdded;
+        _currentModel.OnAffinityChanged += HandleAffinityChanged;
     }
 
     private void UnsubscribeFromModel()
@@ -263,8 +306,7 @@ public class HeroineUI : MonoBehaviour
         if (_currentModel == null) return;
         _currentModel.OnTrustChanged -= HandleTrustChanged;
         _currentModel.OnLibidoChanged -= HandleLibidoChanged;
-        _currentModel.OnCurrentEmotionChanged -= HandleCurrentEmotionChanged;
-        _currentModel.OnEmotionCardAdded -= HandleEmotionCardAdded;
+        _currentModel.OnAffinityChanged -= HandleAffinityChanged;
     }
 
     // ==========================================================
@@ -294,29 +336,27 @@ public class HeroineUI : MonoBehaviour
             delta);
     }
 
-    private void HandleCurrentEmotionChanged(HeroineEmotionCardType emotion)
+    private void HandleAffinityChanged(int newValue)
     {
-        // 暫時性：關閉情緒顯示時，不更新標籤、也不閃「情緒轉變」提示。
-        if (hideEmotionDisplay) return;
+        // 暫時性：關閉好感度顯示時，不更新數值/preview、也不觸發首次解鎖顯示。
+        // 仍同步快取，讓之後若重新開啟顯示時 delta 計算正確。
+        if (hideAffinityDisplay) { _cachedAffinity = newValue; return; }
 
-        // 標籤本體在輪到它的 step 才更新；同時閃一下「情緒轉變」提示（文字固定、只開關）。
-        StatusPreviewSequencer.Instance.EnqueueToggle(
-            StatusPreviewSequencer.OrderHeroineCurrentEmotion,
-            textCurrentEmotionChangedPreview,
-            applyValue: UpdateCurrentEmotionUI);
-    }
+        int delta = newValue - _cachedAffinity;
 
-    private void HandleEmotionCardAdded(HeroineEmotionCardType emotion)
-    {
-        // 暫時性：關閉情緒顯示時，不冒出「情緒名稱 ↑」飄字。
-        if (hideEmotionDisplay) return;
+        // 第一次從 0 變成 >0：解鎖顯示（永久，存檔），並讓 affinityRoot 首次現身。
+        if (_cachedAffinity == 0 && newValue > 0)
+        {
+            MarkAffinityUnlocked(_currentModel != null ? _currentModel.HeroineID : null);
+            SetAffinityRootVisible(true);
+        }
 
-        // 新增情緒卡：冒出「情緒名稱 ↑」飄字（名稱同樣走 EmotionCardCatalog 查表本地化）。
-        string label = ResolveEmotionDisplayText(emotion);
-        StatusPreviewSequencer.Instance.EnqueueText(
-            StatusPreviewSequencer.OrderHeroineEmotionAdded,
-            textEmotionAddedPreview,
-            label + "↑ ");
+        _cachedAffinity = newValue;
+        StatusPreviewSequencer.Instance.Enqueue(
+            StatusPreviewSequencer.OrderHeroineAffinity,
+            () => SetAffinityText(newValue),   // 主數值顯示 Lv.X；Preview 飄字仍為 +X/-X
+            PreviewIfAllowed(textAffinityPreview, delta),
+            delta);
     }
 
     // ==========================================================
@@ -327,7 +367,7 @@ public class HeroineUI : MonoBehaviour
     {
         UpdateTrustUI();
         UpdateLibidoUI();
-        UpdateCurrentEmotionUI();
+        UpdateAffinityUI();
     }
 
     private void UpdateTrustUI()
@@ -342,52 +382,16 @@ public class HeroineUI : MonoBehaviour
         textLibido.text = _currentModel.Libido.ToString();
     }
 
-    private void UpdateCurrentEmotionUI()
+    private void UpdateAffinityUI()
     {
-        if (textCurrentEmotion == null || _currentModel == null) return;
-
-        // 暫時性：關閉情緒顯示時，主導情緒標籤隱藏。
-        if (hideEmotionDisplay)
-        {
-            if (textCurrentEmotion.gameObject.activeSelf)
-                textCurrentEmotion.gameObject.SetActive(false);
-            return;
-        }
-
-        if (!textCurrentEmotion.gameObject.activeSelf)
-            textCurrentEmotion.gameObject.SetActive(true);
-
-        string displayText = ResolveEmotionDisplayText(_currentModel.CurrentEmotion);
-        textCurrentEmotion.text = displayText;
+        if (_currentModel == null) return;
+        SetAffinityText(_currentModel.Affinity);
     }
 
-    /// <summary>
-    /// 透過 EmotionCardCatalog 查詢情緒的 TextTable Key，
-    /// 再透過 UILocalizationManager 取得本地化文字。
-    /// 若 catalog 未設定，回退至 enum 名稱。
-    /// </summary>
-    private string ResolveEmotionDisplayText(HeroineEmotionCardType emotion)
+    // 好感度主數值固定加 "Lv." 前綴（Preview 飄字不加，維持 +X/-X）。
+    private void SetAffinityText(int value)
     {
-        if (emotionCatalog == null)
-        {
-            Debug.LogWarning("[HeroineUI] emotionCatalog 未設定，回退使用 enum 名稱。");
-            return emotion.ToString();
-        }
-
-        string textKey = emotionCatalog.GetEmotionNameTextKey(emotion);
-
-        if (string.IsNullOrEmpty(textKey))
-            return emotion.ToString();
-
-        if (UILocalizationManager.instance != null)
-        {
-            string localized = UILocalizationManager.instance.GetLocalizedText(textKey);
-            if (!string.IsNullOrEmpty(localized))
-                return localized;
-        }
-
-        // Fallback：回傳 key 本身（方便 debug）
-        return textKey;
+        if (textAffinity != null) textAffinity.text = $"Lv.{value}";
     }
 
     // ==========================================================
@@ -396,7 +400,7 @@ public class HeroineUI : MonoBehaviour
 
     // ==========================================================
     //  Hover 預覽（靜態）：滑鼠懸停時常駐顯示 +X / -X，移開清掉。
-    //  只處理女主角兩項（Trust / Libido），對象為目前顯示中的女主角。
+    //  只處理女主角三項（Trust / Libido / Affinity），對象為目前顯示中的女主角。
     //  由 StatPackagePreviewPresenter 呼叫。
     // ==========================================================
 
@@ -424,6 +428,9 @@ public class HeroineUI : MonoBehaviour
             {
                 case StatKind.Trust: SetStaticPreview(textTrustPreview, it.delta); break;
                 case StatKind.Libido: SetStaticPreview(textLibidoPreview, it.delta); break;
+                case StatKind.Affinity:
+                    if (!hideAffinityDisplay) SetStaticPreview(textAffinityPreview, it.delta);
+                    break;
                 // 其餘（主角數值）由 LobbyUI_V2 處理，這裡忽略。
             }
         }
@@ -434,6 +441,7 @@ public class HeroineUI : MonoBehaviour
     {
         HidePreviewText(textTrustPreview);
         HidePreviewText(textLibidoPreview);
+        HidePreviewText(textAffinityPreview);
     }
 
     // 靜態顯示：直接設 +X / -X 並把 alpha 拉滿（不透明），不做動畫。
@@ -451,24 +459,13 @@ public class HeroineUI : MonoBehaviour
     {
         HidePreviewText(textTrustPreview);
         HidePreviewText(textLibidoPreview);
-        HidePreviewText(textEmotionAddedPreview);
-        // 情緒轉變提示文字是固定的，只歸零 alpha、不清字。
-        HidePreviewKeepText(textCurrentEmotionChangedPreview);
+        HidePreviewText(textAffinityPreview);
     }
 
     private void HidePreviewText(TextMeshProUGUI target)
     {
         if (target == null) return;
         target.text = "";
-        var c = target.color;
-        c.a = 0f;
-        target.color = c;
-    }
-
-    // 只把 alpha 歸零、保留原本文字（給「純開關」型 preview 用）。
-    private void HidePreviewKeepText(TextMeshProUGUI target)
-    {
-        if (target == null) return;
         var c = target.color;
         c.a = 0f;
         target.color = c;

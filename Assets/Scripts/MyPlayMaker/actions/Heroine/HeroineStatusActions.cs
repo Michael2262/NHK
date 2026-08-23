@@ -868,6 +868,118 @@ public class CheckTrust : FsmStateAction
 }
 
 // ############################################################
+//  好感度（Affinity）
+// ############################################################
+
+[ActionCategory("Heroine Status")]
+[Tooltip("取得女主角的好感度。")]
+public class GetAffinity : FsmStateAction
+{
+    [RequiredField] public FsmString heroineID;
+    [RequiredField][UIHint(UIHint.Variable)] public FsmInt storeValue;
+
+    public override void Reset() { heroineID = null; storeValue = null; }
+
+    public override void OnEnter()
+    {
+        if (HeroineActionHelper.TryGetHeroine(heroineID.Value, out var h, "GetAffinity"))
+            storeValue.Value = h.Affinity;
+        Finish();
+    }
+}
+
+[ActionCategory("Heroine Status")]
+[Tooltip("設定女主角的好感度（0~150）。")]
+public class SetAffinityAction : FsmStateAction
+{
+    [RequiredField] public FsmString heroineID;
+    [RequiredField] public FsmInt value;
+
+    public override void Reset() { heroineID = null; value = 0; }
+
+    public override void OnEnter()
+    {
+        if (HeroineActionHelper.TryGetHeroine(heroineID.Value, out var h, "SetAffinityAction"))
+            h.SetAffinity(value.Value);
+        Finish();
+    }
+}
+
+[ActionCategory("Heroine Status")]
+[Tooltip("增減女主角的好感度。正值增加，負值減少。")]
+public class AddAffinityAction : FsmStateAction
+{
+    [RequiredField] public FsmString heroineID;
+    [RequiredField] public FsmInt amount;
+
+    public override void Reset() { heroineID = null; amount = 0; }
+
+    public override void OnEnter()
+    {
+        if (HeroineActionHelper.TryGetHeroine(heroineID.Value, out var h, "AddAffinityAction"))
+            h.AddAffinity(amount.Value);
+        Finish();
+    }
+}
+
+[ActionCategory("Heroine Status")]
+[Tooltip("檢查女主角的好感度是否符合條件（>, >=, ==, <, <=）。")]
+public class CheckAffinity : FsmStateAction
+{
+    [RequiredField]
+    [Tooltip("要檢查的女主角 ID。")]
+    public FsmString heroineID;
+
+    [ObjectType(typeof(HeroineCompareOp))]
+    [Tooltip("比較運算子：拿「目前好感度」跟下方 threshold 做比較。可選 >, >=, ==, <=, <。")]
+    public FsmEnum compareOperator;
+
+    [RequiredField]
+    [Tooltip("比較門檻值。例：compareOperator 選 >=、threshold 填 50，代表「好感度 >= 50 時算通過」。好感度範圍 0~150，預設 50。")]
+    public FsmInt threshold;
+
+    [UIHint(UIHint.Variable)]
+    [Tooltip("（選填）把「目前讀到的好感度」存進這個 FSM 變數。不需要就留空，不影響 pass/fail 判斷。")]
+    public FsmInt storeValue;
+
+    [Tooltip("比較「成立」時送出的 Event（好感度達標分支）。")]
+    public FsmEvent passEvent;
+
+    [Tooltip("比較「不成立」時送出的 Event（好感度不足分支）；找不到該女主角時也會走這裡。")]
+    public FsmEvent failEvent;
+
+    public override void Reset()
+    {
+        heroineID = null;
+        compareOperator = HeroineCompareOp.GreaterOrEqual;
+        threshold = 50;
+        storeValue = null;
+        passEvent = null;
+        failEvent = null;
+    }
+
+    public override void OnEnter()
+    {
+        if (!HeroineActionHelper.TryGetHeroine(heroineID.Value, out var h, "CheckAffinity"))
+        {
+            Fsm.Event(failEvent);
+            Finish();
+            return;
+        }
+
+        int val = h.Affinity;
+        if (storeValue != null && !storeValue.IsNone) storeValue.Value = val;
+
+        var op = compareOperator != null && compareOperator.Value != null
+            ? (HeroineCompareOp)compareOperator.Value
+            : HeroineCompareOp.GreaterOrEqual;
+
+        Fsm.Event(HeroineActionHelper.Compare(val, threshold.Value, op) ? passEvent : failEvent);
+        Finish();
+    }
+}
+
+// ############################################################
 //  H 次數（HCount）
 // ############################################################
 

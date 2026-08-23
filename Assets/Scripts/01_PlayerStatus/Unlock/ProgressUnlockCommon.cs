@@ -44,8 +44,8 @@ public enum ComparisonOp
 
 /// <summary>
 /// 解鎖條件要檢查的數值類型。
-/// 前三項屬於女主角 (HeroineStatusModel，需搭配 Rule 上的 heroineID)；
-/// 後四項屬於主角 (ProtagonistStatusModel)，與 heroineID 無關。
+/// Libido / Trust / HCount / Affinity 屬於女主角 (HeroineStatusModel，需搭配 Rule 上的 heroineID)；
+/// Stress / LifePower / Sociality / Dependency / RoomMessLevel / BodyDirtyLevel 屬於主角 (ProtagonistStatusModel)，與 heroineID 無關。
 /// </summary>
 public enum UnlockStatType
 {
@@ -61,7 +61,9 @@ public enum UnlockStatType
     Dependency,
     RoomMessLevel,
     // 追加，放最後以免打亂既有 Rule / Mirror .asset 的列舉索引
-    BodyDirtyLevel
+    BodyDirtyLevel,
+    // 女主角數值（追加，放最後以免打亂既有 Rule / Mirror .asset 的列舉索引）
+    Affinity
 }
 
 /// <summary>
@@ -73,7 +75,7 @@ public class UnlockStatCondition
 {
     [Tooltip(
         "要檢查的數值。\n" +
-        "Libido / Trust / HCount 查 Rule 指定的女主角；\n" +
+        "Libido / Trust / HCount / Affinity 查 Rule 指定的女主角；\n" +
         "Stress / LifePower / Sociality / Dependency 查主角。"
     )]
     public UnlockStatType stat = UnlockStatType.Libido;
@@ -106,7 +108,7 @@ public class UnlockStatCondition
 /// 數值映射 (Sync / 鏡像)：讓某個 Progress Value 變數「永遠等於」某個數值的當下值。
 /// 與門檻規則不同 —— 不判斷大小、不寫固定值，數值一變就把當前值忠實寫入 target。
 ///
-/// 來源數值是女主角 (Libido / Trust / HCount) 時需填 heroineID；
+/// 來源數值是女主角 (Libido / Trust / HCount / Affinity) 時需填 heroineID；
 /// 來源是主角數值 (Stress / LifePower / …) 時 heroineID 留空。
 /// </summary>
 [Serializable]
@@ -139,6 +141,7 @@ public static class ProgressUnlockUtility
     {
         return stat == UnlockStatType.Libido
             || stat == UnlockStatType.Trust
+            || stat == UnlockStatType.Affinity
             || stat == UnlockStatType.HCount;
     }
 
@@ -162,6 +165,10 @@ public static class ProgressUnlockUtility
             case UnlockStatType.Trust:
                 if (heroine == null) return false;
                 value = heroine.Trust;
+                return true;
+            case UnlockStatType.Affinity:
+                if (heroine == null) return false;
+                value = heroine.Affinity;
                 return true;
             case UnlockStatType.HCount:
                 if (heroine == null) return false;

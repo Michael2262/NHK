@@ -31,8 +31,9 @@ public class StatusPreviewSequencer : MonoBehaviour
     public const int OrderBodyClean = 5;
     public const int OrderHeroineTrust = 10;
     public const int OrderHeroineLibido = 11;
-    public const int OrderHeroineEmotionAdded = 12;
-    public const int OrderHeroineCurrentEmotion = 13;
+    public const int OrderHeroineAffinity = 12;
+    public const int OrderHeroineEmotionAdded = 13;
+    public const int OrderHeroineCurrentEmotion = 14;
 
     [Header("=== 播放設定 ===")]
     [Tooltip("每個 Preview 之間的間隔秒數。")]

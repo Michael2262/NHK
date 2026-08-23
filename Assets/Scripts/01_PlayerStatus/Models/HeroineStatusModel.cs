@@ -14,6 +14,7 @@ using UnityEngine;
 /// 5. LastAddedEmotion：最近一次被新增的情緒。
 /// 6. Libido（性慾）：0~150 的獨立數值，每日衰減 LibidoDailyDecay。
 /// 7. Trust（信賴）：0~150 的獨立數值。
+/// 7-1. Affinity（好感度）：0~150 的獨立數值。
 /// 8. 提供情緒分數與卡片替換規則。
 /// 9. 保存 H 次數。
 ///
@@ -52,6 +53,10 @@ public class HeroineStatusModel
     public int Trust { get; private set; }
     public const int TrustMax = 150;
 
+    /// <summary>好感度，0~AffinityMax。</summary>
+    public int Affinity { get; private set; }
+    public const int AffinityMax = 150;
+
     public int HCount { get; private set; }
 
     /// <summary>發情狀態：獨立開關，存入存檔，由劇情/FSM 明確 SetInHeat 控制。</summary>
@@ -77,6 +82,7 @@ public class HeroineStatusModel
     public event Action<HeroineEmotionCardType> OnCurrentEmotionChanged;
     public event Action<int> OnLibidoChanged;
     public event Action<int> OnTrustChanged;
+    public event Action<int> OnAffinityChanged;
     public event Action<int> OnHCountChanged;
     public event Action<bool> OnInHeatChanged;
 
@@ -92,7 +98,6 @@ public class HeroineStatusModel
     // NHK 新功能請不要再依賴這些事件。
     // ─────────────────────────────────────────────────────────────
     public event Action<int> OnLewdnessChanged;
-    public event Action<int> OnAffinityChanged;
     public event Action<int> OnExcitementLevelChanged;
     public event Action<int> OnExcitementChanged;
     public event Action<int> OnDiscomfortChanged;
@@ -131,6 +136,7 @@ public class HeroineStatusModel
         CurrentEmotion = HeroineEmotionCardType.Angry;
         Libido = 0;
         Trust = 0;
+        Affinity = 0;
         HCount = 0;
 
         Statistics = new HeroineStatisticsModel();
@@ -333,6 +339,32 @@ public class HeroineStatusModel
     public int GetTrust() => Trust;
 
     // ─────────────────────────────────────────────────────────────
+    // Affinity（好感度）
+    // ─────────────────────────────────────────────────────────────
+
+    /// <summary>增減好感度。</summary>
+    public void AddAffinity(int amount)
+    {
+        if (amount == 0) return;
+        int newValue = Mathf.Clamp(Affinity + amount, 0, AffinityMax);
+        if (Affinity == newValue) return;
+        Affinity = newValue;
+        OnAffinityChanged?.Invoke(Affinity);
+    }
+
+    /// <summary>直接設定好感度。</summary>
+    public void SetAffinity(int value)
+    {
+        value = Mathf.Clamp(value, 0, AffinityMax);
+        if (Affinity == value) return;
+        Affinity = value;
+        OnAffinityChanged?.Invoke(Affinity);
+    }
+
+    /// <summary>取得目前好感度。</summary>
+    public int GetAffinity() => Affinity;
+
+    // ─────────────────────────────────────────────────────────────
     // Emotion deck mutation
     // ─────────────────────────────────────────────────────────────
     public void AddEmotionCard(HeroineEmotionCardType type)
@@ -499,6 +531,7 @@ public class HeroineStatusModel
             DominantEmotion = DominantEmotion,
             Libido = Libido,
             Trust = Trust,
+            Affinity = Affinity,
             HCount = HCount,
             IsInHeat = IsInHeat,
             NextEmotionCardOrder = nextEmotionCardOrder,
@@ -525,6 +558,7 @@ public class HeroineStatusModel
         CurrentEmotion = data.Emotion;
         Libido = Mathf.Clamp(data.Libido, 0, LibidoMax);
         Trust = Mathf.Clamp(data.Trust, 0, TrustMax);
+        Affinity = Mathf.Clamp(data.Affinity, 0, AffinityMax);
         IsInHeat = data.IsInHeat;
         nextEmotionCardOrder = Mathf.Max(0, data.NextEmotionCardOrder);
 
@@ -558,6 +592,7 @@ public class HeroineStatusModel
         OnHCountChanged?.Invoke(HCount);
         OnLibidoChanged?.Invoke(Libido);
         OnTrustChanged?.Invoke(Trust);
+        OnAffinityChanged?.Invoke(Affinity);
         OnInHeatChanged?.Invoke(IsInHeat);
         OnCurrentEmotionChanged?.Invoke(CurrentEmotion);
         NotifyDeckChanged(oldDominant, forceNotify: true);

@@ -425,7 +425,7 @@ public class ProgressRulesInspectorWindow : EditorWindow
             if (rule.HasHeroineCondition && string.IsNullOrEmpty(rule.heroineID))
             {
                 EditorGUILayout.HelpBox(
-                    "含女主角條件 (Libido / Trust / HCount) 但未填 heroineID，此規則會被 Manager 跳過。",
+                    "含女主角條件 (Libido / Trust / HCount / Affinity) 但未填 heroineID，此規則會被 Manager 跳過。",
                     MessageType.Warning);
             }
 

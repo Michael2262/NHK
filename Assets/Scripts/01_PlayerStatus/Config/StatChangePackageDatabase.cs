@@ -33,7 +33,9 @@ public enum StatKind
     Libido,
     Trust,
     // ── 主角（追加，放最後以免打亂既有套組 .asset 的列舉索引） ──
-    BodyDirtyLevel
+    BodyDirtyLevel,
+    // ── 女主角（追加，放最後以免打亂既有套組 .asset 的列舉索引） ──
+    Affinity
 }
 
 /// <summary>
@@ -53,7 +55,7 @@ public enum StatOp
 [Serializable]
 public class StatChangeOp
 {
-    [Tooltip("要變更的數值種類。Libido / Trust 屬女主角，需在調用時提供 heroineID。")]
+    [Tooltip("要變更的數值種類。Libido / Trust / Affinity 屬女主角，需在調用時提供 heroineID。")]
     public StatKind kind = StatKind.Stress;
 
     [Tooltip("操作方式：Add 增減（帶正負號）/ Set 直接設定。")]
@@ -62,8 +64,8 @@ public class StatChangeOp
     [Tooltip("變化量。Add 時可填負數代表扣除；Set 時為要設定的目標值。")]
     public int amount = 0;
 
-    /// <summary>是否為女主角數值（Libido / Trust）。</summary>
-    public bool IsHeroineStat => kind == StatKind.Libido || kind == StatKind.Trust;
+    /// <summary>是否為女主角數值（Libido / Trust / Affinity）。</summary>
+    public bool IsHeroineStat => kind == StatKind.Libido || kind == StatKind.Trust || kind == StatKind.Affinity;
 }
 
 /// <summary>

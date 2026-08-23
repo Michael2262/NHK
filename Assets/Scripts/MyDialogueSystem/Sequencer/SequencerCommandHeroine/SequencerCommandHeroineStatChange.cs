@@ -5,7 +5,7 @@
 //   HeroineStatChange(heroineID, statName, operation, amount)
 //   HeroineStatChange(heroineID, statName, operation, amount, resultLuaVariable)
 //
-// statName   = libido | trust
+// statName   = libido | trust | affinity
 // operation  = add | set
 //
 // 範例：
@@ -60,18 +60,24 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
             {
                 case "libido":
                 case "性慾":
-                    ApplyOperation(heroine, operation, amount, isLibido: true);
+                    ApplyOperation(heroine, operation, amount, StatTarget.Libido);
                     resultValue = heroine.Libido;
                     break;
 
                 case "trust":
                 case "信賴":
-                    ApplyOperation(heroine, operation, amount, isLibido: false);
+                    ApplyOperation(heroine, operation, amount, StatTarget.Trust);
                     resultValue = heroine.Trust;
                     break;
 
+                case "affinity":
+                case "好感度":
+                    ApplyOperation(heroine, operation, amount, StatTarget.Affinity);
+                    resultValue = heroine.Affinity;
+                    break;
+
                 default:
-                    Debug.LogWarning($"[HeroineStatChange] 無法辨識 statName: {statName}，支援 libido / trust", this);
+                    Debug.LogWarning($"[HeroineStatChange] 無法辨識 statName: {statName}，支援 libido / trust / affinity", this);
                     break;
             }
 
@@ -84,15 +90,17 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
             Stop();
         }
 
-        private static void ApplyOperation(HeroineStatusModel heroine, string operation, int amount, bool isLibido)
+        private enum StatTarget { Libido, Trust, Affinity }
+
+        private static void ApplyOperation(HeroineStatusModel heroine, string operation, int amount, StatTarget target)
         {
+            bool isSet;
             switch (operation)
             {
                 case "set":
                 case "設定":
                 case "=":
-                    if (isLibido) heroine.SetLibido(amount);
-                    else heroine.SetTrust(amount);
+                    isSet = true;
                     break;
 
                 case "add":
@@ -100,8 +108,20 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
                 case "+":
                 case "-":
                 default:
-                    if (isLibido) heroine.AddLibido(amount);
-                    else heroine.AddTrust(amount);
+                    isSet = false;
+                    break;
+            }
+
+            switch (target)
+            {
+                case StatTarget.Libido:
+                    if (isSet) heroine.SetLibido(amount); else heroine.AddLibido(amount);
+                    break;
+                case StatTarget.Trust:
+                    if (isSet) heroine.SetTrust(amount); else heroine.AddTrust(amount);
+                    break;
+                case StatTarget.Affinity:
+                    if (isSet) heroine.SetAffinity(amount); else heroine.AddAffinity(amount);
                     break;
             }
         }
