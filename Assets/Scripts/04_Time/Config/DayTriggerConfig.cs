@@ -27,7 +27,8 @@ public class DayTriggerEntry
     public int TriggerSlotInPhase = 1;
 
     [Header("── 執行動作 ─────────────────────────────")]
-    [Tooltip("要操作的 Flag（拖入 Flag_Xxx 檔案）")]
+    [Tooltip("要操作的 Flag（拖入 Flag_Xxx 檔案）\n" +
+             "可留空：若只想在特定日期單純發公告，不動任何 Flag，則留空並只填下方 AlertKey。")]
     public ProgressFlagDefinition TargetFlag;
 
     [Tooltip("true = 開啟 Flag；false = 關閉（RemoveFlag）")]
@@ -40,6 +41,12 @@ public class DayTriggerEntry
              "• Day：隔天（DayPassed）後自動消失\n" +
              "• Temp：切換場景後消失")]
     public ScheduleFlagLifetime FlagLifetime = ScheduleFlagLifetime.Persistent;
+
+    [Header("── 觸發時的公告 (Alert，選填) ────────────")]
+    [Tooltip("觸發此規則時，經由 AlertToastManager 顯示的系統公告（與 Rules 的達成公告同一套）。\n" +
+             "填 Localization Key（找不到 Key 時會直接顯示原文）；留空則不顯示公告。\n" +
+             "可只填此欄、不指定 TargetFlag，用來在特定日期單純以 key 呼叫公告。")]
+    public string AlertKey;
 
     // 執行期屬性
     public string TargetFlagID => TargetFlag != null ? TargetFlag.FlagID : null;

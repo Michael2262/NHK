@@ -104,35 +104,68 @@ public class DayTriggerProcessor
 
     private void ExecuteEntry(DayTriggerEntry entry)
     {
-        if (string.IsNullOrEmpty(entry.TargetFlagID))
+        bool hasFlag = !string.IsNullOrEmpty(entry.TargetFlagID);
+        bool hasAlert = !string.IsNullOrEmpty(entry.AlertKey);
+
+        // 兩者都沒填，這條規則等於沒設定，直接跳過並提醒。
+        if (!hasFlag && !hasAlert)
         {
-            Debug.LogWarning($"[DayTrigger]「{entry.EntryName}」TargetFlag 未指定，跳過。");
+            Debug.LogWarning($"[DayTrigger]「{entry.EntryName}」未指定 TargetFlag 也未填 AlertKey，跳過。");
             return;
         }
 
-        if (!entry.FlagState)
+        // ── Flag 操作（選填）──────────────────────────
+        if (hasFlag)
         {
-            _flagModel.RemoveFlag(entry.TargetFlagID);
-            Debug.Log($"[DayTrigger] Day {_timeModel.DayIndex} " +
-                      $"Phase {_timeModel.CurrentPhaseIndex} Slot {_timeModel.CurrentSlotInPhase}" +
-                      $"：關閉 Flag「{entry.TargetFlagID}」");
+            if (!entry.FlagState)
+            {
+                _flagModel.RemoveFlag(entry.TargetFlagID);
+                Debug.Log($"[DayTrigger] Day {_timeModel.DayIndex} " +
+                          $"Phase {_timeModel.CurrentPhaseIndex} Slot {_timeModel.CurrentSlotInPhase}" +
+                          $"：關閉 Flag「{entry.TargetFlagID}」");
+            }
+            else
+            {
+                // 將 ScheduleFlagLifetime 對應到 ProgressFlagModel 的 FlagLifetime
+                FlagLifetime lifetime = entry.FlagLifetime switch
+                {
+                    ScheduleFlagLifetime.Persistent => FlagLifetime.Persistent,
+                    ScheduleFlagLifetime.Slot => FlagLifetime.UntilNextSlot,
+                    ScheduleFlagLifetime.Phase => FlagLifetime.UntilNextPhase,
+                    ScheduleFlagLifetime.Day => FlagLifetime.UntilNextDay,
+                    ScheduleFlagLifetime.Temp => FlagLifetime.Scene,
+                    _ => FlagLifetime.Persistent
+                };
+
+                _flagModel.AddFlag(entry.TargetFlagID, lifetime);
+                Debug.Log($"[DayTrigger] Day {_timeModel.DayIndex} " +
+                          $"Phase {_timeModel.CurrentPhaseIndex} Slot {_timeModel.CurrentSlotInPhase}" +
+                          $"：開啟 Flag「{entry.TargetFlagID}」(Lifetime={entry.FlagLifetime})");
+            }
+        }
+
+        // ── 公告（選填，經由 StoryManager → AlertToastManager）─────
+        if (hasAlert)
+        {
+            ShowAlert(entry);
+        }
+    }
+
+    /// <summary>
+    /// 觸發時顯示系統公告（選填；AlertKey 留空則不會走到這裡）。
+    /// 沿用 StoryManager.ShowLocalizedMessage —— 內部會走 AlertToastManager 堆疊公告，
+    /// 找不到管理器時 fallback 回原生 Alert，與 Rules 的達成公告同一套機制。
+    /// </summary>
+    private void ShowAlert(DayTriggerEntry entry)
+    {
+        if (StoryManager.Instance == null)
+        {
+            Debug.LogWarning(
+                $"[DayTrigger]「{entry.EntryName}」想顯示公告「{entry.AlertKey}」，" +
+                "但找不到 StoryManager 實例。");
             return;
         }
 
-        // 將 ScheduleFlagLifetime 對應到 ProgressFlagModel 的 FlagLifetime
-        FlagLifetime lifetime = entry.FlagLifetime switch
-        {
-            ScheduleFlagLifetime.Persistent => FlagLifetime.Persistent,
-            ScheduleFlagLifetime.Slot => FlagLifetime.UntilNextSlot,
-            ScheduleFlagLifetime.Phase => FlagLifetime.UntilNextPhase,
-            ScheduleFlagLifetime.Day => FlagLifetime.UntilNextDay,
-            ScheduleFlagLifetime.Temp => FlagLifetime.Scene,
-            _ => FlagLifetime.Persistent
-        };
-
-        _flagModel.AddFlag(entry.TargetFlagID, lifetime);
-        Debug.Log($"[DayTrigger] Day {_timeModel.DayIndex} " +
-                  $"Phase {_timeModel.CurrentPhaseIndex} Slot {_timeModel.CurrentSlotInPhase}" +
-                  $"：開啟 Flag「{entry.TargetFlagID}」(Lifetime={entry.FlagLifetime})");
+        StoryManager.Instance.ShowLocalizedMessage(entry.AlertKey);
     }
 }
