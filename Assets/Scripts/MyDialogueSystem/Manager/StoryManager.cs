@@ -121,11 +121,13 @@ public class StoryManager : MonoBehaviour
             case DialogueMode.Queue:
                 _conversationQueue.AddLast(new ConversationRequest(title, mode));
                 Debug.Log($"[StoryManager] 已將 {title} 加入隊列尾端。目前隊列總數: {_conversationQueue.Count}");
+                BeginHandoffSuppression(); // 趁 A 還在演、面板還開著時就壓住，避免結束時 dip
                 break;
 
             case DialogueMode.Priority:
                 _conversationQueue.AddFirst(new ConversationRequest(title, mode));
                 Debug.Log($"[StoryManager] 已將 {title} 插隊至隊列最前。目前隊列總數: {_conversationQueue.Count}");
+                BeginHandoffSuppression(); // 趁 A 還在演、面板還開著時就壓住，避免結束時 dip
                 break;
 
             case DialogueMode.Interrupt:
@@ -149,6 +151,7 @@ public class StoryManager : MonoBehaviour
     {
         int count = _conversationQueue.Count;
         _conversationQueue.Clear();
+        EndHandoffSuppression(); // 保底：清隊列後還原抑制，避免 MainPanel 永遠不淡出
         Debug.Log($"[StoryManager] 已清除隊列，共移除 {count} 筆等待中的對話");
     }
 
@@ -398,16 +401,110 @@ public class StoryManager : MonoBehaviour
 
     private System.Collections.IEnumerator QueuedConversationNextFrame()
     {
-        yield return null;
-
-        if (_conversationQueue.Count > 0)
+        // 沒有接力了 → 保底還原抑制（若有），照舊淡入淡出
+        if (_conversationQueue.Count == 0)
         {
-            ConversationRequest next = _conversationQueue.First.Value;
-            _conversationQueue.RemoveFirst();
-            Debug.Log($"[StoryManager] 從隊列啟動 {next.title}");
-            SyncWaitWithCustomDelay();
-            DialogueManager.StartConversation(next.title);
+            EndHandoffSuppression();
+            yield break;
         }
+
+        ConversationRequest next = _conversationQueue.First.Value;
+        _conversationQueue.RemoveFirst();
+        Debug.Log($"[StoryManager] 從隊列啟動 {next.title}");
+
+        yield return null; // 等上一段收乾淨、isConversationActive 變 false
+
+        SyncWaitWithCustomDelay();
+        DialogueManager.StartConversation(next.title);
+
+        yield return null; // 等 B 開好、第一句字幕把內容換上去
+
+        // 隊列還有下一段 → 保持抑制等下一次交接；已空 → 還原
+        if (_conversationQueue.Count == 0)
+        {
+            EndHandoffSuppression();
+        }
+    }
+
+    // ===== 接力無縫抑制（避免 A 結束→B 開始之間 MainPanel / 字幕框 dip）=====
+    // 必須在「A 還在演、面板還開著」時就設好（= 加入隊列的當下）：
+    //   實測 UI 的關閉會在 conversationEnded 事件「之前」就先跑（MainPanel 進入 Closing），
+    //   事後才設 dontDeactivate 已經來不及。所以在 BeginHandoffSuppression 於排隊當下先壓住。
+    private bool _handoffSuppressing = false;
+    private StandardDialogueUI _handoffUI;
+    private bool _handoffRestoreDontDeactivate = false;
+    private readonly System.Collections.Generic.List<StandardUISubtitlePanel> _handoffPanels = new System.Collections.Generic.List<StandardUISubtitlePanel>();
+    private readonly System.Collections.Generic.List<string> _handoffSavedHide = new System.Collections.Generic.List<string>();
+    private readonly System.Collections.Generic.List<string> _handoffSavedShow = new System.Collections.Generic.List<string>();
+    private readonly System.Collections.Generic.List<bool> _handoffSavedDeactivate = new System.Collections.Generic.List<bool>();
+
+    /// <summary>加入隊列（有接力）當下呼叫：壓住 MainPanel 與當下開著的字幕面板，讓 A 結束時不關閉/不淡出。</summary>
+    private void BeginHandoffSuppression()
+    {
+        if (_handoffSuppressing) return; // 已在抑制中（多段連續排隊只需設一次）
+
+        var ui = DialogueManager.dialogueUI as StandardDialogueUI;
+        if (ui == null || ui.conversationUIElements == null) return;
+
+        _handoffUI = ui;
+        _handoffRestoreDontDeactivate = false;
+        _handoffPanels.Clear();
+        _handoffSavedHide.Clear();
+        _handoffSavedShow.Clear();
+        _handoffSavedDeactivate.Clear();
+
+        // MainPanel：結束時不停用/不淡出（dip 的主因就是它）
+        if (!ui.conversationUIElements.dontDeactivateMainPanel)
+        {
+            ui.conversationUIElements.dontDeactivateMainPanel = true;
+            _handoffRestoreDontDeactivate = true;
+        }
+
+        // 當下開著的字幕面板：清 show/hide trigger + 不停用（結束時不淡出、不消失，B 續用同框）
+        var panels = UnityEngine.Object.FindObjectsByType<StandardUISubtitlePanel>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        for (int i = 0; i < panels.Length; i++)
+        {
+            var p = panels[i];
+            if (p == null) continue;
+            if (p.panelState == PixelCrushers.UIPanel.PanelState.Closed && !p.gameObject.activeInHierarchy) continue;
+
+            _handoffPanels.Add(p);
+            _handoffSavedHide.Add(p.hideAnimationTrigger);
+            _handoffSavedShow.Add(p.showAnimationTrigger);
+            _handoffSavedDeactivate.Add(p.deactivateOnHidden);
+
+            p.hideAnimationTrigger = string.Empty;
+            p.showAnimationTrigger = string.Empty;
+            p.deactivateOnHidden = false;
+        }
+
+        _handoffSuppressing = true;
+    }
+
+    /// <summary>接力完成（或隊列清空）後呼叫：還原 MainPanel 與字幕面板設定，恢復正常淡入淡出。</summary>
+    private void EndHandoffSuppression()
+    {
+        if (!_handoffSuppressing) return;
+
+        for (int i = 0; i < _handoffPanels.Count; i++)
+        {
+            if (_handoffPanels[i] == null) continue;
+            _handoffPanels[i].hideAnimationTrigger = _handoffSavedHide[i];
+            _handoffPanels[i].showAnimationTrigger = _handoffSavedShow[i];
+            _handoffPanels[i].deactivateOnHidden = _handoffSavedDeactivate[i];
+        }
+        if (_handoffRestoreDontDeactivate && _handoffUI != null && _handoffUI.conversationUIElements != null)
+        {
+            _handoffUI.conversationUIElements.dontDeactivateMainPanel = false;
+        }
+
+        _handoffPanels.Clear();
+        _handoffSavedHide.Clear();
+        _handoffSavedShow.Clear();
+        _handoffSavedDeactivate.Clear();
+        _handoffUI = null;
+        _handoffRestoreDontDeactivate = false;
+        _handoffSuppressing = false;
     }
 
     #region ====== 系統公告 (Alert) ======
