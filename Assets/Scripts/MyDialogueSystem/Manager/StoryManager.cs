@@ -417,9 +417,10 @@ public class StoryManager : MonoBehaviour
         SyncWaitWithCustomDelay();
         DialogueManager.StartConversation(next.title);
 
-        yield return null; // 等 B 開好、第一句字幕把內容換上去
-
-        // 隊列還有下一段 → 保持抑制等下一次交接；已空 → 還原
+        // B 已啟動（面板已在 StartConversation 內同步開好、且用的是清空的 trigger 不會淡入）。
+        // 立刻還原，讓 B 自己的生命週期（含很短就結束的對話，如 Adv/Card/END）能正常關閉，
+        // 不可再等一幀，否則 B 若在還原前就結束，它的關閉會被壓住 → 對話框卡住不消失。
+        // 隊列還有下一段 → 保持抑制等下一次交接；已空 → 還原。
         if (_conversationQueue.Count == 0)
         {
             EndHandoffSuppression();
