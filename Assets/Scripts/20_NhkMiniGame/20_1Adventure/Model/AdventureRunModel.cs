@@ -53,12 +53,15 @@ public class AdventureRunModel
     // 翻牌期間的暫存（跨兩階段）
     private List<AdventureChangeRecord> _pendingAlwaysChanges;
 
+    // 本輪已抽過的特色牌（給 Dungeon.NoRepeatSpecialInRun 用）
+    private readonly HashSet<AdventureCardData> _drawnSpecials = new HashSet<AdventureCardData>();
+
     // ───── 事件（給 Controller / UI / FSM 掛） ─────
     public event Action<AdventureCardData> OnCardDrawn;
     public event Action<List<AdventureChangeRecord>> OnAlwaysEffectsApplied; // 階段①完成
     public event Action<AdventureFlipResult> OnFlipResolved;                 // 階段②完成
-    public event Action<int> OnMovesChanged;   // 剩餘行動次數
-    public event Action OnMovesExhausted;      // 剩餘行動次數剛歸 0（由正數變 0 時觸發一次）
+    public event Action<int> OnMovesChanged;   // 剩餘行動次數改變（只由 AddMoves 造成，時機由外部控制）
+    public event Action OnMovesExhausted;      // 剩餘行動次數剛歸 0（由正數變 0 時觸發一次；因為只有 AddMoves 會動它，所以時機＝外部扣到 0 的那刻）
     public event Action<AdventureEndReason> OnRunEnded;
 
     public AdventureRunModel(ProtagonistStatusModel protagonist,
@@ -85,6 +88,7 @@ public class AdventureRunModel
         ActionsTaken = 0;
         SpecialHappened = false;
         LastDrawWasSpecial = false;
+        _drawnSpecials.Clear();
         CurrentCard = null;
         IsEnded = false;
         _pendingAlwaysChanges = null;
@@ -126,12 +130,22 @@ public class AdventureRunModel
         bool wantSpecial = Dungeon.HasSpecialCards
                         && UnityEngine.Random.Range(0f, 100f) < specialChance;
 
-        AdventureCardData card = wantSpecial ? Dungeon.PickRandomSpecial() : Dungeon.PickRandomNormal();
-
-        // 特色池抽空 → 退回普通
-        if (card == null && wantSpecial)
+        AdventureCardData card;
+        if (wantSpecial)
         {
-            wantSpecial = false;
+            // 本輪不重複 → 排除已抽過的特色牌
+            var exclude = Dungeon.NoRepeatSpecialInRun ? _drawnSpecials : null;
+            card = Dungeon.PickRandomSpecial(exclude);
+
+            // 特色池抽空（或不重複下全出過了）→ 退回普通
+            if (card == null)
+            {
+                wantSpecial = false;
+                card = Dungeon.PickRandomNormal();
+            }
+        }
+        else
+        {
             card = Dungeon.PickRandomNormal();
         }
 
@@ -142,15 +156,19 @@ public class AdventureRunModel
         }
 
         LastDrawWasSpecial = wantSpecial;
-        if (wantSpecial) SpecialHappened = true;
+        if (wantSpecial)
+        {
+            SpecialHappened = true;
+            _drawnSpecials.Add(card);
+        }
 
-        ConsumeOneAction();
+        ActionsTaken++; // 只推進「第幾次散步」（給機率表用）；Moves 由外部在對話裡自己扣
         return SetDrawnCard(card);
     }
 
     /// <summary>
     /// 直接發一張「指定的」牌（略過牌池抽選），用於劇情腳本強制指定某張牌。
-    /// 一樣算一次行動（ActionsTaken +1、MovesRemaining -1）。
+    /// 一樣推進「第幾次散步」（ActionsTaken +1），但不動 Moves（Moves 由外部在對話裡扣）。
     /// 不受行動次數用完限制（劇情可強制發），但一樣會丟棄上一張未結算的結果、發 OnCardDrawn。
     /// 註：不改動 SpecialHappened / LastDrawWasSpecial（那是隨機抽牌的狀態）。
     /// </summary>
@@ -163,7 +181,7 @@ public class AdventureRunModel
             return null;
         }
 
-        ConsumeOneAction();
+        ActionsTaken++;
         return SetDrawnCard(card);
     }
 
@@ -288,25 +306,14 @@ public class AdventureRunModel
     // ============================================================
 
     /// <summary>
-    /// 額外變更行動次數（AdvMovesEffect 或外部呼叫）。負數＝消耗、正數＝補充。
-    /// 這是「抽牌自動 -1」之外的額外調整。次數不會低於 0；歸 0 不會自動結束（發 OnMovesExhausted 讓外部決定反應）。
+    /// 變更行動次數（AdvMovesEffect 或對話 Adventure(AddMoves) / Adventure(SpendMove) 呼叫）。負數＝消耗、正數＝補充。
+    /// 抽牌本身「不」會動 Moves —— 什麼時候扣完全由外部（對話）控制。
+    /// 次數不會低於 0；由正數扣到 0 時發 OnMovesExhausted（時機＝外部扣到 0 的那刻），但不會自動結束大冒險。
     /// </summary>
     public void AddMoves(int delta)
     {
         if (delta == 0) return;
-        AdjustMoves(delta);
-    }
 
-    /// <summary>抽一張牌 = 散步一次：已散步 +1、剩餘行動 -1。</summary>
-    private void ConsumeOneAction()
-    {
-        ActionsTaken++;
-        AdjustMoves(-1);
-    }
-
-    /// <summary>調整剩餘行動次數並發事件（clamp ≥ 0；由正數變 0 時額外發 OnMovesExhausted）。</summary>
-    private void AdjustMoves(int delta)
-    {
         int before = MovesRemaining;
         MovesRemaining = Mathf.Max(0, MovesRemaining + delta);
 

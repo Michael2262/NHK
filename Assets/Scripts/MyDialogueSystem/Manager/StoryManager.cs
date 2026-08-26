@@ -427,19 +427,17 @@ public class StoryManager : MonoBehaviour
         }
     }
 
-    // ===== 接力無縫抑制（避免 A 結束→B 開始之間 MainPanel / 字幕框 dip）=====
-    // 必須在「A 還在演、面板還開著」時就設好（= 加入隊列的當下）：
-    //   實測 UI 的關閉會在 conversationEnded 事件「之前」就先跑（MainPanel 進入 Closing），
-    //   事後才設 dontDeactivate 已經來不及。所以在 BeginHandoffSuppression 於排隊當下先壓住。
+    // ===== 接力無縫抑制（避免 A 結束→B 開始之間 MainPanel dip）=====
+    // 只處理 MainPanel（dontDeactivateMainPanel），這是乾淨、無副作用的做法：
+    //   - 有指定 MainPanel 時：A 結束不關 MainPanel（它整段本來就開著、看不到），B 續用，不 dip。
+    //   - 沒指定 MainPanel 時：mainPanel 為 null，設這個 bool 完全 inert，字幕面板照常關閉，不會卡住。
+    // 注意：不要去改「字幕面板」的 trigger / deactivateOnHidden —— 抑制從「排隊」持續到 A 結束，
+    //       而排隊是發生在 A 中途，會壓到 A 後半段的換面板 / 選單，導致字幕框卡住不消失（已踩過坑）。
     private bool _handoffSuppressing = false;
     private StandardDialogueUI _handoffUI;
     private bool _handoffRestoreDontDeactivate = false;
-    private readonly System.Collections.Generic.List<StandardUISubtitlePanel> _handoffPanels = new System.Collections.Generic.List<StandardUISubtitlePanel>();
-    private readonly System.Collections.Generic.List<string> _handoffSavedHide = new System.Collections.Generic.List<string>();
-    private readonly System.Collections.Generic.List<string> _handoffSavedShow = new System.Collections.Generic.List<string>();
-    private readonly System.Collections.Generic.List<bool> _handoffSavedDeactivate = new System.Collections.Generic.List<bool>();
 
-    /// <summary>加入隊列（有接力）當下呼叫：壓住 MainPanel 與當下開著的字幕面板，讓 A 結束時不關閉/不淡出。</summary>
+    /// <summary>加入隊列（有接力）當下呼叫：讓 A 結束時不關閉 MainPanel，B 續用不 dip。</summary>
     private void BeginHandoffSuppression()
     {
         if (_handoffSuppressing) return; // 已在抑制中（多段連續排隊只需設一次）
@@ -449,60 +447,26 @@ public class StoryManager : MonoBehaviour
 
         _handoffUI = ui;
         _handoffRestoreDontDeactivate = false;
-        _handoffPanels.Clear();
-        _handoffSavedHide.Clear();
-        _handoffSavedShow.Clear();
-        _handoffSavedDeactivate.Clear();
 
-        // MainPanel：結束時不停用/不淡出（dip 的主因就是它）
         if (!ui.conversationUIElements.dontDeactivateMainPanel)
         {
             ui.conversationUIElements.dontDeactivateMainPanel = true;
             _handoffRestoreDontDeactivate = true;
         }
 
-        // 當下開著的字幕面板：清 show/hide trigger + 不停用（結束時不淡出、不消失，B 續用同框）
-        var panels = UnityEngine.Object.FindObjectsByType<StandardUISubtitlePanel>(FindObjectsInactive.Include, FindObjectsSortMode.None);
-        for (int i = 0; i < panels.Length; i++)
-        {
-            var p = panels[i];
-            if (p == null) continue;
-            if (p.panelState == PixelCrushers.UIPanel.PanelState.Closed && !p.gameObject.activeInHierarchy) continue;
-
-            _handoffPanels.Add(p);
-            _handoffSavedHide.Add(p.hideAnimationTrigger);
-            _handoffSavedShow.Add(p.showAnimationTrigger);
-            _handoffSavedDeactivate.Add(p.deactivateOnHidden);
-
-            p.hideAnimationTrigger = string.Empty;
-            p.showAnimationTrigger = string.Empty;
-            p.deactivateOnHidden = false;
-        }
-
         _handoffSuppressing = true;
     }
 
-    /// <summary>接力完成（或隊列清空）後呼叫：還原 MainPanel 與字幕面板設定，恢復正常淡入淡出。</summary>
+    /// <summary>接力完成（或隊列清空）後呼叫：還原 MainPanel 設定。</summary>
     private void EndHandoffSuppression()
     {
         if (!_handoffSuppressing) return;
 
-        for (int i = 0; i < _handoffPanels.Count; i++)
-        {
-            if (_handoffPanels[i] == null) continue;
-            _handoffPanels[i].hideAnimationTrigger = _handoffSavedHide[i];
-            _handoffPanels[i].showAnimationTrigger = _handoffSavedShow[i];
-            _handoffPanels[i].deactivateOnHidden = _handoffSavedDeactivate[i];
-        }
         if (_handoffRestoreDontDeactivate && _handoffUI != null && _handoffUI.conversationUIElements != null)
         {
             _handoffUI.conversationUIElements.dontDeactivateMainPanel = false;
         }
 
-        _handoffPanels.Clear();
-        _handoffSavedHide.Clear();
-        _handoffSavedShow.Clear();
-        _handoffSavedDeactivate.Clear();
         _handoffUI = null;
         _handoffRestoreDontDeactivate = false;
         _handoffSuppressing = false;

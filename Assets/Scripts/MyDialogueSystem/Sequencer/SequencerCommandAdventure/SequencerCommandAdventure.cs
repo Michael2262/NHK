@@ -19,7 +19,8 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
     ///   Adventure(Start, CStore)         -> 用 Dungeon ID 開始一趟（查 Controller 上的 Database）
     ///   Adventure(Start)                 -> 沒帶 ID 時用 Controller 的預設地點開始
     ///   Adventure(GoHome)                -> 回家，結束這趟
-    ///   Adventure(AddMoves, -1)          -> 行動次數變化（不帶參數預設 -1 消耗一次；正數補充）
+    ///   Adventure(SpendMove)             -> 消耗一次行動（= AddMoves,-1）。扣到 0 會自動發 onMovesExhausted，時機＝你呼叫這行的當下
+    ///   Adventure(AddMoves, -1)          -> 行動次數變化（不帶參數預設 -1；正數補充）
     ///   Adventure(ResetMoves)            -> 行動次數重設為 Dungeon 的上限
     /// </summary>
     public class SequencerCommandAdventure : SequencerCommand
@@ -85,6 +86,10 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
                     controller.AddMoves(amount);
                 }
             }
+            else if (IsAction(action, "SpendMove", "UseMove"))
+            {
+                if (RequireController(action, out var controller)) controller.AddMoves(-1);
+            }
             else if (IsAction(action, "ResetMoves"))
             {
                 if (RequireController(action, out var controller)) controller.ResetMoves();
@@ -92,7 +97,7 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
             else
             {
                 Debug.LogWarning($"[Adventure] 未知的動作類型: {action}。可用選項: " +
-                                 "Dismiss, Draw, DrawByID, Challenge, Start, GoHome, AddMoves, ResetMoves。");
+                                 "Dismiss, Draw, DrawByID, Challenge, Start, GoHome, SpendMove, AddMoves, ResetMoves。");
             }
 
             Stop();

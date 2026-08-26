@@ -41,6 +41,10 @@ public class AdventureDungeonData : ScriptableObject
     [Tooltip("勾選：一趟只要出過一次特色事件，之後的散步就 100% 普通")]
     public bool SpecialOnlyOncePerRun = true;
 
+    [Tooltip("勾選：本輪不會抽到重複的特色牌（同一趟每張特色牌最多出一次）。\n" +
+             "若特色牌全出過了還骰到特色，會退回抽普通牌")]
+    public bool NoRepeatSpecialInRun = false;
+
     /// <summary>是否已通關（依 ClearedFlag 是否存在於進度旗標）。</summary>
     public bool IsCleared
     {
@@ -65,17 +69,21 @@ public class AdventureDungeonData : ScriptableObject
     }
 
     /// <summary>從普通事件牌池隨機抽一張（無有效牌回傳 null）。</summary>
-    public AdventureCardData PickRandomNormal() => PickRandom(NormalCards);
+    public AdventureCardData PickRandomNormal() => PickRandom(NormalCards, null);
 
-    /// <summary>從特色事件牌池隨機抽一張（無有效牌回傳 null）。</summary>
-    public AdventureCardData PickRandomSpecial() => PickRandom(SpecialCards);
+    /// <summary>
+    /// 從特色事件牌池隨機抽一張（無有效牌回傳 null）。
+    /// exclude 內的牌會被排除（給「本輪不重複」用）。
+    /// </summary>
+    public AdventureCardData PickRandomSpecial(ICollection<AdventureCardData> exclude = null)
+        => PickRandom(SpecialCards, exclude);
 
-    private static AdventureCardData PickRandom(List<AdventureCardData> pool)
+    private static AdventureCardData PickRandom(List<AdventureCardData> pool, ICollection<AdventureCardData> exclude)
     {
         if (pool == null || pool.Count == 0) return null;
 
-        // 過濾 null 後等機率隨機
-        var valid = pool.FindAll(c => c != null);
+        // 過濾 null 與被排除的牌後等機率隨機
+        var valid = pool.FindAll(c => c != null && (exclude == null || !exclude.Contains(c)));
         if (valid.Count == 0) return null;
         return valid[Random.Range(0, valid.Count)];
     }

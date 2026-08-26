@@ -291,6 +291,79 @@ MonoBehaviour:
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
   m_LayoutPriority: 1
+--- !u!1 &642939642757893096
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 627864487566047705}
+  - component: {fileID: 1994547542113706992}
+  m_Layer: 5
+  m_Name: 'Main Panel '
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &627864487566047705
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 642939642757893096}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 5042649819248884647}
+  - {fileID: 946663955671338087}
+  - {fileID: 691688241262619219}
+  - {fileID: 7473723206700171063}
+  m_Father: {fileID: 1957427153141589253}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 100, y: 100}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1994547542113706992
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 642939642757893096}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 77c812308255e374f83c1e475bc0c826, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  firstSelected: {fileID: 0}
+  focusCheckFrequency: 0.2
+  refreshSelectablesFrequency: 0
+  selectPreviousOnDisable: 0
+  showAnimationTrigger: Show
+  hideAnimationTrigger: Hide
+  startState: 0
+  waitForShowAnimationToSetOpen: 0
+  m_deactivateOnHidden: 1
+  onOpen:
+    m_PersistentCalls:
+      m_Calls: []
+  onClose:
+    m_PersistentCalls:
+      m_Calls: []
+  onClosed:
+    m_PersistentCalls:
+      m_Calls: []
+  onBackButtonDown:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &654339965968263889
 GameObject:
   m_ObjectHideFlags: 0
@@ -1263,7 +1336,6 @@ GameObject:
   m_Component:
   - component: {fileID: 634427831556776847}
   - component: {fileID: 2262232718746044958}
-  - component: {fileID: 8453093210730580847}
   m_Layer: 5
   m_Name: Basic Subtitle Panel
   m_TagString: Untagged
@@ -1308,80 +1380,6 @@ MonoBehaviour:
   scrollbar: {fileID: 0}
   smoothScroll: 0
   smoothScrollSpeed: 5
---- !u!114 &8453093210730580847
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1720017405364543628}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1a8d5eca422b0e940b8c4b39569ebfb3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PixelCrushers.DialogueSystem.NarrationSubtitlePanel
-  firstSelected: {fileID: 0}
-  focusCheckFrequency: 0.2
-  refreshSelectablesFrequency: 0
-  selectPreviousOnDisable: 1
-  showAnimationTrigger: Show
-  hideAnimationTrigger: Hide
-  startState: 0
-  waitForShowAnimationToSetOpen: 0
-  m_deactivateOnHidden: 1
-  onOpen:
-    m_PersistentCalls:
-      m_Calls: []
-  onClose:
-    m_PersistentCalls:
-      m_Calls: []
-  onClosed:
-    m_PersistentCalls:
-      m_Calls: []
-  onBackButtonDown:
-    m_PersistentCalls:
-      m_Calls: []
-  panel: {fileID: 5042649819248884647}
-  portraitImage: {fileID: 0}
-  portraitName:
-    m_uiText: {fileID: 4782615826724813821}
-    m_textMeshProUGUI: {fileID: 0}
-  subtitleText:
-    m_uiText: {fileID: 4223373437007783140}
-    m_textMeshProUGUI: {fileID: 0}
-  addSpeakerName: 0
-  addSpeakerNameFormat: '{0}: {1}'
-  accumulateText: 0
-  maxLines: 100
-  delayTypewriterUntilOpen: 0
-  continueButton: {fileID: 8726924957984932078}
-  blockInputDuration: 0
-  visibility: 1
-  focusAnimationTrigger: 
-  unfocusAnimationTrigger: 
-  onlyShowNPCPortraits: 0
-  useAnimatedPortraits: 0
-  usePortraitNativeSize: 0
-  waitForOpen: 0
-  waitForClose: 0
-  clearTextOnClose: 1
-  clearTextOnConversationStart: 0
-  scrollbarEnabler: {fileID: 0}
-  onFocus:
-    m_PersistentCalls:
-      m_Calls: []
-  onUnfocus:
-    m_PersistentCalls:
-      m_Calls: []
-  m_hasFocus: 1
-  m_isFocusing: 1
-  m_actorOverridingPanel: {fileID: 0}
-  narrationText:
-    m_uiText: {fileID: 3118828463682718951}
-    m_textMeshProUGUI: {fileID: 0}
-  narrationContainer: {fileID: 4152853996448110292}
-  narrationFieldName: Narration
-  narrationFlagFieldName: NarrationFlag
 --- !u!1 &1746499302394783067
 GameObject:
   m_ObjectHideFlags: 0
@@ -2316,10 +2314,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 5042649819248884647}
-  - {fileID: 946663955671338087}
-  - {fileID: 691688241262619219}
-  - {fileID: 7473723206700171063}
+  - {fileID: 627864487566047705}
   - {fileID: 2416294874445256250}
   - {fileID: 7430554335600719000}
   - {fileID: 7956105664316753414}
@@ -2352,16 +2347,16 @@ MonoBehaviour:
     waitForHideAnimation: 1
     allowForceImmediate: 1
   conversationUIElements:
-    mainPanel: {fileID: 3817404663200750120}
+    mainPanel: {fileID: 1994547542113706992}
     dontDeactivateMainPanel: 0
     waitForMainPanelOpen: 0
     subtitlePanels:
-    - {fileID: 8453093210730580847}
-    - {fileID: 7021585257896211342}
-    - {fileID: 4306253415964862475}
-    - {fileID: 7641742322555925678}
-    defaultNPCSubtitlePanel: {fileID: 0}
-    defaultPCSubtitlePanel: {fileID: 0}
+    - {fileID: 2595439750624448470}
+    - {fileID: 1626995789316863719}
+    - {fileID: 4576631533068561018}
+    - {fileID: 9151733016599341287}
+    defaultNPCSubtitlePanel: {fileID: 2595439750624448470}
+    defaultPCSubtitlePanel: {fileID: 2595439750624448470}
     allowOpenSubtitlePanelsOnStartConversation: 0
     allowDialogueActorCustomPanels: 1
     menuPanels:
@@ -3713,6 +3708,7 @@ GameObject:
   - component: {fileID: 4451910982799716621}
   - component: {fileID: 8258103552484617088}
   - component: {fileID: 279296506516024409}
+  - component: {fileID: 9151733016599341287}
   m_Layer: 5
   m_Name: Black Dialogue Panel
   m_TagString: Untagged
@@ -3727,7 +3723,7 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3427943849342684070}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -3735,12 +3731,12 @@ RectTransform:
   - {fileID: 6827161962627046344}
   - {fileID: 636670984416646994}
   - {fileID: 8533304959425210752}
-  m_Father: {fileID: 1957427153141589253}
+  m_Father: {fileID: 627864487566047705}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_SizeDelta: {x: 966.66675, y: 500}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1106722006652478715
 CanvasRenderer:
@@ -3834,6 +3830,80 @@ MonoBehaviour:
   scrollbar: {fileID: 0}
   smoothScroll: 0
   smoothScrollSpeed: 5
+--- !u!114 &9151733016599341287
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3427943849342684070}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1a8d5eca422b0e940b8c4b39569ebfb3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PixelCrushers.DialogueSystem.NarrationSubtitlePanel
+  firstSelected: {fileID: 0}
+  focusCheckFrequency: 0.2
+  refreshSelectablesFrequency: 0
+  selectPreviousOnDisable: 1
+  showAnimationTrigger: Show
+  hideAnimationTrigger: Hide
+  startState: 0
+  waitForShowAnimationToSetOpen: 0
+  m_deactivateOnHidden: 1
+  onOpen:
+    m_PersistentCalls:
+      m_Calls: []
+  onClose:
+    m_PersistentCalls:
+      m_Calls: []
+  onClosed:
+    m_PersistentCalls:
+      m_Calls: []
+  onBackButtonDown:
+    m_PersistentCalls:
+      m_Calls: []
+  panel: {fileID: 7473723206700171063}
+  portraitImage: {fileID: 0}
+  portraitName:
+    m_uiText: {fileID: 8593385770789502210}
+    m_textMeshProUGUI: {fileID: 0}
+  subtitleText:
+    m_uiText: {fileID: 4805796137642472205}
+    m_textMeshProUGUI: {fileID: 0}
+  addSpeakerName: 0
+  addSpeakerNameFormat: '{0}: {1}'
+  accumulateText: 0
+  maxLines: 100
+  delayTypewriterUntilOpen: 0
+  continueButton: {fileID: 6431263107555257971}
+  blockInputDuration: 0
+  visibility: 1
+  focusAnimationTrigger: 
+  unfocusAnimationTrigger: 
+  onlyShowNPCPortraits: 0
+  useAnimatedPortraits: 0
+  usePortraitNativeSize: 0
+  waitForOpen: 0
+  waitForClose: 0
+  clearTextOnClose: 1
+  clearTextOnConversationStart: 0
+  scrollbarEnabler: {fileID: 0}
+  onFocus:
+    m_PersistentCalls:
+      m_Calls: []
+  onUnfocus:
+    m_PersistentCalls:
+      m_Calls: []
+  m_hasFocus: 1
+  m_isFocusing: 1
+  m_actorOverridingPanel: {fileID: 0}
+  narrationText:
+    m_uiText: {fileID: 0}
+    m_textMeshProUGUI: {fileID: 0}
+  narrationContainer: {fileID: 0}
+  narrationFieldName: Narration
+  narrationFlagFieldName: NarrationFlag
 --- !u!1 &3514539160808077596
 GameObject:
   m_ObjectHideFlags: 0
@@ -4408,7 +4478,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5941454675948981926}
-  - component: {fileID: 7641742322555925678}
   m_Layer: 5
   m_Name: Black Subtitle Panel
   m_TagString: Untagged
@@ -4436,80 +4505,6 @@ RectTransform:
   m_AnchoredPosition: {x: 7.1689453, y: 0}
   m_SizeDelta: {x: -40.3377, y: -26}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &7641742322555925678
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4136588771037702699}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1a8d5eca422b0e940b8c4b39569ebfb3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PixelCrushers.DialogueSystem.NarrationSubtitlePanel
-  firstSelected: {fileID: 0}
-  focusCheckFrequency: 0.2
-  refreshSelectablesFrequency: 0
-  selectPreviousOnDisable: 1
-  showAnimationTrigger: Show
-  hideAnimationTrigger: Hide
-  startState: 0
-  waitForShowAnimationToSetOpen: 0
-  m_deactivateOnHidden: 1
-  onOpen:
-    m_PersistentCalls:
-      m_Calls: []
-  onClose:
-    m_PersistentCalls:
-      m_Calls: []
-  onClosed:
-    m_PersistentCalls:
-      m_Calls: []
-  onBackButtonDown:
-    m_PersistentCalls:
-      m_Calls: []
-  panel: {fileID: 7473723206700171063}
-  portraitImage: {fileID: 0}
-  portraitName:
-    m_uiText: {fileID: 8593385770789502210}
-    m_textMeshProUGUI: {fileID: 0}
-  subtitleText:
-    m_uiText: {fileID: 4805796137642472205}
-    m_textMeshProUGUI: {fileID: 0}
-  addSpeakerName: 0
-  addSpeakerNameFormat: '{0}: {1}'
-  accumulateText: 0
-  maxLines: 100
-  delayTypewriterUntilOpen: 0
-  continueButton: {fileID: 6431263107555257971}
-  blockInputDuration: 0
-  visibility: 1
-  focusAnimationTrigger: 
-  unfocusAnimationTrigger: 
-  onlyShowNPCPortraits: 0
-  useAnimatedPortraits: 0
-  usePortraitNativeSize: 0
-  waitForOpen: 0
-  waitForClose: 0
-  clearTextOnClose: 1
-  clearTextOnConversationStart: 0
-  scrollbarEnabler: {fileID: 0}
-  onFocus:
-    m_PersistentCalls:
-      m_Calls: []
-  onUnfocus:
-    m_PersistentCalls:
-      m_Calls: []
-  m_hasFocus: 1
-  m_isFocusing: 1
-  m_actorOverridingPanel: {fileID: 0}
-  narrationText:
-    m_uiText: {fileID: 0}
-    m_textMeshProUGUI: {fileID: 0}
-  narrationContainer: {fileID: 0}
-  narrationFieldName: Narration
-  narrationFlagFieldName: NarrationFlag
 --- !u!1 &4152853996448110292
 GameObject:
   m_ObjectHideFlags: 0
@@ -5645,7 +5640,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8592977319598299012}
-  - component: {fileID: 4306253415964862475}
   m_Layer: 5
   m_Name: Empty Subtitle Panel
   m_TagString: Untagged
@@ -5673,80 +5667,6 @@ RectTransform:
   m_AnchoredPosition: {x: 7.1689453, y: 0}
   m_SizeDelta: {x: -40.3377, y: -26}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &4306253415964862475
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4905091081191612315}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1a8d5eca422b0e940b8c4b39569ebfb3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PixelCrushers.DialogueSystem.NarrationSubtitlePanel
-  firstSelected: {fileID: 0}
-  focusCheckFrequency: 0.2
-  refreshSelectablesFrequency: 0
-  selectPreviousOnDisable: 1
-  showAnimationTrigger: Show
-  hideAnimationTrigger: Hide
-  startState: 0
-  waitForShowAnimationToSetOpen: 0
-  m_deactivateOnHidden: 1
-  onOpen:
-    m_PersistentCalls:
-      m_Calls: []
-  onClose:
-    m_PersistentCalls:
-      m_Calls: []
-  onClosed:
-    m_PersistentCalls:
-      m_Calls: []
-  onBackButtonDown:
-    m_PersistentCalls:
-      m_Calls: []
-  panel: {fileID: 691688241262619219}
-  portraitImage: {fileID: 0}
-  portraitName:
-    m_uiText: {fileID: 3567640810577152664}
-    m_textMeshProUGUI: {fileID: 0}
-  subtitleText:
-    m_uiText: {fileID: 3438639476012941895}
-    m_textMeshProUGUI: {fileID: 0}
-  addSpeakerName: 0
-  addSpeakerNameFormat: '{0}: {1}'
-  accumulateText: 0
-  maxLines: 100
-  delayTypewriterUntilOpen: 0
-  continueButton: {fileID: 2688233078286062948}
-  blockInputDuration: 0
-  visibility: 1
-  focusAnimationTrigger: 
-  unfocusAnimationTrigger: 
-  onlyShowNPCPortraits: 0
-  useAnimatedPortraits: 0
-  usePortraitNativeSize: 0
-  waitForOpen: 0
-  waitForClose: 0
-  clearTextOnClose: 1
-  clearTextOnConversationStart: 0
-  scrollbarEnabler: {fileID: 0}
-  onFocus:
-    m_PersistentCalls:
-      m_Calls: []
-  onUnfocus:
-    m_PersistentCalls:
-      m_Calls: []
-  m_hasFocus: 1
-  m_isFocusing: 1
-  m_actorOverridingPanel: {fileID: 0}
-  narrationText:
-    m_uiText: {fileID: 0}
-    m_textMeshProUGUI: {fileID: 0}
-  narrationContainer: {fileID: 0}
-  narrationFieldName: Narration
-  narrationFlagFieldName: NarrationFlag
 --- !u!1 &4907534016589907503
 GameObject:
   m_ObjectHideFlags: 0
@@ -5996,7 +5916,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6277825816706820922}
-  - component: {fileID: 7021585257896211342}
   m_Layer: 5
   m_Name: Angry Subtitle Panel
   m_TagString: Untagged
@@ -6024,80 +5943,6 @@ RectTransform:
   m_AnchoredPosition: {x: 7.1689453, y: 0}
   m_SizeDelta: {x: -40.3377, y: -26}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &7021585257896211342
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5325003529257546047}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1a8d5eca422b0e940b8c4b39569ebfb3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PixelCrushers.DialogueSystem.NarrationSubtitlePanel
-  firstSelected: {fileID: 0}
-  focusCheckFrequency: 0.2
-  refreshSelectablesFrequency: 0
-  selectPreviousOnDisable: 1
-  showAnimationTrigger: Show
-  hideAnimationTrigger: Hide
-  startState: 0
-  waitForShowAnimationToSetOpen: 0
-  m_deactivateOnHidden: 1
-  onOpen:
-    m_PersistentCalls:
-      m_Calls: []
-  onClose:
-    m_PersistentCalls:
-      m_Calls: []
-  onClosed:
-    m_PersistentCalls:
-      m_Calls: []
-  onBackButtonDown:
-    m_PersistentCalls:
-      m_Calls: []
-  panel: {fileID: 946663955671338087}
-  portraitImage: {fileID: 0}
-  portraitName:
-    m_uiText: {fileID: 2581453729253079784}
-    m_textMeshProUGUI: {fileID: 0}
-  subtitleText:
-    m_uiText: {fileID: 3950864508941064606}
-    m_textMeshProUGUI: {fileID: 0}
-  addSpeakerName: 0
-  addSpeakerNameFormat: '{0}: {1}'
-  accumulateText: 0
-  maxLines: 100
-  delayTypewriterUntilOpen: 0
-  continueButton: {fileID: 7291431277081715816}
-  blockInputDuration: 0
-  visibility: 1
-  focusAnimationTrigger: 
-  unfocusAnimationTrigger: 
-  onlyShowNPCPortraits: 0
-  useAnimatedPortraits: 0
-  usePortraitNativeSize: 0
-  waitForOpen: 0
-  waitForClose: 0
-  clearTextOnClose: 1
-  clearTextOnConversationStart: 0
-  scrollbarEnabler: {fileID: 0}
-  onFocus:
-    m_PersistentCalls:
-      m_Calls: []
-  onUnfocus:
-    m_PersistentCalls:
-      m_Calls: []
-  m_hasFocus: 1
-  m_isFocusing: 1
-  m_actorOverridingPanel: {fileID: 0}
-  narrationText:
-    m_uiText: {fileID: 0}
-    m_textMeshProUGUI: {fileID: 0}
-  narrationContainer: {fileID: 0}
-  narrationFieldName: Narration
-  narrationFlagFieldName: NarrationFlag
 --- !u!1 &5469535036538178614
 GameObject:
   m_ObjectHideFlags: 0
@@ -6112,6 +5957,7 @@ GameObject:
   - component: {fileID: 3442756401197733963}
   - component: {fileID: 1088072248908673050}
   - component: {fileID: 1764623717490750767}
+  - component: {fileID: 4576631533068561018}
   m_Layer: 5
   m_Name: Empty Dialogue Panel
   m_TagString: Untagged
@@ -6126,7 +5972,7 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5469535036538178614}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -6134,12 +5980,12 @@ RectTransform:
   - {fileID: 340494808436955404}
   - {fileID: 4565133193767765948}
   - {fileID: 3626526347128421080}
-  m_Father: {fileID: 1957427153141589253}
+  m_Father: {fileID: 627864487566047705}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_SizeDelta: {x: 966.66675, y: 500}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &2115883279488174016
 CanvasRenderer:
@@ -6233,6 +6079,80 @@ MonoBehaviour:
   scrollbar: {fileID: 0}
   smoothScroll: 0
   smoothScrollSpeed: 5
+--- !u!114 &4576631533068561018
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5469535036538178614}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1a8d5eca422b0e940b8c4b39569ebfb3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PixelCrushers.DialogueSystem.NarrationSubtitlePanel
+  firstSelected: {fileID: 0}
+  focusCheckFrequency: 0.2
+  refreshSelectablesFrequency: 0
+  selectPreviousOnDisable: 1
+  showAnimationTrigger: Show
+  hideAnimationTrigger: Hide
+  startState: 0
+  waitForShowAnimationToSetOpen: 0
+  m_deactivateOnHidden: 1
+  onOpen:
+    m_PersistentCalls:
+      m_Calls: []
+  onClose:
+    m_PersistentCalls:
+      m_Calls: []
+  onClosed:
+    m_PersistentCalls:
+      m_Calls: []
+  onBackButtonDown:
+    m_PersistentCalls:
+      m_Calls: []
+  panel: {fileID: 691688241262619219}
+  portraitImage: {fileID: 0}
+  portraitName:
+    m_uiText: {fileID: 3567640810577152664}
+    m_textMeshProUGUI: {fileID: 0}
+  subtitleText:
+    m_uiText: {fileID: 3438639476012941895}
+    m_textMeshProUGUI: {fileID: 0}
+  addSpeakerName: 0
+  addSpeakerNameFormat: '{0}: {1}'
+  accumulateText: 0
+  maxLines: 100
+  delayTypewriterUntilOpen: 0
+  continueButton: {fileID: 2688233078286062948}
+  blockInputDuration: 0
+  visibility: 1
+  focusAnimationTrigger: 
+  unfocusAnimationTrigger: 
+  onlyShowNPCPortraits: 0
+  useAnimatedPortraits: 0
+  usePortraitNativeSize: 0
+  waitForOpen: 0
+  waitForClose: 0
+  clearTextOnClose: 1
+  clearTextOnConversationStart: 0
+  scrollbarEnabler: {fileID: 0}
+  onFocus:
+    m_PersistentCalls:
+      m_Calls: []
+  onUnfocus:
+    m_PersistentCalls:
+      m_Calls: []
+  m_hasFocus: 1
+  m_isFocusing: 1
+  m_actorOverridingPanel: {fileID: 0}
+  narrationText:
+    m_uiText: {fileID: 0}
+    m_textMeshProUGUI: {fileID: 0}
+  narrationContainer: {fileID: 0}
+  narrationFieldName: Narration
+  narrationFlagFieldName: NarrationFlag
 --- !u!1 &5560155976545028712
 GameObject:
   m_ObjectHideFlags: 0
@@ -8452,6 +8372,7 @@ GameObject:
   - component: {fileID: 4853365002801024815}
   - component: {fileID: 2264968242254357207}
   - component: {fileID: 2647999899481361327}
+  - component: {fileID: 1626995789316863719}
   m_Layer: 5
   m_Name: 'Angry Dialogue Panel '
   m_TagString: Untagged
@@ -8466,7 +8387,7 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8068799061136724508}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -8474,12 +8395,12 @@ RectTransform:
   - {fileID: 1913117086946518807}
   - {fileID: 1004179035446400288}
   - {fileID: 5292653405750705909}
-  m_Father: {fileID: 1957427153141589253}
+  m_Father: {fileID: 627864487566047705}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_SizeDelta: {x: 966.66675, y: 500}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &2395892625790063151
 CanvasRenderer:
@@ -8573,6 +8494,80 @@ MonoBehaviour:
   scrollbar: {fileID: 0}
   smoothScroll: 0
   smoothScrollSpeed: 5
+--- !u!114 &1626995789316863719
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8068799061136724508}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1a8d5eca422b0e940b8c4b39569ebfb3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PixelCrushers.DialogueSystem.NarrationSubtitlePanel
+  firstSelected: {fileID: 0}
+  focusCheckFrequency: 0.2
+  refreshSelectablesFrequency: 0
+  selectPreviousOnDisable: 1
+  showAnimationTrigger: Show
+  hideAnimationTrigger: Hide
+  startState: 0
+  waitForShowAnimationToSetOpen: 0
+  m_deactivateOnHidden: 1
+  onOpen:
+    m_PersistentCalls:
+      m_Calls: []
+  onClose:
+    m_PersistentCalls:
+      m_Calls: []
+  onClosed:
+    m_PersistentCalls:
+      m_Calls: []
+  onBackButtonDown:
+    m_PersistentCalls:
+      m_Calls: []
+  panel: {fileID: 946663955671338087}
+  portraitImage: {fileID: 0}
+  portraitName:
+    m_uiText: {fileID: 2581453729253079784}
+    m_textMeshProUGUI: {fileID: 0}
+  subtitleText:
+    m_uiText: {fileID: 3950864508941064606}
+    m_textMeshProUGUI: {fileID: 0}
+  addSpeakerName: 0
+  addSpeakerNameFormat: '{0}: {1}'
+  accumulateText: 0
+  maxLines: 100
+  delayTypewriterUntilOpen: 0
+  continueButton: {fileID: 7291431277081715816}
+  blockInputDuration: 0
+  visibility: 1
+  focusAnimationTrigger: 
+  unfocusAnimationTrigger: 
+  onlyShowNPCPortraits: 0
+  useAnimatedPortraits: 0
+  usePortraitNativeSize: 0
+  waitForOpen: 0
+  waitForClose: 0
+  clearTextOnClose: 1
+  clearTextOnConversationStart: 0
+  scrollbarEnabler: {fileID: 0}
+  onFocus:
+    m_PersistentCalls:
+      m_Calls: []
+  onUnfocus:
+    m_PersistentCalls:
+      m_Calls: []
+  m_hasFocus: 1
+  m_isFocusing: 1
+  m_actorOverridingPanel: {fileID: 0}
+  narrationText:
+    m_uiText: {fileID: 0}
+    m_textMeshProUGUI: {fileID: 0}
+  narrationContainer: {fileID: 0}
+  narrationFieldName: Narration
+  narrationFlagFieldName: NarrationFlag
 --- !u!1 &8123056838609544180
 GameObject:
   m_ObjectHideFlags: 0
@@ -8980,7 +8975,7 @@ GameObject:
   - component: {fileID: 163531944488374602}
   - component: {fileID: 7527265795333806577}
   - component: {fileID: 2335534225447841217}
-  - component: {fileID: 3817404663200750120}
+  - component: {fileID: 2595439750624448470}
   m_Layer: 5
   m_Name: Basic Dialogue Panel
   m_TagString: Untagged
@@ -8995,7 +8990,7 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8834194823128409150}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -9003,12 +8998,12 @@ RectTransform:
   - {fileID: 9212831194996352526}
   - {fileID: 7368166342935018608}
   - {fileID: 8223183258295981879}
-  m_Father: {fileID: 1957427153141589253}
+  m_Father: {fileID: 627864487566047705}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_SizeDelta: {x: 966.66675, y: 500}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &163531944488374602
 CanvasRenderer:
@@ -9052,7 +9047,7 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
---- !u!114 &3817404663200750120
+--- !u!114 &2595439750624448470
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -9061,13 +9056,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 8834194823128409150}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 77c812308255e374f83c1e475bc0c826, type: 3}
+  m_Script: {fileID: 11500000, guid: 1a8d5eca422b0e940b8c4b39569ebfb3, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: 
+  m_EditorClassIdentifier: Assembly-CSharp::PixelCrushers.DialogueSystem.NarrationSubtitlePanel
   firstSelected: {fileID: 0}
   focusCheckFrequency: 0.2
   refreshSelectablesFrequency: 0
-  selectPreviousOnDisable: 0
+  selectPreviousOnDisable: 1
   showAnimationTrigger: Show
   hideAnimationTrigger: Hide
   startState: 0
@@ -9085,6 +9080,47 @@ MonoBehaviour:
   onBackButtonDown:
     m_PersistentCalls:
       m_Calls: []
+  panel: {fileID: 5042649819248884647}
+  portraitImage: {fileID: 0}
+  portraitName:
+    m_uiText: {fileID: 4782615826724813821}
+    m_textMeshProUGUI: {fileID: 0}
+  subtitleText:
+    m_uiText: {fileID: 4223373437007783140}
+    m_textMeshProUGUI: {fileID: 0}
+  addSpeakerName: 0
+  addSpeakerNameFormat: '{0}: {1}'
+  accumulateText: 0
+  maxLines: 100
+  delayTypewriterUntilOpen: 0
+  continueButton: {fileID: 8726924957984932078}
+  blockInputDuration: 0
+  visibility: 1
+  focusAnimationTrigger: 
+  unfocusAnimationTrigger: 
+  onlyShowNPCPortraits: 0
+  useAnimatedPortraits: 0
+  usePortraitNativeSize: 0
+  waitForOpen: 0
+  waitForClose: 0
+  clearTextOnClose: 1
+  clearTextOnConversationStart: 0
+  scrollbarEnabler: {fileID: 0}
+  onFocus:
+    m_PersistentCalls:
+      m_Calls: []
+  onUnfocus:
+    m_PersistentCalls:
+      m_Calls: []
+  m_hasFocus: 1
+  m_isFocusing: 1
+  m_actorOverridingPanel: {fileID: 0}
+  narrationText:
+    m_uiText: {fileID: 3118828463682718951}
+    m_textMeshProUGUI: {fileID: 0}
+  narrationContainer: {fileID: 4152853996448110292}
+  narrationFieldName: Narration
+  narrationFlagFieldName: NarrationFlag
 --- !u!1 &8968969698070048582
 GameObject:
   m_ObjectHideFlags: 0

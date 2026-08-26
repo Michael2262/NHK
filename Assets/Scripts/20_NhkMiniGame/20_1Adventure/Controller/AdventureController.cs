@@ -49,17 +49,36 @@ public class AdventureController : MonoBehaviour
     private readonly List<AdventureFlipResult> _history = new List<AdventureFlipResult>();
     public IReadOnlyList<AdventureFlipResult> History => _history;
 
-    [Header("事件（給 UI / FSM 掛）")]
+    [Header("事件（給 UI / FSM 掛；不需要的留空即可，留空不掛沒有任何負擔）")]
+
+    [Tooltip("【選用】抽到一張牌時（翻牌之前）觸發，帶那張牌的資料。\n" +
+             "想在牌一出現就反應（放音效、依牌名分支）才需要。牌面演出本身由 Presenter 處理，不靠這個。")]
     public AdventureCardEvent onCardDrawn;
+
+    [Tooltip("【選用】必有效果套用完、判定之前觸發，帶必有效果造成的數值變動。\n" +
+             "只有想在『必有 → 停頓等挑戰』中間先跳必有效果的數值提示時才需要。\n" +
+             "同一份資料在 onFlipResolved 的 result.AlwaysChanges 也拿得到（只是時機較晚）。")]
     public AdventureChangeListEvent onAlwaysEffectsApplied;
+
+    [Tooltip("【核心】一次翻牌結算完觸發，帶完整結果：成功與否、成功率、必有/成功失敗的數值變動、是否結束。")]
     public AdventureFlipEvent onFlipResolved;
+
+    [Tooltip("【方便】翻牌成功時觸發（無參數，好接 FSM 轉場）。等同 onFlipResolved 裡 Success==true。\n" +
+             "AlwaysOnly、或必有效果就直接結束的牌不會發（因為沒跑成敗判定）。")]
     public UnityEvent onSuccess;
+
+    [Tooltip("【方便】翻牌失敗時觸發（無參數，好接 FSM 轉場）。等同 onFlipResolved 裡 Success==false。")]
     public UnityEvent onFail;
+
+    [Tooltip("【核心】剩餘行動次數改變時觸發，帶新的剩餘次數。AdventureMovesView 就是靠這個自動更新。")]
     public AdventureIntEvent onMovesChanged;
 
-    [Tooltip("剩餘行動次數剛歸 0（散步用完）。不會自動結束大冒險，由你決定反應（例如強制回家）")]
+    [Tooltip("【核心】行動次數被扣到 0 時觸發（例如強制回家 / 結算）。\n" +
+             "抽牌不會動 Moves —— Moves 由你在對話用 Adventure(AddMoves,-1) / Adventure(SpendMove) 扣，\n" +
+             "所以這個事件發出的時機＝你在對話裡把它扣到 0 的那一刻。")]
     public UnityEvent onMovesExhausted;
 
+    [Tooltip("【核心】這趟大冒險結束時觸發（玩家回家，或牌上的 End Adventure 效果）。")]
     public UnityEvent onRunEnded;
 
     // ============================================================
@@ -173,7 +192,7 @@ public class AdventureController : MonoBehaviour
         return Run.DrawCard() == null ? null : Run.Flip();
     }
 
-    /// <summary>變更行動次數（負=消耗、正=補充）。可掛在 Button.onClick 或 FSM/對話呼叫。</summary>
+    /// <summary>變更行動次數（負=消耗、正=補充）。可掛在 Button.onClick 或 FSM/對話呼叫。抽牌不會動它，時機由外部控制。</summary>
     public void AddMoves(int delta) => Run?.AddMoves(delta);
     public void GoHome() => Run?.GoHome();
 
