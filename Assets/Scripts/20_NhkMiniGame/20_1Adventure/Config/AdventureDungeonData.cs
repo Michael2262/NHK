@@ -2,8 +2,10 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// 一個冒險地點（Dungeon）。定義里程目標、休息規則、通關旗標，以及依里程分段的牌池。
-/// 命名用 Dungeon 以避免跟既有的 LocationData 語意混淆。
+/// 一個冒險地點（Dungeon）。
+/// 抽牌模型：一趟最多散步 MaxMoves 次；每次散步先依「第幾次」的機率決定這次是
+/// 普通事件還是特色事件，再從對應牌池隨機抽一張。
+/// 「結束大冒險 / 標記通關」純由卡片效果驅動（End Adventure / Mark Dungeon Cleared）。
 /// </summary>
 [CreateAssetMenu(menuName = "Game/Adventure/Dungeon")]
 public class AdventureDungeonData : ScriptableObject
@@ -15,30 +17,29 @@ public class AdventureDungeonData : ScriptableObject
     public Sprite Banner;
 
     [Header("規則")]
-    [Tooltip("里程目標的「初始值」，開始時複製給 AdventureRunModel.TotalMileage。\n" +
-             "本輪可用 AddRequiredMileage() 加長（繞遠路），不會改到這裡。\n" +
-             "主要給進度條顯示；實際「結束」由牌上的 End Adventure 效果觸發")]
-    public int TotalMileage = 8;
-
-    // 休息次數上限 / 每次減壓量 → 改由 AdventureRunModel 統一定義（見其常數）
+    [Tooltip("一趟最多散步幾次（= 幾次行動）。抽一張牌就是散步一次")]
+    public int MaxMoves = 3;
 
     [Header("通關標記")]
-    [Tooltip("通關時要設的 persistent 進度旗標；也用來判定 IsCleared（供已通關顯示 / 解鎖）")]
+    [Tooltip("由卡片效果 Mark Dungeon Cleared 設的 persistent 進度旗標；也用來判定 IsCleared")]
     public ProgressFlagDefinition ClearedFlag;
 
-    [Header("完成時觸發")]
-    [Tooltip("里程達到目標（CurrentMileage >= TotalMileage）時執行的效果，一趟只會觸發一次。\n" +
-             "時機在「該次翻牌完全結算、牌收掉之後」，由演出層決定，不會插進牌的效果清單中間。\n" +
-             "「結束大冒險」是固定行為，不需要在這裡放 End Adventure。\n" +
-             "通常放：Mark Dungeon Cleared（標記通關）、Play Conversation（通關演出）、獎勵類效果")]
-    [SerializeReference] public List<AdventureEffect> CompletionEffects = new List<AdventureEffect>();
-
     [Header("牌池")]
-    [Tooltip("指定里程強制發牌（優先於分段牌池）")]
-    public List<AdventureForcedDraw> ForcedDraws = new List<AdventureForcedDraw>();
+    [Tooltip("普通事件牌池")]
+    public List<AdventureCardData> NormalCards = new List<AdventureCardData>();
 
-    [Tooltip("依里程分段的加權牌池")]
-    public List<AdventureMileageBand> Bands = new List<AdventureMileageBand>();
+    [Tooltip("特色 / 判定事件牌池")]
+    public List<AdventureCardData> SpecialCards = new List<AdventureCardData>();
+
+    [Header("抽牌機率")]
+    [Tooltip("每次散步抽到「特色事件」的機率(%)，依第幾次散步查表。\n" +
+             "index 0 = 第 1 次、index 1 = 第 2 次…（普通機率 = 100 - 特色）。\n" +
+             "散步次數超過表格長度時，沿用最後一筆。\n" +
+             "例：0 / 35 / 50 就是第1次0%、第2次35%、第3次50%")]
+    public List<float> SpecialChancePerAction = new List<float> { 0f, 35f, 50f };
+
+    [Tooltip("勾選：一趟只要出過一次特色事件，之後的散步就 100% 普通")]
+    public bool SpecialOnlyOncePerRun = true;
 
     /// <summary>是否已通關（依 ClearedFlag 是否存在於進度旗標）。</summary>
     public bool IsCleared
@@ -51,60 +52,31 @@ public class AdventureDungeonData : ScriptableObject
         }
     }
 
-    /// <summary>
-    /// 依目前里程抽一張牌：
-    /// 1. 先看 ForcedDraw（符合就強制回傳）
-    /// 2. 否則找里程所在的 Band，加權隨機抽一張
-    /// 找不到對應 Band 時 fallback 到最後一段，避免里程 overshoot 抽不到牌。
-    /// </summary>
-    public AdventureCardData PickCard(int mileage)
+    /// <summary>特色牌池是否有可用牌。</summary>
+    public bool HasSpecialCards => SpecialCards != null && SpecialCards.Exists(c => c != null);
+
+    /// <summary>取第 (actionIndex+1) 次散步抽到「特色」的機率(%)。超過表格長度沿用最後一筆。</summary>
+    public float GetSpecialChance(int actionIndex)
     {
-        // 1. ForcedDraw 優先
-        if (ForcedDraws != null)
-        {
-            foreach (var forced in ForcedDraws)
-            {
-                if (forced != null && forced.Card != null && forced.Matches(mileage))
-                    return forced.Card;
-            }
-        }
-
-        if (Bands == null || Bands.Count == 0) return null;
-
-        // 2. 找里程所在的 Band
-        AdventureMileageBand band = null;
-        foreach (var b in Bands)
-        {
-            if (b != null && b.Contains(mileage)) { band = b; break; }
-        }
-        if (band == null) band = Bands[Bands.Count - 1]; // fallback：最後一段
-
-        return WeightedPick(band);
+        if (SpecialChancePerAction == null || SpecialChancePerAction.Count == 0) return 0f;
+        if (actionIndex < 0) actionIndex = 0;
+        if (actionIndex >= SpecialChancePerAction.Count) actionIndex = SpecialChancePerAction.Count - 1;
+        return SpecialChancePerAction[actionIndex];
     }
 
-    private static AdventureCardData WeightedPick(AdventureMileageBand band)
+    /// <summary>從普通事件牌池隨機抽一張（無有效牌回傳 null）。</summary>
+    public AdventureCardData PickRandomNormal() => PickRandom(NormalCards);
+
+    /// <summary>從特色事件牌池隨機抽一張（無有效牌回傳 null）。</summary>
+    public AdventureCardData PickRandomSpecial() => PickRandom(SpecialCards);
+
+    private static AdventureCardData PickRandom(List<AdventureCardData> pool)
     {
-        if (band == null || band.Cards == null || band.Cards.Count == 0) return null;
+        if (pool == null || pool.Count == 0) return null;
 
-        int total = 0;
-        foreach (var wc in band.Cards)
-            if (wc != null && wc.Card != null) total += Mathf.Max(0, wc.Weight);
-
-        // 全部權重為 0 時，回傳第一張有效牌
-        if (total <= 0)
-        {
-            foreach (var wc in band.Cards)
-                if (wc != null && wc.Card != null) return wc.Card;
-            return null;
-        }
-
-        int roll = Random.Range(0, total);
-        foreach (var wc in band.Cards)
-        {
-            if (wc == null || wc.Card == null) continue;
-            roll -= Mathf.Max(0, wc.Weight);
-            if (roll < 0) return wc.Card;
-        }
-        return null;
+        // 過濾 null 後等機率隨機
+        var valid = pool.FindAll(c => c != null);
+        if (valid.Count == 0) return null;
+        return valid[Random.Range(0, valid.Count)];
     }
 }

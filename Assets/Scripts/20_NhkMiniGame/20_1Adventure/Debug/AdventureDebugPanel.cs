@@ -2,7 +2,7 @@ using UnityEngine;
 
 /// <summary>
 /// 大冒險除錯面板（OnGUI）。不需要任何 UI 美術即可試玩核心流程：
-/// 開始 → 發牌 → 翻牌 → 繼續/休息/回家。
+/// 開始 → 發牌 → 翻牌 → 繼續/行動-1/回家。
 /// 掛在場景任一 GameObject，拖入 AdventureController 與要測的 Dungeon 即可。
 /// </summary>
 public class AdventureDebugPanel : MonoBehaviour
@@ -24,10 +24,9 @@ public class AdventureDebugPanel : MonoBehaviour
 
     private void OnFlip(AdventureFlipResult r)
     {
-        string sign = r.MileageDelta >= 0 ? "+" : "";
         string outcome = r.OutcomeResolved ? (r.Success ? "★成功" : "✗失敗") : "（必有效果直接結束）";
 
-        _lastResult = $"{outcome}  里程{sign}{r.MileageDelta} → {r.NewMileage}"
+        _lastResult = outcome
                     + Format("必有", r.AlwaysChanges)
                     + Format("結果", r.Changes);
     }
@@ -65,7 +64,16 @@ public class AdventureDebugPanel : MonoBehaviour
         // ── 狀態列 ──
         GUILayout.Space(4);
         GUILayout.Label($"地點：{run.Dungeon?.DungeonID}");
-        GUILayout.Label($"里程：{run.CurrentMileage} / {run.TotalMileage}    休息剩：{run.RestRemaining}");
+        int maxMoves = run.Dungeon != null ? run.Dungeon.MaxMoves : 0;
+        GUILayout.Label($"行動次數：{run.MovesRemaining} / {maxMoves}    已散步：{run.ActionsTaken} 次");
+
+        // 下一次散步的特色機率（把「一趟只出一次」規則算進去）
+        if (run.Dungeon != null)
+        {
+            float nextChance = run.Dungeon.GetSpecialChance(run.ActionsTaken);
+            if (run.Dungeon.SpecialOnlyOncePerRun && run.SpecialHappened) nextChance = 0f;
+            GUILayout.Label($"下次特色機率：{nextChance:0}%   （已出過特色：{(run.SpecialHappened ? "是" : "否")}）");
+        }
         if (p != null)
             GUILayout.Label($"壓力：{p.Stress}   社會性：{p.Sociality}   生活力：{p.LifePower}   $：{p.Money}");
 
@@ -74,7 +82,8 @@ public class AdventureDebugPanel : MonoBehaviour
         if (run.CurrentCard != null)
         {
             float rate = run.CurrentCard.CalcSuccessRate(p);
-            GUILayout.Label($"當前牌：{run.CurrentCard.CardID}（{run.CurrentCard.Mode}）  成功率 {rate:0}%");
+            string kind = run.LastDrawWasSpecial ? "特色" : "普通";
+            GUILayout.Label($"當前牌：{run.CurrentCard.CardID}（{kind}・{run.CurrentCard.Mode}）  成功率 {rate:0}%");
         }
         else
         {
@@ -96,13 +105,9 @@ public class AdventureDebugPanel : MonoBehaviour
         GUILayout.EndHorizontal();
 
         GUILayout.BeginHorizontal();
-        GUI.enabled = run.RestRemaining > 0;
-        if (GUILayout.Button($"休息（{run.RestRemaining}）", Big())) _controller.Rest();
-        GUI.enabled = true;
+        if (GUILayout.Button($"行動-1（剩 {run.MovesRemaining}）", Big())) _controller.AddMoves(-1);
         if (GUILayout.Button("回家", Big())) _controller.GoHome();
         GUILayout.EndHorizontal();
-
-        if (GUILayout.Button("繞遠路：里程目標 +1", Big())) _controller.AddRequiredMileage(1);
 
         GUILayout.EndArea();
     }

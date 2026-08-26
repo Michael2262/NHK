@@ -14,8 +14,6 @@ using UnityEngine;
 ///   AlwaysOnly   到 ① 就結束，②③ 都不跑
 ///   ForceSuccess 不擲骰，必定跑成功效果
 /// Controller 讀它來決定演出節奏（要不要隔一段時間再演第二拍）。
-///
-/// 里程增減不是獨立欄位，而是掛在效果清單裡的 AdvMileageEffect（三個清單都可放）。
 /// </summary>
 [CreateAssetMenu(menuName = "Game/Adventure/Card")]
 public class AdventureCardData : ScriptableObject
@@ -25,6 +23,11 @@ public class AdventureCardData : ScriptableObject
     [Header("顯示（走多語系 Text Table）")]
     public string DisplayNameKey = "ADV_CARD_NAME_DEFAULT";
     public string DescriptionKey = "ADV_CARD_DESC_DEFAULT";
+
+    [Header("演出")]
+    [Tooltip("啟用：這張牌不播飛入/翻面/淡出動畫、也不需要插圖。\n" +
+             "只拿掉「視覺」——邏輯流程完全一樣：必有效果 → （Judge 仍會停下等玩家挑戰/繞遠路）→ 判定。")]
+    public bool NoFlipCardAnimation = false;
 
     [Header("插圖")]
     [Tooltip("預設插圖。下面三張沒填時的 fallback")]
@@ -62,10 +65,10 @@ public class AdventureCardData : ScriptableObject
     [Tooltip("只要翻到這張牌就一定會執行，不分成功失敗。先於成功/失敗效果執行")]
     [SerializeReference] public List<AdventureEffect> AlwaysEffects = new List<AdventureEffect>();
 
-    [Tooltip("翻牌成功時依序執行。里程推進請在這裡放一個 Mileage 效果")]
+    [Tooltip("翻牌成功時依序執行")]
     [SerializeReference] public List<AdventureEffect> SuccessEffects = new List<AdventureEffect>();
 
-    [Tooltip("翻牌失敗時依序執行（通常放 Stress；也可放 -1 Mileage）")]
+    [Tooltip("翻牌失敗時依序執行（通常放 Stress）")]
     [SerializeReference] public List<AdventureEffect> FailureEffects = new List<AdventureEffect>();
 
     /// <summary>

@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using UnityEngine;
-
 /// <summary>
 /// 成功率算式模式。也讓 UI 知道這張牌看哪個屬性（可搭配不同美術素材）。
 /// </summary>
@@ -15,9 +11,8 @@ public enum AdventureRateMode
 /// <summary>大冒險結束原因。</summary>
 public enum AdventureEndReason
 {
-    GoHome,    // 玩家主動回家
-    Completed, // 里程達標，正常通關（固定行為，不需要設定）
-    ByEffect   // 牌上的 End Adventure 效果手動中止
+    GoHome,   // 玩家主動回家
+    ByEffect  // 牌上的 End Adventure 效果結束（通關/中止皆走這個）
 }
 
 /// <summary>
@@ -35,43 +30,5 @@ public enum AdventureOutcomeMode
     ForceSuccess
 }
 
-/// <summary>加權牌：Weight 越大越容易被抽到。</summary>
-[Serializable]
-public class AdventureWeightedCard
-{
-    public AdventureCardData Card;
-    [Min(0)] public int Weight = 1;
-}
-
-/// <summary>
-/// 里程分段牌池：里程落在 [MinMileage, MaxMileage] 時，從這段的加權牌表抽牌。
-/// 例如「10 里程後變難」= 開一段 [10, 999] 放難牌。
-/// </summary>
-[Serializable]
-public class AdventureMileageBand
-{
-    public int MinMileage = 0;
-    public int MaxMileage = 999;
-    public List<AdventureWeightedCard> Cards = new List<AdventureWeightedCard>();
-
-    public bool Contains(int mileage) => mileage >= MinMileage && mileage <= MaxMileage;
-}
-
-/// <summary>
-/// 指定里程強制發某張牌，優先於一般牌池。
-/// 例如「第 8 里程必抽 Boss 牌」。
-/// TriggerAtOrAbove 勾選後改為「里程 ≥ AtMileage 皆強制」，
-/// 適合最終牌，避免 +2 里程一次跳過目標格。
-/// </summary>
-[Serializable]
-public class AdventureForcedDraw
-{
-    public int AtMileage = 0;
-
-    [Tooltip("勾選：里程 ≥ AtMileage 皆強制此牌（適合最終 Boss 牌）。\n不勾：里程 == AtMileage 才強制")]
-    public bool TriggerAtOrAbove = false;
-
-    public AdventureCardData Card;
-
-    public bool Matches(int mileage) => TriggerAtOrAbove ? mileage >= AtMileage : mileage == AtMileage;
-}
+// 抽牌改為「兩池 + 每次特色機率」，相關資料直接放在 AdventureDungeonData，
+// 不再需要獨立的加權牌 / 分段 / 強制牌型別。

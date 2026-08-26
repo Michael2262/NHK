@@ -26,12 +26,6 @@ public class AdventureFlipResult
     /// <summary>「成功/失敗效果」造成的數值變動</summary>
     public List<AdventureChangeRecord> Changes = new List<AdventureChangeRecord>();
 
-    /// <summary>這次翻牌（含必有效果）造成的里程淨變化</summary>
-    public int MileageDelta;
-
-    /// <summary>套用完所有效果後的里程</summary>
-    public int NewMileage;
-
     /// <summary>這次翻牌是否讓大冒險結束（牌上有結束效果）</summary>
     public bool Ended;
 

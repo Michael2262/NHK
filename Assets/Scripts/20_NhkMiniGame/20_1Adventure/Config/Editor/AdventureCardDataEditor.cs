@@ -20,14 +20,26 @@ public class AdventureCardDataEditor : Editor
         serializedObject.Update();
 
         var mode = (AdventureOutcomeMode)serializedObject.FindProperty("OutcomeMode").enumValueIndex;
+        bool noAnim = serializedObject.FindProperty("NoFlipCardAnimation").boolValue;
         bool showSuccess = mode != AdventureOutcomeMode.AlwaysOnly;
         bool showFailure = mode == AdventureOutcomeMode.Judge;
         bool showRateFormula = mode == AdventureOutcomeMode.Judge;
 
         // ── 基礎欄位（效果清單自己畫；依模式隱藏不會生效的欄位）──
         var excluded = new List<string> { "AlwaysEffects", "SuccessEffects", "FailureEffects" };
-        if (!showSuccess) excluded.Add("SuccessIllustration");
-        if (!showFailure) excluded.Add("FailureIllustration");
+        if (noAnim)
+        {
+            // 無牌面演出 → 插圖全部用不到，隱藏
+            excluded.Add("Illustration");
+            excluded.Add("AlwaysIllustration");
+            excluded.Add("SuccessIllustration");
+            excluded.Add("FailureIllustration");
+        }
+        else
+        {
+            if (!showSuccess) excluded.Add("SuccessIllustration");
+            if (!showFailure) excluded.Add("FailureIllustration");
+        }
         if (!showRateFormula)
         {
             excluded.Add("Mode");
@@ -36,6 +48,15 @@ public class AdventureCardDataEditor : Editor
             excluded.Add("LifeCoef");
         }
         DrawPropertiesExcluding(serializedObject, excluded.ToArray());
+
+        if (noAnim)
+        {
+            EditorGUILayout.Space(4);
+            EditorGUILayout.HelpBox(
+                "No Flip Card Animation：只拿掉牌面視覺（動畫、插圖）。\n" +
+                "邏輯流程不變 —— Judge 模式一樣會停下來等玩家選挑戰/繞遠路。",
+                MessageType.Info);
+        }
 
         EditorGUILayout.Space(4);
         switch (mode)
@@ -70,7 +91,7 @@ public class AdventureCardDataEditor : Editor
             AdventureEffectListDrawer.Draw(serializedObject,
                 serializedObject.FindProperty("SuccessEffects"),
                 "效果 - 翻牌成功",
-                "成功時依序執行。里程推進請放 Mileage 效果");
+                "成功時依序執行");
         }
 
         // ── 失敗效果 ──
@@ -80,7 +101,7 @@ public class AdventureCardDataEditor : Editor
             AdventureEffectListDrawer.Draw(serializedObject,
                 serializedObject.FindProperty("FailureEffects"),
                 "效果 - 翻牌失敗",
-                "失敗時依序執行（通常放 Stress；也可放 -1 Mileage）");
+                "失敗時依序執行（通常放 Stress）");
         }
 
         serializedObject.ApplyModifiedProperties();

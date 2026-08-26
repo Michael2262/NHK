@@ -55,12 +55,10 @@ public class AdventureController : MonoBehaviour
     public AdventureFlipEvent onFlipResolved;
     public UnityEvent onSuccess;
     public UnityEvent onFail;
-    public AdventureIntEvent onMileageChanged;
-    public AdventureIntEvent onTotalMileageChanged;
-    public AdventureIntEvent onRestChanged;
+    public AdventureIntEvent onMovesChanged;
 
-    [Tooltip("里程達標、Dungeon 的完成效果已跑完。時機在 onFlipResolved 之後、onRunEnded 之前")]
-    public AdventureChangeListEvent onDungeonCompleted;
+    [Tooltip("剩餘行動次數剛歸 0（散步用完）。不會自動結束大冒險，由你決定反應（例如強制回家）")]
+    public UnityEvent onMovesExhausted;
 
     public UnityEvent onRunEnded;
 
@@ -90,7 +88,7 @@ public class AdventureController : MonoBehaviour
     /// <summary>用預設地點開始（測試 / 單一地點場景用）。</summary>
     public void StartDefaultAdventure() => StartAdventure(_defaultDungeon);
 
-    /// <summary>開始一趟大冒險（里程一律從 0 開始）。</summary>
+    /// <summary>開始一趟大冒險。</summary>
     public void StartAdventure(AdventureDungeonData dungeon)
     {
         if (dungeon == null)
@@ -113,10 +111,8 @@ public class AdventureController : MonoBehaviour
         Run.OnCardDrawn += HandleCardDrawn;
         Run.OnAlwaysEffectsApplied += HandleAlwaysEffectsApplied;
         Run.OnFlipResolved += HandleFlipResolved;
-        Run.OnMileageChanged += HandleMileageChanged;
-        Run.OnTotalMileageChanged += HandleTotalMileageChanged;
-        Run.OnRestChanged += HandleRestChanged;
-        Run.OnDungeonCompleted += HandleDungeonCompleted;
+        Run.OnMovesChanged += HandleMovesChanged;
+        Run.OnMovesExhausted += HandleMovesExhausted;
         Run.OnRunEnded += HandleRunEnded;
 
         Run.StartRun(dungeon);
@@ -126,7 +122,7 @@ public class AdventureController : MonoBehaviour
     // 玩家動作（給 Button.onClick / FSM 呼叫）
     // ============================================================
 
-    public void ResetRest() => Run?.ResetRestToMax();
+    public void ResetMoves() => Run?.ResetMovesToMax();
 
     // ── 分階段（給 AdventureCardPresenter 這類演出層在對的時間點呼叫）──
 
@@ -165,15 +161,6 @@ public class AdventureController : MonoBehaviour
     /// <summary>階段②：立刻依 OutcomeMode 收尾（判成敗 / 必定成功 / 不判定）。</summary>
     public AdventureFlipResult ResolveOutcome() => Run?.ResolveOutcome();
 
-    /// <summary>里程已達標、Dungeon 的完成效果還沒跑（演出層用來判斷要不要進完成演出）。</summary>
-    public bool HasPendingCompletion => Run != null && Run.HasPendingCompletion;
-
-    /// <summary>階段③：立刻執行 Dungeon 的完成效果（不含結束）。</summary>
-    public List<AdventureChangeRecord> ApplyCompletionEffects() => Run?.ApplyCompletionEffects();
-
-    /// <summary>階段④：通關收尾，結束這趟大冒險。</summary>
-    public void CompleteRun() => Run?.CompleteRun();
-
     // ── 即時（不演出。Debug 面板或不需要演出的流程用）──
 
     /// <summary>翻開目前的牌，兩階段一次跑完。</summary>
@@ -186,13 +173,8 @@ public class AdventureController : MonoBehaviour
         return Run.DrawCard() == null ? null : Run.Flip();
     }
 
-    /// <summary>
-    /// 加長本輪的里程目標（繞遠路用）。只影響這一輪，不會改到 Dungeon 的設定檔。
-    /// 可直接掛在 Button.onClick 或用 FSM 呼叫。
-    /// </summary>
-    public void AddRequiredMileage(int amount) => Run?.AddRequiredMileage(amount);
-
-    public void Rest() => Run?.Rest();
+    /// <summary>變更行動次數（負=消耗、正=補充）。可掛在 Button.onClick 或 FSM/對話呼叫。</summary>
+    public void AddMoves(int delta) => Run?.AddMoves(delta);
     public void GoHome() => Run?.GoHome();
 
     // ============================================================
@@ -214,12 +196,8 @@ public class AdventureController : MonoBehaviour
         else onFail?.Invoke();
     }
 
-    private void HandleMileageChanged(int mileage) => onMileageChanged?.Invoke(mileage);
-    private void HandleTotalMileageChanged(int total) => onTotalMileageChanged?.Invoke(total);
-    private void HandleRestChanged(int remaining) => onRestChanged?.Invoke(remaining);
-
-    private void HandleDungeonCompleted(List<AdventureChangeRecord> changes)
-        => onDungeonCompleted?.Invoke(changes);
+    private void HandleMovesChanged(int remaining) => onMovesChanged?.Invoke(remaining);
+    private void HandleMovesExhausted() => onMovesExhausted?.Invoke();
 
     private void HandleRunEnded(AdventureEndReason reason)
     {
@@ -233,10 +211,8 @@ public class AdventureController : MonoBehaviour
         Run.OnCardDrawn -= HandleCardDrawn;
         Run.OnAlwaysEffectsApplied -= HandleAlwaysEffectsApplied;
         Run.OnFlipResolved -= HandleFlipResolved;
-        Run.OnMileageChanged -= HandleMileageChanged;
-        Run.OnTotalMileageChanged -= HandleTotalMileageChanged;
-        Run.OnRestChanged -= HandleRestChanged;
-        Run.OnDungeonCompleted -= HandleDungeonCompleted;
+        Run.OnMovesChanged -= HandleMovesChanged;
+        Run.OnMovesExhausted -= HandleMovesExhausted;
         Run.OnRunEnded -= HandleRunEnded;
     }
 

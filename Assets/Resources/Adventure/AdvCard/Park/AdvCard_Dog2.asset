@@ -1,0 +1,49 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4c07bd9ae89d66048aa7fefab22499c3, type: 3}
+  m_Name: AdvCard_Dog2
+  m_EditorClassIdentifier: Assembly-CSharp::AdventureCardData
+  DisplayNameKey: ADV_CARD_NAME_DEFAULT
+  DescriptionKey: ADV_CARD_DESC_DEFAULT
+  NoFlipCardAnimation: 0
+  Illustration: {fileID: 21300000, guid: c3d3b2e4a6a79a7488d072219c3a2121, type: 3}
+  AlwaysIllustration: {fileID: 0}
+  SuccessIllustration: {fileID: 21300000, guid: 3c8791c72fd085f4b97af87c522888b3, type: 3}
+  FailureIllustration: {fileID: 0}
+  OutcomeMode: 2
+  Mode: 0
+  BaseRate: 50
+  SocialCoef: 0
+  LifeCoef: 0
+  AlwaysEffects:
+  - rid: 8803944081077305346
+  - rid: 8803944088594284641
+  - rid: 3131747257583665269
+  SuccessEffects: []
+  FailureEffects: []
+  references:
+    version: 2
+    RefIds:
+    - rid: 3131747257583665269
+      type: {class: AdvMovesEffect, ns: , asm: Assembly-CSharp}
+      data:
+        Delta: -1
+    - rid: 8803944081077305346
+      type: {class: AdvPlayConversationEffect, ns: , asm: Assembly-CSharp}
+      data:
+        ConversationTitle: Adv/Card/Park/Dog2
+        Mode: 2
+    - rid: 8803944088594284641
+      type: {class: AdvStatPackageEffect, ns: , asm: Assembly-CSharp}
+      data:
+        PackageID: AdvStress1
+        HeroineID: 

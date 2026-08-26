@@ -68,13 +68,6 @@ public class AdventureCardPresenter : MonoBehaviour
 
     [SerializeField] private float _fadeDuration = 0.35f;
 
-    [Header("里程完成演出")]
-    [Tooltip("牌收掉後，等多久才觸發 Dungeon 的完成效果")]
-    [SerializeField] private float _waitBeforeCompletion = 0.5f;
-
-    [Tooltip("完成效果觸發後，等多久才正式結束這趟大冒險")]
-    [SerializeField] private float _waitAfterCompletion = 0.8f;
-
     [Header("事件")]
     [Tooltip("必有效果已觸發，停下來等玩家決定。接這裡去開你的「挑戰 / 繞遠路」對話")]
     public UnityEvent onAwaitingOutcome;
@@ -137,23 +130,45 @@ public class AdventureCardPresenter : MonoBehaviour
     }
 
     /// <summary>
-    /// 讓「結果已呈現、正在等待淡出」的牌提前消失 —— 也就是把 Wait After Outcome 那段等待切短。
-    /// 三種牌都適用：AlwaysOnly 跑完後、Judge / ForceSuccess 判定完後。
-    /// 流程照常走完，onSequenceComplete 仍會照發，不會卡住後續。
+    /// 把當前這張牌立刻收掉。依牌停在哪個狀態有兩種收法：
     ///
-    /// 不在該窗口時（飛入 / 翻面 / 等待挑戰 / 判定進行中）呼叫一律忽略，不會破壞狀態。
+    /// ① 停著等挑戰/繞遠路（IsAwaitingOutcome）
+    ///    → 直接撤牌，不判定成敗、不發 onSequenceComplete。
+    ///      未結算的結果會在下次 PlayDraw() 時被 Model 丟棄（已生效的必有效果不回復）。
+    ///
+    /// ② 結果已呈現、正在等待淡出（_canCutWait）
+    ///    → 把 Wait After Outcome 切短，立刻淡出。流程照常走完，onSequenceComplete 仍會發。
+    ///
+    /// 其他時機（飛入 / 翻面 / 判定進行中）呼叫一律忽略，不破壞狀態。
     /// </summary>
     public void DismissCard()
     {
+        // ② 等待淡出中 → 切短等待
         if (_canCutWait)
         {
             _dismissRequested = true;
             return;
         }
 
-        Debug.LogWarning("[AdventureCardPresenter] DismissCard() 被忽略：目前不在「結果已呈現、等待淡出」的窗口。" +
-                         $"（IsPlaying={IsPlaying}, IsAwaitingOutcome={IsAwaitingOutcome}, 有牌={_current != null}）" +
-                         " 若希望牌停著等對話決定何時收，請勾選 Hold Until Dismissed。");
+        // ① 停著等挑戰/繞遠路 → 撤牌
+        if (!IsPlaying && IsAwaitingOutcome)
+        {
+            StartCoroutine(WithdrawSequence());
+            return;
+        }
+
+        Debug.LogWarning("[AdventureCardPresenter] DismissCard() 被忽略：目前沒有可收的牌。" +
+                         $"（IsPlaying={IsPlaying}, IsAwaitingOutcome={IsAwaitingOutcome}, 等待淡出={_canCutWait}）");
+    }
+
+    /// <summary>撤牌：淡出當前牌、清掉等待挑戰狀態，不判定成敗、不發 onSequenceComplete。</summary>
+    private IEnumerator WithdrawSequence()
+    {
+        IsPlaying = true;
+        IsAwaitingOutcome = false;
+        yield return ClearCurrentCard(); // 有牌就淡出；NoFlip 無牌則直接跳過
+        IsPlaying = false;
+        // 刻意不發 onSequenceComplete —— 撤牌是中途操作，後續由呼叫端接（通常再 PlayDraw）
     }
 
     /// <summary>目前是否可以用 DismissCard() 提前收牌。</summary>
@@ -206,31 +221,38 @@ public class AdventureCardPresenter : MonoBehaviour
             yield break;
         }
 
-        // 生成牌背在畫面外
-        _current = Instantiate(_cardPrefab, _cardParent);
-        _current.Rect.anchoredPosition = _spawnPosition;
-        _current.ShowBack();
+        // NoFlip 只拿掉「視覺」，邏輯流程（必有 → 停頓等挑戰 → 判定）完全一樣
+        bool visual = !card.NoFlipCardAnimation;
 
-        // 飛入 → 翻面，露出預設插圖
-        yield return _current.FlyTo(_centerPosition, _flyDuration).WaitForCompletion();
-        yield return _current.FlipTo(card.Illustration, _flipDuration).WaitForCompletion();
+        if (visual)
+        {
+            // 生成牌背在畫面外 → 飛入 → 翻面，露出預設插圖
+            _current = Instantiate(_cardPrefab, _cardParent);
+            _current.Rect.anchoredPosition = _spawnPosition;
+            _current.ShowBack();
 
-        // 等 X → 換必有插圖 + 觸發必有效果
-        yield return new WaitForSeconds(_waitBeforeAlways);
-        _current.SetSprite(card.GetAlwaysIllustration());
+            yield return _current.FlyTo(_centerPosition, _flyDuration).WaitForCompletion();
+            yield return _current.FlipTo(card.Illustration, _flipDuration).WaitForCompletion();
+
+            // 等 X → 換必有插圖
+            yield return new WaitForSeconds(_waitBeforeAlways);
+            _current.SetSprite(card.GetAlwaysIllustration());
+        }
+
+        // 觸發必有效果（有無演出都一樣）
         _controller.ApplyAlways();
 
         if (card.OutcomeMode == AdventureOutcomeMode.AlwaysOnly)
         {
-            // 這種牌沒有挑戰階段：直接收尾、收牌
+            // 這種牌沒有挑戰階段：直接收尾
             _controller.ResolveOutcome();
 
-            yield return WaitOrDismiss(_waitAfterOutcome); // 可被 DismissCard() 提前切斷
+            if (visual) yield return WaitOrDismiss(_waitAfterOutcome); // 可被 DismissCard() 提前切斷
             yield return FinishCardSequence();
         }
         else
         {
-            // 停在這裡，等外部呼叫 PlayOutcome()（挑戰）或 PlayDraw()（繞遠路）
+            // 停在這裡，等外部呼叫 PlayOutcome()（挑戰）或 PlayDraw()（繞遠路）—— 有無演出都會停
             IsPlaying = false;
             IsAwaitingOutcome = true;
             onAwaitingOutcome?.Invoke();
@@ -242,53 +264,31 @@ public class AdventureCardPresenter : MonoBehaviour
         IsPlaying = true;
         IsAwaitingOutcome = false;
 
-        yield return new WaitForSeconds(_waitBeforeOutcome);
+        bool visual = _current != null; // NoFlip 卡沒有生成牌
+
+        if (visual) yield return new WaitForSeconds(_waitBeforeOutcome);
 
         var result = _controller.ResolveOutcome();
         if (result != null && _current != null)
             _current.SetSprite(result.ResultIllustration);
 
-        yield return WaitOrDismiss(_waitAfterOutcome); // 可被 DismissCard() 提前切斷
+        if (visual) yield return WaitOrDismiss(_waitAfterOutcome); // 可被 DismissCard() 提前切斷
         yield return FinishCardSequence();
     }
 
     /// <summary>
-    /// 一張牌演完後的共同收尾：收牌 →
-    /// 若這次讓里程達標就接完成演出，否則發 onSequenceComplete 讓玩家選下一步。
+    /// 一張牌演完後的共同收尾：收牌 → 開下一步選單（onSequenceComplete）。
+    /// 若這張牌的效果已結束了大冒險（End Adventure），則 onRunEnded 已發，不再開選單。
     /// </summary>
     private IEnumerator FinishCardSequence()
     {
         yield return ClearCurrentCard();
 
-        if (_controller.HasPendingCompletion)
-        {
-            yield return CompletionSequence();
-            yield break;
-        }
-
         IsPlaying = false;
-        onSequenceComplete?.Invoke();
-    }
 
-    /// <summary>
-    /// 里程達標的完成演出。想加通關表演就插在這裡。
-    /// 結束（通關）是固定行為，不需要在 Dungeon 上設定 End Adventure。
-    /// </summary>
-    private IEnumerator CompletionSequence()
-    {
-        IsPlaying = true;
-
-        yield return new WaitForSeconds(_waitBeforeCompletion);
-
-        // 觸發 Dungeon 的完成效果 → Controller 的 onDungeonCompleted 會發出來，演出接那裡
-        _controller.ApplyCompletionEffects();
-
-        yield return new WaitForSeconds(_waitAfterCompletion);
-
-        // 固定收尾：通關結束（會發 onRunEnded）
-        _controller.CompleteRun();
-
-        IsPlaying = false;
+        // 牌上的效果結束了大冒險 → onRunEnded 已發，不開下一步選單
+        if (_controller.IsRunning)
+            onSequenceComplete?.Invoke();
     }
 
     private IEnumerator ClearCurrentCard()

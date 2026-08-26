@@ -18,11 +18,9 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
     /// 【流程】（走 Controller）
     ///   Adventure(Start, CStore)         -> 用 Dungeon ID 開始一趟（查 Controller 上的 Database）
     ///   Adventure(Start)                 -> 沒帶 ID 時用 Controller 的預設地點開始
-    ///   Adventure(Rest)                  -> 消耗一次休息次數（次數不足自動無效）。
-    ///                                       本身不做任何數值變化，降壓請另外用 StatPackage 等指令
     ///   Adventure(GoHome)                -> 回家，結束這趟
-    ///   Adventure(ResetRest)             -> 休息次數重設為上限
-    ///   Adventure(AddRequiredMileage, 2) -> 本輪里程目標 +2（繞遠路，不改 SO）
+    ///   Adventure(AddMoves, -1)          -> 行動次數變化（不帶參數預設 -1 消耗一次；正數補充）
+    ///   Adventure(ResetMoves)            -> 行動次數重設為 Dungeon 的上限
     /// </summary>
     public class SequencerCommandAdventure : SequencerCommand
     {
@@ -75,30 +73,26 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
                         controller.StartDungeonByID(dungeonID);
                 }
             }
-            else if (IsAction(action, "Rest"))
-            {
-                if (RequireController(action, out var controller)) controller.Rest();
-            }
             else if (IsAction(action, "GoHome", "Home"))
             {
                 if (RequireController(action, out var controller)) controller.GoHome();
             }
-            else if (IsAction(action, "ResetRest"))
-            {
-                if (RequireController(action, out var controller)) controller.ResetRest();
-            }
-            else if (IsAction(action, "AddRequiredMileage", "AddRequired", "LongerRoad"))
+            else if (IsAction(action, "AddMoves", "Moves"))
             {
                 if (RequireController(action, out var controller))
                 {
-                    int amount = GetParameterAsInt(1, 1);
-                    controller.AddRequiredMileage(amount);
+                    int amount = GetParameterAsInt(1, -1); // 預設 -1（消耗一次行動）
+                    controller.AddMoves(amount);
                 }
+            }
+            else if (IsAction(action, "ResetMoves"))
+            {
+                if (RequireController(action, out var controller)) controller.ResetMoves();
             }
             else
             {
                 Debug.LogWarning($"[Adventure] 未知的動作類型: {action}。可用選項: " +
-                                 "Dismiss, Draw, Challenge, Start, Rest, GoHome, ResetRest, AddRequiredMileage。");
+                                 "Dismiss, Draw, DrawByID, Challenge, Start, GoHome, AddMoves, ResetMoves。");
             }
 
             Stop();

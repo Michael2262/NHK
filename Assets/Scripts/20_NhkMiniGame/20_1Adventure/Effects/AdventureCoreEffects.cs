@@ -79,40 +79,22 @@ public class AdvMoneyEffect : AdventureEffect
 }
 
 /// <summary>
-/// 里程增減。掛在成功效果清單 = 成功推進；掛在失敗效果清單 = 失敗才變動。
-/// Delta 可為 +2 / +1 / 0 / -1 …
+/// 行動次數增減。預設 -1（消耗一次行動），也可填正數補充。
+/// 次數不會低於 0；歸 0 不會自動結束，由外部決定反應。
 /// </summary>
 [Serializable]
-public class AdvMileageEffect : AdventureEffect
+public class AdvMovesEffect : AdventureEffect
 {
-    [Tooltip("里程變化量，可為負數")]
-    public int Delta = 1;
+    [Tooltip("行動次數變化量，預設 -1（消耗一次）。可填正數補充")]
+    public int Delta = -1;
 
     public override void Apply(AdventureContext ctx)
     {
-        ctx.Run?.AddMileage(Delta);
+        ctx.Run?.AddMoves(Delta);
     }
 
     public override AdventureChangeRecord? ReportChange(AdventureContext ctx)
-        => new AdventureChangeRecord("Mileage", Delta);
-}
-
-/// <summary>
-/// 加長本輪的里程目標（路變遠了）。只影響這一輪，不會改到 Dungeon 的設定檔。
-/// </summary>
-[Serializable]
-public class AdvRequiredMileageEffect : AdventureEffect
-{
-    [Tooltip("里程目標的增加量（正數＝路變遠）")]
-    public int Amount = 1;
-
-    public override void Apply(AdventureContext ctx)
-    {
-        ctx.Run?.AddRequiredMileage(Amount);
-    }
-
-    public override AdventureChangeRecord? ReportChange(AdventureContext ctx)
-        => new AdventureChangeRecord("RequiredMileage", Amount);
+        => new AdventureChangeRecord("Moves", Delta);
 }
 
 /// <summary>
