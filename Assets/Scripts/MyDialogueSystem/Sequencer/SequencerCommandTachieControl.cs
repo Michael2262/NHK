@@ -18,6 +18,7 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
     /// 6. Body: TachieControl(Body, Sister, Uniform)
     /// 7. Expression (表情預設): TachieControl(Expression, Sister, Angry)
     /// 8. Move: TachieControl(Move, Sister, 500, 0.5)
+    ///    也可用具名預設: TachieControl(Move, Sister, Adv) -> 位置與時間查 MovePresets（可加第4參數覆寫時間）
     /// 9. Left/Right/Center: TachieControl(Left, Sister, 0.5)
     /// 10. Clear: TachieControl(Clear, 0.5) -> 邊淡出邊移回原位（過程看得到）
     /// 10.5 HideAndClear: 先原地淡出，看不見之後才歸零（過程看不到）
@@ -36,6 +37,16 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
 
     public class SequencerCommandTachieControl : SequencerCommand
     {
+        // ── Move 具名位置預設 ─────────────────────────────
+        // 用法：TachieControl(Move, Sister, Adv);  等同  TachieControl(Move, Sister, 250, 0.5);
+        // 要改某個預設的含義，只要改這裡的 (x 位置, 移動時間) 即可，所有用到該名稱的劇本一起變。
+        // 名稱大小寫不敏感。
+        private static readonly System.Collections.Generic.Dictionary<string, (float x, float duration)> MovePresets =
+            new System.Collections.Generic.Dictionary<string, (float x, float duration)>(System.StringComparer.OrdinalIgnoreCase)
+        {
+            { "Adv", (350f, 0.5f) },
+        };
+
         public void Awake()
         {
             if (TachieController.Instance == null)
@@ -129,8 +140,30 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
 
             else if (IsAction(action, "Move"))
             {
-                float xValue = GetParameterAsFloat(2);
-                float duration = GetParameterAsFloat(3, -1f);
+                // 兩種寫法：
+                //   TachieControl(Move, Sister, 250, 0.5)  -> 直接指定 x 與時間
+                //   TachieControl(Move, Sister, Adv)       -> 用具名預設（見 MovePresets），第4參數可覆寫時間
+                string p2 = GetParameter(2);
+                float xValue;
+                float duration;
+                if (float.TryParse(p2, System.Globalization.NumberStyles.Float,
+                                   System.Globalization.CultureInfo.InvariantCulture, out xValue))
+                {
+                    // 數字寫法
+                    duration = GetParameterAsFloat(3, -1f);
+                }
+                else if (MovePresets.TryGetValue(p2, out var preset))
+                {
+                    // 具名預設；第4參數若有給就覆寫預設時間
+                    xValue = preset.x;
+                    duration = GetParameterAsFloat(3, preset.duration);
+                }
+                else
+                {
+                    Debug.LogWarning($"[TachieControl] Move 的位置參數無法解析（不是數字也不是已知預設）: {p2}");
+                    Stop();
+                    return;
+                }
                 TachieController.Instance.MoveToX(actorID, xValue, duration);
             }
             else if (IsAction(action, "Left")) TachieController.Instance.MoveToLeft(actorID, GetParameterAsFloat(2, -1f));

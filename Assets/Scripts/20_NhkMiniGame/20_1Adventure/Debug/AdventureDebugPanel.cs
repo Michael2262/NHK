@@ -67,12 +67,18 @@ public class AdventureDebugPanel : MonoBehaviour
         int maxMoves = run.Dungeon != null ? run.Dungeon.MaxMoves : 0;
         GUILayout.Label($"行動次數：{run.MovesRemaining} / {maxMoves}    已散步：{run.ActionsTaken} 次");
 
-        // 下一次散步的特色機率（把「一趟只出一次」規則算進去）
-        if (run.Dungeon != null)
+        // 下一次散步的各池機率（把 gating 算進去，跟實際抽牌同一套邏輯）
+        var d = run.Dungeon;
+        if (d != null)
         {
-            float nextChance = run.Dungeon.GetSpecialChance(run.ActionsTaken);
-            if (run.Dungeon.SpecialOnlyOncePerRun && run.SpecialHappened) nextChance = 0f;
-            GUILayout.Label($"下次特色機率：{nextChance:0}%   （已出過特色：{(run.SpecialHappened ? "是" : "否")}）");
+            float q = d.QuestPool.HasCards && !(d.QuestPool.OnlyOncePerRun && run.QuestHappened)
+                      ? d.QuestPool.GetChance(run.ActionsTaken) : 0f;
+            float s = d.SpecialPool.HasCards && !(d.SpecialPool.OnlyOncePerRun && run.SpecialHappened)
+                      ? d.SpecialPool.GetChance(run.ActionsTaken) : 0f;
+            s = Mathf.Min(s, 100f - q);
+            float n = Mathf.Max(0f, 100f - q - s);
+            GUILayout.Label($"下次機率  任務:{q:0}%  特色:{s:0}%  普通:{n:0}%");
+            GUILayout.Label($"已出過  任務:{(run.QuestHappened ? "是" : "否")}  特色:{(run.SpecialHappened ? "是" : "否")}");
         }
         if (p != null)
             GUILayout.Label($"壓力：{p.Stress}   社會性：{p.Sociality}   生活力：{p.LifePower}   $：{p.Money}");
@@ -82,8 +88,7 @@ public class AdventureDebugPanel : MonoBehaviour
         if (run.CurrentCard != null)
         {
             float rate = run.CurrentCard.CalcSuccessRate(p);
-            string kind = run.LastDrawWasSpecial ? "特色" : "普通";
-            GUILayout.Label($"當前牌：{run.CurrentCard.CardID}（{kind}・{run.CurrentCard.Mode}）  成功率 {rate:0}%");
+            GUILayout.Label($"當前牌：{run.CurrentCard.CardID}（{run.LastDrawCategory}・{run.CurrentCard.Mode}）  成功率 {rate:0}%");
         }
         else
         {

@@ -32,14 +32,16 @@ public class AdventureRunModel
     /// <summary>本輪剩餘的行動次數（還能散步幾次）。開始＝Dungeon.MaxMoves；每次隨機抽牌 -1；也可由 AdvMovesEffect 額外增減。歸 0 就抽不到牌，但不會自動結束。</summary>
     public int MovesRemaining { get; private set; }
 
-    /// <summary>本輪已散步幾次（隨機抽牌才算）。用來決定「第幾次」的特色機率。</summary>
+    /// <summary>本輪已散步幾次（隨機抽牌才算）。用來決定「第幾次」的機率。</summary>
     public int ActionsTaken { get; private set; }
 
-    /// <summary>本輪是否已經出過特色事件（供「一趟只出一次」規則判斷）。</summary>
-    public bool SpecialHappened { get; private set; }
+    /// <summary>最近一次隨機抽牌抽到的類別（Normal / Special / Quest）。</summary>
+    public AdventureCardCategory LastDrawCategory { get; private set; }
 
-    /// <summary>最近一次隨機抽牌抽到的是不是特色事件。</summary>
-    public bool LastDrawWasSpecial { get; private set; }
+    /// <summary>本輪是否已出過特色事件（供除錯 / UI）。</summary>
+    public bool SpecialHappened => _special.Happened;
+    /// <summary>本輪是否已出過任務事件（供除錯 / UI）。</summary>
+    public bool QuestHappened => _quest.Happened;
 
     public AdventureCardData CurrentCard { get; private set; }
     public bool IsEnded { get; private set; }
@@ -53,8 +55,15 @@ public class AdventureRunModel
     // 翻牌期間的暫存（跨兩階段）
     private List<AdventureChangeRecord> _pendingAlwaysChanges;
 
-    // 本輪已抽過的特色牌（給 Dungeon.NoRepeatSpecialInRun 用）
-    private readonly HashSet<AdventureCardData> _drawnSpecials = new HashSet<AdventureCardData>();
+    // 各機率池的本輪執行狀態（是否出過、已抽過哪些）
+    private sealed class PoolState
+    {
+        public bool Happened;
+        public readonly HashSet<AdventureCardData> Drawn = new HashSet<AdventureCardData>();
+        public void Reset() { Happened = false; Drawn.Clear(); }
+    }
+    private readonly PoolState _special = new PoolState();
+    private readonly PoolState _quest = new PoolState();
 
     // ───── 事件（給 Controller / UI / FSM 掛） ─────
     public event Action<AdventureCardData> OnCardDrawn;
@@ -86,9 +95,9 @@ public class AdventureRunModel
         Dungeon = dungeon;
         MovesRemaining = dungeon != null ? dungeon.MaxMoves : 0;
         ActionsTaken = 0;
-        SpecialHappened = false;
-        LastDrawWasSpecial = false;
-        _drawnSpecials.Clear();
+        LastDrawCategory = AdventureCardCategory.Normal;
+        _special.Reset();
+        _quest.Reset();
         CurrentCard = null;
         IsEnded = false;
         _pendingAlwaysChanges = null;
@@ -108,8 +117,8 @@ public class AdventureRunModel
     // ============================================================
 
     /// <summary>
-    /// 散步一次：算「第幾次」→ 依機率決定普通 / 特色 →（出過特色且規則開啟則強制普通）→
-    /// 從對應牌池隨機抽一張。抽牌本身就是一次行動：ActionsTaken +1、MovesRemaining -1。
+    /// 散步一次：算「第幾次」→ 單次擲骰依機率瓜分決定類別（Quest > Special > Normal）→ 從對應池隨機抽一張。
+    /// 抽牌只推進 ActionsTaken（給機率表用），不動 Moves（Moves 由外部在對話控制）。
     /// 行動次數已用完（MovesRemaining ≤ 0）則抽不到牌。
     /// 若上一張牌已跑過必有效果卻還沒結算（玩家選了「繞遠路」），這裡會把那個未完成的結果丟棄。
     /// </summary>
@@ -124,53 +133,84 @@ public class AdventureRunModel
 
         int actionIndex = ActionsTaken; // 0-based：這是第 (actionIndex+1) 次散步
 
-        float specialChance = Dungeon.GetSpecialChance(actionIndex);
-        if (Dungeon.SpecialOnlyOncePerRun && SpecialHappened) specialChance = 0f;
+        // 各池「實際生效」的機率（被 gating 關掉或抽不出牌的池 → 0，那份自動歸給 Normal）
+        float questChance = EffectiveChance(Dungeon.QuestPool, _quest, actionIndex);
+        float specialChance = EffectiveChance(Dungeon.SpecialPool, _special, actionIndex);
+        // Quest 優先：兩者相加超過 100 時壓縮 Special
+        specialChance = Mathf.Min(specialChance, 100f - questChance);
 
-        bool wantSpecial = Dungeon.HasSpecialCards
-                        && UnityEngine.Random.Range(0f, 100f) < specialChance;
+        float roll = UnityEngine.Random.Range(0f, 100f);
 
         AdventureCardData card;
-        if (wantSpecial)
-        {
-            // 本輪不重複 → 排除已抽過的特色牌
-            var exclude = Dungeon.NoRepeatSpecialInRun ? _drawnSpecials : null;
-            card = Dungeon.PickRandomSpecial(exclude);
+        AdventureCardCategory category;
 
-            // 特色池抽空（或不重複下全出過了）→ 退回普通
-            if (card == null)
-            {
-                wantSpecial = false;
-                card = Dungeon.PickRandomNormal();
-            }
+        if (roll < questChance)
+        {
+            category = AdventureCardCategory.Quest;
+            card = Dungeon.QuestPool.PickRandom(Dungeon.QuestPool.NoRepeatInRun ? _quest.Drawn : null);
+        }
+        else if (roll < questChance + specialChance)
+        {
+            category = AdventureCardCategory.Special;
+            card = Dungeon.SpecialPool.PickRandom(Dungeon.SpecialPool.NoRepeatInRun ? _special.Drawn : null);
         }
         else
         {
+            category = AdventureCardCategory.Normal;
+            card = Dungeon.PickRandomNormal();
+        }
+
+        // 保險：機率池臨時抽不出牌 → 退回普通（EffectiveChance 通常已擋掉，但防呆）
+        if (card == null && category != AdventureCardCategory.Normal)
+        {
+            category = AdventureCardCategory.Normal;
             card = Dungeon.PickRandomNormal();
         }
 
         if (card == null)
         {
             Debug.LogWarning($"[Adventure] Dungeon '{Dungeon.DungeonID}' 第 {actionIndex + 1} 次散步抽不到牌（牌池皆空）。");
-            return null; // 抽不到牌就不消耗行動
+            return null; // 抽不到牌就不推進行動
         }
 
-        LastDrawWasSpecial = wantSpecial;
-        if (wantSpecial)
-        {
-            SpecialHappened = true;
-            _drawnSpecials.Add(card);
-        }
+        LastDrawCategory = category;
+        MarkPoolDraw(category, card);
 
         ActionsTaken++; // 只推進「第幾次散步」（給機率表用）；Moves 由外部在對話裡自己扣
         return SetDrawnCard(card);
+    }
+
+    /// <summary>某機率池這次「實際生效」的機率(%)：被 gating 關掉或抽不出牌就回 0。</summary>
+    private static float EffectiveChance(AdventureCardPool pool, PoolState state, int actionIndex)
+    {
+        if (pool == null || !pool.HasCards) return 0f;
+        if (pool.OnlyOncePerRun && state.Happened) return 0f;
+
+        var exclude = pool.NoRepeatInRun ? state.Drawn : null;
+        if (!pool.HasDrawable(exclude)) return 0f; // NoRepeat 下全抽過了
+
+        return Mathf.Clamp(pool.GetChance(actionIndex), 0f, 100f);
+    }
+
+    private void MarkPoolDraw(AdventureCardCategory category, AdventureCardData card)
+    {
+        if (category == AdventureCardCategory.Quest)
+        {
+            _quest.Happened = true;
+            _quest.Drawn.Add(card);
+        }
+        else if (category == AdventureCardCategory.Special)
+        {
+            _special.Happened = true;
+            _special.Drawn.Add(card);
+        }
     }
 
     /// <summary>
     /// 直接發一張「指定的」牌（略過牌池抽選），用於劇情腳本強制指定某張牌。
     /// 一樣推進「第幾次散步」（ActionsTaken +1），但不動 Moves（Moves 由外部在對話裡扣）。
     /// 不受行動次數用完限制（劇情可強制發），但一樣會丟棄上一張未結算的結果、發 OnCardDrawn。
-    /// 註：不改動 SpecialHappened / LastDrawWasSpecial（那是隨機抽牌的狀態）。
+    /// 註：不改動任何機率池狀態 / LastDrawCategory（那是隨機抽牌的狀態）。
     /// </summary>
     public AdventureCardData DrawSpecificCard(AdventureCardData card)
     {
