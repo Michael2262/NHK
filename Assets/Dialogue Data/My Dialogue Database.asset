@@ -112900,7 +112900,7 @@ MonoBehaviour:
         typeString: CustomFieldType_Text
       - title: Sequence
         value: "Anim(Stop);  \n\n\nTachieControl(Eye, Sister, Half);\n\nTachieControl(Mouth,
-          Sister, Small3);\n\n\n\n\nCanvasAlpha(Basic Dialogue Panel, 1);\nDelay({{end}});"
+          Sister, Small3);\n\n\n\n\nSubtitlePanel(show);\nDelay({{end}});"
         type: 0
         typeString: CustomFieldType_Text
       - title: zh-TW
@@ -113148,7 +113148,7 @@ MonoBehaviour:
       - title: Sequence
         value: "TachieControl(Eye, Sister, Close_Sad);\nTachieControl(Blush, Sister,
           BlushL2);\nTachieControl(Mouth, Sister, Small2);\nTachieControl(Brow, Sister,
-          Angry1);\n\n\n\n\nAnim(Stop);  \nCanvasAlpha(Basic Dialogue Panel, 1);\nDelay({{end}});"
+          Angry1);\n\n\n\n\nAnim(Stop);  \nSubtitlePanel(show);\nDelay({{end}});"
         type: 0
         typeString: CustomFieldType_Text
       - title: zh-TW
@@ -113271,7 +113271,7 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: "Anim(Stop);  \nCanvasAlpha(Basic Dialogue Panel, 1);\n\nTachieControl(Expression,
+        value: "Anim(Stop);  \nSubtitlePanel(show);\n\nTachieControl(Expression,
           Sister, Sad1);\n\n\n\nTachieControl(Mouth, Sister, Small3);\n\nTachieControl(Eye,
           Sister, Normal);\n\n\nDelay({{end}});"
         type: 0
@@ -113407,7 +113407,7 @@ MonoBehaviour:
           Sister, Angry1);
 
 
-          CanvasAlpha(Basic Dialogue Panel, 1);
+          SubtitlePanel(show);
 
           Delay({{end}});'
         type: 0
@@ -115440,8 +115440,8 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: "Anim(Stop);  \nCanvasAlpha(Basic Dialogue Panel, 1);\n\nTachieControl(Mouth,
-          Sister, Small3);\nDelay({{end}});"
+        value: "Anim(Stop);  \nSubtitlePanel(show);\n\nTachieControl(Mouth, Sister,
+          Small3);\nDelay({{end}});"
         type: 0
         typeString: CustomFieldType_Text
       - title: zh-TW
@@ -115957,6 +115957,8 @@ MonoBehaviour:
 
           Request(sister,Think);
 
+
+          SubtitlePanel(hide);
 
 
           Delay(1.5);
@@ -116845,7 +116847,7 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 2103.537
+        x: 2105.8901
         y: 378.1359
         width: 160
         height: 30
@@ -117137,7 +117139,7 @@ MonoBehaviour:
         value: 'Delay(0.5);
 
 
-          CanvasAlpha(Basic Dialogue Panel, 0);'
+          SubtitlePanel(hide);'
         type: 0
         typeString: CustomFieldType_Text
       - title: zh-TW
@@ -117260,7 +117262,7 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: "Anim(Stop);  \nCanvasAlpha(Basic Dialogue Panel, 1);\n\n\nTachieControl(Expression,
+        value: "Anim(Stop);  \nSubtitlePanel(show);\n\n\nTachieControl(Expression,
           Sister, Angry2);\n\nTachieControl(Eye, Sister, Close_Sad);\n\nTachieControl(Mouth,
           Sister, Small3);\n\nTachieControl(Other, Sister, SweatL1);\n\nDelay({{end}});"
         type: 0
@@ -118782,7 +118784,7 @@ MonoBehaviour:
       - title: Sequence
         value: "Anim(Stop);  \n\nTachieControl(Eye, Sister, Half);\nTachieControl(Brow,
           Sister, Sad4);\nTachieControl(Mouth, Sister, Small3);\nTachieControl(Body,
-          Sister, Normal);\n\n\nCanvasAlpha(Basic Dialogue Panel, 1);\nDelay({{end}});"
+          Sister, Normal);\n\n\nSubtitlePanel(show);\nDelay({{end}});"
         type: 0
         typeString: CustomFieldType_Text
       - title: zh-TW
@@ -120001,7 +120003,7 @@ MonoBehaviour:
         width: 160
         height: 30
     entryGroups: []
-    canvasScrollPosition: {x: 682.3504, y: 32.941223}
+    canvasScrollPosition: {x: 1596.4678, y: 0}
     canvasZoom: 0.85000014
   - id: 169
     fields:
@@ -317242,7 +317244,7 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: 'ItemImage(bento);
+        value: '
 
 
           ContinueButtonLock(on);
@@ -317367,7 +317369,10 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: Delay(1);
+        value: 'Delay(2.5);
+
+
+          CookingImage(Pork);'
         type: 0
         typeString: CustomFieldType_Text
       - title: zh-TW

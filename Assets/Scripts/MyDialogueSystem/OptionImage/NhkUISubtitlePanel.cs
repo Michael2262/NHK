@@ -16,6 +16,7 @@
 //   3. Inspector 拖入 Narration Text（與可選的 Narration Container）
 //   4. 需要敘述的對話節點：新增 Text 欄位 "Narration"，直接填敘述文字
 
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace PixelCrushers.DialogueSystem
@@ -168,6 +169,47 @@ namespace PixelCrushers.DialogueSystem
                 return;
             }
             base.ShowContinueButtonNow();
+        }
+
+        // ===================== 整個字幕面板 隱藏 / 還原（給 Sequencer 命令用）=====================
+        //
+        // 用途：演出期間想把「整個對話框」暫時收起來（例如秀立繪 / 過場），演完再叫回來。
+        //   Hide → 對當下開著的所有 NhkUISubtitlePanel 呼叫 Close()（會播 Hide 動畫），並記住它們。
+        //   Show → 對剛剛記住的面板呼叫 Open()（會播 Show 動畫）還原。
+        //   Reset → 只清掉記錄、不還原（保底用）。
+        //
+        // 注意：走面板原生的 Open()/Close()，動畫、敘述框收合、繼續鈕鎖等都照常。
+        //   面板若勾了 Clear Text On Close，Hide 後文字會被清掉，Show 回來是空框（下一句才會填字）。
+        private static readonly List<NhkUISubtitlePanel> s_commandHiddenPanels = new List<NhkUISubtitlePanel>();
+
+        /// <summary>隱藏當下開著的所有字幕面板（播 Hide 動畫），並記住以便 <see cref="ShowHiddenPanels"/> 還原。</summary>
+        public static void HideOpenPanels()
+        {
+            var panels = FindObjectsByType<NhkUISubtitlePanel>(FindObjectsSortMode.None);
+            for (int i = 0; i < panels.Length; i++)
+            {
+                var p = panels[i];
+                if (p == null || !p.isOpen) continue;
+                if (!s_commandHiddenPanels.Contains(p)) s_commandHiddenPanels.Add(p);
+                p.Close(); // 播 Hide 動畫
+            }
+        }
+
+        /// <summary>還原先前被 <see cref="HideOpenPanels"/> 隱藏的面板（播 Show 動畫），並清空記錄。</summary>
+        public static void ShowHiddenPanels()
+        {
+            for (int i = 0; i < s_commandHiddenPanels.Count; i++)
+            {
+                var p = s_commandHiddenPanels[i];
+                if (p != null) p.Open(); // 播 Show 動畫
+            }
+            s_commandHiddenPanels.Clear();
+        }
+
+        /// <summary>只清空「被命令隱藏」的記錄，不還原（保底用，擔心 Hide/Show 沒配對時）。</summary>
+        public static void ResetHiddenPanels()
+        {
+            s_commandHiddenPanels.Clear();
         }
     }
 }
