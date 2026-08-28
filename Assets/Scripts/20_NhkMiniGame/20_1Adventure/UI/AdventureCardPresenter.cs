@@ -68,6 +68,13 @@ public class AdventureCardPresenter : MonoBehaviour
 
     [SerializeField] private float _fadeDuration = 0.35f;
 
+    [Header("音效（AudioManager 的音效 ID；留空 = 不播）")]
+    [Tooltip("發牌（牌飛入畫面）時播的音效 ID")]
+    [SerializeField] private string _dealSoundKey = "woosh";
+
+    [Tooltip("翻面時播的音效 ID")]
+    [SerializeField] private string _flipSoundKey = "flipCard";
+
     [Header("事件")]
     [Tooltip("必有效果已觸發，停下來等玩家決定。接這裡去開你的「挑戰 / 繞遠路」對話")]
     public UnityEvent onAwaitingOutcome;
@@ -231,7 +238,10 @@ public class AdventureCardPresenter : MonoBehaviour
             _current.Rect.anchoredPosition = _spawnPosition;
             _current.ShowBack();
 
+            PlaySfx(_dealSoundKey); // 發牌
             yield return _current.FlyTo(_centerPosition, _flyDuration).WaitForCompletion();
+
+            PlaySfx(_flipSoundKey); // 翻牌
             yield return _current.FlipTo(card.Illustration, _flipDuration).WaitForCompletion();
 
             // 等 X → 換必有插圖
@@ -298,6 +308,13 @@ public class AdventureCardPresenter : MonoBehaviour
         yield return _current.FadeOut(_fadeDuration).WaitForCompletion();
         Destroy(_current.gameObject);
         _current = null;
+    }
+
+    /// <summary>播一個 AudioManager 音效（key 為空或找不到 AudioManager 就跳過）。</summary>
+    private static void PlaySfx(string key)
+    {
+        if (string.IsNullOrEmpty(key)) return;
+        if (AudioManager.Instance != null) AudioManager.Instance.PlaySound(key);
     }
 
     private void OnEnable()
