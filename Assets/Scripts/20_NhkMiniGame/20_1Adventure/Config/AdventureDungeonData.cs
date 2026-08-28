@@ -15,9 +15,10 @@ public class AdventureDungeonData : ScriptableObject
 {
     public string DungeonID => name;
 
-    [Header("顯示（走多語系 Text Table）")]
-    public string DisplayNameKey = "ADV_DUNGEON_NAME_DEFAULT";
-    public Sprite Banner;
+    [Header("備註")]
+    [Tooltip("給自己看的敘述，不影響任何功能")]
+    [TextArea(2, 5)]
+    public string Description;
 
     [Header("規則")]
     [Tooltip("一趟最多散步幾次（= 幾次行動）。抽一張牌就是散步一次")]

@@ -20,9 +20,10 @@ public class AdventureCardData : ScriptableObject
 {
     public string CardID => name;
 
-    [Header("顯示（走多語系 Text Table）")]
-    public string DisplayNameKey = "ADV_CARD_NAME_DEFAULT";
-    public string DescriptionKey = "ADV_CARD_DESC_DEFAULT";
+    [Header("備註")]
+    [Tooltip("給自己看的敘述，不影響任何功能")]
+    [TextArea(2, 5)]
+    public string Description;
 
     [Header("演出")]
     [Tooltip("啟用：這張牌不播飛入/翻面/淡出動畫、也不需要插圖。\n" +
