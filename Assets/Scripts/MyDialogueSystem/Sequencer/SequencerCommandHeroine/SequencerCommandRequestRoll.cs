@@ -2,21 +2,25 @@
 // SequencerCommandRequestRoll.cs
 // ============================================================
 // 用法：
-//   RequestRoll(heroineID, archetypeID)
-//   RequestRoll(heroineID, archetypeID, bonus)
-//   RequestRoll(heroineID, archetypeID, bonus, flagName)
+//   RequestRoll(archetypeID)
+//   RequestRoll(archetypeID, heroineID)
+//   RequestRoll(archetypeID, heroineID, bonus)
+//   RequestRoll(archetypeID, heroineID, bonus, flagName)
 //
+// heroineID：可省略，預設 sister。主角數值型 Request 不會使用此參數。
 // bonus：本次臨時對「主驅動數值」加減（可正可負，不影響數值本身）。
 //
 // 範例：
-//   RequestRoll(sister, 邀約)
+//   RequestRoll(打球)
+//     → 用 Resources/RequestRoll/打球.asset 擲骰；若原型需要女主角數值，預設讀 sister
+//   RequestRoll(邀約, sister)
 //     → 用 Resources/RequestRoll/邀約.asset 對 sister 擲骰，
 //       過:加 Flag_RequestPass；敗:移除 Flag_RequestPass（Scene 生命週期）
-//   RequestRoll(sister, 邀約, +10)
+//   RequestRoll(邀約, sister, +10)
 //     → 驅動值臨時 +10 再判定（例：非常強烈的請求）
-//   RequestRoll(sister, 邀約, -10)
+//   RequestRoll(邀約, sister, -10)
 //     → 驅動值臨時 -10 再判定（例：女主心情不好）
-//   RequestRoll(sister, 邀約, 0, Flag_MyResult)
+//   RequestRoll(邀約, sister, 0, Flag_MyResult)
 //     → 無加減，結果改寫到 Flag_MyResult
 //
 // 說明：
@@ -26,7 +30,7 @@
 // - 寫完 Flag 後發送 Sequencer Message "RequestRollDone"，
 //   方便把後續 Continue 明確排在擲骰之後（避免同訊息競態）：
 //     Request(sister,Think);
-//     RequestRoll(sister,邀約)@Message(RequestDone);
+//     RequestRoll(邀約,sister)@Message(RequestDone);
 //     Continue()@Message(RequestRollDone)
 // ============================================================
 
@@ -38,13 +42,45 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
     public class SequencerCommandRequestRoll : SequencerCommand
     {
         private const string ResourcesFolder = "RequestRoll/";
+        private const string DefaultHeroineID = "sister";
         private const string DefaultFlagName = "Flag_RequestPass";
         private const string DoneMessage = "RequestRollDone";
 
         public void Awake()
         {
-            string heroineID = GetParameter(0, string.Empty).Trim();
-            string archetypeID = GetParameter(1, string.Empty).Trim();
+            string firstParameter = GetParameter(0, string.Empty).Trim();
+            string secondParameter = GetParameter(1, string.Empty).Trim();
+
+            if (string.IsNullOrEmpty(firstParameter))
+            {
+                Debug.LogError("[RequestRoll] 缺少 archetypeID，指令中止。", this);
+                Complete();
+                return;
+            }
+
+            // 新格式：RequestRoll(archetypeID, heroineID?, bonus?, flagName?)
+            string archetypeID = firstParameter;
+            string heroineID = string.IsNullOrEmpty(secondParameter)
+                ? DefaultHeroineID
+                : secondParameter;
+            var archetype = Resources.Load<RequestArchetype>(ResourcesFolder + archetypeID);
+
+            // 舊格式相容：RequestRoll(heroineID, archetypeID, bonus?, flagName?)
+            // 第一參數找不到原型、第二參數能找到時，自動按舊順序解析。
+            if (archetype == null && !string.IsNullOrEmpty(secondParameter))
+            {
+                var legacyArchetype = Resources.Load<RequestArchetype>(ResourcesFolder + secondParameter);
+                if (legacyArchetype != null)
+                {
+                    heroineID = firstParameter;
+                    archetypeID = secondParameter;
+                    archetype = legacyArchetype;
+                    Debug.LogWarning(
+                        $"[RequestRoll] 偵測到舊格式 RequestRoll({heroineID}, {archetypeID})；" +
+                        $"建議改為 RequestRoll({archetypeID}, {heroineID})。",
+                        this);
+                }
+            }
 
             string bonusRaw = GetParameter(2, string.Empty).Trim();
             int bonus = 0;
@@ -57,14 +93,6 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
             string flagName = GetParameter(3, DefaultFlagName).Trim();
             if (string.IsNullOrEmpty(flagName)) flagName = DefaultFlagName;
 
-            if (string.IsNullOrEmpty(archetypeID))
-            {
-                Debug.LogError("[RequestRoll] 缺少 archetypeID，指令中止。", this);
-                Complete();
-                return;
-            }
-
-            var archetype = Resources.Load<RequestArchetype>(ResourcesFolder + archetypeID);
             if (archetype == null)
             {
                 Debug.LogError($"[RequestRoll] 找不到原型 Resources/{ResourcesFolder}{archetypeID}.asset，指令中止。", this);
