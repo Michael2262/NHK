@@ -52,6 +52,20 @@ namespace PixelCrushers.DialogueSystem
             base.Close();
         }
 
+        public override void Open()
+        {
+            // 只要有字幕板被對話系統自然開啟，就代表畫面已經進入新狀態；
+            // 先前 SubtitlePanel(hide) 記住的面板快照不再可用，避免未來 show 又叫回舊面板。
+            // SubtitlePanel(show) 會在呼叫 Open 前先取出快照並清空清單，所以正常還原不受影響。
+            s_commandHiddenPanels.Clear();
+
+            base.Open();
+
+            // 面板可能在 inactive 期間才被上鎖，當時 PushContinueButtonLock 未必找得到它。
+            // 每次 Open 都再檢查一次，避免舊的 Continue Button 跟著父面板重新出現。
+            if (IsContinueButtonLocked) HideContinueButton();
+        }
+
         /// <summary>
         /// 依當前字幕行節點的欄位取敘述：有字 → 顯示；否則隱藏。
         /// 用 LookupLocalizedValue，多語系機制與對話文字相同（維護 "Narration ja" 等變體）。
@@ -138,8 +152,9 @@ namespace PixelCrushers.DialogueSystem
             s_continueLockCount++;
             if (s_continueLockCount != 1) return;
 
-            // 由「不鎖」轉為「鎖」的當下：把目前已顯示的繼續鈕立刻藏起來（含前一句遺留的那顆）。
-            var panels = FindObjectsByType<NhkUISubtitlePanel>(FindObjectsSortMode.None);
+            // 由「不鎖」轉為「鎖」的當下：把所有繼續鈕立刻藏起來。
+            // 必須包含 inactive 面板，否則它們日後 Open 時可能把舊的亮著按鈕一起帶回來。
+            var panels = FindObjectsByType<NhkUISubtitlePanel>(FindObjectsInactive.Include, FindObjectsSortMode.None);
             for (int i = 0; i < panels.Length; i++)
             {
                 if (panels[i] != null) panels[i].HideContinueButton();
@@ -210,12 +225,16 @@ namespace PixelCrushers.DialogueSystem
         /// <summary>還原先前被 <see cref="HideOpenPanels"/> 隱藏的面板（播 Show 動畫），並清空記錄。</summary>
         public static void ShowHiddenPanels()
         {
-            for (int i = 0; i < s_commandHiddenPanels.Count; i++)
+            // 先取出快照並清空原清單，再逐一 Open。
+            // 如此 Open() 內的「自然開啟會清過期記錄」不會干擾這次明確的 show 還原。
+            var panelsToShow = s_commandHiddenPanels.ToArray();
+            s_commandHiddenPanels.Clear();
+
+            for (int i = 0; i < panelsToShow.Length; i++)
             {
-                var p = s_commandHiddenPanels[i];
+                var p = panelsToShow[i];
                 if (p != null) p.Open(); // 播 Show 動畫
             }
-            s_commandHiddenPanels.Clear();
         }
 
         /// <summary>只清空「被命令隱藏」的記錄，不還原（保底用，擔心 Hide/Show 沒配對時）。</summary>

@@ -16,7 +16,17 @@ public class FsmTrigge : MonoBehaviour
 
     void Awake()
     {
-        // 找到指定名稱的 FSM
+        ResolveFsm();
+
+        if (_fsm == null)
+        {
+            Debug.LogError($"[FsmTrigger] 在 {gameObject.name} 上找不到名稱為 '{fsmName}' 的 FSM!");
+        }
+    }
+
+    // 找到指定名稱的 FSM 並快取
+    private void ResolveFsm()
+    {
         var fsms = GetComponents<PlayMakerFSM>();
         foreach (var f in fsms)
         {
@@ -26,16 +36,24 @@ public class FsmTrigge : MonoBehaviour
                 break;
             }
         }
+    }
+
+    [ContextMenu("Trigger")]
+    public void Trigger()
+    {
+        // ContextMenu 在編輯期就可能被呼叫（此時 Awake 尚未執行），保底再找一次
+        if (_fsm == null)
+        {
+            ResolveFsm();
+        }
 
         if (_fsm == null)
         {
             Debug.LogError($"[FsmTrigger] 在 {gameObject.name} 上找不到名稱為 '{fsmName}' 的 FSM!");
+            return;
         }
-    }
 
-    public void Trigger()
-    {
-        if (_fsm != null && !string.IsNullOrEmpty(eventName))
+        if (!string.IsNullOrEmpty(eventName))
         {
             _fsm.SendEvent(eventName);
         }
