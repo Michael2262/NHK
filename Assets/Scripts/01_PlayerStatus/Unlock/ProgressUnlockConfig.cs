@@ -34,4 +34,12 @@ public class ProgressUnlockConfig : ScriptableObject
         "與門檻規則不同：這裡不判斷大小，只是讓 Value 永遠等於來源的當下值。"
     )]
     public List<StatMirror> mirrors = new List<StatMirror>();
+
+    [Header("布林 Flag 映射 (Sync / 鏡像)")]
+    [Tooltip(
+        "把主角布林狀態忠實同步到 Progress Flag（狀態一變就跟著開關）。\n" +
+        "來源支援 BadHealthy / BadDependency；true 時加入 Persistent Flag，false 時移除 Flag。\n" +
+        "此映射為單向：修改 Progress Flag 不會反向修改主角狀態。"
+    )]
+    public List<BoolFlagMirror> flagMirrors = new List<BoolFlagMirror>();
 }

@@ -35,6 +35,10 @@ public class ProgressUnlockManager
     private readonly List<StatMirror> _protagonistMirrors
         = new List<StatMirror>();
 
+    // 主角布林狀態映射：BadHealthy / BadDependency → Progress Flag
+    private readonly List<BoolFlagMirror> _protagonistFlagMirrors
+        = new List<BoolFlagMirror>();
+
     // 紀錄每條 Rule「目前是否已套用」(用 Rule 本身為 key；Rule 是 ScriptableObject，引用即唯一)
     private readonly Dictionary<ProgressUnlockRuleAsset, bool> _ruleApplied
         = new Dictionary<ProgressUnlockRuleAsset, bool>();
@@ -45,6 +49,9 @@ public class ProgressUnlockManager
 
     // 主角的 handler，掛在 Stress / LifePower / Sociality / Dependency 四個事件上
     private Action<int> _protagonistHandler;
+
+    // 主角布林狀態的 handler，掛在 BadHealthy / BadDependency 事件上
+    private Action<bool> _protagonistBoolHandler;
 
     // RefreshAllRules (讀檔 / 新遊戲) 期間不發公告，避免載入時整批已達成規則同時彈 Alert
     private bool _suppressAlerts = false;
@@ -74,6 +81,7 @@ public class ProgressUnlockManager
             if (cfg == null) continue;
 
             CollectMirrors(cfg);
+            CollectFlagMirrors(cfg);
 
             if (cfg.rules == null) continue;
 
@@ -173,6 +181,27 @@ public class ProgressUnlockManager
         }
     }
 
+    /// <summary>收集一個 Config 內的主角布林狀態 → Progress Flag 映射。</summary>
+    private void CollectFlagMirrors(ProgressUnlockConfig cfg)
+    {
+        if (cfg.flagMirrors == null) return;
+
+        foreach (var mirror in cfg.flagMirrors)
+        {
+            if (mirror == null) continue;
+
+            if (mirror.target == null)
+            {
+                Debug.LogWarning(
+                    $"[ProgressUnlockManager] Config '{cfg.name}' 有一筆布林 Flag 映射未設定 target，已跳過。"
+                );
+                continue;
+            }
+
+            _protagonistFlagMirrors.Add(mirror);
+        }
+    }
+
     // ==========================================================
     // 訂閱數值變化事件
     // ==========================================================
@@ -216,6 +245,14 @@ public class ProgressUnlockManager
             _protagonist.OnRoomMessLevelChanged += _protagonistHandler;
             _protagonist.OnBodyDirtyLevelChanged += _protagonistHandler;
         }
+
+        // ── 主角布林狀態：BadHealthy / BadDependency ──
+        if (_protagonistFlagMirrors.Count > 0 && _protagonist != null)
+        {
+            _protagonistBoolHandler = (_) => ApplyProtagonistFlagMirrors();
+            _protagonist.OnBadHealthyChanged += _protagonistBoolHandler;
+            _protagonist.OnBadDependencyChanged += _protagonistBoolHandler;
+        }
     }
 
     /// <summary>
@@ -243,6 +280,13 @@ public class ProgressUnlockManager
             _protagonist.OnBodyDirtyLevelChanged -= _protagonistHandler;
         }
         _protagonistHandler = null;
+
+        if (_protagonistBoolHandler != null && _protagonist != null)
+        {
+            _protagonist.OnBadHealthyChanged -= _protagonistBoolHandler;
+            _protagonist.OnBadDependencyChanged -= _protagonistBoolHandler;
+        }
+        _protagonistBoolHandler = null;
     }
 
     // ==========================================================
@@ -282,6 +326,7 @@ public class ProgressUnlockManager
             ApplyMirrorsForHeroine(id);
 
         ApplyProtagonistMirrors();
+        ApplyProtagonistFlagMirrors();
     }
 
     // ==========================================================
@@ -329,6 +374,26 @@ public class ProgressUnlockManager
 
         if (ProgressUnlockUtility.TryGetStatValue(mirror.stat, heroine, _protagonist, out int value))
             _progress.SetValue(mirror.target.FlagID, value);
+    }
+
+    private void ApplyProtagonistFlagMirrors()
+    {
+        foreach (var mirror in _protagonistFlagMirrors)
+            ApplyFlagMirror(mirror);
+    }
+
+    private void ApplyFlagMirror(BoolFlagMirror mirror)
+    {
+        if (mirror == null || mirror.target == null) return;
+
+        if (!ProgressUnlockUtility.TryGetProtagonistBoolState(
+                mirror.state, _protagonist, out bool isActive))
+            return;
+
+        if (isActive)
+            _progress.AddPersistentFlag(mirror.target.FlagID);
+        else
+            _progress.RemoveFlag(mirror.target.FlagID);
     }
 
     private void EvaluateRule(ProgressUnlockRuleAsset rule)

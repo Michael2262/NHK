@@ -71,6 +71,9 @@ public class ProtagonistStatusModel
     /// <summary>BadDependency 開啟時，每次進入新 Phase 增加的壓力。</summary>
     public const int BAD_DEPENDENCY_PHASE_STRESS_GAIN = 5;
 
+    /// <summary>Dependency 小於等於此值時，BadDependency 會自動解除且無法開啟。</summary>
+    public const int BAD_DEPENDENCY_AUTO_DISABLE_THRESHOLD = 50;
+
     // ───── 分級門檻（各數值可獨立調整，預設一致） ─────
     // Stress
     public const int STRESS_MEDIUM_THRESHOLD = 50;
@@ -156,7 +159,7 @@ public class ProtagonistStatusModel
     /// <summary>狀態不好：true 時「增加壓力會再多 +1、減少壓力會少 -1」。換日時自動解除。</summary>
     public bool BadHealthy { get; private set; } = false;
 
-    /// <summary>不良依賴：true 時每次 Phase 變化增加壓力。僅由外部手動開關。</summary>
+    /// <summary>不良依賴：true 時每次 Phase 變化增加壓力；Dependency 小於等於 50 時自動解除。</summary>
     public bool BadDependency { get; private set; } = false;
 
     // ───── 事件通知 ─────
@@ -231,7 +234,8 @@ public class ProtagonistStatusModel
         RoomMessLevel = ClampRoomMessLevel(data.RoomMessLevel);
         BodyDirtyLevel = ClampBodyDirtyLevel(data.BodyDirtyLevel); // 舊存檔缺欄位時反序列化為 0（= 身體最乾淨）
         BadHealthy = data.BadHealthy; // 舊存檔沒有此欄位時，Newtonsoft 預設為 false
-        BadDependency = data.BadDependency; // 舊存檔沒有此欄位時，Newtonsoft 預設為 false
+        // 舊存檔沒有此欄位時，Newtonsoft 預設為 false；不符合依賴度門檻時直接校正為關閉。
+        BadDependency = data.BadDependency && Dependency > BAD_DEPENDENCY_AUTO_DISABLE_THRESHOLD;
 
         NotifyAllCoreValues();
     }
@@ -394,6 +398,8 @@ public class ProtagonistStatusModel
         int prevValue = Dependency;
         StatusGrade prevGrade = GetDependencyGrade();
         Dependency = ClampDependency(Dependency + delta);
+
+        DisableBadDependencyIfDependencyLow();
 
         if (Dependency == prevValue) return;
 
@@ -605,15 +611,22 @@ public class ProtagonistStatusModel
     /// <summary>開啟「不良依賴」。開啟期間每次進入新 Phase 增加壓力。</summary>
     public void EnableBadDependency() => SetBadDependency(true);
 
-    /// <summary>解除「不良依賴」。此狀態不會因換日自動解除。</summary>
+    /// <summary>解除「不良依賴」。Dependency 小於等於門檻時也會自動呼叫。</summary>
     public void DisableBadDependency() => SetBadDependency(false);
 
-    /// <summary>直接設定「不良依賴」。狀態有變化時觸發 OnBadDependencyChanged。</summary>
+    /// <summary>直接設定「不良依賴」。Dependency 小於等於門檻時無法開啟。</summary>
     public void SetBadDependency(bool value)
     {
-        if (BadDependency == value) return;
-        BadDependency = value;
+        bool nextValue = value && Dependency > BAD_DEPENDENCY_AUTO_DISABLE_THRESHOLD;
+        if (BadDependency == nextValue) return;
+        BadDependency = nextValue;
         OnBadDependencyChanged?.Invoke(BadDependency);
+    }
+
+    private void DisableBadDependencyIfDependencyLow()
+    {
+        if (Dependency <= BAD_DEPENDENCY_AUTO_DISABLE_THRESHOLD)
+            DisableBadDependency();
     }
 
     /// <summary>Phase 變化時套用「不良依賴」效果。壓力變化會走既有 BadHealthy 修正。</summary>

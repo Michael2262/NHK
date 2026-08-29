@@ -132,6 +132,34 @@ public class StatMirror
 }
 
 /// <summary>
+/// 可映射到 Progress Flag 的主角布林狀態。
+/// 新項目一律追加在最後，避免打亂既有 Config .asset 的列舉索引。
+/// </summary>
+public enum ProtagonistBoolState
+{
+    BadHealthy,
+    BadDependency
+}
+
+/// <summary>
+/// 布林 Flag 映射 (Sync / 鏡像)：讓 Progress Flag 永遠等於主角布林狀態。
+/// 來源為 true 時加入 Persistent Flag，false 時移除 Flag。
+/// </summary>
+[Serializable]
+public class BoolFlagMirror
+{
+    [Tooltip("要映射的主角布林狀態。")]
+    public ProtagonistBoolState state = ProtagonistBoolState.BadHealthy;
+
+    [Tooltip("要忠實同步開關狀態的 Progress Flag。")]
+    public ProgressFlagDefinition target;
+
+    /// <summary>映射的文字摘要，例如 "BadHealthy → Flag_BadHealthy"。</summary>
+    public string ToSummary()
+        => $"{state} → {(target != null ? target.FlagID : "(未設定)")}";
+}
+
+/// <summary>
 /// 解鎖系統的共用小工具：數值取得 / 比較 / 顯示符號
 /// </summary>
 public static class ProgressUnlockUtility
@@ -200,6 +228,28 @@ public static class ProgressUnlockUtility
                 value = protagonist.BodyDirtyLevel;
                 return true;
 
+            default:
+                return false;
+        }
+    }
+
+    /// <summary>取出指定主角布林狀態。Model 為 null 或類型不支援時回傳 false。</summary>
+    public static bool TryGetProtagonistBoolState(
+        ProtagonistBoolState state,
+        ProtagonistStatusModel protagonist,
+        out bool value)
+    {
+        value = false;
+        if (protagonist == null) return false;
+
+        switch (state)
+        {
+            case ProtagonistBoolState.BadHealthy:
+                value = protagonist.BadHealthy;
+                return true;
+            case ProtagonistBoolState.BadDependency:
+                value = protagonist.BadDependency;
+                return true;
             default:
                 return false;
         }
