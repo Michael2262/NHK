@@ -45097,11 +45097,10 @@ MonoBehaviour:
 
 
 
-          CanvasAlpha(Empty
-          Dialogue Panel, 0);
 
 
-          TachieControl(Show, Sister, 0.5);
+          TachieControl(Show,
+          Sister, 0.5);
 
 '
         type: 0
@@ -45360,7 +45359,7 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: 'CanvasAlpha(Empty Dialogue Panel, 1);
+        value: 'SubtitlePanel(reset);
 
           Delay({{end}});'
         type: 0
@@ -45454,8 +45453,8 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 981.2871
-        y: 453.22784
+        x: 982.2578
+        y: 452.25696
         width: 160
         height: 30
     - id: 18
@@ -48735,8 +48734,9 @@ MonoBehaviour:
       - title: Sequence
         value: 'SetContinueMode(false)@0;
 
-          CanvasAlpha(Empty Dialogue Panel,
-          0);
+
+          SubtitlePanel(hide);
+
 
           Continue();'
         type: 0
@@ -48830,7 +48830,7 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 990.54407
+        x: 975.9809
         y: 58.29129
         width: 160
         height: 30
@@ -51191,11 +51191,11 @@ MonoBehaviour:
 
 
 
-          CanvasAlpha(Empty
-          Dialogue Panel, 0);
+          SubtitlePanel(hide);
 
 
-          TachieControl(Show, Sister, 0.5);
+          TachieControl(Show,
+          Sister, 0.5);
 
 '
         type: 0
@@ -51289,7 +51289,7 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 1280.2336
+        x: 1281.2336
         y: 307.20236
         width: 160
         height: 30
@@ -51454,7 +51454,7 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: 'CanvasAlpha(Empty Dialogue Panel, 1);
+        value: 'SubtitlePanel(reset);
 
           Delay({{end}});'
         type: 0
@@ -56798,7 +56798,7 @@ MonoBehaviour:
         width: 160
         height: 30
     entryGroups: []
-    canvasScrollPosition: {x: 636, y: 150}
+    canvasScrollPosition: {x: 988, y: 0}
     canvasZoom: 1
   - id: 92
     fields:
@@ -119907,7 +119907,7 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Dialogue Text
-        value: '[lua(TB("Tip.HowToPass2"))]'
+        value: '[lua(TB("Tip.HowToPass1"))]'
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
@@ -119996,7 +119996,7 @@ MonoBehaviour:
         destinationDialogueID: 54
         isConnector: 0
         priority: 2
-      conditionsString: 'not Flag("Request.OneHugHowToPass1") '
+      conditionsString: 
       userScript: 
       onExecute:
         m_PersistentCalls:
@@ -120119,15 +120119,15 @@ MonoBehaviour:
         destinationDialogueID: 54
         isConnector: 0
         priority: 2
-      conditionsString: 'not Flag("Request.OneHugHowToPass1") '
+      conditionsString: 
       userScript: 
       onExecute:
         m_PersistentCalls:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 1676.2642
-        y: 770.0061
+        x: 1677.4407
+        y: 821.7708
         width: 160
         height: 30
     - id: 112
@@ -120153,7 +120153,7 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Dialogue Text
-        value: '[lua(TB("Tip.HowToPass2"))]'
+        value: '[lua(TB("Tip.HowToPass1"))]'
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
@@ -120242,15 +120242,15 @@ MonoBehaviour:
         destinationDialogueID: 54
         isConnector: 0
         priority: 2
-      conditionsString: 'not Flag("Request.OneHugHowToPass1") '
+      conditionsString: 
       userScript: 
       onExecute:
         m_PersistentCalls:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 2513.8135
-        y: 756.70105
+        x: 2517.3428
+        y: 731.9952
         width: 160
         height: 30
     - id: 113
@@ -120373,7 +120373,7 @@ MonoBehaviour:
         width: 160
         height: 30
     entryGroups: []
-    canvasScrollPosition: {x: 701.1739, y: 3.529419}
+    canvasScrollPosition: {x: 547.05676, y: 256.47052}
     canvasZoom: 0.85000014
   - id: 169
     fields:
@@ -193700,7 +193700,7 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Actor
-        value: 2
+        value: 12
         type: 5
         typeString: CustomFieldType_Actor
       conversationID: 138
@@ -201725,7 +201725,7 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 423
+        x: 424
         y: 348
         width: 160
         height: 30
@@ -201886,7 +201886,7 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: CanvasAlpha(Black Dialogue Panel, 0);
+        value: SubtitlePanel(hide);
         type: 0
         typeString: CustomFieldType_Text
       - title: zh-TW
@@ -202009,7 +202009,7 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: 'CanvasAlpha(Black Dialogue Panel, 1);
+        value: 'SubtitlePanel(reset);
 
           Delay({{end}});'
         type: 0
@@ -380104,12 +380104,12 @@ MonoBehaviour:
           CGControl(HideCG);
 
 
-
-          CanvasAlpha(Empty
-          Dialogue Panel, 0);
+          SubtitlePanel(reset);
 
 
-          TachieControl(Show, Sister, 0.5);
+
+          TachieControl(Show,
+          Sister, 0.5);
 
 '
         type: 0
@@ -380203,7 +380203,7 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 981.6249
+        x: 980.56104
         y: 355.49365
         width: 160
         height: 30
@@ -380368,7 +380368,7 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: 'CanvasAlpha(Empty Dialogue Panel, 1);
+        value: '
 
           Delay({{end}});'
         type: 0
@@ -380462,7 +380462,7 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 981.2871
+        x: 982.35095
         y: 453.22784
         width: 160
         height: 30
@@ -380713,7 +380713,7 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 977.88586
+        x: 978.9497
         y: 554.49365
         width: 160
         height: 30
@@ -380843,8 +380843,8 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 980.4945
-        y: 601.0154
+        x: 981.55835
+        y: 603.143
         width: 160
         height: 30
     - id: 21
@@ -385797,7 +385797,7 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 369.06912
+        x: 370.13297
         y: 1396.1315
         width: 160
         height: 30
@@ -385953,9 +385953,7 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: '
-
-          CanvasAlpha(Empty Dialogue Panel, 0);
+        value: 'SubtitlePanel(hide);
 
           Continue();'
         type: 0
@@ -386173,7 +386171,7 @@ MonoBehaviour:
         width: 160
         height: 30
     entryGroups: []
-    canvasScrollPosition: {x: 4.25531, y: 106.38254}
+    canvasScrollPosition: {x: 222.3404, y: 269.1485}
     canvasZoom: 0.94000006
   - id: 200
     fields:
@@ -394530,7 +394528,7 @@ MonoBehaviour:
     - id: 17
       fields:
       - title: Title
-        value: Trust<45
+        value: Trust<35
         type: 0
         typeString: CustomFieldType_Text
       - title: Description
@@ -394639,7 +394637,7 @@ MonoBehaviour:
         destinationDialogueID: 23
         isConnector: 0
         priority: 2
-      conditionsString: GetTrust("sister") <= 45
+      conditionsString: GetTrust("sister") <= 35
       userScript: 
       onExecute:
         m_PersistentCalls:
@@ -395025,7 +395023,7 @@ MonoBehaviour:
     - id: 35
       fields:
       - title: Title
-        value: Trust<45
+        value: Trust<35
         type: 0
         typeString: CustomFieldType_Text
       - title: Description
@@ -395130,7 +395128,7 @@ MonoBehaviour:
         destinationDialogueID: 53
         isConnector: 0
         priority: 2
-      conditionsString: GetTrust("sister") > 45 and GetTrust("sister") <= 85
+      conditionsString: GetTrust("sister") > 35 and GetTrust("sister") <= 85
       userScript: 
       onExecute:
         m_PersistentCalls:
@@ -396534,7 +396532,7 @@ MonoBehaviour:
       canvasRect:
         serializedVersion: 2
         x: 277
-        y: 365
+        y: 364
         width: 160
         height: 30
     - id: 51
@@ -408631,7 +408629,7 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Dialogue Text
-        value: "\u54FC\uFF5E\uFF5E"
+        value: "\u2026\u2026\u3002"
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
@@ -410871,7 +410869,7 @@ MonoBehaviour:
         width: 160
         height: 30
     entryGroups: []
-    canvasScrollPosition: {x: 498.07788, y: 74.75729}
+    canvasScrollPosition: {x: 304.874, y: 18.446564}
     canvasZoom: 1.03
   - id: 210
     fields:
@@ -458313,8 +458311,8 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 382.7912
-        y: 108.82439
+        x: 390.7912
+        y: 69.82439
         width: 160
         height: 30
     - id: 27
@@ -458711,7 +458709,7 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Dialogue Text
-        value: "\u2026\u2026\u3002"
+        value: 
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
@@ -458719,10 +458717,11 @@ MonoBehaviour:
 
 
 
+
           Request(sister,Think);
 
 
-          Request(StayLate);
+          RequestRoll(StayLate);
 
 
           Delay(2);
@@ -458975,7 +458974,7 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: 'SetContinueMode(Optional);
+        value: '
 
           Continue();'
         type: 0
@@ -459846,7 +459845,7 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 449.1103
+        x: 450.1103
         y: 578.9286
         width: 160
         height: 30
@@ -460718,7 +460717,7 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 203.66382
+        x: 201.66382
         y: 237.94061
         width: 160
         height: 30
@@ -461514,8 +461513,7 @@ MonoBehaviour:
       - title: Sequence
         value: 'Delay(2);
 
-
-          CanvasAlpha(Basic Dialogue Panel, 0);'
+'
         type: 0
         typeString: CustomFieldType_Text
       - title: zh-TW
@@ -461607,8 +461605,8 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 476.58905
-        y: 272.055
+        x: 477.58905
+        y: 271.055
         width: 160
         height: 30
     - id: 78
@@ -462013,8 +462011,8 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 391.5523
-        y: 155.38483
+        x: 381.5523
+        y: 134.38483
         width: 160
         height: 30
     - id: 82
@@ -462136,8 +462134,8 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 602.31946
-        y: 148.86838
+        x: 599.31946
+        y: 88.86838
         width: 160
         height: 30
     - id: 83
@@ -462259,8 +462257,8 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 596.8599
-        y: 210.4068
+        x: 593.8599
+        y: 164.4068
         width: 160
         height: 30
     - id: 84
@@ -462382,8 +462380,8 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 783.67316
-        y: 148.31891
+        x: 780.67316
+        y: 88.31891
         width: 160
         height: 30
     - id: 85
@@ -462505,8 +462503,8 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 788.10376
-        y: 206.56064
+        x: 785.10376
+        y: 160.56064
         width: 160
         height: 30
     - id: 86
@@ -462633,8 +462631,8 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 1026.1758
-        y: 147.0662
+        x: 1023.1758
+        y: 87.06619
         width: 160
         height: 30
     - id: 87
@@ -462766,8 +462764,8 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 1165.3651
-        y: 204.83954
+        x: 1162.3651
+        y: 158.83954
         width: 160
         height: 30
     - id: 88
@@ -462891,8 +462889,8 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 975.87555
-        y: 203.74323
+        x: 972.87555
+        y: 157.74323
         width: 160
         height: 30
     - id: 90
@@ -465055,7 +465053,7 @@ MonoBehaviour:
         width: 160
         height: 30
     entryGroups: []
-    canvasScrollPosition: {x: 56, y: 22}
+    canvasScrollPosition: {x: 171, y: 0}
     canvasZoom: 1
   - id: 235
     fields:
@@ -487287,7 +487285,7 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 160
+        x: 161
         y: 80
         width: 160
         height: 30
@@ -487413,7 +487411,7 @@ MonoBehaviour:
       canvasRect:
         serializedVersion: 2
         x: 160
-        y: 129
+        y: 128
         width: 160
         height: 30
     - id: 3
@@ -487537,7 +487535,7 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 160
+        x: 161
         y: 180
         width: 160
         height: 30
@@ -487568,7 +487566,7 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: 'PlayMusic(StressSong, 5);
+        value: 'PlayMusic(WetDream, 5);
 
           Delay({{end}});'
         type: 0
@@ -487923,7 +487921,7 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Actor
-        value: 5
+        value: 2
         type: 5
         typeString: CustomFieldType_Actor
       - title: Conversant
@@ -488031,7 +488029,7 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 163
+        x: 164
         y: 445
         width: 160
         height: 30
@@ -488317,8 +488315,12 @@ MonoBehaviour:
 
           CGControl(HideBG);
 
+          CGControl(HideCG);
+
+
           SetPanel(Sister,
           0); SetPanel(Brother, 0);SetPanel(Empty, 0);
+
 
           Delay(2.5);'
         type: 0
@@ -488413,7 +488415,7 @@ MonoBehaviour:
       canvasRect:
         serializedVersion: 2
         x: 567
-        y: 343
+        y: 344
         width: 160
         height: 30
     - id: 33
@@ -488542,8 +488544,8 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 564
-        y: 387
+        x: 566
+        y: 385
         width: 160
         height: 30
     - id: 34
@@ -488573,7 +488575,7 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: CanvasAlpha(Black Dialogue Panel, 0);
+        value: SubtitlePanel(hide);
         type: 0
         typeString: CustomFieldType_Text
       - title: zh-TW
@@ -488696,7 +488698,7 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: 'CanvasAlpha(Black Dialogue Panel, 1);
+        value: 'SubtitlePanel(reset);
 
           Delay({{end}});'
         type: 0
@@ -488823,7 +488825,7 @@ MonoBehaviour:
       - title: Sequence
         value: 'StatPackage(Stress100Punish);
 
-          BadHealthy(on);'
+          BadDependency(on);'
         type: 0
         typeString: CustomFieldType_Text
       - title: zh-TW
@@ -489408,7 +489410,7 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Conversant
-        value: 2
+        value: 5
         type: 5
         typeString: CustomFieldType_Actor
       - title: Menu Text
@@ -489484,7 +489486,7 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Actor
-        value: 5
+        value: 2
         type: 5
         typeString: CustomFieldType_Actor
       conversationID: 246
@@ -489847,7 +489849,7 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Actor
-        value: 5
+        value: 4
         type: 5
         typeString: CustomFieldType_Actor
       conversationID: 246
@@ -490471,7 +490473,7 @@ MonoBehaviour:
         width: 160
         height: 30
     entryGroups: []
-    canvasScrollPosition: {x: 0, y: 0}
+    canvasScrollPosition: {x: 16, y: 3}
     canvasZoom: 1
   syncInfo:
     syncActors: 0
