@@ -281,6 +281,7 @@ public class GameStatusService : MonoBehaviour
         Time.OnPhaseChanged += () =>
         {
             ProgressFlags.ClearPhaseFlags();
+            Protagonist.ApplyBadDependencyPhaseStress();
             _scheduleProcessor?.NotifyPhaseChanged();
             _dayTriggerProcessor?.NotifyPhaseChanged();
             ValueTriggerManager.OnValueChanged("Phase", Time.CurrentPhaseIndex);

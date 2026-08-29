@@ -28,4 +28,7 @@ public class ProtagonistSaveData
 
     // ───── 狀態不好（換日自動解除；舊存檔缺欄位時反序列化預設 false） ─────
     public bool BadHealthy;
+
+    // ───── 不良依賴（手動開關；舊存檔缺欄位時反序列化預設 false） ─────
+    public bool BadDependency;
 }

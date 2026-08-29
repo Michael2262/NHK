@@ -68,6 +68,9 @@ public class ProtagonistStatusModel
     /// <summary>每日依賴度自動上升量（換日時套用，參照 HeroineStatusModel.LibidoDailyDecay 的模式）。</summary>
     public const int DEPENDENCY_DAILY_GAIN = 5;
 
+    /// <summary>BadDependency 開啟時，每次進入新 Phase 增加的壓力。</summary>
+    public const int BAD_DEPENDENCY_PHASE_STRESS_GAIN = 5;
+
     // ───── 分級門檻（各數值可獨立調整，預設一致） ─────
     // Stress
     public const int STRESS_MEDIUM_THRESHOLD = 50;
@@ -153,6 +156,9 @@ public class ProtagonistStatusModel
     /// <summary>狀態不好：true 時「增加壓力會再多 +1、減少壓力會少 -1」。換日時自動解除。</summary>
     public bool BadHealthy { get; private set; } = false;
 
+    /// <summary>不良依賴：true 時每次 Phase 變化增加壓力。僅由外部手動開關。</summary>
+    public bool BadDependency { get; private set; } = false;
+
     // ───── 事件通知 ─────
     public event Action<int> OnStressChanged;       // delta
     public event Action<int> OnLifePowerChanged;    // delta
@@ -164,6 +170,7 @@ public class ProtagonistStatusModel
     public event Action<int> OnRoomMessLevelChanged; // delta
     public event Action<int> OnBodyDirtyLevelChanged; // delta
     public event Action<bool> OnBadHealthyChanged;   // 新狀態值
+    public event Action<bool> OnBadDependencyChanged; // 新狀態值
 
     public event Action<StatusGrade, StatusGrade> OnStressGradeChanged;
     public event Action<StatusGrade, StatusGrade> OnLifeGradeChanged;
@@ -183,6 +190,7 @@ public class ProtagonistStatusModel
         RoomMessLevel = INITIAL_ROOM_MESS_LEVEL;
         BodyDirtyLevel = INITIAL_BODY_DIRTY_LEVEL;
         BadHealthy = false;
+        BadDependency = false;
 
         NotifyAllCoreValues();
     }
@@ -200,7 +208,8 @@ public class ProtagonistStatusModel
             ShootTimes = ShootTimes,
             RoomMessLevel = RoomMessLevel,
             BodyDirtyLevel = BodyDirtyLevel,
-            BadHealthy = BadHealthy
+            BadHealthy = BadHealthy,
+            BadDependency = BadDependency
         };
     }
 
@@ -222,6 +231,7 @@ public class ProtagonistStatusModel
         RoomMessLevel = ClampRoomMessLevel(data.RoomMessLevel);
         BodyDirtyLevel = ClampBodyDirtyLevel(data.BodyDirtyLevel); // 舊存檔缺欄位時反序列化為 0（= 身體最乾淨）
         BadHealthy = data.BadHealthy; // 舊存檔沒有此欄位時，Newtonsoft 預設為 false
+        BadDependency = data.BadDependency; // 舊存檔沒有此欄位時，Newtonsoft 預設為 false
 
         NotifyAllCoreValues();
     }
@@ -238,6 +248,7 @@ public class ProtagonistStatusModel
         OnRoomMessLevelChanged?.Invoke(0);
         OnBodyDirtyLevelChanged?.Invoke(0);
         OnBadHealthyChanged?.Invoke(BadHealthy);
+        OnBadDependencyChanged?.Invoke(BadDependency);
     }
 
     // ───── 每日流程 ─────
@@ -587,6 +598,29 @@ public class ProtagonistStatusModel
         if (BadHealthy == value) return;
         BadHealthy = value;
         OnBadHealthyChanged?.Invoke(BadHealthy);
+    }
+
+    // ───── BadDependency（不良依賴） ─────
+
+    /// <summary>開啟「不良依賴」。開啟期間每次進入新 Phase 增加壓力。</summary>
+    public void EnableBadDependency() => SetBadDependency(true);
+
+    /// <summary>解除「不良依賴」。此狀態不會因換日自動解除。</summary>
+    public void DisableBadDependency() => SetBadDependency(false);
+
+    /// <summary>直接設定「不良依賴」。狀態有變化時觸發 OnBadDependencyChanged。</summary>
+    public void SetBadDependency(bool value)
+    {
+        if (BadDependency == value) return;
+        BadDependency = value;
+        OnBadDependencyChanged?.Invoke(BadDependency);
+    }
+
+    /// <summary>Phase 變化時套用「不良依賴」效果。壓力變化會走既有 BadHealthy 修正。</summary>
+    public void ApplyBadDependencyPhaseStress()
+    {
+        if (!BadDependency) return;
+        AddStress(BAD_DEPENDENCY_PHASE_STRESS_GAIN);
     }
 
     // ───── 分級查詢 ─────

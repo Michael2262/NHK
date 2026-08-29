@@ -55,7 +55,7 @@ public class LobbyUI_V2 : MonoBehaviour
     [SerializeField] private TextMeshProUGUI textBodyCleanPreview;
 
     [SerializeField] private TextMeshProUGUI textDependency;
-    [Tooltip("依賴度標題。平常顯示 Dependency；OverDependency Flag 成立時改顯示 OverDependency 並轉粉色。")]
+    [Tooltip("依賴度標題。優先度：BadDependency > OverDependency Flag > 一般 Dependency。")]
     [SerializeField] private TextMeshProUGUI textDependencyTitle;
     [SerializeField] private TextMeshProUGUI textDependencyPreview;
 
@@ -120,7 +120,8 @@ public class LobbyUI_V2 : MonoBehaviour
     private const string TITLE_KEY_OVER_STRESS = "OverStress";
     private const string TITLE_KEY_STRESS = "Stress";
 
-    // 依賴度標題的 Text Table Key（OverDependency Flag 成立時改用 OverDependency）
+    // 依賴度標題的 Text Table Key（優先度由高到低：BadDependency > OverDependency > Dependency）
+    private const string TITLE_KEY_BAD_DEPENDENCY = "BadDependency";
     private const string TITLE_KEY_OVER_DEPENDENCY = "OverDependency";
     private const string TITLE_KEY_DEPENDENCY = "Dependency";
 
@@ -182,6 +183,7 @@ public class LobbyUI_V2 : MonoBehaviour
             _protagonistModel.OnBodyDirtyLevelChanged += HandleBodyDirtyLevelChanged;
             _protagonistModel.OnMoneyChanged += HandleMoneyChanged;
             _protagonistModel.OnBadHealthyChanged += HandleBadHealthyChanged;
+            _protagonistModel.OnBadDependencyChanged += HandleBadDependencyChanged;
         }
 
         if (_progressFlagModel != null)
@@ -210,6 +212,7 @@ public class LobbyUI_V2 : MonoBehaviour
             _protagonistModel.OnBodyDirtyLevelChanged -= HandleBodyDirtyLevelChanged;
             _protagonistModel.OnMoneyChanged -= HandleMoneyChanged;
             _protagonistModel.OnBadHealthyChanged -= HandleBadHealthyChanged;
+            _protagonistModel.OnBadDependencyChanged -= HandleBadDependencyChanged;
         }
 
         if (_progressFlagModel != null)
@@ -374,6 +377,11 @@ public class LobbyUI_V2 : MonoBehaviour
         UpdateStressTitleUI();
     }
 
+    private void HandleBadDependencyChanged(bool _)
+    {
+        UpdateDependencyTitleUI();
+    }
+
     // 監聽 OverStress / OverDependency 條件 Flag 的變化；含清桶（換日/換場景）時發出的 false 事件。
     // Flag 切換時：對應標題文字/顏色 + 數字顏色一起刷新。
     private void HandleProgressFlagChanged(string flagID, bool _)
@@ -469,9 +477,10 @@ public class LobbyUI_V2 : MonoBehaviour
     }
 
     /// <summary>
-    /// 依賴度標題兩規則：
-    /// 1. overDependencyFlag 成立 → "OverDependency"（Pink）
-    /// 2. 平常                    → "Dependency"（原始顏色）
+    /// 依賴度標題三規則（優先度高→低）：
+    /// 1. BadDependency == true    → "BadDependency"（DarkRed）
+    /// 2. overDependencyFlag 成立  → "OverDependency"（Pink）
+    /// 3. 平常                     → "Dependency"（原始顏色）
     /// 每次都重新查表，語言重進場景後會跟著刷新。
     /// </summary>
     private void UpdateDependencyTitleUI()
@@ -481,7 +490,12 @@ public class LobbyUI_V2 : MonoBehaviour
         string key = TITLE_KEY_DEPENDENCY;
         Color color = _dependencyTitleDefaultColor;
 
-        if (IsOverDependencyFlagActive())
+        if (_protagonistModel != null && _protagonistModel.BadDependency)
+        {
+            key = TITLE_KEY_BAD_DEPENDENCY;
+            color = UIColorPalette.DarkRed;
+        }
+        else if (IsOverDependencyFlagActive())
         {
             key = TITLE_KEY_OVER_DEPENDENCY;
             color = UIColorPalette.Pink;
