@@ -35,7 +35,9 @@ namespace PixelCrushers.DialogueSystem
         [SerializeField] private string narrationFieldName = "Narration";
 
         [Tooltip("Dialogue Entry 自訂欄位名稱，Text 類型。該欄位值填 ProgressFlag 名稱：\n" +
-                 "留空 = 敘述照常顯示；有填 = 只有該 Flag 為 true 時才顯示敘述。")]
+                 "留空 = 敘述照常顯示；\n" +
+                 "填 FlagName = 只有該 Flag 為 true 時才顯示敘述；\n" +
+                 "填 !FlagName = 反向，只有該 Flag 不為 true 時才顯示敘述。")]
         [SerializeField] private string narrationFlagFieldName = "NarrationFlag";
 
         public override void SetContent(Subtitle subtitle)
@@ -80,15 +82,25 @@ namespace PixelCrushers.DialogueSystem
         /// <summary>
         /// 依 NarrationFlag 欄位決定是否允許顯示敘述：
         ///   - 欄位空白 → 允許（照常顯示）
-        ///   - 欄位有填 Flag 名稱 → 只有該 Flag 在 ProgressFlags 中為 true 時才允許
+        ///   - 填 FlagName  → 只有該 Flag 在 ProgressFlags 中為 true 時才允許（正向）
+        ///   - 填 !FlagName → 反向，只有該 Flag 不為 true 時才允許
+        /// 數值型 Flag > 0 也會被 Contains() 視為 true（沿用專案慣例）。
         /// </summary>
         private bool IsNarrationAllowedByFlag(DialogueEntry entry)
         {
             if (entry == null) return false;
             string flag = Field.LookupValue(entry.fields, narrationFlagFieldName);
             if (string.IsNullOrWhiteSpace(flag)) return true;
+
+            // 解析反向前綴 "!"：!FlagName = 只有 Flag 不為 true 時才顯示
+            flag = flag.Trim();
+            bool negate = flag.StartsWith("!");
+            if (negate) flag = flag.Substring(1).Trim();
+            if (string.IsNullOrWhiteSpace(flag)) return true; // 只有 "!" 沒接名 → 視為不設限
+
             var flags = (GameStatusService.Instance != null) ? GameStatusService.Instance.ProgressFlags : null;
-            return flags != null && flags.Contains(flag);
+            bool has = flags != null && flags.Contains(flag);
+            return negate ? !has : has;
         }
 
         private void HideNarration()
