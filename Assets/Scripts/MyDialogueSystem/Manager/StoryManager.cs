@@ -121,13 +121,13 @@ public class StoryManager : MonoBehaviour
             case DialogueMode.Queue:
                 _conversationQueue.AddLast(new ConversationRequest(title, mode));
                 Debug.Log($"[StoryManager] 已將 {title} 加入隊列尾端。目前隊列總數: {_conversationQueue.Count}");
-                BeginHandoffSuppression(); // 趁 A 還在演、面板還開著時就壓住，避免結束時 dip
+                BeginHandoffSuppression(); // 趁 A 還在演、面板還開著時就準備交接
                 break;
 
             case DialogueMode.Priority:
                 _conversationQueue.AddFirst(new ConversationRequest(title, mode));
                 Debug.Log($"[StoryManager] 已將 {title} 插隊至隊列最前。目前隊列總數: {_conversationQueue.Count}");
-                BeginHandoffSuppression(); // 趁 A 還在演、面板還開著時就壓住，避免結束時 dip
+                BeginHandoffSuppression(); // 趁 A 還在演、面板還開著時就準備交接
                 break;
 
             case DialogueMode.Interrupt:
@@ -151,7 +151,7 @@ public class StoryManager : MonoBehaviour
     {
         int count = _conversationQueue.Count;
         _conversationQueue.Clear();
-        EndHandoffSuppression(); // 保底：清隊列後還原抑制，避免 MainPanel 永遠不淡出
+        EndHandoffSuppression(); // 保底：取消待命交接，必要時補做正常關閉
         Debug.Log($"[StoryManager] 已清除隊列，共移除 {count} 筆等待中的對話");
     }
 
@@ -401,75 +401,93 @@ public class StoryManager : MonoBehaviour
 
     private System.Collections.IEnumerator QueuedConversationNextFrame()
     {
-        // 沒有接力了 → 保底還原抑制（若有），照舊淡入淡出
+        // 沒有接力了 → 取消待命抑制。
+        // 若上一段 Close 已被吞掉，NhkDialogueUI 會在此補做正常關閉。
         if (_conversationQueue.Count == 0)
         {
             EndHandoffSuppression();
             yield break;
         }
 
-        ConversationRequest next = _conversationQueue.First.Value;
-        _conversationQueue.RemoveFirst();
-        Debug.Log($"[StoryManager] 從隊列啟動 {next.title}");
+        // 等上一段的 Dialogue System 生命週期收乾淨。
+        // 也讓同一幀內的 ClearConversationQueue() 來得及取消未啟動的接力。
+        yield return null;
 
-        yield return null; // 等上一段收乾淨、isConversationActive 變 false
-
-        SyncWaitWithCustomDelay();
-        DialogueManager.StartConversation(next.title);
-
-        // B 已啟動（面板已在 StartConversation 內同步開好、且用的是清空的 trigger 不會淡入）。
-        // 立刻還原，讓 B 自己的生命週期（含很短就結束的對話，如 Adv/Card/END）能正常關閉，
-        // 不可再等一幀，否則 B 若在還原前就結束，它的關閉會被壓住 → 對話框卡住不消失。
-        // 隊列還有下一段 → 保持抑制等下一次交接；已空 → 還原。
         if (_conversationQueue.Count == 0)
         {
             EndHandoffSuppression();
+            yield break;
         }
+
+        // 略過失效標題，避免上一段 Close 已被抑制，卻沒有新對話能進入 Open，
+        // 最後使 UI 永久停留。若後面還有有效請求，直接接續嘗試下一筆。
+        while (_conversationQueue.Count > 0)
+        {
+            ConversationRequest next = _conversationQueue.First.Value;
+            _conversationQueue.RemoveFirst();
+
+            var database = DialogueManager.masterDatabase;
+            if (string.IsNullOrWhiteSpace(next.title) || database == null || database.GetConversation(next.title) == null)
+            {
+                Debug.LogError($"[StoryManager] Queue 對話不存在，已略過：{next.title}");
+                continue;
+            }
+
+            Debug.Log($"[StoryManager] 從隊列啟動 {next.title}");
+
+            // B 後面還有 C：必須在啟動 B 之前就準備好下一次 Close 抑制。
+            // 如此即使 B 很短，也不會來不及保護 B → C 的交接。
+            if (_conversationQueue.Count > 0)
+            {
+                BeginHandoffSuppression();
+            }
+
+            SyncWaitWithCustomDelay();
+            DialogueManager.StartConversation(next.title);
+
+            // A → B 的完成記號由 NhkDialogueUI.Open() 在 StartConversation 內同步處理，
+            // 才能正確支援啟動後立即結束的極短對話。
+            if (_conversationQueue.Count == 0)
+            {
+                _handoffUI = null;
+            }
+            yield break;
+        }
+
+        EndHandoffSuppression();
     }
 
-    // ===== 接力無縫抑制（避免 A 結束→B 開始之間 MainPanel dip）=====
-    // 只處理 MainPanel（dontDeactivateMainPanel），這是乾淨、無副作用的做法：
-    //   - 有指定 MainPanel 時：A 結束不關 MainPanel（它整段本來就開著、看不到），B 續用，不 dip。
-    //   - 沒指定 MainPanel 時：mainPanel 為 null，設這個 bool 完全 inert，字幕面板照常關閉，不會卡住。
-    // 注意：不要去改「字幕面板」的 trigger / deactivateOnHidden —— 抑制從「排隊」持續到 A 結束，
-    //       而排隊是發生在 A 中途，會壓到 A 後半段的換面板 / 選單，導致字幕框卡住不消失（已踩過坑）。
-    private bool _handoffSuppressing = false;
-    private StandardDialogueUI _handoffUI;
-    private bool _handoffRestoreDontDeactivate = false;
+    // ===== Queue 接力無縫抑制 =====
+    // 不再只設 dontDeactivateMainPanel：它只保護父層，Subtitle / Menu Panel 仍會 Close。
+    // 改由 NhkDialogueUI 吞掉「對話結束引發的下一次整體 Close」，但不影響：
+    //   - 對話內正常換字幕板（SupercedeOtherPanels）
+    //   - SubtitlePanel(hide/show) 直接對字幕板呼叫 Close/Open
+    private NhkDialogueUI _handoffUI;
 
-    /// <summary>加入隊列（有接力）當下呼叫：讓 A 結束時不關閉 MainPanel，B 續用不 dip。</summary>
+    /// <summary>加入隊列當下呼叫：準備吞掉 A 結束時的下一次 Dialogue UI.Close。</summary>
     private void BeginHandoffSuppression()
     {
-        if (_handoffSuppressing) return; // 已在抑制中（多段連續排隊只需設一次）
+        var ui = DialogueManager.dialogueUI as NhkDialogueUI;
+        if (ui == null)
+        {
+            Debug.LogWarning("[StoryManager] 當前 Dialogue UI 不是 NhkDialogueUI，Queue 將沿用原生關閉/開啟行為。");
+            return;
+        }
 
-        var ui = DialogueManager.dialogueUI as StandardDialogueUI;
-        if (ui == null || ui.conversationUIElements == null) return;
+        if (_handoffUI != null && _handoffUI != ui)
+        {
+            _handoffUI.CancelQueuedHandoff();
+        }
 
         _handoffUI = ui;
-        _handoffRestoreDontDeactivate = false;
-
-        if (!ui.conversationUIElements.dontDeactivateMainPanel)
-        {
-            ui.conversationUIElements.dontDeactivateMainPanel = true;
-            _handoffRestoreDontDeactivate = true;
-        }
-
-        _handoffSuppressing = true;
+        _handoffUI.PrepareQueuedHandoff();
     }
 
-    /// <summary>接力完成（或隊列清空）後呼叫：還原 MainPanel 設定。</summary>
+    /// <summary>隊列清空或無法接力時，取消抑制；必要時補做曾被吞掉的 Close。</summary>
     private void EndHandoffSuppression()
     {
-        if (!_handoffSuppressing) return;
-
-        if (_handoffRestoreDontDeactivate && _handoffUI != null && _handoffUI.conversationUIElements != null)
-        {
-            _handoffUI.conversationUIElements.dontDeactivateMainPanel = false;
-        }
-
+        _handoffUI?.CancelQueuedHandoff();
         _handoffUI = null;
-        _handoffRestoreDontDeactivate = false;
-        _handoffSuppressing = false;
     }
 
     #region ====== 系統公告 (Alert) ======

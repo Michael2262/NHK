@@ -44,6 +44,60 @@ namespace PixelCrushers.DialogueSystem
         [Tooltip("Dialogue Entry 自訂欄位名稱，Text 類型，填 Lua 運算式。空白 = 永遠可用；運算式為 false 時該選項灰顯不可點。")]
         [SerializeField] private string enableConditionsFieldName = "Enable Conditions";
 
+        // ===================== Queue 對話無縫交接 =====================
+        //
+        // Dialogue System 結束一段對話時，會先呼叫 Dialogue UI.Close()，
+        // 逐一關閉 Subtitle / Menu Panel，之後才發出 conversationEnded。
+        // StoryManager 的 Queue 若等到 conversationEnded 才保護面板，已經太遲。
+        //
+        // 因此 StoryManager 在 A 還在播放時預先準備「只吞掉下一次 Close」。
+        // A 結束後 UI 維持原狀；B 第一句若使用同一字幕板，只更新內容；
+        // 若使用不同字幕板，交回 StandardUISubtitleControls 正常切板。
+        private bool _suppressNextCloseForQueuedHandoff;
+        private bool _queuedHandoffCloseWasSuppressed;
+
+        /// <summary>準備吞掉下一次由「對話結束」引發的 Close。</summary>
+        public void PrepareQueuedHandoff()
+        {
+            _suppressNextCloseForQueuedHandoff = true;
+        }
+
+        /// <summary>
+        /// 取消待命的 Queue 交接。若上一段對話的 Close 已被吞掉，
+        /// 代表已沒有下一段可接力，此時補做正常關閉，避免 UI 永久卡住。
+        /// </summary>
+        public void CancelQueuedHandoff()
+        {
+            _suppressNextCloseForQueuedHandoff = false;
+
+            if (!_queuedHandoffCloseWasSuppressed) return;
+
+            _queuedHandoffCloseWasSuppressed = false;
+            if (isOpen) base.Close();
+        }
+
+        public override void Open()
+        {
+            // 新對話進入 Open 就代表上一次交接已成功。
+            // 放在 StartConversation 的 UI.Open 階段清除，可正確處理「啟動後立即結束」的極短對話：
+            // 若它後面還有一段 Queue，隨後的 Close 會再正確留下新的抑止記號。
+            _queuedHandoffCloseWasSuppressed = false;
+            base.Open();
+        }
+
+        public override void Close()
+        {
+            if (_suppressNextCloseForQueuedHandoff)
+            {
+                _suppressNextCloseForQueuedHandoff = false; // 一次性，只吞這次 Close
+                _queuedHandoffCloseWasSuppressed = true;
+                return;
+            }
+
+            _queuedHandoffCloseWasSuppressed = false;
+            base.Close();
+        }
+
         /// <summary>
         /// 覆寫顯示選項的核心方法：在交給 base 之前，
         /// 過濾掉不需要灰顯的 invalid response，並依 Enable Conditions 把選項轉為失能灰顯。

@@ -66,7 +66,7 @@ public class ProtagonistStatusModel
     public const int DEPENDENCY_MAX_VALUE = 150;
 
     /// <summary>每日依賴度自動上升量（換日時套用，參照 HeroineStatusModel.LibidoDailyDecay 的模式）。</summary>
-    public const int DEPENDENCY_DAILY_GAIN = 5;
+    public const int DEPENDENCY_DAILY_GAIN = 6;
 
     /// <summary>BadDependency 開啟時，每次進入新 Phase 增加的壓力。</summary>
     public const int BAD_DEPENDENCY_PHASE_STRESS_GAIN = 5;
