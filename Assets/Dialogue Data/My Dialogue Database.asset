@@ -140455,6 +140455,12 @@ MonoBehaviour:
         destinationDialogueID: 3
         isConnector: 0
         priority: 2
+      - originConversationID: 171
+        originDialogueID: 2
+        destinationConversationID: 171
+        destinationDialogueID: 50
+        isConnector: 0
+        priority: 2
       conditionsString: 
       userScript: 
       onExecute:
@@ -140463,7 +140469,7 @@ MonoBehaviour:
       canvasRect:
         serializedVersion: 2
         x: 554.8549
-        y: 106.236374
+        y: 120.52208
         width: 160
         height: 30
     - id: 3
@@ -140583,7 +140589,7 @@ MonoBehaviour:
         destinationDialogueID: 4
         isConnector: 0
         priority: 2
-      conditionsString: 
+      conditionsString: Dialog[thisID].SimStatus == "Untouched"
       userScript: 
       onExecute:
         m_PersistentCalls:
@@ -140629,6 +140635,10 @@ MonoBehaviour:
 
 
           TachieControl(Body, Sister, Worry1);
+
+
+          StopMusic(4,
+          false);
 
 
           Delay({{end}});
@@ -140727,8 +140737,8 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 342.02557
-        y: 252.15747
+        x: 343.12448
+        y: 243.36627
         width: 160
         height: 30
     - id: 5
@@ -140966,6 +140976,12 @@ MonoBehaviour:
         destinationDialogueID: 7
         isConnector: 0
         priority: 2
+      - originConversationID: 171
+        originDialogueID: 6
+        destinationConversationID: 171
+        destinationDialogueID: 43
+        isConnector: 0
+        priority: 2
       conditionsString: 
       userScript: 
       onExecute:
@@ -140973,8 +140989,8 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 248.61893
-        y: 370.83878
+        x: 239.82773
+        y: 415.89368
         width: 160
         height: 30
     - id: 7
@@ -140992,7 +141008,7 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Conversant
-        value: 2
+        value: 5
         type: 5
         typeString: CustomFieldType_Actor
       - title: Menu Text
@@ -141000,7 +141016,7 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Dialogue Text
-        value: "\u59B9\u59B9\u610F\u8B58\u5230\u6211\u662F\u8A8D\u771F\u7684\uFF0C\u5BB3\u7F9E\u5F97\u770B\u5411\u4ED6\u8655\u3002"
+        value: "\u59B9\u59B9\u610F\u8B58\u5230\u6211\u662F\u8A8D\u771F\u7684\uFF0C\u5BB3\u7F9E\u5730\u770B\u5411\u4ED6\u8655\u3002"
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
@@ -141075,7 +141091,7 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Actor
-        value: 5
+        value: 4
         type: 5
         typeString: CustomFieldType_Actor
       conversationID: 171
@@ -141092,15 +141108,15 @@ MonoBehaviour:
         destinationDialogueID: 8
         isConnector: 0
         priority: 2
-      conditionsString: 
+      conditionsString: Dialog[thisID].SimStatus == "Untouched"
       userScript: 
       onExecute:
         m_PersistentCalls:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 247.52005
-        y: 480.17953
+        x: 242.02557
+        y: 479.08066
         width: 160
         height: 30
     - id: 8
@@ -141133,9 +141149,12 @@ MonoBehaviour:
         value: 'SetContinueMode(false)@0;
 
 
+          PlayMusic(Heartbeat, 0);
 
 
           SubtitlePanel(hide);
+
+
 
 
           Continue();
@@ -141382,7 +141401,7 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Dialogue Text
-        value: "\u2026\u2026\u3002"
+        value: 
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
@@ -141738,6 +141757,12 @@ MonoBehaviour:
         destinationDialogueID: 22
         isConnector: 0
         priority: 2
+      - originConversationID: 171
+        originDialogueID: 12
+        destinationConversationID: 171
+        destinationDialogueID: 53
+        isConnector: 0
+        priority: 3
       conditionsString: 
       userScript: 
       onExecute:
@@ -141864,8 +141889,8 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 270.58917
-        y: 796.15894
+        x: 187.0727
+        y: 793.9612
         width: 160
         height: 30
     - id: 14
@@ -141895,7 +141920,8 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: "Anim(Angry);  \n\nFlash();\n\nTachieControl(Eye, Sister, Close_Sad);\n\n\n\nDelay(1);"
+        value: "Anim(Angry);  \n\nFlash();\n\nTachieControl(Eye, Sister, Close_Sad);\n\nStopMusic(0.8,
+          false);\n\nDelay(1);"
         type: 0
         typeString: CustomFieldType_Text
       - title: zh-TW
@@ -142766,12 +142792,8 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: 'PlayStory(Chat/Sister/Option_END);
-
-          TachieControl(Clear,
-          0.5);
-
-          Anim(Stop);  '
+        value: "PlayStory(Chat/Sister/Option_END);\nTachieControl(Clear, 0.5);\nAnim(Stop); 
+          \nStopMusic(0.8, true);"
         type: 0
         typeString: CustomFieldType_Text
       - title: zh-TW
@@ -142975,16 +142997,15 @@ MonoBehaviour:
         destinationDialogueID: 35
         isConnector: 0
         priority: 2
-      conditionsString: Flag("Flag_RequestPass") or GetCurrentEmotion("sister") ==
-        "Worried"
+      conditionsString: 'Flag("Flag_RequestPass") '
       userScript: 
       onExecute:
         m_PersistentCalls:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 466.7496
-        y: 796.15906
+        x: 670.0464
+        y: 797.25793
         width: 160
         height: 30
     - id: 23
@@ -143014,7 +143035,7 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: "Delay(1);\nAnim(Shy);  \n\nFlash();\n\n\n\n\n\nTachieControl(Eye,
+        value: "Delay(1);\nAnim(Shy);  \n\nFlash();\n\n\nStopMusic(0.8, false);\n\n\nTachieControl(Eye,
           Sister, Close_Sad);"
         type: 0
         typeString: CustomFieldType_Text
@@ -144501,7 +144522,7 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: "TachieControl(Eye, Sister, Close_Sad);\n\n\nDelay(1);\nAnim(Shy); 
+        value: "TachieControl(Eye, Sister, Close_Sad);\n\nStopMusic(0.8, false);\n\nDelay(1);\nAnim(Shy); 
           \n\nFlash();\n\n"
         type: 0
         typeString: CustomFieldType_Text
@@ -145257,7 +145278,7 @@ MonoBehaviour:
           TachieControl(Body,
           Sister, Angry2);
 
-          TachieControl(Mouth, Sister, Small1);
+          TachieControl(Mouth, Sister, Small3);
 
 
           Delay({{end}});'
@@ -145348,7 +145369,7 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 442.13208
+        x: 443.23096
         y: 376.1677
         width: 160
         height: 30
@@ -145379,10 +145400,7 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: 'TachieControl(Expression, Sister,ThinkShy1);
-
-
-          Delay({{end}});'
+        value: "TachieControl(Expression, Sister,ThinkShy1);\n\nAnim(Shy);  \n\nDelay({{end}});"
         type: 0
         typeString: CustomFieldType_Text
       - title: zh-TW
@@ -145507,6 +145525,8 @@ MonoBehaviour:
           Sister, Worry1);
 
 
+
+
           Delay({{end}});'
         type: 0
         typeString: CustomFieldType_Text
@@ -145595,8 +145615,8 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 450.92328
-        y: 481.11285
+        x: 477.29688
+        y: 483.3106
         width: 160
         height: 30
     - id: 44
@@ -146373,8 +146393,509 @@ MonoBehaviour:
         y: 1045.1382
         width: 160
         height: 30
+    - id: 50
+      fields:
+      - title: Title
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Description
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Narration
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Conversant
+        value: 5
+        type: 5
+        typeString: CustomFieldType_Actor
+      - title: Menu Text
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Dialogue Text
+        value: "\u2026\u2026\u53C8\u4F86\u4E86\u3002"
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Sequence
+        value: 'TachieControl(Eye, Sister, Close_Sad);
+
+
+          TachieControl(Mouth,
+          Sister, Small1);
+
+
+          Delay({{end}});
+
+'
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: zh-TW
+        value: 
+        type: 4
+        typeString: CustomFieldType_Localization
+      - title: zh-CN
+        value: 
+        type: 4
+        typeString: CustomFieldType_Localization
+      - title: en
+        value: 
+        type: 4
+        typeString: CustomFieldType_Localization
+      - title: ja
+        value: 
+        type: 4
+        typeString: CustomFieldType_Localization
+      - title: ko
+        value: 
+        type: 4
+        typeString: CustomFieldType_Localization
+      - title: StaminaPreview
+        value: 0
+        type: 1
+        typeString: CustomFieldType_Number
+      - title: canvasRect
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Response Menu Sequence
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Notes
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: DontTranslate
+        value: False
+        type: 2
+        typeString: CustomFieldType_Boolean
+      - title: Guid
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Show Invalid
+        value: False
+        type: 2
+        typeString: CustomFieldType_Boolean
+      - title: Enable Conditions
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Option Image
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: NarrationFlag
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Actor
+        value: 2
+        type: 5
+        typeString: CustomFieldType_Actor
+      conversationID: 171
+      isRoot: 0
+      isGroup: 0
+      nodeColor: 
+      delaySimStatus: 0
+      falseConditionAction: Block
+      conditionPriority: 2
+      outgoingLinks:
+      - originConversationID: 171
+        originDialogueID: 50
+        destinationConversationID: 171
+        destinationDialogueID: 52
+        isConnector: 0
+        priority: 2
+      conditionsString: 
+      userScript: 
+      onExecute:
+        m_PersistentCalls:
+          m_Calls: []
+      canvasRect:
+        serializedVersion: 2
+        x: 542.767
+        y: 184.80782
+        width: 160
+        height: 30
+    - id: 51
+      fields:
+      - title: Title
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Description
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Narration
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Conversant
+        value: 5
+        type: 5
+        typeString: CustomFieldType_Actor
+      - title: Menu Text
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Dialogue Text
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Sequence
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: zh-TW
+        value: 
+        type: 4
+        typeString: CustomFieldType_Localization
+      - title: zh-CN
+        value: 
+        type: 4
+        typeString: CustomFieldType_Localization
+      - title: en
+        value: 
+        type: 4
+        typeString: CustomFieldType_Localization
+      - title: ja
+        value: 
+        type: 4
+        typeString: CustomFieldType_Localization
+      - title: ko
+        value: 
+        type: 4
+        typeString: CustomFieldType_Localization
+      - title: StaminaPreview
+        value: 0
+        type: 1
+        typeString: CustomFieldType_Number
+      - title: canvasRect
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Response Menu Sequence
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Notes
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: DontTranslate
+        value: False
+        type: 2
+        typeString: CustomFieldType_Boolean
+      - title: Guid
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Show Invalid
+        value: False
+        type: 2
+        typeString: CustomFieldType_Boolean
+      - title: Enable Conditions
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Option Image
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: NarrationFlag
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Actor
+        value: 2
+        type: 5
+        typeString: CustomFieldType_Actor
+      conversationID: 171
+      isRoot: 0
+      isGroup: 0
+      nodeColor: 
+      delaySimStatus: 0
+      falseConditionAction: Block
+      conditionPriority: 2
+      outgoingLinks: []
+      conditionsString: 
+      userScript: 
+      onExecute:
+        m_PersistentCalls:
+          m_Calls: []
+      canvasRect:
+        serializedVersion: 2
+        x: 875.53613
+        y: 93.47095
+        width: 160
+        height: 30
+    - id: 52
+      fields:
+      - title: Title
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Description
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Narration
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Conversant
+        value: 5
+        type: 5
+        typeString: CustomFieldType_Actor
+      - title: Menu Text
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Dialogue Text
+        value: "\u4E0D\u662F\u8AAA\u904E\u4E0D\u884C\u4E86\u55CE\uFF1F"
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Sequence
+        value: 'TachieControl(Eye, Sister, Half_Lookaway);
+
+
+          TachieControl(Mouth,
+          Sister, Small1);
+
+
+          TachieControl(Body, Sister, Worry1);
+
+
+          StopMusic(4,
+          false);
+
+
+          Delay({{end}});
+
+'
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: zh-TW
+        value: 
+        type: 4
+        typeString: CustomFieldType_Localization
+      - title: zh-CN
+        value: 
+        type: 4
+        typeString: CustomFieldType_Localization
+      - title: en
+        value: 
+        type: 4
+        typeString: CustomFieldType_Localization
+      - title: ja
+        value: 
+        type: 4
+        typeString: CustomFieldType_Localization
+      - title: ko
+        value: 
+        type: 4
+        typeString: CustomFieldType_Localization
+      - title: StaminaPreview
+        value: 0
+        type: 1
+        typeString: CustomFieldType_Number
+      - title: canvasRect
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Response Menu Sequence
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Notes
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: DontTranslate
+        value: False
+        type: 2
+        typeString: CustomFieldType_Boolean
+      - title: Guid
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Show Invalid
+        value: False
+        type: 2
+        typeString: CustomFieldType_Boolean
+      - title: Enable Conditions
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Option Image
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: NarrationFlag
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Actor
+        value: 2
+        type: 5
+        typeString: CustomFieldType_Actor
+      conversationID: 171
+      isRoot: 0
+      isGroup: 0
+      nodeColor: 
+      delaySimStatus: 0
+      falseConditionAction: Block
+      conditionPriority: 2
+      outgoingLinks:
+      - originConversationID: 171
+        originDialogueID: 52
+        destinationConversationID: 171
+        destinationDialogueID: 40
+        isConnector: 0
+        priority: 2
+      - originConversationID: 171
+        originDialogueID: 52
+        destinationConversationID: 171
+        destinationDialogueID: 5
+        isConnector: 0
+        priority: 2
+      conditionsString: 
+      userScript: 
+      onExecute:
+        m_PersistentCalls:
+          m_Calls: []
+      canvasRect:
+        serializedVersion: 2
+        x: 538.3714
+        y: 247.99461
+        width: 160
+        height: 30
+    - id: 53
+      fields:
+      - title: Title
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Description
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Narration
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Conversant
+        value: 5
+        type: 5
+        typeString: CustomFieldType_Actor
+      - title: Menu Text
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Dialogue Text
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Sequence
+        value: Continue();
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: zh-TW
+        value: 
+        type: 4
+        typeString: CustomFieldType_Localization
+      - title: zh-CN
+        value: 
+        type: 4
+        typeString: CustomFieldType_Localization
+      - title: en
+        value: 
+        type: 4
+        typeString: CustomFieldType_Localization
+      - title: ja
+        value: 
+        type: 4
+        typeString: CustomFieldType_Localization
+      - title: ko
+        value: 
+        type: 4
+        typeString: CustomFieldType_Localization
+      - title: StaminaPreview
+        value: 0
+        type: 1
+        typeString: CustomFieldType_Number
+      - title: canvasRect
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Response Menu Sequence
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Notes
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: DontTranslate
+        value: False
+        type: 2
+        typeString: CustomFieldType_Boolean
+      - title: Guid
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Show Invalid
+        value: False
+        type: 2
+        typeString: CustomFieldType_Boolean
+      - title: Enable Conditions
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Option Image
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: NarrationFlag
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Actor
+        value: 2
+        type: 5
+        typeString: CustomFieldType_Actor
+      conversationID: 171
+      isRoot: 0
+      isGroup: 0
+      nodeColor: 
+      delaySimStatus: 0
+      falseConditionAction: Block
+      conditionPriority: 2
+      outgoingLinks:
+      - originConversationID: 171
+        originDialogueID: 53
+        destinationConversationID: 171
+        destinationDialogueID: 35
+        isConnector: 0
+        priority: 2
+      conditionsString: GetCurrentEmotion("sister") == "Worried"
+      userScript: 
+      onExecute:
+        m_PersistentCalls:
+          m_Calls: []
+      canvasRect:
+        serializedVersion: 2
+        x: 468.96033
+        y: 797.8915
+        width: 160
+        height: 30
     entryGroups: []
-    canvasScrollPosition: {x: 3.296692, y: 161.5383}
+    canvasScrollPosition: {x: 64.835144, y: 237.36267}
     canvasZoom: 0.9099999
   - id: 134
     fields:
@@ -148524,7 +149045,7 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Actor
-        value: 2
+        value: 12
         type: 5
         typeString: CustomFieldType_Actor
       - title: Conversant
@@ -152935,7 +153456,7 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Actor
-        value: 2
+        value: 12
         type: 5
         typeString: CustomFieldType_Actor
       - title: Conversant
@@ -154446,7 +154967,7 @@ MonoBehaviour:
         width: 160
         height: 30
     entryGroups: []
-    canvasScrollPosition: {x: 547.05676, y: 256.47052}
+    canvasScrollPosition: {x: 402.35095, y: 227.05872}
     canvasZoom: 0.85000014
   - id: 169
     fields:
@@ -263098,8 +263619,8 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 171.7828
-        y: 12.172226
+        x: 177.00021
+        y: 6.2173843
         width: 160
         height: 30
     - id: 1
@@ -263243,8 +263764,8 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 176.80785
-        y: 64.33678
+        x: 170.72087
+        y: 49.55417
         width: 160
         height: 30
     - id: 2
@@ -263377,8 +263898,8 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 380.8364
-        y: 97.242645
+        x: 167.79294
+        y: 94.63397
         width: 160
         height: 30
     - id: 3
@@ -265179,8 +265700,8 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 102.65277
-        y: 847.34143
+        x: 92.21799
+        y: 840.3849
         width: 160
         height: 30
     - id: 17
@@ -265298,8 +265819,8 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 102.65277
-        y: 897.34143
+        x: 88.73973
+        y: 907.7762
         width: 160
         height: 30
     - id: 18
@@ -266769,7 +267290,7 @@ MonoBehaviour:
       - originConversationID: 150
         originDialogueID: 29
         destinationConversationID: 150
-        destinationDialogueID: 18
+        destinationDialogueID: 16
         isConnector: 0
         priority: 2
       conditionsString: 
@@ -266780,7 +267301,7 @@ MonoBehaviour:
       canvasRect:
         serializedVersion: 2
         x: 339.5119
-        y: 908.4536
+        y: 915.4101
         width: 160
         height: 30
     - id: 30
@@ -267923,7 +268444,7 @@ MonoBehaviour:
         width: 160
         height: 30
     entryGroups: []
-    canvasScrollPosition: {x: 3.478241, y: 0}
+    canvasScrollPosition: {x: 0, y: 0}
     canvasZoom: 1.1499999
   - id: 223
     fields:
@@ -384458,7 +384979,7 @@ MonoBehaviour:
         width: 160
         height: 30
     entryGroups: []
-    canvasScrollPosition: {x: 171, y: 0}
+    canvasScrollPosition: {x: 103, y: 444}
     canvasZoom: 1
   - id: 217
     fields:
@@ -387891,7 +388412,7 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 56
+        x: 58
         y: 250
         width: 160
         height: 30
@@ -388008,7 +388529,7 @@ MonoBehaviour:
       - originConversationID: 204
         originDialogueID: 4
         destinationConversationID: 204
-        destinationDialogueID: 5
+        destinationDialogueID: 24
         isConnector: 0
         priority: 2
       conditionsString: 
@@ -388140,8 +388661,8 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 77
-        y: 359
+        x: 75
+        y: 464
         width: 160
         height: 30
     - id: 6
@@ -390368,6 +390889,125 @@ MonoBehaviour:
         serializedVersion: 2
         x: 924
         y: 52
+        width: 160
+        height: 30
+    - id: 24
+      fields:
+      - title: Title
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Description
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Narration
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Conversant
+        value: 8
+        type: 5
+        typeString: CustomFieldType_Actor
+      - title: Menu Text
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Dialogue Text
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Sequence
+        value: StoryAlert(Alert.UnlockNewTouchArea, 2.5);
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: zh-TW
+        value: 
+        type: 4
+        typeString: CustomFieldType_Localization
+      - title: zh-CN
+        value: 
+        type: 4
+        typeString: CustomFieldType_Localization
+      - title: en
+        value: 
+        type: 4
+        typeString: CustomFieldType_Localization
+      - title: ja
+        value: 
+        type: 4
+        typeString: CustomFieldType_Localization
+      - title: ko
+        value: 
+        type: 4
+        typeString: CustomFieldType_Localization
+      - title: StaminaPreview
+        value: 0
+        type: 1
+        typeString: CustomFieldType_Number
+      - title: canvasRect
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Response Menu Sequence
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Notes
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: DontTranslate
+        value: False
+        type: 2
+        typeString: CustomFieldType_Boolean
+      - title: Guid
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Show Invalid
+        value: False
+        type: 2
+        typeString: CustomFieldType_Boolean
+      - title: Enable Conditions
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Option Image
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: NarrationFlag
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Actor
+        value: 4
+        type: 5
+        typeString: CustomFieldType_Actor
+      conversationID: 204
+      isRoot: 0
+      isGroup: 0
+      nodeColor: 
+      delaySimStatus: 0
+      falseConditionAction: Passthrough
+      conditionPriority: 2
+      outgoingLinks:
+      - originConversationID: 204
+        originDialogueID: 24
+        destinationConversationID: 204
+        destinationDialogueID: 5
+        isConnector: 0
+        priority: 2
+      conditionsString: Dialog[thisID].SimStatus == "Untouched"
+      userScript: 
+      onExecute:
+        m_PersistentCalls:
+          m_Calls: []
+      canvasRect:
+        serializedVersion: 2
+        x: 76
+        y: 356
         width: 160
         height: 30
     entryGroups: []
@@ -417497,14 +418137,14 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Dialogue Text
-        value: "\u2026\u2026\u3002"
+        value: "\u54FC\u2026\u2026\u3002"
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: 'SpinePlay(sister, Eye, Eye_Half);
+        value: 'SpinePlay(sister, Eye, Eye_Ajar);
 
           SpinePlay(sister, Brow,
-          Brow_Normal1);
+          Brow_Normal3);
 
           SpinePlay(sister, Mouth, Mouth_Close2);
 
