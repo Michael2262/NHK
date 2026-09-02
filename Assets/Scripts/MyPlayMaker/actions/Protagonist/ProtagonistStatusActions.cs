@@ -578,6 +578,43 @@ public class CheckProtagonistStatus : FsmStateAction
 // BadHealthy（狀態不好）
 // ==========================================================
 [ActionCategory("Protagonist Status")]
+[Tooltip("檢查主角目前是否處於「狀態不好 BadHealthy」，並依結果發送事件。")]
+public class CheckBadHealthy : FsmStateAction
+{
+    [UIHint(UIHint.Variable)]
+    [Tooltip("儲存目前的 BadHealthy 狀態（選填）")]
+    public FsmBool storeResult;
+
+    [Tooltip("BadHealthy 為 true 時發送的事件")]
+    public FsmEvent trueEvent;
+
+    [Tooltip("BadHealthy 為 false 時發送的事件")]
+    public FsmEvent falseEvent;
+
+    public override void Reset()
+    {
+        storeResult = null;
+        trueEvent = null;
+        falseEvent = null;
+    }
+
+    public override void OnEnter()
+    {
+        var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(CheckBadHealthy));
+        if (p == null)
+        {
+            Finish();
+            return;
+        }
+
+        bool result = p.BadHealthy;
+        ProtagonistPlayMakerUtil.StoreBool(storeResult, result);
+        Fsm.Event(result ? trueEvent : falseEvent);
+        Finish();
+    }
+}
+
+[ActionCategory("Protagonist Status")]
 [Tooltip("設定主角「狀態不好 BadHealthy」。開啟期間：增加壓力再 +1、減少壓力少 -1。換日自動解除。")]
 public class SetBadHealthy : FsmStateAction
 {
