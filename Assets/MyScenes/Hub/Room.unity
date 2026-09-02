@@ -13710,8 +13710,8 @@ MonoBehaviour:
       colorIndex: 0
       position:
         serializedVersion: 2
-        x: 463.29688
-        y: 813.41406
+        x: 468.29688
+        y: 758.41406
         width: 140.85
         height: 32
       isBreakpoint: 0
@@ -13722,7 +13722,7 @@ MonoBehaviour:
           name: FINISHED
           isSystemEvent: 1
           isGlobal: 0
-        toState: SwitchProgressFlag
+        toState: "\u6703\u64D4\u5FC3?"
         linkStyle: 0
         linkConstraint: 0
         linkTarget: 0
@@ -13981,10 +13981,10 @@ MonoBehaviour:
       colorIndex: 0
       position:
         serializedVersion: 2
-        x: 459.1953
-        y: 886.66406
+        x: 457.1953
+        y: 910.66406
         width: 146.08
-        height: 48
+        height: 64
       isBreakpoint: 0
       isSequence: 0
       hideUnused: 0
@@ -14007,6 +14007,15 @@ MonoBehaviour:
         linkConstraint: 0
         linkTarget: 0
         colorIndex: 0
+      - fsmEvent:
+          name: Shave
+          isSystemEvent: 0
+          isGlobal: 0
+        toState: Shave
+        linkStyle: 0
+        linkConstraint: 0
+        linkTarget: 0
+        colorIndex: 0
       actionData:
         actionNames:
         - MyGame.Actions.SwitchProgressFlag
@@ -14018,6 +14027,7 @@ MonoBehaviour:
         actionHashCodes: 7defeb03
         unityObjectParams:
         - {fileID: 11400000, guid: 0dd5b7f673488c34fad4d7bb4f298bc2, type: 2}
+        - {fileID: 11400000, guid: 6461914c094961242a5618aba4aef89f, type: 2}
         fsmGameObjectParams: []
         fsmOwnerDefaultParams: []
         animationCurveParams: []
@@ -14041,23 +14051,28 @@ MonoBehaviour:
         fsmQuaternionParams: []
         stringParams:
         - CleanRoom
+        - Shave
         - FINISHED
         byteData: 
-        arrayParamSizes: 01000000
+        arrayParamSizes: 02000000
         arrayParamTypes:
         - MyGame.Actions.SwitchProgressFlag+FlagEventEntry
-        customTypeSizes: 02000000
+        customTypeSizes: 0200000002000000
         customTypeNames:
         - MyGame.Actions.SwitchProgressFlag+FlagEventEntry
-        paramDataType: 0c00000028000000050000001700000017000000
+        - MyGame.Actions.SwitchProgressFlag+FlagEventEntry
+        paramDataType: 0c00000028000000050000001700000028000000050000001700000017000000
         paramName:
         - entries
         - 
         - flagDef
         - sendEvent
+        - 
+        - flagDef
+        - sendEvent
         - noneMatchedEvent
-        paramDataPos: 0000000000000000000000000000000001000000
-        paramByteDataSize: 0000000000000000000000000000000000000000
+        paramDataPos: 0000000000000000000000000000000001000000010000000100000002000000
+        paramByteDataSize: 0000000000000000000000000000000000000000000000000000000000000000
     - name: removeAllFlag
       description: 
       colorIndex: 0
@@ -16033,8 +16048,8 @@ MonoBehaviour:
       colorIndex: 3
       position:
         serializedVersion: 2
-        x: 728.66406
-        y: 893.83594
+        x: 737.66406
+        y: 896.83594
         width: 101.22
         height: 32
       isBreakpoint: 0
@@ -16045,7 +16060,7 @@ MonoBehaviour:
           name: FINISHED
           isSystemEvent: 1
           isGlobal: 0
-        toState: 
+        toState: "\u662F\u5426\u89F8\u767C\u64D4\u5FC3?"
         linkStyle: 0
         linkConstraint: 0
         linkTarget: 0
@@ -16160,6 +16175,161 @@ MonoBehaviour:
         paramName: []
         paramDataPos: 
         paramByteDataSize: 
+    - name: "\u6703\u64D4\u5FC3?"
+      description: 
+      colorIndex: 0
+      position:
+        serializedVersion: 2
+        x: 483
+        y: 824
+        width: 100
+        height: 48
+      isBreakpoint: 0
+      isSequence: 0
+      hideUnused: 0
+      transitions:
+      - fsmEvent:
+          name: FINISHED
+          isSystemEvent: 1
+          isGlobal: 0
+        toState: SwitchProgressFlag
+        linkStyle: 0
+        linkConstraint: 0
+        linkTarget: 0
+        colorIndex: 0
+      - fsmEvent:
+          name: BadHealthy
+          isSystemEvent: 0
+          isGlobal: 0
+        toState: DefaultTalk
+        linkStyle: 0
+        linkConstraint: 0
+        linkTarget: 0
+        colorIndex: 0
+      actionData:
+        actionNames:
+        - CheckProtagonistStatus
+        customNames:
+        - 
+        actionEnabled: 01
+        actionIsOpen: 01
+        actionStartIndex: 00000000
+        actionHashCodes: 214d2000
+        unityObjectParams: []
+        fsmGameObjectParams: []
+        fsmOwnerDefaultParams: []
+        animationCurveParams: []
+        functionCallParams: []
+        fsmTemplateControlParams: []
+        fsmEventTargetParams: []
+        fsmPropertyParams: []
+        layoutOptionParams: []
+        fsmStringParams: []
+        fsmObjectParams: []
+        fsmVarParams: []
+        fsmArrayParams: []
+        fsmEnumParams: []
+        fsmFloatParams: []
+        fsmIntParams: []
+        fsmBoolParams:
+        - useVariable: 1
+          name: 
+          tooltip: 
+          showInInspector: 0
+          networkSync: 0
+          value: 0
+        fsmVector2Params: []
+        fsmVector3Params: []
+        fsmColorParams: []
+        fsmRectParams: []
+        fsmQuaternionParams: []
+        stringParams:
+        - BadHealthy
+        - FINISHED
+        byteData: 09000000
+        arrayParamSizes: 
+        arrayParamTypes: []
+        customTypeSizes: 
+        customTypeNames: []
+        paramDataType: 07000000110000001700000017000000
+        paramName:
+        - check
+        - storeResult
+        - trueEvent
+        - falseEvent
+        paramDataPos: 00000000000000000000000001000000
+        paramByteDataSize: 04000000000000000000000000000000
+    - name: Shave
+      description: 
+      colorIndex: 3
+      position:
+        serializedVersion: 2
+        x: 736.66406
+        y: 979.84375
+        width: 100
+        height: 32
+      isBreakpoint: 0
+      isSequence: 0
+      hideUnused: 0
+      transitions:
+      - fsmEvent:
+          name: FINISHED
+          isSystemEvent: 1
+          isGlobal: 0
+        toState: "\u662F\u5426\u89F8\u767C\u64D4\u5FC3?"
+        linkStyle: 0
+        linkConstraint: 0
+        linkTarget: 0
+        colorIndex: 0
+      actionData:
+        actionNames:
+        - PlayStoryConversation
+        customNames:
+        - 
+        actionEnabled: 01
+        actionIsOpen: 01
+        actionStartIndex: 00000000
+        actionHashCodes: a4345405
+        unityObjectParams: []
+        fsmGameObjectParams: []
+        fsmOwnerDefaultParams: []
+        animationCurveParams: []
+        functionCallParams: []
+        fsmTemplateControlParams: []
+        fsmEventTargetParams: []
+        fsmPropertyParams: []
+        layoutOptionParams: []
+        fsmStringParams:
+        - useVariable: 0
+          name: 
+          tooltip: 
+          showInInspector: 0
+          networkSync: 0
+          value: DayLoopTalk/Come/Shave
+        fsmObjectParams: []
+        fsmVarParams: []
+        fsmArrayParams: []
+        fsmEnumParams: []
+        fsmFloatParams: []
+        fsmIntParams: []
+        fsmBoolParams: []
+        fsmVector2Params: []
+        fsmVector3Params: []
+        fsmColorParams: []
+        fsmRectParams: []
+        fsmQuaternionParams: []
+        stringParams: []
+        byteData: 02000000
+        arrayParamSizes: 
+        arrayParamTypes: []
+        customTypeSizes: 
+        customTypeNames: []
+        paramDataType: 1200000007000000
+        paramName:
+        - title
+        - mode
+        paramDataPos: 0000000000000000
+        paramByteDataSize: 0000000004000000
     events:
     - name: FINISHED
       isSystemEvent: 1
@@ -16219,6 +16389,9 @@ MonoBehaviour:
       isSystemEvent: 0
       isGlobal: 0
     - name: Slang
+      isSystemEvent: 0
+      isGlobal: 0
+    - name: BadHealthy
       isSystemEvent: 0
       isGlobal: 0
     globalTransitions: []
