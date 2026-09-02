@@ -229206,7 +229206,7 @@ MonoBehaviour:
         value: 'TachieControl(Eye, Sister, Close_Happy);
 
           TachieControl(Mouth,
-          Sister, Smile1);
+          Sister, Smile2);
 
           TachieControl(Body, Sister, Worry2);
 
@@ -250954,11 +250954,11 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Actor
-        value: 5
+        value: 2
         type: 5
         typeString: CustomFieldType_Actor
       - title: Conversant
-        value: 2
+        value: 5
         type: 5
         typeString: CustomFieldType_Actor
       - title: Menu Text
@@ -393301,7 +393301,7 @@ MonoBehaviour:
 
 
           SpinePlay(sister,
-          Brow, Brow_Angry2);
+          Brow, Brow_Sad1);
 
 
           SpinePlay(sister, OverBody1, Hand_Block);
@@ -393547,7 +393547,7 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 370.90076
+        x: 369.90076
         y: 415.22772
         width: 160
         height: 30
@@ -420869,7 +420869,7 @@ MonoBehaviour:
         width: 160
         height: 30
     entryGroups: []
-    canvasScrollPosition: {x: 304.874, y: 18.446564}
+    canvasScrollPosition: {x: 985.45654, y: 0}
     canvasZoom: 1.03
   - id: 210
     fields:
@@ -429977,7 +429977,7 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Actor
-        value: 5
+        value: 12
         type: 5
         typeString: CustomFieldType_Actor
       - title: Conversant
@@ -430079,7 +430079,7 @@ MonoBehaviour:
         isConnector: 0
         priority: 2
       conditionsString: IsBadHealthy()
-      userScript: 
+      userScript: SetCurrentEmotion("sister", "Normal")
       onExecute:
         m_PersistentCalls:
           m_Calls: []
@@ -430100,7 +430100,7 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Actor
-        value: 4
+        value: 12
         type: 5
         typeString: CustomFieldType_Actor
       - title: Conversant
@@ -431562,7 +431562,7 @@ MonoBehaviour:
         width: 160
         height: 30
     entryGroups: []
-    canvasScrollPosition: {x: 0, y: 326.30298}
+    canvasScrollPosition: {x: 3.529419, y: 513.3618}
     canvasZoom: 0.8500001
   - id: 144
     fields:
@@ -439955,7 +439955,7 @@ MonoBehaviour:
         width: 160
         height: 30
     entryGroups: []
-    canvasScrollPosition: {x: 0, y: 290.48593}
+    canvasScrollPosition: {x: 0, y: 484.60355}
     canvasZoom: 0.85000014
   - id: 243
     fields:
@@ -488394,7 +488394,7 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Actor
-        value: 5
+        value: 12
         type: 5
         typeString: CustomFieldType_Actor
       - title: Conversant
@@ -488496,7 +488496,7 @@ MonoBehaviour:
         isConnector: 0
         priority: 2
       conditionsString: IsBadHealthy()
-      userScript: 
+      userScript: SetCurrentEmotion("sister", "Normal")
       onExecute:
         m_PersistentCalls:
           m_Calls: []
@@ -488517,7 +488517,7 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Actor
-        value: 4
+        value: 12
         type: 5
         typeString: CustomFieldType_Actor
       - title: Conversant
@@ -490987,7 +490987,7 @@ MonoBehaviour:
         width: 160
         height: 30
     entryGroups: []
-    canvasScrollPosition: {x: 0, y: 346.8085}
+    canvasScrollPosition: {x: 72.340454, y: 559.57446}
     canvasZoom: 0.94000006
   - id: 251
     fields:
@@ -501090,7 +501090,7 @@ MonoBehaviour:
 
 
 
-          SpinePlay(sister, Eye, Eye_Ajar_LookAway);
+          SpinePlay(sister, Eye, Eye_Ajar);
 
 
           SpinePlay(sister,
@@ -501219,7 +501219,7 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: 'SpinePlay(sister, Eye, Eye_Normal);
+        value: 'SpinePlay(sister, Eye, Eye_Ajar_LookAway);
 
 
           SpinePlay(sister,
@@ -502234,7 +502234,7 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Dialogue Text
-        value: "\u4E00\u76F4\u8B1B\u2026\u2026"
+        value: "\u597D\u5566\u597D\u5566\u2026\u2026"
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
@@ -502327,15 +502327,15 @@ MonoBehaviour:
         destinationDialogueID: 15
         isConnector: 0
         priority: 2
-      conditionsString: Variable["Tease.TalkQute"] >= 6
+      conditionsString: Variable["Tease.TalkThanks"] >= 6
       userScript: 
       onExecute:
         m_PersistentCalls:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 1028.4736
-        y: 305
+        x: 1052.4736
+        y: 296
         width: 160
         height: 30
     - id: 15
@@ -502453,8 +502453,8 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 1039.5264
-        y: 359.3684
+        x: 1064.5264
+        y: 371.3684
         width: 160
         height: 30
     - id: 16
@@ -502969,7 +502969,7 @@ MonoBehaviour:
         width: 160
         height: 30
     entryGroups: []
-    canvasScrollPosition: {x: 0, y: 0}
+    canvasScrollPosition: {x: 331, y: 34}
     canvasZoom: 1
   - id: 255
     fields:
