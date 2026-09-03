@@ -33,11 +33,6 @@ public class LobbyUI_V2 : MonoBehaviour
     [SerializeField] private TextMeshProUGUI textStressTitle;
     [SerializeField] private TextMeshProUGUI textStressPreview;
 
-    [Header("=== 壓力標題顯示規則 ===")]
-    [Tooltip("OverStress 條件 Flag。此 Flag 成立時，壓力標題改顯示 OverStress（優先度最高）。\n" +
-             "優先度：OverStress Flag > BadHealthy > 一般 Stress。")]
-    [SerializeField] private ProgressFlagDefinition overStressFlag;
-
     [SerializeField] private TextMeshProUGUI textLifePower;
     [SerializeField] private TextMeshProUGUI textLifePowerPreview;
 
@@ -55,13 +50,9 @@ public class LobbyUI_V2 : MonoBehaviour
     [SerializeField] private TextMeshProUGUI textBodyCleanPreview;
 
     [SerializeField] private TextMeshProUGUI textDependency;
-    [Tooltip("依賴度標題。優先度：BadDependency > OverDependency Flag > 一般 Dependency。")]
+    [Tooltip("依賴度標題。優先度：BadDependency > Dependency Extreme > 一般 Dependency。")]
     [SerializeField] private TextMeshProUGUI textDependencyTitle;
     [SerializeField] private TextMeshProUGUI textDependencyPreview;
-
-    [Header("=== 依賴度標題顯示規則 ===")]
-    [Tooltip("OverDependency 條件 Flag。此 Flag 成立時，依賴度標題改顯示 OverDependency 並轉粉色，依賴度數字也轉粉色。")]
-    [SerializeField] private ProgressFlagDefinition overDependencyFlag;
 
     [Header("=== Preview 顯示設定 ===")]
     [Tooltip("正/負變動是否顯示飄字；播放間隔與淡入淡出時間改由 StatusPreviewSequencer 控制。")]
@@ -108,7 +99,6 @@ public class LobbyUI_V2 : MonoBehaviour
 
     private ProtagonistStatusModel _protagonistModel;
     private TimeSystemModel _timeModel;
-    private ProgressFlagModel _progressFlagModel;
     private int _lastPhaseIndex = -1;
 
     // 整潔度飄字用：事件傳來的是「髒亂度 delta」，這裡改用「整潔度百分比」的前後差來顯示 +N% / -N%。
@@ -168,7 +158,6 @@ public class LobbyUI_V2 : MonoBehaviour
         if (GameStatusService.Instance == null) return;
         _protagonistModel = GameStatusService.Instance.Protagonist;
         _timeModel = GameStatusService.Instance.Time;
-        _progressFlagModel = GameStatusService.Instance.ProgressFlags;
     }
 
     private void SubscribeEvents()
@@ -185,9 +174,6 @@ public class LobbyUI_V2 : MonoBehaviour
             _protagonistModel.OnBadHealthyChanged += HandleBadHealthyChanged;
             _protagonistModel.OnBadDependencyChanged += HandleBadDependencyChanged;
         }
-
-        if (_progressFlagModel != null)
-            _progressFlagModel.OnFlagChanged += HandleProgressFlagChanged;
 
         if (_timeModel != null)
         {
@@ -214,9 +200,6 @@ public class LobbyUI_V2 : MonoBehaviour
             _protagonistModel.OnBadHealthyChanged -= HandleBadHealthyChanged;
             _protagonistModel.OnBadDependencyChanged -= HandleBadDependencyChanged;
         }
-
-        if (_progressFlagModel != null)
-            _progressFlagModel.OnFlagChanged -= HandleProgressFlagChanged;
 
         if (_timeModel != null)
         {
@@ -279,7 +262,7 @@ public class LobbyUI_V2 : MonoBehaviour
         int v = _protagonistModel != null ? _protagonistModel.Stress : 0;
         StatusPreviewSequencer.Instance.Enqueue(
             StatusPreviewSequencer.OrderStress,
-            () => { SetText(textStress, v); ApplyStressColor(); },
+            () => { SetText(textStress, v); UpdateStressTitleUI(); ApplyStressColor(); },
             PreviewIfAllowed(textStressPreview, delta),
             delta);
     }
@@ -319,7 +302,7 @@ public class LobbyUI_V2 : MonoBehaviour
         int v = _protagonistModel != null ? _protagonistModel.Dependency : 0;
         StatusPreviewSequencer.Instance.Enqueue(
             StatusPreviewSequencer.OrderDependency,
-            () => { SetText(textDependency, v); ApplyDependencyColor(); },
+            () => { SetText(textDependency, v); UpdateDependencyTitleUI(); ApplyDependencyColor(); },
             PreviewIfAllowed(textDependencyPreview, delta),
             delta);
     }
@@ -382,23 +365,6 @@ public class LobbyUI_V2 : MonoBehaviour
         UpdateDependencyTitleUI();
     }
 
-    // 監聽 OverStress / OverDependency 條件 Flag 的變化；含清桶（換日/換場景）時發出的 false 事件。
-    // Flag 切換時：對應標題文字/顏色 + 數字顏色一起刷新。
-    private void HandleProgressFlagChanged(string flagID, bool _)
-    {
-        if (overStressFlag != null && flagID == overStressFlag.FlagID)
-        {
-            UpdateStressTitleUI();
-            ApplyStressColor();
-        }
-
-        if (overDependencyFlag != null && flagID == overDependencyFlag.FlagID)
-        {
-            UpdateDependencyTitleUI();
-            ApplyDependencyColor();
-        }
-    }
-
     private void HandleTimeSlotChanged(int _) => UpdateTimeUI();
 
     private void HandlePhaseChange()
@@ -449,7 +415,7 @@ public class LobbyUI_V2 : MonoBehaviour
 
     /// <summary>
     /// 壓力標題三規則（優先度高→低）：
-    /// 1. overStressFlag 成立     → "OverStress"（Red）
+    /// 1. IsStressExtreme() == true → "OverStress"（Red）
     /// 2. BadHealthy == true      → "BadHealthy"（DarkRed）
     /// 3. 平常                    → "Stress"（原始顏色）
     /// 每次都重新查表，語言重進場景後會跟著刷新。
@@ -461,7 +427,7 @@ public class LobbyUI_V2 : MonoBehaviour
         string key = TITLE_KEY_STRESS;
         Color color = _stressTitleDefaultColor;
 
-        if (IsOverStressFlagActive())
+        if (_protagonistModel != null && _protagonistModel.IsStressExtreme())
         {
             key = TITLE_KEY_OVER_STRESS;
             color = UIColorPalette.Red;
@@ -479,7 +445,7 @@ public class LobbyUI_V2 : MonoBehaviour
     /// <summary>
     /// 依賴度標題三規則（優先度高→低）：
     /// 1. BadDependency == true    → "BadDependency"（DarkRed）
-    /// 2. overDependencyFlag 成立  → "OverDependency"（Pink）
+    /// 2. IsDependencyExtreme() == true → "OverDependency"（Pink）
     /// 3. 平常                     → "Dependency"（原始顏色）
     /// 每次都重新查表，語言重進場景後會跟著刷新。
     /// </summary>
@@ -495,7 +461,7 @@ public class LobbyUI_V2 : MonoBehaviour
             key = TITLE_KEY_BAD_DEPENDENCY;
             color = UIColorPalette.DarkRed;
         }
-        else if (IsOverDependencyFlagActive())
+        else if (_protagonistModel != null && _protagonistModel.IsDependencyExtreme())
         {
             key = TITLE_KEY_OVER_DEPENDENCY;
             color = UIColorPalette.Pink;
@@ -548,8 +514,8 @@ public class LobbyUI_V2 : MonoBehaviour
 
     // ==================================================
     // 警示變色：
-    // - Stress 數字：OverStress Flag 成立時變 Red，解除時還原。
-    // - Dependency 數字：OverDependency Flag 成立時變 Pink，解除時還原。
+    // - Stress 數字：IsStressExtreme() 成立時變 Red，解除時還原。
+    // - Dependency 數字：IsDependencyExtreme() 成立時變 Pink，解除時還原。
     // 顏色取自 UIColorPalette（靜態色票）；未觸發時還原成原始顏色。
     // ==================================================
 
@@ -567,29 +533,17 @@ public class LobbyUI_V2 : MonoBehaviour
     private void ApplyStressColor()
     {
         if (textStress == null) return;
-        textStress.color = IsOverStressFlagActive()
+        textStress.color = _protagonistModel != null && _protagonistModel.IsStressExtreme()
             ? UIColorPalette.Red
             : _stressDefaultColor;
-    }
-
-    private bool IsOverStressFlagActive()
-    {
-        return overStressFlag != null && _progressFlagModel != null
-            && _progressFlagModel.Contains(overStressFlag.FlagID);
     }
 
     private void ApplyDependencyColor()
     {
         if (textDependency == null) return;
-        textDependency.color = IsOverDependencyFlagActive()
+        textDependency.color = _protagonistModel != null && _protagonistModel.IsDependencyExtreme()
             ? UIColorPalette.Pink
             : _dependencyDefaultColor;
-    }
-
-    private bool IsOverDependencyFlagActive()
-    {
-        return overDependencyFlag != null && _progressFlagModel != null
-            && _progressFlagModel.Contains(overDependencyFlag.FlagID);
     }
 
     private void HideAllPreviewTexts()

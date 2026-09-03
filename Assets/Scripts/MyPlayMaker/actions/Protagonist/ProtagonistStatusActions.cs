@@ -538,7 +538,8 @@ public class CheckProtagonistStatus : FsmStateAction
         IsDependencyHigh,
         IsDependencyExtreme,
         IsOverShoot,
-        IsBadHealthy
+        IsBadHealthy,
+        IsBadDependency
     }
 
     public CheckType check;
@@ -565,6 +566,7 @@ public class CheckProtagonistStatus : FsmStateAction
             CheckType.IsDependencyExtreme => p.IsDependencyExtreme(),
             CheckType.IsOverShoot => p.IsOverShoot,
             CheckType.IsBadHealthy => p.BadHealthy,
+            CheckType.IsBadDependency => p.BadDependency,
             _ => false
         };
 

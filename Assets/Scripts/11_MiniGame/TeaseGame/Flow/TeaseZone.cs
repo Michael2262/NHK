@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.EventSystems;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 /// <summary>滑動方向（TeaseGame 自用）。</summary>
@@ -18,7 +19,7 @@ public enum TeaseSwipeDir
 ///
 /// 這一個元件就包含一個觸碰點的完整定義：
 ///   - 手勢：點一下（Tap）或往某方向滑（Swipe）
-///   - 出現條件：屬於哪個模式（mode）＋需要哪個進度旗標（requiredFlag，拖 SO）
+///   - 出現條件：屬於哪個模式（mode）＋多筆進度旗標條件（flagConditions，AND）
 ///   - 跑條：這次觸碰要跑多久（duration）
 ///   - 提示：這一點的愛心（hint，懸浮對應模式按鈕時亮）
 ///   - 成功回呼：onTouch（觸碰當下）、onComplete（跑條結束、女主角反應）
@@ -36,6 +37,16 @@ public enum TeaseSwipeDir
 public class TeaseZone : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
 {
     public enum GestureType { Tap, Swipe }
+
+    [System.Serializable]
+    private class FlagCondition
+    {
+        [Tooltip("要檢查的進度旗標；留空會忽略此項。")]
+        public ProgressFlagDefinition flag;
+
+        [Tooltip("不勾 = 旗標必須存在；勾選 = 旗標必須不存在。")]
+        public bool invert;
+    }
 
     [Header("手勢")]
     [Tooltip("Tap = 點一下；Swipe = 往指定方向滑。")]
@@ -60,11 +71,18 @@ public class TeaseZone : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
     [Tooltip("無視模式：勾選後不管目前切到哪個模式，此點都保持存在（不會被模式關掉）。上面的 mode 只剩「提示要對應哪顆按鈕」的作用；仍受 flag 條件影響。")]
     [SerializeField] private bool ignoreMode = false;
 
-    [Tooltip("需要此進度旗標才出現；留空 = 不看旗標。拖入 Flag Definition SO。")]
-    [SerializeField] private ProgressFlagDefinition requiredFlag;
+    [Tooltip("旗標條件；每項可獨立設定 Invert，所有非空條件都成立才出現（AND）。")]
+    [SerializeField] private FlagCondition[] flagConditions;
 
-    [Tooltip("反向：勾選後改成「沒有此旗標時才出現」。requiredFlag 留空則此項無效。")]
-    [SerializeField] private bool invertFlag = false;
+    // 保留上一版已序列化的多 Flag；新的逐項條件有設定時便不再使用。
+    [SerializeField, HideInInspector] private ProgressFlagDefinition[] requiredFlags;
+
+    // 保留舊場景 / Prefab 已序列化的單一 Flag。新陣列有設定時便不再使用此值。
+    [FormerlySerializedAs("requiredFlag")]
+    [SerializeField, HideInInspector] private ProgressFlagDefinition legacyRequiredFlag;
+
+    // 上一版的共用 Invert，僅用於舊的 requiredFlags / legacyRequiredFlag 相容判定。
+    [SerializeField, HideInInspector] private bool invertFlag = false;
 
     [Header("跑條")]
     [Tooltip("這一點的跑條時長（秒）。\n0 = 使用 TeaseActionGate 的預設時長。\n-1 = 不跑跑條、也不觸發 onTouch，成功後直接觸發 onComplete。\n其他正值 = 該秒數。")]
@@ -168,9 +186,41 @@ public class TeaseZone : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
     {
         get
         {
-            if (requiredFlag == null) return true;
-            bool has = HasFlag(requiredFlag.FlagID);
-            return invertFlag ? !has : has;
+            bool hasIndividualConditions = false;
+
+            if (flagConditions != null)
+            {
+                foreach (var condition in flagConditions)
+                {
+                    if (condition == null || condition.flag == null) continue;
+
+                    hasIndividualConditions = true;
+                    bool has = HasFlag(condition.flag.FlagID);
+                    if (condition.invert ? has : !has) return false;
+                }
+            }
+
+            // 新條件有任一有效項目時，完全取代舊版設定。
+            if (hasIndividualConditions) return true;
+
+            bool hasLegacyArrayConditions = false;
+
+            if (requiredFlags != null)
+            {
+                foreach (var requiredFlag in requiredFlags)
+                {
+                    if (requiredFlag == null) continue;
+
+                    hasLegacyArrayConditions = true;
+                    bool has = HasFlag(requiredFlag.FlagID);
+                    if (invertFlag ? has : !has) return false;
+                }
+            }
+
+            if (hasLegacyArrayConditions || legacyRequiredFlag == null) return true;
+
+            bool hasLegacyFlag = HasFlag(legacyRequiredFlag.FlagID);
+            return invertFlag ? !hasLegacyFlag : hasLegacyFlag;
         }
     }
 
