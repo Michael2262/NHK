@@ -14,9 +14,9 @@ using UnityEngine;
 /// 5. LastAddedEmotion：最近一次被新增的情緒。
 /// 6. Libido（性慾）：0~150 的獨立數值，每日衰減 LibidoDailyDecay。
 /// 7. Trust（信賴）：0~150 的獨立數值。
-/// 8. Affinity（好感度）：0~150 的獨立數值。
-/// 9. Excitement（興奮度）：
-/// 10. Orgasm（高潮度）：
+/// 8. Affinity（好感度）：0~100 的獨立數值。
+/// 9. Excitement（興奮度）：0~100 的獨立數值。
+/// 10. Orgasm（高潮度）：0~100 的獨立數值。
 ///  
 /// 11. 提供情緒分數與卡片替換規則。
 /// 12. 保存 H 次數。
@@ -52,6 +52,17 @@ public class HeroineStatusModel
     public const int LibidoMax = 150;
     public const int LibidoDailyDecay = 2;
 
+    /// <summary>獨立興奮度，0~100；與舊版興奮等級／經驗值分開。</summary>
+    public int Excitement { get; private set; }
+    public const int ExcitementMax = 100;
+    public const int ExcitementInHeatDailyRetentionMax = 50;
+    public const int LIBIDO_MEDIUM_THRESHOLD = 50;
+    public const int LIBIDO_HIGH_THRESHOLD = 120;
+
+    /// <summary>獨立高潮度，0~100，每日歸零。</summary>
+    public int Orgasm { get; private set; }
+    public int OrgasmMax => 100;
+
     /// <summary>信賴值，0~TrustMax。</summary>
     public int Trust { get; private set; }
     public const int TrustMax = 150;
@@ -84,6 +95,10 @@ public class HeroineStatusModel
     public event Action<HeroineEmotionCardType> OnDominantEmotionChanged;
     public event Action<HeroineEmotionCardType> OnCurrentEmotionChanged;
     public event Action<int> OnLibidoChanged;
+    /// <summary>獨立興奮度改變時傳回新值；讀檔後請透過 OnGameStatusLoaded 統一刷新。</summary>
+    public event Action<int> OnExcitementValueChanged;
+    /// <summary>高潮度改變時傳回新值；讀檔後透過 OnGameStatusLoaded 統一刷新。</summary>
+    public event Action<int> OnOrgasmChanged;
     public event Action<int> OnTrustChanged;
     public event Action<int> OnAffinityChanged;
     public event Action<int> OnHCountChanged;
@@ -105,7 +120,6 @@ public class HeroineStatusModel
     public event Action<int> OnExcitementChanged;
     public event Action<int> OnDiscomfortChanged;
     public event Action OnDiscomfortFull;
-    public event Action<int> OnOrgasmChanged;
     public event Action OnOrgasmFull;
     public event Action<int> OnPersonalSuspicionChanged;
     public event Action OnPersonalSuspicionReachedMax;
@@ -138,6 +152,8 @@ public class HeroineStatusModel
         DominantEmotion = HeroineEmotionCardType.Angry;
         CurrentEmotion = HeroineEmotionCardType.Angry;
         Libido = 0;
+        Excitement = 0;
+        Orgasm = 0;
         Trust = 0;
         Affinity = 0;
         HCount = 0;
@@ -314,6 +330,76 @@ public class HeroineStatusModel
     {
         AddLibido(-LibidoDailyDecay);
     }
+
+    /// <summary>取得獨立興奮度。</summary>
+    public int GetExcitement() => Excitement;
+
+    /// <summary>直接設定興奮度，不套用性慾倍率。</summary>
+    public void SetExcitement(int value)
+    {
+        value = Mathf.Clamp(value, 0, ExcitementMax);
+        if (Excitement == value) return;
+        Excitement = value;
+        OnExcitementValueChanged?.Invoke(Excitement);
+    }
+
+    /// <summary>一般增減興奮度，不套用性慾倍率。</summary>
+    public void AddExcitement(int amount)
+    {
+        // 先使用 long 相加，避免極大輸入溢位後反向變動。
+        long newValue = (long)Excitement + amount;
+        SetExcitement((int)Math.Max(0L, Math.Min(ExcitementMax, newValue)));
+    }
+
+    /// <summary>正數依性慾套用 1~2 倍並四捨五入；零或負數沿用一般增減。</summary>
+    public void WeightedAddExcitement(int amount)
+    {
+        if (amount <= 0)
+        {
+            AddExcitement(amount);
+            return;
+        }
+
+        int libidoOffset = Mathf.Clamp(Libido - LIBIDO_MEDIUM_THRESHOLD,
+            0, LIBIDO_HIGH_THRESHOLD - LIBIDO_MEDIUM_THRESHOLD);
+        double multiplier = 1d + (double)libidoOffset
+            / (LIBIDO_HIGH_THRESHOLD - LIBIDO_MEDIUM_THRESHOLD);
+        double increase = Math.Round(amount * multiplier, MidpointRounding.AwayFromZero);
+        // 最大僅需增加 100，轉回 int 前先限制，避免倍率運算溢位。
+        AddExcitement((int)Math.Min(ExcitementMax, increase));
+    }
+
+    /// <summary>跨日結算：平時歸零；發情中保留目前值，但最多 50。</summary>
+    public void ApplyExcitementDailyReset()
+    {
+        SetExcitement(IsInHeat ? Mathf.Min(Excitement, ExcitementInHeatDailyRetentionMax) : 0);
+    }
+
+    /// <summary>取得獨立高潮度。</summary>
+    public int GetOrgasm() => Orgasm;
+
+    /// <summary>設定高潮度，限制在 0~100。</summary>
+    public void SetOrgasm(int value)
+    {
+        value = Mathf.Clamp(value, 0, OrgasmMax);
+        if (Orgasm == value) return;
+        Orgasm = value;
+        OnOrgasmChanged?.Invoke(Orgasm);
+    }
+
+    /// <summary>一般增減高潮度，不套用倍率，也不改變 H 次數。</summary>
+    public void AddOrgasm(int amount)
+    {
+        long newValue = (long)Orgasm + amount;
+        SetOrgasm((int)Math.Max(0L, Math.Min(OrgasmMax, newValue)));
+    }
+
+    /// <summary>跨日結算：無論是否發情，一律歸零。</summary>
+    public void ApplyOrgasmDailyReset() => SetOrgasm(0);
+
+    // 保留既有呼叫入口，統一轉交獨立數值操作。
+    public void ReduceOrgasm(int amount) => AddOrgasm((int)Math.Min(int.MaxValue, -(long)amount));
+    public void ResetOrgasm() => SetOrgasm(0);
 
     // ─────────────────────────────────────────────────────────────
     // Trust（信賴）
@@ -533,6 +619,8 @@ public class HeroineStatusModel
             Emotion = CurrentEmotion,
             DominantEmotion = DominantEmotion,
             Libido = Libido,
+            Excitement = Excitement,
+            Orgasm = Orgasm,
             Trust = Trust,
             Affinity = Affinity,
             HCount = HCount,
@@ -560,6 +648,9 @@ public class HeroineStatusModel
         HCount = Mathf.Max(0, data.HCount);
         CurrentEmotion = data.Emotion;
         Libido = Mathf.Clamp(data.Libido, 0, LibidoMax);
+        // 直接還原，不逐項廣播；缺少此欄位的舊存檔預設為 0。
+        Excitement = Mathf.Clamp(data.Excitement, 0, ExcitementMax);
+        Orgasm = Mathf.Clamp(data.Orgasm, 0, OrgasmMax);
         Trust = Mathf.Clamp(data.Trust, 0, TrustMax);
         Affinity = Mathf.Clamp(data.Affinity, 0, AffinityMax);
         IsInHeat = data.IsInHeat;
@@ -614,9 +705,7 @@ public class HeroineStatusModel
     public int TotalExcitementLevel => BaseExcitementLevel;
 
     public int Discomfort => 0;
-    public int Orgasm => 0;
     public int DiscomfortMax => 100;
-    public int OrgasmMax => 100;
 
     public int PersonalSuspicion => GetNegativeMoodScore();
     public int PersonalSuspicionMax => EmotionDeckMaxCount;
@@ -683,7 +772,8 @@ public class HeroineStatusModel
         OnExcitementLevelChanged?.Invoke(BaseExcitementLevel);
     }
     public void ReduceExcitementExp(int delta) => AddExcitementExp(-delta);
-    public void SetExcitement(int level, int exp = 0)
+    // 舊版等級／經驗值入口必須明確傳入兩個參數，避免與獨立興奮度混用。
+    public void SetExcitement(int level, int exp)
     {
         OnExcitementLevelChanged?.Invoke(level);
         OnExcitementChanged?.Invoke(exp);
@@ -698,14 +788,6 @@ public class HeroineStatusModel
     }
     public void ReduceDiscomfort(int amount) => AddDiscomfort(-amount);
     public void ResetDiscomfort() => OnDiscomfortChanged?.Invoke(0);
-
-    public void AddOrgasm(int amount)
-    {
-        OnOrgasmChanged?.Invoke(amount);
-        if (amount > 0) AddHCount(1);
-    }
-    public void ReduceOrgasm(int amount) => AddOrgasm(-amount);
-    public void ResetOrgasm() => OnOrgasmChanged?.Invoke(0);
 
     public void AddPersonalSuspicion(int amount)
     {

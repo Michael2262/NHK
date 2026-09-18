@@ -8,7 +8,7 @@ using UnityEngine;
 /// 女主角 ID 直接在 Inspector 中指定。
 ///
 /// 已對齊 NHK 版 HeroineStatusModel：操作情緒卡池、主導情緒（CurrentEmotion）、
-/// 性慾（Libido）、信賴（Trust）、好感度（Affinity）、H 次數（HCount）。
+/// 性慾（Libido）、興奮度（Excitement）、高潮度（Orgasm）、信賴（Trust）、好感度（Affinity）、H 次數（HCount）。
 /// 不再使用舊專案遺留的 Lewdness stub（Affinity 已是現役獨立數值）。
 ///
 /// 為了讓 Button.onClick / UnityEvent 能無參數呼叫，多數操作同時提供：
@@ -185,6 +185,105 @@ public class HeroineStatusDebugBridge : MonoBehaviour
     }
 
     // ==========================================================
+    // 興奮度 (Excitement)
+    // ==========================================================
+
+    /// <summary>一般增減興奮度，不套用性慾倍率。</summary>
+    public void AddExcitement(int amount)
+    {
+        var m = Model;
+        if (m == null) return;
+        int before = m.GetExcitement();
+        m.AddExcitement(amount);
+        Debug.Log($"[HeroineStatusDebugBridge] ({heroineID}) 興奮度一般增減 {amount}：{before} → {m.GetExcitement()}");
+    }
+
+    /// <summary>加權增減興奮度；正數依性慾套用倍率，負數直接扣除。</summary>
+    public void WeightedAddExcitement(int amount)
+    {
+        var m = Model;
+        if (m == null) return;
+        int before = m.GetExcitement();
+        int libido = m.Libido;
+        m.WeightedAddExcitement(amount);
+        Debug.Log($"[HeroineStatusDebugBridge] ({heroineID}) 興奮度加權增減 {amount}（性慾 {libido}）：{before} → {m.GetExcitement()}");
+    }
+
+    /// <summary>直接設定興奮度（0~100），不套用性慾倍率。</summary>
+    public void SetExcitement(int value)
+    {
+        var m = Model;
+        if (m == null) return;
+        m.SetExcitement(value);
+        Debug.Log($"[HeroineStatusDebugBridge] ({heroineID}) 設定興奮度 = {m.GetExcitement()}");
+    }
+
+    /// <summary>取得目前興奮度；無法取得 Model 時回傳 0。</summary>
+    public int GetExcitement() => Model?.GetExcitement() ?? 0;
+
+    /// <summary>手動套用一次興奮度每日結算，不推進遊戲時間。</summary>
+    public void ApplyExcitementDailyReset()
+    {
+        var m = Model;
+        if (m == null) return;
+        int before = m.GetExcitement();
+        m.ApplyExcitementDailyReset();
+        Debug.Log($"[HeroineStatusDebugBridge] ({heroineID}) 興奮度每日結算（發情：{m.IsInHeat}）：{before} → {m.GetExcitement()}");
+    }
+
+    /// <summary>輸出目前興奮度到 Console，供無參數按鈕呼叫。</summary>
+    public void LogExcitement()
+    {
+        var m = Model;
+        if (m == null) return;
+        Debug.Log($"[HeroineStatusDebugBridge] ({heroineID}) 興奮度 = {m.GetExcitement()} / {HeroineStatusModel.ExcitementMax}");
+    }
+
+    // ==========================================================
+    // 高潮度 (Orgasm)
+    // ==========================================================
+
+    /// <summary>一般增減高潮度（正增負減，限制 0~100）。</summary>
+    public void AddOrgasm(int amount)
+    {
+        var m = Model;
+        if (m == null) return;
+        int before = m.GetOrgasm();
+        m.AddOrgasm(amount);
+        Debug.Log($"[HeroineStatusDebugBridge] ({heroineID}) 高潮度增減 {amount}：{before} → {m.GetOrgasm()}");
+    }
+
+    /// <summary>直接設定高潮度（0~100）。</summary>
+    public void SetOrgasm(int value)
+    {
+        var m = Model;
+        if (m == null) return;
+        m.SetOrgasm(value);
+        Debug.Log($"[HeroineStatusDebugBridge] ({heroineID}) 設定高潮度 = {m.GetOrgasm()}");
+    }
+
+    /// <summary>取得目前高潮度；無法取得 Model 時回傳 0。</summary>
+    public int GetOrgasm() => Model?.GetOrgasm() ?? 0;
+
+    /// <summary>手動套用一次高潮度每日歸零，不推進遊戲時間。</summary>
+    public void ApplyOrgasmDailyReset()
+    {
+        var m = Model;
+        if (m == null) return;
+        int before = m.GetOrgasm();
+        m.ApplyOrgasmDailyReset();
+        Debug.Log($"[HeroineStatusDebugBridge] ({heroineID}) 高潮度每日歸零：{before} → {m.GetOrgasm()}");
+    }
+
+    /// <summary>輸出目前高潮度到 Console，供無參數按鈕呼叫。</summary>
+    public void LogOrgasm()
+    {
+        var m = Model;
+        if (m == null) return;
+        Debug.Log($"[HeroineStatusDebugBridge] ({heroineID}) 高潮度 = {m.GetOrgasm()} / {m.OrgasmMax}");
+    }
+
+    // ==========================================================
     // 信賴 (Trust)
     // ==========================================================
 
@@ -289,6 +388,9 @@ public class HeroineStatusDebugBridge : MonoBehaviour
             $"  CurrentEmotion  : {m.CurrentEmotion}\n" +
             $"  EmotionDeck     : {m.GetEmotionDeckCount()} / {m.EmotionDeckMaxCount}\n" +
             $"  Libido          : {m.Libido} / {HeroineStatusModel.LibidoMax}\n" +
+            $"  Excitement      : {m.GetExcitement()} / {HeroineStatusModel.ExcitementMax}\n" +
+            $"  Orgasm          : {m.GetOrgasm()} / {m.OrgasmMax}\n" +
+            $"  IsInHeat        : {m.IsInHeat}\n" +
             $"  Trust           : {m.Trust} / {HeroineStatusModel.TrustMax}\n" +
             $"  Affinity        : {m.Affinity} / {HeroineStatusModel.AffinityMax}\n" +
             $"  HCount          : {m.HCount}"

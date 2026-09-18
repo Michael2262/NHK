@@ -1146,3 +1146,217 @@ public class CheckInHeat : FsmStateAction
         Finish();
     }
 }
+
+// 獨立興奮度入口；舊版興奮等級／經驗值不使用這組 Action。
+[ActionCategory("Heroine Status")]
+[Tooltip("取得女主角的獨立興奮度（0~100）。")]
+public class GetExcitement : FsmStateAction
+{
+    [RequiredField] public FsmString heroineID;
+    [RequiredField][UIHint(UIHint.Variable)] public FsmInt storeValue;
+
+    public override void Reset() { heroineID = null; storeValue = null; }
+
+    public override void OnEnter()
+    {
+        if (HeroineActionHelper.TryGetHeroine(heroineID.Value, out var h, "GetExcitement"))
+            storeValue.Value = h.GetExcitement();
+        Finish();
+    }
+}
+
+[ActionCategory("Heroine Status")]
+[Tooltip("直接設定獨立興奮度（0~100），不套用性慾倍率。")]
+public class SetExcitementAction : FsmStateAction
+{
+    [RequiredField] public FsmString heroineID;
+    [RequiredField] public FsmInt value;
+
+    public override void Reset() { heroineID = null; value = 0; }
+
+    public override void OnEnter()
+    {
+        if (HeroineActionHelper.TryGetHeroine(heroineID.Value, out var h, "SetExcitementAction"))
+            h.SetExcitement(value.Value);
+        Finish();
+    }
+}
+
+[ActionCategory("Heroine Status")]
+[Tooltip("一般增減獨立興奮度，不套用性慾倍率。")]
+public class AddExcitementAction : FsmStateAction
+{
+    [RequiredField] public FsmString heroineID;
+    [RequiredField] public FsmInt amount;
+
+    public override void Reset() { heroineID = null; amount = 0; }
+
+    public override void OnEnter()
+    {
+        if (HeroineActionHelper.TryGetHeroine(heroineID.Value, out var h, "AddExcitementAction"))
+            h.AddExcitement(amount.Value);
+        Finish();
+    }
+}
+
+[ActionCategory("Heroine Status")]
+[Tooltip("加權增減獨立興奮度；正數依性慾乘 1~2 倍並四捨五入，負數直接扣除。")]
+public class WeightedAddExcitementAction : FsmStateAction
+{
+    [RequiredField] public FsmString heroineID;
+    [RequiredField] public FsmInt amount;
+
+    public override void Reset() { heroineID = null; amount = 0; }
+
+    public override void OnEnter()
+    {
+        if (HeroineActionHelper.TryGetHeroine(heroineID.Value, out var h, "WeightedAddExcitementAction"))
+            h.WeightedAddExcitement(amount.Value);
+        Finish();
+    }
+}
+
+[ActionCategory("Heroine Status")]
+[Tooltip("取得女主角的獨立高潮度（0~100）。")]
+public class GetOrgasm : FsmStateAction
+{
+    [RequiredField] public FsmString heroineID;
+    [RequiredField][UIHint(UIHint.Variable)] public FsmInt storeValue;
+
+    public override void Reset() { heroineID = null; storeValue = null; }
+
+    public override void OnEnter()
+    {
+        if (HeroineActionHelper.TryGetHeroine(heroineID.Value, out var h, "GetOrgasm"))
+            storeValue.Value = h.GetOrgasm();
+        Finish();
+    }
+}
+
+[ActionCategory("Heroine Status")]
+[Tooltip("設定女主角的獨立高潮度，限制在 0~100。")]
+public class SetOrgasmAction : FsmStateAction
+{
+    [RequiredField] public FsmString heroineID;
+    [RequiredField] public FsmInt value;
+
+    public override void Reset() { heroineID = null; value = 0; }
+
+    public override void OnEnter()
+    {
+        if (HeroineActionHelper.TryGetHeroine(heroineID.Value, out var h, "SetOrgasmAction"))
+            h.SetOrgasm(value.Value);
+        Finish();
+    }
+}
+
+[ActionCategory("Heroine Status")]
+[Tooltip("增減女主角的獨立高潮度，正數增加、負數減少。")]
+public class AddOrgasmAction : FsmStateAction
+{
+    [RequiredField] public FsmString heroineID;
+    [RequiredField] public FsmInt amount;
+
+    public override void Reset() { heroineID = null; amount = 0; }
+
+    public override void OnEnter()
+    {
+        if (HeroineActionHelper.TryGetHeroine(heroineID.Value, out var h, "AddOrgasmAction"))
+            h.AddOrgasm(amount.Value);
+        Finish();
+    }
+}
+
+[ActionCategory("Heroine Status")]
+[Tooltip("檢查女主角的獨立興奮度是否符合條件（>, >=, ==, <, <=）。")]
+public class CheckExcitement : FsmStateAction
+{
+    [RequiredField] public FsmString heroineID;
+
+    [ObjectType(typeof(HeroineCompareOp))]
+    public FsmEnum compareOperator;
+
+    [RequiredField] public FsmInt threshold;
+
+    [UIHint(UIHint.Variable)] public FsmInt storeValue;
+
+    public FsmEvent passEvent;
+    public FsmEvent failEvent;
+
+    public override void Reset()
+    {
+        heroineID = null;
+        compareOperator = HeroineCompareOp.GreaterOrEqual;
+        threshold = 50;
+        storeValue = null;
+        passEvent = null;
+        failEvent = null;
+    }
+
+    public override void OnEnter()
+    {
+        if (!HeroineActionHelper.TryGetHeroine(heroineID.Value, out var h, "CheckExcitement"))
+        {
+            Fsm.Event(failEvent);
+            Finish();
+            return;
+        }
+
+        int val = h.Excitement;
+        if (storeValue != null && !storeValue.IsNone) storeValue.Value = val;
+
+        var op = compareOperator != null && compareOperator.Value != null
+            ? (HeroineCompareOp)compareOperator.Value
+            : HeroineCompareOp.GreaterOrEqual;
+
+        Fsm.Event(HeroineActionHelper.Compare(val, threshold.Value, op) ? passEvent : failEvent);
+        Finish();
+    }
+}
+
+[ActionCategory("Heroine Status")]
+[Tooltip("檢查女主角的獨立高潮度是否符合條件（>, >=, ==, <, <=）。")]
+public class CheckOrgasm : FsmStateAction
+{
+    [RequiredField] public FsmString heroineID;
+
+    [ObjectType(typeof(HeroineCompareOp))]
+    public FsmEnum compareOperator;
+
+    [RequiredField] public FsmInt threshold;
+
+    [UIHint(UIHint.Variable)] public FsmInt storeValue;
+
+    public FsmEvent passEvent;
+    public FsmEvent failEvent;
+
+    public override void Reset()
+    {
+        heroineID = null;
+        compareOperator = HeroineCompareOp.GreaterOrEqual;
+        threshold = 50;
+        storeValue = null;
+        passEvent = null;
+        failEvent = null;
+    }
+
+    public override void OnEnter()
+    {
+        if (!HeroineActionHelper.TryGetHeroine(heroineID.Value, out var h, "CheckOrgasm"))
+        {
+            Fsm.Event(failEvent);
+            Finish();
+            return;
+        }
+
+        int val = h.Orgasm;
+        if (storeValue != null && !storeValue.IsNone) storeValue.Value = val;
+
+        var op = compareOperator != null && compareOperator.Value != null
+            ? (HeroineCompareOp)compareOperator.Value
+            : HeroineCompareOp.GreaterOrEqual;
+
+        Fsm.Event(HeroineActionHelper.Compare(val, threshold.Value, op) ? passEvent : failEvent);
+        Finish();
+    }
+}

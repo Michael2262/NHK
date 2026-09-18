@@ -11,6 +11,10 @@ public class HeroineSaveData
     public HeroineEmotionCardType Emotion;
     public HeroineEmotionCardType DominantEmotion;
     public int Libido;
+    // 獨立興奮度；舊存檔缺少欄位時預設為 0。
+    public int Excitement;
+    // 獨立高潮度；舊存檔缺少欄位時預設為 0。
+    public int Orgasm;
     public int Trust;
     public int Affinity;
     public int HCount;

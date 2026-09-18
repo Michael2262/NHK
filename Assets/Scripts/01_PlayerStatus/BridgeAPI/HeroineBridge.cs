@@ -10,6 +10,8 @@ using UnityEngine;
 ///
 /// 目前對應 NHK 版 HeroineStatusModel：
 /// - Libido 性慾值
+/// - Excitement 獨立興奮度（一般／加權增減）
+/// - Orgasm 獨立高潮度
 /// - HCount H 次數
 /// - Emotion Card 情緒卡池
 /// - CurrentEmotion 主導情緒
@@ -91,6 +93,17 @@ public class HeroineBridge : MonoBehaviour
     public void ReduceLibidoDefault() => ReduceLibido(defaultLibidoAmount);
     public void SetLibidoZero() => SetLibido(0);
     public void SetLibidoMax() => SetLibido(HeroineStatusModel.LibidoMax);
+
+    // 獨立興奮度：所有範圍與加權規則由 Model 處理。
+    public int GetExcitement() => H?.GetExcitement() ?? 0;
+    public void SetExcitement(int value) => H?.SetExcitement(value);
+    public void AddExcitement(int amount) => H?.AddExcitement(amount);
+    public void WeightedAddExcitement(int amount) => H?.WeightedAddExcitement(amount);
+
+    // 獨立高潮度
+    public int GetOrgasm() => H?.GetOrgasm() ?? 0;
+    public void SetOrgasm(int value) => H?.SetOrgasm(value);
+    public void AddOrgasm(int amount) => H?.AddOrgasm(amount);
 
     // ==========================================================
     // H Count

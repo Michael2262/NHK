@@ -24,6 +24,15 @@ using PixelCrushers.DialogueSystem;
 ///   SetLibido("sister", 50)                        → 設定性慾值
 ///   AddLibido("sister", 10)                        → 增減性慾值
 ///
+/// ── 獨立興奮度 ──
+/// 興奮度：GetExcitement("sister")、SetExcitement("sister", 50)、
+/// AddExcitement("sister", 10)、WeightedAddExcitement("sister", 10)。
+/// 僅 WeightedAddExcitement 的正數套用性慾倍率，結果四捨五入。
+///
+/// ── 獨立高潮度 ──
+///   GetOrgasm("sister")、SetOrgasm("sister", 50)、AddOrgasm("sister", -10)。
+///   範圍 0~100，每日歸零。
+///
 /// ── 信賴 ──
 ///   GetTrust("sister")                             → 信賴值 (0~150)
 ///   SetTrust("sister", 50)                         → 設定信賴值
@@ -58,6 +67,24 @@ public class HeroineLuaBridge : MonoBehaviour
 
     void OnEnable()
     {
+        // 獨立高潮度
+        Lua.RegisterFunction("GetOrgasm", this,
+            SymbolExtensions.GetMethodInfo(() => GetOrgasm(string.Empty)));
+        Lua.RegisterFunction("SetOrgasm", this,
+            SymbolExtensions.GetMethodInfo(() => SetOrgasm(string.Empty, (double)0)));
+        Lua.RegisterFunction("AddOrgasm", this,
+            SymbolExtensions.GetMethodInfo(() => AddOrgasm(string.Empty, (double)0)));
+
+        // 獨立興奮度
+        Lua.RegisterFunction("GetExcitement", this,
+            SymbolExtensions.GetMethodInfo(() => GetExcitement(string.Empty)));
+        Lua.RegisterFunction("SetExcitement", this,
+            SymbolExtensions.GetMethodInfo(() => SetExcitement(string.Empty, (double)0)));
+        Lua.RegisterFunction("AddExcitement", this,
+            SymbolExtensions.GetMethodInfo(() => AddExcitement(string.Empty, (double)0)));
+        Lua.RegisterFunction("WeightedAddExcitement", this,
+            SymbolExtensions.GetMethodInfo(() => WeightedAddExcitement(string.Empty, (double)0)));
+
         // ── 情緒卡查詢 ──
         Lua.RegisterFunction("GetEmotionCardCount", this,
             SymbolExtensions.GetMethodInfo(() => GetEmotionCardCount(string.Empty, string.Empty)));
@@ -121,6 +148,15 @@ public class HeroineLuaBridge : MonoBehaviour
 
     void OnDisable()
     {
+        Lua.UnregisterFunction("GetOrgasm");
+        Lua.UnregisterFunction("SetOrgasm");
+        Lua.UnregisterFunction("AddOrgasm");
+
+        Lua.UnregisterFunction("GetExcitement");
+        Lua.UnregisterFunction("SetExcitement");
+        Lua.UnregisterFunction("AddExcitement");
+        Lua.UnregisterFunction("WeightedAddExcitement");
+
         Lua.UnregisterFunction("GetEmotionCardCount");
         Lua.UnregisterFunction("GetEmotionDeckMax");
         Lua.UnregisterFunction("GetIntimateMoodScore");
@@ -246,6 +282,16 @@ public class HeroineLuaBridge : MonoBehaviour
     {
         return GetModel(heroineID)?.Libido ?? 0;
     }
+
+    // Lua 數字沿用其他整數數值的轉型方式；倍率與四捨五入集中於 Model。
+    public double GetExcitement(string heroineID) => GetModel(heroineID)?.GetExcitement() ?? 0;
+    public void SetExcitement(string heroineID, double value) => GetModel(heroineID)?.SetExcitement((int)value);
+    public void AddExcitement(string heroineID, double amount) => GetModel(heroineID)?.AddExcitement((int)amount);
+    public void WeightedAddExcitement(string heroineID, double amount) => GetModel(heroineID)?.WeightedAddExcitement((int)amount);
+
+    public double GetOrgasm(string heroineID) => GetModel(heroineID)?.GetOrgasm() ?? 0;
+    public void SetOrgasm(string heroineID, double value) => GetModel(heroineID)?.SetOrgasm((int)value);
+    public void AddOrgasm(string heroineID, double amount) => GetModel(heroineID)?.AddOrgasm((int)amount);
 
     public void SetLibido(string heroineID, double value)
     {
