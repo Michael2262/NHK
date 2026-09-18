@@ -7,6 +7,7 @@ using UnityEngine.UI;
 
 /// <summary>
 /// 將符合條件的選項依序填入預先擺好的按鈕，不改動位置、尺寸或階層。
+/// 有效固定按鈕的數量即為顯示上限，多餘選項暫不顯示。
 /// 掛在按鈕群組父物件；固定按鈕的 On Click 留空，事件設定在選項上。
 /// 文字由本元件查 Text Table，請勿在同一文字物件掛 LocalizeUI。
 /// </summary>
@@ -45,12 +46,10 @@ public class ToolButtonMenuDisplayControl : MonoBehaviour
     }
 
     [Header("固定按鈕（依填入順序排列）")]
+    [Tooltip("有效按鈕數量即為顯示上限；每個槽位須指定不同的 Button 及對應文字。")]
     [SerializeField] private List<ButtonSlot> slots = new List<ButtonSlot>();
     [Header("選項（越前面順位越高）")]
     [SerializeField] private List<MenuOption> options = new List<MenuOption>();
-    [Header("顯示上限")]
-    [Tooltip("最多同時顯示幾個選項；0 表示全部隱藏，且不會超過有效按鈕數。")]
-    [Min(0)] [SerializeField] private int maxVisibleCount = 3;
 
     private sealed class SlotBinding
     {
@@ -136,14 +135,13 @@ public class ToolButtonMenuDisplayControl : MonoBehaviour
         if (!isActiveAndEnabled) return;
 
         int nextOption = 0;
-        int displayed = 0;
         foreach (var binding in _bindings)
         {
             var slot = binding.slot;
             if (slot.button == null || slot.text == null) continue;
 
             MenuOption option = null;
-            while (displayed < maxVisibleCount && nextOption < options.Count)
+            while (nextOption < options.Count)
             {
                 var candidate = options[nextOption++];
                 if (candidate != null && Evaluate(candidate.visibilityFlag, candidate.invertVisibility))
@@ -161,7 +159,6 @@ public class ToolButtonMenuDisplayControl : MonoBehaviour
             bool visible = option != null;
             if (slot.button.gameObject.activeSelf != visible)
                 slot.button.gameObject.SetActive(visible);
-            if (visible) displayed++;
         }
     }
 
