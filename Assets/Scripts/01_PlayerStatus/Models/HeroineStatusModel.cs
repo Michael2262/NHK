@@ -14,9 +14,12 @@ using UnityEngine;
 /// 5. LastAddedEmotion：最近一次被新增的情緒。
 /// 6. Libido（性慾）：0~150 的獨立數值，每日衰減 LibidoDailyDecay。
 /// 7. Trust（信賴）：0~150 的獨立數值。
-/// 7-1. Affinity（好感度）：0~150 的獨立數值。
-/// 8. 提供情緒分數與卡片替換規則。
-/// 9. 保存 H 次數。
+/// 8. Affinity（好感度）：0~150 的獨立數值。
+/// 9. Excitement（興奮度）：
+/// 10. Orgasm（高潮度）：
+///  
+/// 11. 提供情緒分數與卡片替換規則。
+/// 12. 保存 H 次數。
 ///
 /// DominantEmotion 規則：
 /// - 不允許外部主動設定。

@@ -1614,6 +1614,65 @@ RectTransform:
   m_AnchoredPosition: {x: -1483.76, y: -440}
   m_SizeDelta: {x: 172.02, y: 615.34}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!1 &166284626
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 166284627}
+  - component: {fileID: 166284628}
+  m_Layer: 5
+  m_Name: ToolButtonDisplayControl
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &166284627
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 166284626}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 826382563}
+  m_Father: {fileID: 1424981076}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: -897, y: -123.00001}
+  m_SizeDelta: {x: 100, y: 100}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &166284628
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 166284626}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2fb02d7a5164aa1479e2e3dc6c4dc2e3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ToolButtonDisplayControl
+  buttons:
+  - label: 
+    button: {fileID: 826382562}
+    visibilityFlag: {fileID: 0}
+    invertVisibility: 1
+    interactableFlag: {fileID: 0}
+    invertInteractable: 0
+  switchMode: 1
+  switchColorSource: 0
+  defaultSelectedIndex: 0
 --- !u!1001 &186898327
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2593,7 +2652,7 @@ GameObject:
   - component: {fileID: 225905307}
   - component: {fileID: 225905308}
   m_Layer: 5
-  m_Name: TalkButtonGroup(ToolButtonMenuDisplayControl)
+  m_Name: ToolButtonMenuDisplayControl
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2615,7 +2674,6 @@ RectTransform:
   - {fileID: 1021238174369891575}
   - {fileID: 1518068719}
   - {fileID: 1574771910}
-  - {fileID: 826382563}
   m_Father: {fileID: 1424981076}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -2718,7 +2776,6 @@ MonoBehaviour:
             m_StringArgument: Tease1/Talk/DontBlock/L1
             m_BoolArgument: 0
           m_CallState: 2
-  maxVisibleCount: 3
 --- !u!1 &239571572 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 135794, guid: 141523aa72016bf45bbdfa5634f0d5fc, type: 3}
@@ -11766,7 +11823,7 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 225905305}
+    m_TransformParent: {fileID: 166284627}
     m_Modifications:
     - target: {fileID: 1144110496245510506, guid: 1470e4a9c735fd240ae64267b4a1211b, type: 3}
       propertyPath: m_AnchoredPosition.y
@@ -11862,13 +11919,24 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8872683294364267734, guid: 1470e4a9c735fd240ae64267b4a1211b, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 1470e4a9c735fd240ae64267b4a1211b, type: 3}
+--- !u!114 &826382562 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 4826972369091766347, guid: 1470e4a9c735fd240ae64267b4a1211b, type: 3}
+  m_PrefabInstance: {fileID: 826382561}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
 --- !u!224 &826382563 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 3118854131460546759, guid: 1470e4a9c735fd240ae64267b4a1211b, type: 3}
@@ -22500,6 +22568,7 @@ RectTransform:
   - {fileID: 2102085558}
   - {fileID: 988217625}
   - {fileID: 1163422807}
+  - {fileID: 166284627}
   - {fileID: 225905305}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
