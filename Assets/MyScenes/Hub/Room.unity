@@ -12555,7 +12555,7 @@ MonoBehaviour:
           name: Worried
           isSystemEvent: 0
           isGlobal: 0
-        toState: "\u77ED\u66AB\u7B49\u5F85"
+        toState: "\u64D4\u5FC3\u7684Come"
         linkStyle: 0
         linkConstraint: 0
         linkTarget: 0
@@ -12623,10 +12623,10 @@ MonoBehaviour:
       hideUnused: 0
       transitions:
       - fsmEvent:
-          name: NextAction
-          isSystemEvent: 0
+          name: FINISHED
+          isSystemEvent: 1
           isGlobal: 0
-        toState: "\u77ED\u66AB\u7B49\u5F85 2"
+        toState: "Retrigger\u7684Come"
         linkStyle: 0
         linkConstraint: 0
         linkTarget: 0
@@ -12692,20 +12692,11 @@ MonoBehaviour:
         x: 562
         y: 65.99219
         width: 100
-        height: 32
+        height: 16
       isBreakpoint: 0
       isSequence: 0
       hideUnused: 0
-      transitions:
-      - fsmEvent:
-          name: FINISHED
-          isSystemEvent: 1
-          isGlobal: 0
-        toState: "\u64D4\u5FC3\u7684Come"
-        linkStyle: 0
-        linkConstraint: 0
-        linkTarget: 0
-        colorIndex: 0
+      transitions: []
       actionData:
         actionNames:
         - HutongGames.PlayMaker.Actions.Wait
@@ -13078,20 +13069,11 @@ MonoBehaviour:
         x: 566
         y: 206.5
         width: 100
-        height: 32
+        height: 16
       isBreakpoint: 0
       isSequence: 0
       hideUnused: 0
-      transitions:
-      - fsmEvent:
-          name: FINISHED
-          isSystemEvent: 1
-          isGlobal: 0
-        toState: "Retrigger\u7684Come"
-        linkStyle: 0
-        linkConstraint: 0
-        linkTarget: 0
-        colorIndex: 0
+      transitions: []
       actionData:
         actionNames:
         - HutongGames.PlayMaker.Actions.Wait
@@ -15219,8 +15201,8 @@ MonoBehaviour:
         customNames:
         - 
         - 
-        actionEnabled: 0101
-        actionIsOpen: 0101
+        actionEnabled: 0001
+        actionIsOpen: 0001
         actionStartIndex: 0000000004000000
         actionHashCodes: 214d2000214d2000
         unityObjectParams: []
@@ -16233,8 +16215,8 @@ MonoBehaviour:
         customNames:
         - 
         - 
-        actionEnabled: 0101
-        actionIsOpen: 0101
+        actionEnabled: 0100
+        actionIsOpen: 0100
         actionStartIndex: 0000000004000000
         actionHashCodes: 214d2000214d2000
         unityObjectParams: []
@@ -26969,7 +26951,7 @@ MonoBehaviour:
       Comparison: 4
       TargetValue: 1
     ToActivate:
-    - {fileID: 1870348263}
+    - {fileID: 753010545}
     ToDeactivate: []
   - StateName: RoomMessLevel>=3
     Priority: 1
@@ -26980,7 +26962,7 @@ MonoBehaviour:
       Comparison: 4
       TargetValue: 3
     ToActivate:
-    - {fileID: 753010545}
+    - {fileID: 1214348841}
     ToDeactivate: []
   - StateName: RoomMessLevel>=5
     Priority: 1
@@ -26991,7 +26973,7 @@ MonoBehaviour:
       Comparison: 4
       TargetValue: 5
     ToActivate:
-    - {fileID: 1214348841}
+    - {fileID: 855370715}
     ToDeactivate: []
   - StateName: RoomMessLevel>=8
     Priority: 1
@@ -27002,7 +26984,7 @@ MonoBehaviour:
       Comparison: 4
       TargetValue: 8
     ToActivate:
-    - {fileID: 855370715}
+    - {fileID: 42885445}
     ToDeactivate: []
   - StateName: RoomMessLevel>=11
     Priority: 1
@@ -27024,8 +27006,9 @@ MonoBehaviour:
       Comparison: 4
       TargetValue: 13
     ToActivate:
-    - {fileID: 42885445}
-    ToDeactivate: []
+    - {fileID: 413265865}
+    ToDeactivate:
+    - {fileID: 1745311312}
   - StateName: RoomMessLevel>=15
     Priority: 1
     Logic: 0
@@ -27046,9 +27029,8 @@ MonoBehaviour:
       Comparison: 4
       TargetValue: 17
     ToActivate:
-    - {fileID: 413265865}
-    ToDeactivate:
-    - {fileID: 1745311312}
+    - {fileID: 838189584}
+    ToDeactivate: []
   - StateName: RoomMessLevel>=19
     Priority: 1
     Logic: 0
@@ -27069,7 +27051,7 @@ MonoBehaviour:
       Comparison: 4
       TargetValue: 20
     ToActivate:
-    - {fileID: 838189584}
+    - {fileID: 343458837}
     ToDeactivate: []
   - StateName: RoomMessLevel>=21
     Priority: 1
@@ -27080,7 +27062,7 @@ MonoBehaviour:
       Comparison: 4
       TargetValue: 21
     ToActivate:
-    - {fileID: 343458837}
+    - {fileID: 1870348263}
     ToDeactivate: []
   - StateName: RoomMessLevel>=23
     Priority: 1
