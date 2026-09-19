@@ -7,6 +7,7 @@ public enum TeaseMode
     Hand,
     Mouth,
     Clothes,
+    GG,
 }
 
 /// <summary>
@@ -98,6 +99,7 @@ public class TeaseModeController : MonoBehaviour
     public void SetHandMode() => SetMode(TeaseMode.Hand);
     public void SetMouthMode() => SetMode(TeaseMode.Mouth);
     public void SetClothesMode() => SetMode(TeaseMode.Clothes);
+    public void SetGGMode() => SetMode(TeaseMode.GG);
 
     // ───── 懸浮預覽 ─────
 

@@ -19,7 +19,7 @@ public enum TeaseSwipeDir
 ///
 /// 這一個元件就包含一個觸碰點的完整定義：
 ///   - 手勢：點一下（Tap）或往某方向滑（Swipe）
-///   - 出現條件：屬於哪個模式（mode）＋多筆進度旗標條件（flagConditions，AND）
+///   - 出現條件：符合任一模式（modes，OR）＋多筆進度旗標條件（flagConditions，AND）
 ///   - 跑條：這次觸碰要跑多久（duration）
 ///   - 提示：這一點的愛心（hint，懸浮對應模式按鈕時亮）
 ///   - 成功回呼：onTouch（觸碰當下）、onComplete（跑條結束、女主角反應）
@@ -65,10 +65,14 @@ public class TeaseZone : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
     [SerializeField] private float tapMoveTolerance = 20f;
 
     [Header("出現條件")]
-    [Tooltip("此觸碰點屬於哪個操作模式。")]
-    [SerializeField] private TeaseMode mode = TeaseMode.Hand;
+    [Tooltip("此觸碰點允許的操作模式，符合任一項即可。清單留空時沿用原本的單一模式；新元件預設為 Hand。")]
+    [SerializeField] private TeaseMode[] modes;
 
-    [Tooltip("無視模式：勾選後不管目前切到哪個模式，此點都保持存在（不會被模式關掉）。上面的 mode 只剩「提示要對應哪顆按鈕」的作用；仍受 flag 條件影響。")]
+    // 保留既有場景 / Prefab 的單一模式；多模式清單有設定時便不再使用。
+    [FormerlySerializedAs("mode")]
+    [SerializeField, HideInInspector] private TeaseMode legacyMode = TeaseMode.Hand;
+
+    [Tooltip("無視模式：勾選後不管目前切到哪個模式，此點都保持存在（不會被模式關掉）。上面的 Modes 只剩「提示要對應哪些按鈕」的作用；仍受 flag 條件影響。")]
     [SerializeField] private bool ignoreMode = false;
 
     [Tooltip("旗標條件；每項可獨立設定 Invert，所有非空條件都成立才出現（AND）。")]
@@ -230,8 +234,15 @@ public class TeaseZone : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
         {
             if (ignoreMode) return true;
             var mc = TeaseModeController.Instance;
-            return mc != null && mc.IsMode(mode);
+            return mc != null && MatchesMode(mc.CurrentMode);
         }
+    }
+
+    /// <summary>符合清單中的任一模式即可；清單留空時相容既有單一模式設定。</summary>
+    private bool MatchesMode(TeaseMode candidate)
+    {
+        if (modes == null || modes.Length == 0) return candidate == legacyMode;
+        return System.Array.IndexOf(modes, candidate) >= 0;
     }
 
     private void RefreshActivation()
@@ -251,7 +262,8 @@ public class TeaseZone : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
         if (hints == null || hints.Length == 0) return;
 
         var mc = TeaseModeController.Instance;
-        bool visible = mc != null && mc.IsHovered(mode) && FlagOk;
+        bool visible = mc != null && mc.HoveredMode.HasValue
+            && MatchesMode(mc.HoveredMode.Value) && FlagOk;
 
         foreach (var h in hints)
             if (h != null) h.SetActive(visible);
