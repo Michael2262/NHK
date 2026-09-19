@@ -15,6 +15,12 @@ public class OrgasmSliderVisualizer2 : MonoBehaviour
     [Tooltip("放在填色上方的右側 TMP 數字；顯示值隨填色動畫變動。")]
     [SerializeField] private TMP_Text valueText;
 
+    [Header("高潮次數顯示")]
+    [Tooltip("心形圖示與次數文字的共同父物件。請指定獨立的顯示群組，不可包含本腳本所在物件。零次時隱藏。")]
+    [SerializeField] private GameObject orgasmCountRoot;
+    [Tooltip("顯示 X1、X2、X3 的 TMP 文字。")]
+    [SerializeField] private TMP_Text orgasmCountText;
+
     [Header("填色與平滑過渡")]
     [SerializeField] private Color fillColor = new Color(1f, 0.61f, 0.72f, 1f);
     [Tooltip("每次目標改變後，從目前顯示位置過渡到新值所需秒數。")]
@@ -60,11 +66,14 @@ public class OrgasmSliderVisualizer2 : MonoBehaviour
     private bool flashing;
     private bool fullArmed;
     private int lastNumber = -1;
+    // 僅記錄此 UI 實例的顯示次數；由外部明確呼叫，不代表角色永久統計。
+    private int displayedOrgasmCount;
 
     private void Awake()
     {
         waveGraphic = GetComponent<OrgasmWaveGraphic>();
         waveGraphic.raycastTarget = false;
+        RefreshOrgasmCountVisual();
     }
 
     private void OnEnable()
@@ -72,6 +81,7 @@ public class OrgasmSliderVisualizer2 : MonoBehaviour
         if (waveGraphic == null) waveGraphic = GetComponent<OrgasmWaveGraphic>();
         RefreshBinding();
         SynchronizeImmediately();
+        RefreshOrgasmCountVisual();
     }
 
     private void OnDisable()
@@ -100,6 +110,34 @@ public class OrgasmSliderVisualizer2 : MonoBehaviour
     public void AddOrgasm(int amount)
     {
         if (TryGetModel()) model.AddOrgasm(amount);
+    }
+
+    /// <summary>供 UnityEvent 綁定：次數加一；第一次呼叫時顯示心形與 X1。</summary>
+    public void IncrementOrgasmCount()
+    {
+        if (displayedOrgasmCount < int.MaxValue) displayedOrgasmCount++;
+        RefreshOrgasmCountVisual();
+    }
+
+    /// <summary>由外部決定新一輪開始時機：歸零並隱藏整組。</summary>
+    public void ResetOrgasmCount()
+    {
+        displayedOrgasmCount = 0;
+        RefreshOrgasmCountVisual();
+    }
+
+    private void RefreshOrgasmCountVisual()
+    {
+        if (orgasmCountText != null)
+            orgasmCountText.text = "X" + displayedOrgasmCount.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+        if (orgasmCountRoot == null) return;
+        if (transform.IsChildOf(orgasmCountRoot.transform))
+        {
+            Debug.LogWarning("[OrgasmSliderVisualizer2] 次數顯示群組不可包含本腳本所在物件，請指定獨立的心形與數字群組。", this);
+            return;
+        }
+        orgasmCountRoot.SetActive(displayedOrgasmCount > 0);
     }
 
     private bool TryGetModel()
