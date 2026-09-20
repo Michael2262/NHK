@@ -4,6 +4,10 @@ using UnityEngine.InputSystem.Controls;
 
 public class DebugToggle : MonoBehaviour
 {
+    [Header("打包版本設定")]
+    [Tooltip("勾選後才允許在打包的遊戲中使用（包含 Development Build）；Unity Editor 內不受此設定影響。")]
+    [SerializeField] private bool enableInBuild = false;
+
     [Header("按下對應字母鍵會切換該 GameObject")]
     [SerializeField] private GameObject targetT;
     [SerializeField] private GameObject targetY;
@@ -37,6 +41,8 @@ public class DebugToggle : MonoBehaviour
 
     private void Update()
     {
+        if (!Application.isEditor && !enableInBuild) return;
+
         var keyboard = Keyboard.current;
         if (keyboard == null) return;
 
