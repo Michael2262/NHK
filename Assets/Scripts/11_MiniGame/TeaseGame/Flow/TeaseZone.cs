@@ -72,9 +72,6 @@ public class TeaseZone : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
     [FormerlySerializedAs("mode")]
     [SerializeField, HideInInspector] private TeaseMode legacyMode = TeaseMode.Hand;
 
-    [Tooltip("無視模式：勾選後不管目前切到哪個模式，此點都保持存在（不會被模式關掉）。上面的 Modes 只剩「提示要對應哪些按鈕」的作用；仍受 flag 條件影響。")]
-    [SerializeField] private bool ignoreMode = false;
-
     [Tooltip("旗標條件；每項可獨立設定 Invert，所有非空條件都成立才出現（AND）。")]
     [SerializeField] private FlagCondition[] flagConditions;
 
@@ -232,7 +229,6 @@ public class TeaseZone : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
     {
         get
         {
-            if (ignoreMode) return true;
             var mc = TeaseModeController.Instance;
             return mc != null && MatchesMode(mc.CurrentMode);
         }
