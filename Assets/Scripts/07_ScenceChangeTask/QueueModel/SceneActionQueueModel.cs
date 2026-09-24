@@ -19,6 +19,13 @@ using UnityEngine;
 /// - 執行順序固定為：時間推進 → 女主角移動 → 風險移動 → Flag 變更。
 ///   時間推進會觸發世界狀態重算，必須先做，否則強制移動會被覆蓋。
 /// - 佇列為一次性轉場資料，不存檔；新遊戲 / 讀檔時由 GameStatusService 清空。
+///
+/// TODO（2026-09-24）：使用者已將 MinigameManager 虛位化，未來需重新檢查舊 Queue 流程。
+/// QueueHeroineMove、QueueFlagChange 等工具所描述的「小遊戲結束後才執行」，
+/// 依賴舊 MinigameManager 配對呼叫 Suspend/Resume；新流程不一定仍符合此假設。
+/// 後續需確認暫停／恢復的負責者，以及各場景是否執行 Task_ExecuteSceneActionQueue，
+/// 再決定如何支援「下一場景（包含進入小遊戲）就執行」，避免命令提早執行、持續暫停或過期。
+/// 本次僅標記待修正事項，未變更既有 Queue 的執行行為。
 /// </summary>
 public class SceneActionQueueModel
 {

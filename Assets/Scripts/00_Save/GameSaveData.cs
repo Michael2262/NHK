@@ -60,6 +60,7 @@ public class GameSaveData
     public CurrentScenarioSaveData ScenarioData;//當前情境數據 (解決中途存檔問題)
 
     public VisualModeSaveData VisualModeData;// 視覺 mode（Tachie body mode + 全域 BG/CG mode）
+    public SpineSkinStateSaveData SpineSkinData; // 接收器 ID → skin 組 ID；舊存檔可為 null
 
     //建構函式,確保新欄位被初始化
     public GameSaveData()

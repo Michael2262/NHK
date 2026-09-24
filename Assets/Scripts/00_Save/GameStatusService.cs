@@ -60,6 +60,7 @@ public class GameStatusService : MonoBehaviour
     public ProtagonistSkillModel Skills { get; private set; }
     public TimeSystemModel Time { get; private set; }
     public SceneActionQueueModel SceneActionQueue { get; private set; }
+    public SpineSkinStateModel SpineSkins { get; private set; }
     public ShopStatusModel ShopStatus { get; private set; }
     public PendingDeliveryModel PendingDelivery { get; private set; }
     public ProgressFlagModel ProgressFlags { get; private set; }// 進度開關模型
@@ -159,6 +160,7 @@ public class GameStatusService : MonoBehaviour
         PendingDelivery = new PendingDeliveryModel();
         StatusEffectModel = new ProtagonistStatusEffectModel();
         VisualMode = new VisualModeModel(); // 視覺 mode（無依賴）
+        SpineSkins = new SpineSkinStateModel();
 
         // TimeSystemModel: 注入 TimeConfig
         Time = new TimeSystemModel(timeConfig);
@@ -360,6 +362,7 @@ public class GameStatusService : MonoBehaviour
         Scenario.NewGame();// 重設情境 Model
 
         VisualMode.NewGame();// 視覺 mode 回歸預設
+        SpineSkins.NewGame(); // 清除外觀選擇，接收器回到各自預設
 
         NotifyGameStatusLoaded();//通知所有系統，數據已重置完畢
 

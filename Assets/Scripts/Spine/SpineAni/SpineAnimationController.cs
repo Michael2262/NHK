@@ -93,6 +93,9 @@ public class SpineAnimationController : MonoBehaviour
     [SerializeField] private SkeletonGraphic skeletonGraphic;
 
     [Header("Defaults")]
+    [Tooltip("是否啟用動畫切換的自動混合（補間）。預設關閉；開啟時沿用 Spine 的混合時間設定。變更後套用於後續建立的動畫。")]
+    public bool enableAutoMix = false;
+
     [Tooltip("當 ClearMode = ClearAfterDelay 時，未特別指定時使用的延遲秒數。")]
     [Min(0f)] public float defaultClearDelaySeconds = 2f;
 
@@ -187,10 +190,12 @@ public class SpineAnimationController : MonoBehaviour
         }
 
         CancelDelayedClearOnTrack(t);
-        _state.ClearTrack(t);
+        // 關閉補間時沿用先清軌的作法；開啟時保留上一段動畫供 Spine 混合。
+        if (!enableAutoMix) _state.ClearTrack(t);
         TryStopPlayByListIfSameTrack(t);
 
         var entry = _state.SetAnimation(t, animationName, false);
+        if (!enableAutoMix) entry.MixDuration = 0f;
 
         if (delaySeconds < 0f) delaySeconds = defaultClearDelaySeconds;
         _entryPolicies[entry] = (mode, delaySeconds);
@@ -218,6 +223,8 @@ public class SpineAnimationController : MonoBehaviour
         int t = (int)track;
 
         var entry = _state.AddAnimation(t, animationName, false, delayFromPrevious);
+        // 排隊延遲會受到混合時間影響，關閉時一併重新計算。
+        if (!enableAutoMix) entry.SetMixDuration(0f, delayFromPrevious);
 
         if (delaySeconds < 0f) delaySeconds = defaultClearDelaySeconds;
         _entryPolicies[entry] = (mode, delaySeconds);
@@ -237,6 +244,13 @@ public class SpineAnimationController : MonoBehaviour
         }
 
         OnAnimationCompleted?.Invoke((AnimationTrack)entry.TrackIndex, entry.Animation?.Name);
+
+        // 混合中的舊動畫仍可能完成，不可清除或重播已被新動畫接手的軌道。
+        if (_state.GetTrack(entry.TrackIndex) != entry)
+        {
+            _entryPolicies.Remove(entry);
+            return;
+        }
 
         switch (policy.mode)
         {
@@ -261,6 +275,7 @@ public class SpineAnimationController : MonoBehaviour
                 if (currentEntry == null || currentEntry == entry)
                 {
                     var loopEntry = _state.SetAnimation(entry.TrackIndex, entry.Animation.Name, false);
+                    if (!enableAutoMix) loopEntry.MixDuration = 0f;
                     _entryPolicies[loopEntry] = (ClearMode.Loop, policy.delay);
                 }
                 break;
