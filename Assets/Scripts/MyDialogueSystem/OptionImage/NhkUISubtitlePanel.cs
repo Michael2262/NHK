@@ -141,7 +141,8 @@ namespace PixelCrushers.DialogueSystem
         private static int s_continueLockCount = 0;
 
         /// <summary>繼續鈕是否正被鎖定（鎖定期間所有 NhkUISubtitlePanel 都不顯示繼續鈕）。</summary>
-        public static bool IsContinueButtonLocked => s_continueLockCount > 0;
+        public static bool IsContinueButtonLocked =>
+            s_continueLockCount > 0 || NhkAutoDialogueBridge.IsBlockingContinue;
 
         /// <summary>
         /// 壓住繼續鈕：鎖定期間，任何來源（換句、typewriter 完成、SetContinueMode 重刷、endOfFrame 延遲顯示…）

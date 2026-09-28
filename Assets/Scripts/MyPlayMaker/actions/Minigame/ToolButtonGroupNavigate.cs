@@ -3,7 +3,7 @@ using HutongGames.PlayMaker;
 namespace MyGame.Actions
 {
     [ActionCategory("Minigame")]
-    [Tooltip("透過 FSM 所在物件的 ToolButtonGroupFsmBridge 操作按鈕群組。進入 State 時執行一次，不需要逐個 Action 設定 Target。")]
+    [Tooltip("透過場景單例操作按鈕群組，不需要 Target 或 Bridge。進入 State 執行一次；Show／Hide 啟動淡入淡出後立即 Finish，不等待動畫。")]
     public class ToolButtonGroupNavigate : FsmStateAction
     {
         public enum NavigationOperation
@@ -11,7 +11,9 @@ namespace MyGame.Actions
             ShowGroup,
             LastGroup,
             BackGroup,
-            MainGroup
+            MainGroup,
+            Show,
+            Hide
         }
 
         [Tooltip("要執行的群組操作。")]
@@ -34,17 +36,10 @@ namespace MyGame.Actions
 
         private void Navigate()
         {
-            var bridge = Owner != null ? Owner.GetComponent<ToolButtonGroupFsmBridge>() : null;
-            if (bridge == null)
-            {
-                LogError("[ToolButtonGroupNavigate] FSM 所在物件缺少 ToolButtonGroupFsmBridge，請在同一物件新增元件並指定控制器。");
-                return;
-            }
-
-            var controller = bridge.Controller;
+            var controller = ToolButtonGroupDisplayControl.Instance;
             if (controller == null)
             {
-                LogError("[ToolButtonGroupNavigate] ToolButtonGroupFsmBridge 尚未指定群組控制器。");
+                LogError("[ToolButtonGroupNavigate] 場景尚未初始化 ToolButtonGroupDisplayControl，請保持控制器物件啟用，改用 CanvasGroup 隱藏。");
                 return;
             }
 
@@ -66,6 +61,12 @@ namespace MyGame.Actions
                     break;
                 case NavigationOperation.MainGroup:
                     controller.MainGroup();
+                    break;
+                case NavigationOperation.Show:
+                    controller.Show();
+                    break;
+                case NavigationOperation.Hide:
+                    controller.Hide();
                     break;
                 default:
                     LogError("[ToolButtonGroupNavigate] 未知的群組操作。");

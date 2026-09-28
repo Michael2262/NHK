@@ -10,8 +10,18 @@ using UnityEngine.UI;
 /// 群組與歷史僅供此 UI 使用，不寫入遊戲存檔。
 /// </summary>
 [DisallowMultipleComponent]
+[DefaultExecutionOrder(-100)]
 public class ToolButtonGroupDisplayControl : MonoBehaviour
 {
+    public static ToolButtonGroupDisplayControl Instance { get; private set; }
+
+    [Serializable]
+    public class IconEntry
+    {
+        public string name;
+        public Sprite sprite;
+    }
+
     [Serializable]
     public class GroupOption
     {
@@ -19,6 +29,8 @@ public class ToolButtonGroupDisplayControl : MonoBehaviour
         public string label;
         [Tooltip("Text Table 的多語系文字 Key。")]
         public string textKey;
+        [ToolButtonIconName]
+        public string iconName = "Heart";
         [Header("是否出現（留空永遠成立）")]
         public ProgressFlagDefinition visibilityFlag;
         public bool invertVisibility;
@@ -26,10 +38,8 @@ public class ToolButtonGroupDisplayControl : MonoBehaviour
         public ProgressFlagDefinition interactableFlag;
         public bool invertInteractable;
         [Header("狀態圖示")]
-        [Tooltip("true 顯示 OK，false 顯示 NG；未設定則隱藏圖示。")]
-        public ProgressFlagDefinition statusFlag;
-        [Tooltip("此 Flag 為 true 時優先隱藏圖示；留空則不阻擋。")]
-        public ProgressFlagDefinition noImageFlag;
+        [Tooltip("true 顯示 Ng Icon 與紅字；false 或未設定則正常顯示。不影響可點條件。")]
+        public ProgressFlagDefinition ngFlag;
         [Header("點擊事件")]
         public UnityEvent onClick = new UnityEvent();
     }
@@ -41,6 +51,8 @@ public class ToolButtonGroupDisplayControl : MonoBehaviour
         public string groupName;
         [Tooltip("BackGroup 的目的地；留空使用 LastGroup。")]
         public string backGroupName;
+        [Tooltip("第一個 Slot 改為返回按鈕，其餘 Slot 向右縮排；一般選項容量減少一格。")]
+        public bool showBackButton;
         [Tooltip("越前面的選項順位越高。")]
         public List<GroupOption> options = new List<GroupOption>();
     }
@@ -49,12 +61,32 @@ public class ToolButtonGroupDisplayControl : MonoBehaviour
     [SerializeField] private List<ToolButtonGroupItemView> slots = new List<ToolButtonGroupItemView>();
     [Header("群組")]
     [SerializeField] private List<ButtonGroup> groups = new List<ButtonGroup>();
+    [Header("Icon 種類（名稱區分大小寫，Ng／Back 為固定用途）")]
+    [SerializeField] private List<IconEntry> icons = new List<IconEntry>
+    {
+        new IconEntry { name = "Heart" }, new IconEntry { name = "Ng" },
+        new IconEntry { name = "Menu" }, new IconEntry { name = "Back" },
+        new IconEntry { name = "Question" }
+    };
+    [Header("返回按鈕設定（使用第一個 Slot）")]
+    [SerializeField] private string backTextKey = "Button.Back";
+    [SerializeField] private Color backBackgroundColor = new Color(0.85f, 0.85f, 0.85f, 1f);
+    [Tooltip("顯示返回按鈕時，其餘槽位相對原位置向右偏移的距離；不改變高度與寬度。")]
+    [Min(0f)] [SerializeField] private float submenuIndent = 40f;
+    [Header("整體顯示（保持物件啟用，透過 CanvasGroup 隱藏）")]
+    [SerializeField] private CanvasGroup canvasGroup;
+    [SerializeField] private bool startVisible = true;
+    [Min(0.01f)] [SerializeField] private float fadeInDuration = 0.2f;
+    [Tooltip("實際淡出時間會限制為淡入時間的一半以內。")]
+    [Min(0f)] [SerializeField] private float fadeOutDuration = 0.1f;
 
     private sealed class SlotBinding
     {
         public ToolButtonGroupItemView view;
         public GroupOption option;
         public UnityAction listener;
+        public bool isFirstSlot;
+        public bool isBack;
     }
 
     private readonly List<SlotBinding> _bindings = new List<SlotBinding>();
@@ -63,20 +95,56 @@ public class ToolButtonGroupDisplayControl : MonoBehaviour
     private bool _initialized;
     private GameStatusService _service;
     private ProgressFlagModel _flags;
+    private bool _visible;
+    private bool _fading;
+    private float _fadeStartAlpha;
+    private float _fadeElapsed;
+    private float _fadeDuration;
+    private readonly HashSet<string> _iconWarnings = new HashSet<string>();
 
     public string CurrentGroupName => CurrentGroup != null ? CurrentGroup.groupName : string.Empty;
     private ButtonGroup CurrentGroup => _currentIndex >= 0 && _currentIndex < groups.Count
         ? groups[_currentIndex] : null;
 
-    private void Awake() => Initialize();
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetInstance() => Instance = null;
+
+    private void Awake()
+    {
+        if (Instance != null && Instance != this)
+        {
+            Debug.LogError("[ToolButtonGroupDisplayControl] 場景存在多個控制器，停用重複元件。", this);
+            enabled = false;
+            return;
+        }
+        Instance = this;
+        _visible = startVisible;
+        Initialize();
+        ApplyVisibilityImmediately();
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this) Instance = null;
+    }
 
     private void Initialize()
     {
         if (_initialized) return;
         _initialized = true;
-        var seen = new HashSet<Button>();
-        foreach (var view in slots)
+        if (canvasGroup == null)
+            Debug.LogWarning("[ToolButtonGroupDisplayControl] 尚未指定 CanvasGroup，無法使用整體淡入淡出。", this);
+        var iconNames = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var icon in icons)
         {
+            if (icon == null || string.IsNullOrWhiteSpace(icon.name)) continue;
+            if (!iconNames.Add(icon.name))
+                Debug.LogWarning($"[ToolButtonGroupDisplayControl] Icon 名稱「{icon.name}」重複，使用第一筆。", this);
+        }
+        var seen = new HashSet<Button>();
+        for (int i = 0; i < slots.Count; i++)
+        {
+            var view = slots[i];
             if (view == null || !view.IsConfigured || transform.IsChildOf(view.transform))
             {
                 Debug.LogWarning("[ToolButtonGroupDisplayControl] 槽位無效：請確認 Button／文字位於視圖內、狀態圖為獨立 Image，且視圖不是控制器本身或其父層。已略過。", this);
@@ -87,10 +155,13 @@ public class ToolButtonGroupDisplayControl : MonoBehaviour
                 Debug.LogWarning("[ToolButtonGroupDisplayControl] 固定按鈕重複指定，已略過。", this);
                 continue;
             }
-            var binding = new SlotBinding { view = view };
+            var binding = new SlotBinding { view = view, isFirstSlot = i == 0 };
             binding.listener = () => HandleClick(binding);
             _bindings.Add(binding);
         }
+        if (!_bindings.Exists(binding => binding.isFirstSlot)
+            && groups.Exists(group => group != null && group.showBackButton))
+            Debug.LogWarning("[ToolButtonGroupDisplayControl] 第一個 Slot 無效，無法顯示返回按鈕，請檢查 Slots 第 1 格的 ItemView 關聯。", this);
 
         _currentIndex = FindGroup("Main");
         if (_currentIndex < 0)
@@ -102,7 +173,9 @@ public class ToolButtonGroupDisplayControl : MonoBehaviour
 
     private void OnEnable()
     {
+        if (Instance != this) return;
         Initialize();
+        ApplyVisibilityImmediately();
         foreach (var binding in _bindings)
             if (binding.view != null) binding.view.Bind(binding.listener);
         _service = GameStatusService.Instance;
@@ -119,10 +192,18 @@ public class ToolButtonGroupDisplayControl : MonoBehaviour
 
     private void OnDisable()
     {
+        if (Instance != this) return;
+        _fading = false;
+        if (canvasGroup != null)
+        {
+            canvasGroup.interactable = false;
+            canvasGroup.blocksRaycasts = false;
+        }
         foreach (var binding in _bindings)
         {
             if (binding.view != null) binding.view.Unbind();
             binding.option = null;
+            binding.isBack = false;
         }
         if (_flags != null)
         {
@@ -227,13 +308,26 @@ public class ToolButtonGroupDisplayControl : MonoBehaviour
 
     public void Refresh()
     {
-        if (!isActiveAndEnabled) return;
+        if (!isActiveAndEnabled || Instance != this) return;
         Initialize();
+        bool showBack = CurrentGroup != null && CurrentGroup.showBackButton;
         var options = CurrentGroup?.options;
         int next = 0;
         foreach (var binding in _bindings)
         {
+            binding.option = null;
+            binding.isBack = false;
             if (binding.view == null || !binding.view.IsConfigured) continue;
+            binding.isBack = showBack && binding.isFirstSlot;
+            binding.view.SetOffset(showBack && !binding.isFirstSlot
+                ? new Vector2(Mathf.Max(0f, submenuIndent), 0f) : Vector2.zero);
+            if (binding.isBack)
+            {
+                // 返回占用第一格，不消耗選項；事件沿用同一個監聽，依目前角色分流。
+                binding.view.Present(Localize(backTextKey), true, ResolveIcon("Back"), false,
+                    true, backBackgroundColor);
+                continue;
+            }
             GroupOption option = null;
             while (options != null && next < options.Count)
             {
@@ -248,13 +342,10 @@ public class ToolButtonGroupDisplayControl : MonoBehaviour
                 binding.view.Hide();
                 continue;
             }
-            var status = ToolButtonGroupItemView.StatusDisplay.Hidden;
-            if (option.statusFlag != null && !HasFlag(option.noImageFlag))
-                status = HasFlag(option.statusFlag)
-                    ? ToolButtonGroupItemView.StatusDisplay.OK
-                    : ToolButtonGroupItemView.StatusDisplay.NG;
+            bool isNg = HasFlag(option.ngFlag);
             binding.view.Present(Localize(option.textKey),
-                Evaluate(option.interactableFlag, option.invertInteractable), status);
+                Evaluate(option.interactableFlag, option.invertInteractable),
+                ResolveIcon(isNg ? "Ng" : option.iconName), isNg);
         }
     }
 
@@ -289,9 +380,15 @@ public class ToolButtonGroupDisplayControl : MonoBehaviour
     private void HandleClick(SlotBinding binding)
     {
         var option = binding.option;
-        if (!isActiveAndEnabled || option == null || binding.view == null
+        if (!CanReceiveInput || binding.view == null
             || !binding.view.isActiveAndEnabled || binding.view.Button == null
             || !binding.view.Button.isActiveAndEnabled || !binding.view.Button.IsInteractable()) return;
+        if (binding.isBack)
+        {
+            if (CurrentGroup != null && CurrentGroup.showBackButton) BackGroup();
+            return;
+        }
+        if (option == null) return;
         if (!Evaluate(option.visibilityFlag, option.invertVisibility)
             || !Evaluate(option.interactableFlag, option.invertInteractable))
         {
@@ -301,5 +398,66 @@ public class ToolButtonGroupDisplayControl : MonoBehaviour
         option.onClick?.Invoke();
         // 事件可切組、改 Flag、關閉面板或銷毀控制器；刷新時使用最新群組。
         if (this != null && isActiveAndEnabled) Refresh();
+    }
+
+    private bool CanReceiveInput => isActiveAndEnabled && Instance == this && _visible && !_fading
+        && (canvasGroup == null || (canvasGroup.interactable && canvasGroup.blocksRaycasts));
+
+    private Sprite ResolveIcon(string name)
+    {
+        foreach (var entry in icons)
+        {
+            if (entry == null || entry.name != name) continue;
+            if (entry.sprite != null) return entry.sprite;
+            break;
+        }
+        if (_iconWarnings.Add(name ?? string.Empty))
+            Debug.LogWarning($"[ToolButtonGroupDisplayControl] Icon「{name}」不存在或未指定 Sprite。", this);
+        return null;
+    }
+
+    /// <summary>淡入目前群組；不重設群組與歷史。</summary>
+    public void Show() => SetVisible(true);
+
+    /// <summary>淡出並立即停用輸入，保留物件啟用以供單例再次呼叫。</summary>
+    public void Hide() => SetVisible(false);
+
+    private void SetVisible(bool visible)
+    {
+        if (Instance != this) return;
+        if (canvasGroup == null)
+        {
+            Debug.LogError("[ToolButtonGroupDisplayControl] Show／Hide 需要先指定 CanvasGroup。", this);
+            return;
+        }
+        if (_visible == visible && (_fading || Mathf.Approximately(canvasGroup.alpha, visible ? 1f : 0f))) return;
+        _visible = visible;
+        _fadeStartAlpha = canvasGroup.alpha;
+        _fadeElapsed = 0f;
+        float duration = visible ? Mathf.Max(0.01f, fadeInDuration)
+            : Mathf.Min(Mathf.Max(0f, fadeOutDuration), Mathf.Max(0.01f, fadeInDuration) * 0.5f);
+        _fadeDuration = duration * Mathf.Abs((visible ? 1f : 0f) - _fadeStartAlpha);
+        canvasGroup.interactable = false;
+        canvasGroup.blocksRaycasts = false;
+        _fading = _fadeDuration > 0f && isActiveAndEnabled;
+        if (!_fading) ApplyVisibilityImmediately();
+        if (visible) Refresh();
+    }
+
+    private void Update()
+    {
+        if (!_fading || canvasGroup == null) return;
+        _fadeElapsed += Time.unscaledDeltaTime;
+        canvasGroup.alpha = Mathf.Lerp(_fadeStartAlpha, _visible ? 1f : 0f, _fadeElapsed / _fadeDuration);
+        if (_fadeElapsed >= _fadeDuration) ApplyVisibilityImmediately();
+    }
+
+    private void ApplyVisibilityImmediately()
+    {
+        _fading = false;
+        if (canvasGroup == null) return;
+        canvasGroup.alpha = _visible ? 1f : 0f;
+        canvasGroup.interactable = _visible && isActiveAndEnabled;
+        canvasGroup.blocksRaycasts = _visible && isActiveAndEnabled;
     }
 }
