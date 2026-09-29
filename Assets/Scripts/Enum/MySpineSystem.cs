@@ -12,10 +12,11 @@ namespace MySpineSystem
         BodyAttach = 2,    // 身體層附加：偏肢體的動畫附加
         LeftHand = 3,          
         RightHand = 4,
-        BothHand = 5,
-        OverBody1 = 6,        // 後續備用軌道，block目前在此
-        OverBody2 = 7,
-        OverBody3 = 8,
+        OverBody1 = 5,        // 後續備用軌道，block目前在此        
+        LeftFoot = 6,        // 後續備用軌道，block目前在此
+        RightFoot = 7,
+        OverBody2 = 8,
+
         Face = 9,           // 臉層：主要用在此
         Eye = 10,   // 臉層附加1：眼睛等等的需求
         Mouth = 11,   // 臉層附加2：嘴巴等等的需求
@@ -23,7 +24,9 @@ namespace MySpineSystem
         FaceAll = 13,    //臉層附加4：覆蓋全臉(主動)
         FaceAyatem = 14, //臉層附加5：覆蓋全臉(被動)
         SF = 15,
-        Track16 = 16
+        BoyBody = 16,
+        BoyLeftHand = 17,
+        BoyRightHand = 18,
 
 
     }

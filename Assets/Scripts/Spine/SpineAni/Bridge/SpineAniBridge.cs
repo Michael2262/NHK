@@ -31,6 +31,17 @@ public class SpineAniBridge : MonoBehaviour
     /// <summary>UnityEvent 傳入動畫名稱；軌道、模式與延遲使用 Inspector 設定。</summary>
     public void PlayAnimation(string name)
     {
+        PlayAnimationWithMode(name, clearMode, clearDelaySeconds);
+    }
+
+    /// <summary>UnityEvent 傳入動畫名稱；沿用 Inspector 軌道，固定循環播放，忽略 Inspector 播放模式。</summary>
+    public void PlayAnimationLoop(string name)
+    {
+        PlayAnimationWithMode(name, SpineAnimationController.ClearMode.Loop, -1f);
+    }
+
+    private void PlayAnimationWithMode(string name, SpineAnimationController.ClearMode mode, float delaySeconds)
+    {
         if (string.IsNullOrWhiteSpace(name))
         {
             Debug.LogWarning($"[{nameof(SpineAniBridge)}] 尚未指定動畫名稱。", this);
@@ -52,7 +63,7 @@ public class SpineAniBridge : MonoBehaviour
             return;
         }
 
-        target.PlayAnimation(track, name, clearMode, clearDelaySeconds);
+        target.PlayAnimation(track, name, mode, delaySeconds);
     }
 
     /// <summary>停止設定的軌道；同物件上的清單若正在使用該軌道，也先停止其協程。</summary>

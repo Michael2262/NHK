@@ -8,6 +8,9 @@ public sealed class ToolButtonGroupEditorWindow : EditorWindow
 {
     private const string WindowTitle = "ToolButtonGroup編輯器";
     [SerializeField] private ToolButtonGroupDisplayControl controller;
+    [SerializeField] private ToolButtonGroupDisplayControl editController;
+    [SerializeField] private string editControllerId;
+    private bool changingPlayMode;
     [SerializeField] private int selectedGroup = -1, selectedButton = -1;
     [SerializeField] private bool commonSettings;
     [SerializeField] private string search = string.Empty;
@@ -43,6 +46,9 @@ public sealed class ToolButtonGroupEditorWindow : EditorWindow
         minSize = new Vector2(920, 560);
         Undo.undoRedoPerformed += OnUndo;
         EditorApplication.playModeStateChanged += OnPlayModeChanged;
+        changingPlayMode = EditorApplication.isPlayingOrWillChangePlaymode != EditorApplication.isPlaying;
+        // 相容原本已開啟的視窗，首次更新時記住既有編輯目標。
+        if (!Locked && editController == null && controller != null) RememberEditController(controller);
     }
 
     private void OnDisable()
@@ -52,8 +58,71 @@ public sealed class ToolButtonGroupEditorWindow : EditorWindow
         ReleaseData();
     }
 
-    private void OnInspectorUpdate() => Repaint();
-    private void OnPlayModeChanged(PlayModeStateChange state) { ReleaseData(); Repaint(); }
+    private void OnInspectorUpdate()
+    {
+        ResolveController();
+        Repaint();
+    }
+
+    private void OnPlayModeChanged(PlayModeStateChange state)
+    {
+        if (state == PlayModeStateChange.ExitingEditMode)
+        {
+            data?.ApplyModifiedProperties();
+            if (controller != null) RememberEditController(controller);
+        }
+        changingPlayMode = state == PlayModeStateChange.ExitingEditMode
+            || state == PlayModeStateChange.ExitingPlayMode;
+        ReleaseData();
+        if (state == PlayModeStateChange.EnteredEditMode) controller = null;
+        ResolveController();
+        Repaint();
+    }
+
+    private void RememberEditController(ToolButtonGroupDisplayControl target)
+    {
+        editController = target;
+        editControllerId = target != null
+            ? GlobalObjectId.GetGlobalObjectIdSlow(target).ToString() : string.Empty;
+    }
+
+    private void ResolveController()
+    {
+        if (changingPlayMode) return;
+        if (Application.isPlaying)
+        {
+            // 執行期目標獨立追蹤，不覆寫試玩前的編輯目標。
+            BindController(ToolButtonGroupDisplayControl.Instance);
+            return;
+        }
+        if (Locked) return;
+        if (editController == null && !string.IsNullOrEmpty(editControllerId)
+            && GlobalObjectId.TryParse(editControllerId, out var id))
+            editController = GlobalObjectId.GlobalObjectIdentifierToObjectSlow(id) as ToolButtonGroupDisplayControl;
+
+        if (editController == null)
+        {
+            // 包含未啟用物件；只在已載入的一般場景中存在唯一候選時自動選取。
+            ToolButtonGroupDisplayControl candidate = null;
+            foreach (var item in Resources.FindObjectsOfTypeAll<ToolButtonGroupDisplayControl>())
+            {
+                if (EditorUtility.IsPersistent(item) || !item.gameObject.scene.IsValid()
+                    || !item.gameObject.scene.isLoaded
+                    || UnityEditor.SceneManagement.EditorSceneManager.IsPreviewSceneObject(item.gameObject)) continue;
+                if (candidate != null) { candidate = null; break; }
+                candidate = item;
+            }
+            if (candidate != null) RememberEditController(candidate);
+        }
+        BindController(editController);
+    }
+
+    private void BindController(ToolButtonGroupDisplayControl target)
+    {
+        if (ReferenceEquals(controller, target)) return;
+        ReleaseData();
+        controller = target;
+    }
     private void OnUndo()
     {
         selectedGroup = selectedButton = -1;
@@ -65,6 +134,8 @@ public sealed class ToolButtonGroupEditorWindow : EditorWindow
 
     private void SetController(ToolButtonGroupDisplayControl target)
     {
+        if (Locked) { ResolveController(); return; }
+        RememberEditController(target);
         if (controller == target) return;
         data?.ApplyModifiedProperties();
         ReleaseData();
@@ -78,11 +149,18 @@ public sealed class ToolButtonGroupEditorWindow : EditorWindow
 
     private void OnGUI()
     {
+        if (changingPlayMode)
+        {
+            EditorGUILayout.HelpBox("正在切換試玩模式，完成後會自動連接控制器。", MessageType.Info);
+            return;
+        }
         DrawTargetToolbar();
         if (controller == null)
         {
             ReleaseData();
-            EditorGUILayout.HelpBox("拖入控制器，或選取場景／Prefab 中的物件後按「使用選取物件」。\n目標會保持固定，方便從 Hierarchy 拖入事件參照。", MessageType.Info);
+            EditorGUILayout.HelpBox(Application.isPlaying
+                ? "等待場景的 ToolButtonGroupDisplayControl 單例初始化，視窗會自動連接。"
+                : "場景只有一個控制器時會自動連接。若有多個控制器或要編輯 Prefab，請指定目標或按「使用選取物件」。", MessageType.Info);
             return;
         }
         if (data == null || data.targetObject != controller)
@@ -120,15 +198,15 @@ public sealed class ToolButtonGroupEditorWindow : EditorWindow
     {
         using (new EditorGUILayout.HorizontalScope(EditorStyles.toolbar))
         {
-            GUILayout.Label("編輯目標", GUILayout.Width(60));
-            var target = (ToolButtonGroupDisplayControl)EditorGUILayout.ObjectField(
-                controller, typeof(ToolButtonGroupDisplayControl), true);
-            if (target != controller) { SetController(target); GUIUtility.ExitGUI(); }
-            if (GUILayout.Button("使用選取物件", EditorStyles.toolbarButton, GUILayout.Width(100)))
-            { SetController(SelectedController()); GUIUtility.ExitGUI(); }
-            using (new EditorGUI.DisabledScope(!Application.isPlaying || ToolButtonGroupDisplayControl.Instance == null))
-                if (GUILayout.Button("使用執行中單例", EditorStyles.toolbarButton, GUILayout.Width(110)))
-                { SetController(ToolButtonGroupDisplayControl.Instance); GUIUtility.ExitGUI(); }
+            GUILayout.Label(Application.isPlaying ? "執行中單例" : "編輯目標", GUILayout.Width(75));
+            using (new EditorGUI.DisabledScope(Locked))
+            {
+                var target = (ToolButtonGroupDisplayControl)EditorGUILayout.ObjectField(
+                    controller, typeof(ToolButtonGroupDisplayControl), true);
+                if (target != controller) { SetController(target); GUIUtility.ExitGUI(); }
+                if (GUILayout.Button("使用選取物件", EditorStyles.toolbarButton, GUILayout.Width(100)))
+                { SetController(SelectedController()); GUIUtility.ExitGUI(); }
+            }
             using (new EditorGUI.DisabledScope(controller == null))
                 if (GUILayout.Button("定位", EditorStyles.toolbarButton, GUILayout.Width(40)))
                     EditorGUIUtility.PingObject(controller.gameObject);
@@ -141,7 +219,7 @@ public sealed class ToolButtonGroupEditorWindow : EditorWindow
         if (!Locked) return;
         string status = hasSnapshot
             ? $"當前組：{GroupName(groups, currentIndex)}　　返回組：{(backIndex >= 0 ? GroupName(groups, backIndex) : "無可返回組")}"
-            : "此目標尚無執行期狀態；可按「使用執行中單例」查看場景控制器。";
+            : "正在等待場景單例完成初始化。";
         EditorGUILayout.HelpBox(status + "\n試玩期間設定唯讀，顏色自動更新；複製的試玩事件不可貼回編輯模式。", MessageType.Info);
     }
 

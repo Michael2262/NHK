@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEditor;
+using UnityEditorInternal;
 using UnityEngine;
 
 /// <summary>分組方塊總覽與選取項目編輯面板。</summary>
@@ -15,6 +16,10 @@ public sealed class GroupedStateControllerWindow : EditorWindow
     private static List<EventValue> clipboard;
     private static string clipboardLabel;
     private static bool clipboardFromPlay;
+    private static List<EventValue> selectedEventClipboard;
+    private static string selectedEventClipboardLabel;
+    private static bool selectedEventClipboardFromPlay;
+    private readonly Dictionary<string, SelectableEventDrawer> eventDrawers = new Dictionary<string, SelectableEventDrawer>();
     private static readonly Color Active = new Color(0.18f, 0.65f, 0.34f, 0.55f);
     private static readonly Color Exited = new Color(0.9f, 0.5f, 0.12f, 0.5f);
     private static readonly Color Selected = new Color(0.25f, 0.65f, 1f);
@@ -26,6 +31,33 @@ public sealed class GroupedStateControllerWindow : EditorWindow
         public SerializedPropertyType Type;
         public object Value;
         public bool IsArray;
+    }
+
+    // 沿用原生事件欄位與函式選單，只追蹤使用者實際選中的清單項目。
+    private sealed class SelectableEventDrawer : UnityEventDrawer
+    {
+        private ReorderableList eventList;
+        private bool hasSelection;
+        public int SelectedIndex => hasSelection && eventList != null ? eventList.index : -1;
+
+        protected override void SetupReorderableList(ReorderableList list)
+        {
+            base.SetupReorderableList(list);
+            eventList = list;
+            hasSelection = false;
+        }
+
+        protected override void OnSelectEvent(ReorderableList list)
+        {
+            base.OnSelectEvent(list);
+            hasSelection = true;
+        }
+
+        protected override void OnReorderEvent(ReorderableList list)
+        {
+            base.OnReorderEvent(list);
+            hasSelection = true;
+        }
     }
 
     [MenuItem("Tools/NHK/分組狀態編輯器")]
@@ -48,17 +80,37 @@ public sealed class GroupedStateControllerWindow : EditorWindow
     private void OnEnable()
     {
         minSize = new Vector2(900, 620);
+        ReleaseData();
         Undo.undoRedoPerformed += OnUndo;
+        EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
     }
 
     private void OnDisable()
     {
         Undo.undoRedoPerformed -= OnUndo;
+        EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
         ReleaseData();
+    }
+
+    private void OnPlayModeStateChanged(PlayModeStateChange state)
+    {
+        // 場景重載後必須重建序列化快取，即使元件參照看起來仍相同。
+        ReleaseData();
+        if (state == PlayModeStateChange.EnteredPlayMode || state == PlayModeStateChange.EnteredEditMode)
+            OnSelectionChange();
+        Repaint();
+    }
+
+    private void OnSelectionChange()
+    {
+        // 有效目標維持固定；失效時才接上目前選取的元件。
+        if (controller == null) SetController(SelectedController());
+        Repaint();
     }
 
     private void OnUndo()
     {
+        eventDrawers.Clear();
         // 結構 Undo 可能改變索引，避免繼續編輯另一項。
         selectedGroup = selectedState = -1;
         Repaint();
@@ -68,11 +120,12 @@ public sealed class GroupedStateControllerWindow : EditorWindow
     private static GroupedStateController SelectedController() => Selection.activeGameObject == null
         ? null : Selection.activeGameObject.GetComponent<GroupedStateController>();
 
-    private void ReleaseData() { data?.Dispose(); data = null; }
+    private void ReleaseData() { eventDrawers.Clear(); data?.Dispose(); data = null; }
 
     private void SetController(GroupedStateController value)
     {
-        if (controller == value) return;
+        // Unity 已銷毀的物件也會等於 null，仍須清掉其舊參照與快取。
+        if (controller == value && (controller != null || ReferenceEquals(controller, null))) return;
         ReleaseData();
         controller = value;
         selectedGroup = selectedState = -1;
@@ -176,8 +229,14 @@ public sealed class GroupedStateControllerWindow : EditorWindow
                 row.y + 8 + (s / columns) * (tileHeight + gap), tileWidth, tileHeight);
             if (s == states.arraySize)
             {
+                float buttonHeight = (tile.height - 4) / 2;
+                var addRect = new Rect(tile.x, tile.y, tile.width, buttonHeight);
+                var copyRect = new Rect(tile.x, tile.y + buttonHeight + 4, tile.width, buttonHeight);
                 using (new EditorGUI.DisabledScope(Locked))
-                    if (GUI.Button(tile, "＋ 狀態")) AddState(states, g);
+                    if (GUI.Button(addRect, "＋ 狀態")) AddState(states, g);
+                using (new EditorGUI.DisabledScope(Locked || GetSelectedState() == null))
+                    if (GUI.Button(copyRect, new GUIContent("＋ 從選中狀態複製", "將選中的狀態與進入／解除事件複製到此組，支援 Undo")))
+                        CopySelectedState(states, g);
                 continue;
             }
             SerializedProperty state = states.GetArrayElementAtIndex(s);
@@ -302,9 +361,64 @@ public sealed class GroupedStateControllerWindow : EditorWindow
                 using (new EditorGUI.DisabledScope(Locked || clipboard == null || clipboardFromPlay))
                     if (GUILayout.Button(new GUIContent("貼上", "覆蓋此事件，支援 Undo"), GUILayout.Width(45))) Paste(property);
             }
+            if (!eventDrawers.TryGetValue(property.propertyPath, out SelectableEventDrawer drawer))
+            {
+                drawer = new SelectableEventDrawer();
+                eventDrawers.Add(property.propertyPath, drawer);
+            }
+            var label = new GUIContent(title);
+            Rect eventRect = EditorGUILayout.GetControlRect(false, drawer.GetPropertyHeight(property, label));
             using (new EditorGUI.DisabledScope(Locked))
-                EditorGUILayout.PropertyField(property, new GUIContent(title), true);
+                drawer.OnGUI(eventRect, property, label);
+            DrawSelectedEventActions(property, drawer.SelectedIndex, source + " · " + title);
         }
+    }
+
+    private void DrawSelectedEventActions(SerializedProperty property, int index, string source)
+    {
+        SerializedProperty calls = property.FindPropertyRelative("m_PersistentCalls.m_Calls");
+        bool selected = index >= 0 && index < calls.arraySize;
+        // 固定保留按鈕列高度，選取改變時不影響 IMGUI 的 Layout／Repaint 配對。
+        Rect row = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight);
+        float width = (row.width - 8) / 3;
+        if (selected)
+        {
+            if (GUI.Button(new Rect(row.x, row.y, width, row.height), "複製所選事件"))
+            {
+                selectedEventClipboard = Capture(calls.GetArrayElementAtIndex(index));
+                selectedEventClipboardLabel = source + " · 第 " + (index + 1) + " 項";
+                selectedEventClipboardFromPlay = Locked;
+            }
+            using (new EditorGUI.DisabledScope(Locked))
+                if (GUI.Button(new Rect(row.x + width + 4, row.y, width, row.height), "刪除所選事件"))
+                {
+                    calls.DeleteArrayElementAtIndex(index);
+                    Commit();
+                }
+        }
+        using (new EditorGUI.DisabledScope(Locked || selectedEventClipboard == null || selectedEventClipboardFromPlay))
+            if (GUI.Button(new Rect(row.x + (width + 4) * 2, row.y, width, row.height),
+                new GUIContent("貼上所選事件", "新增到清單末尾，保留原有項目，支援 Undo")))
+                AppendSelectedEvent(calls);
+        EditorGUILayout.LabelField(selectedEventClipboard == null ? "點選事件列可複製或刪除單一項目。"
+            : "單項剪貼簿：" + selectedEventClipboardLabel, EditorStyles.wordWrappedMiniLabel);
+    }
+
+    private void AppendSelectedEvent(SerializedProperty calls)
+    {
+        if (Locked || selectedEventClipboard == null || selectedEventClipboardFromPlay) return;
+        foreach (EventValue value in selectedEventClipboard)
+        {
+            if (value.Type != SerializedPropertyType.ObjectReference || ReferenceEquals(value.Value, null)) continue;
+            var reference = (UnityEngine.Object)value.Value;
+            if (reference == null)
+            { ShowNotification(new GUIContent("複製的物件已失效，請重新複製事件")); return; }
+            if (EditorUtility.IsPersistent(controller) && !EditorUtility.IsPersistent(reference))
+            { ShowNotification(new GUIContent("場景物件參照無法貼入 Prefab 資產")); return; }
+        }
+        int index = calls.arraySize++;
+        ApplyValues(calls.GetArrayElementAtIndex(index), selectedEventClipboard);
+        Commit();
     }
 
     private void ShowTestMenu(string group, string state, SerializedProperty states, bool ready)
@@ -347,6 +461,30 @@ public sealed class GroupedStateControllerWindow : EditorWindow
         state.FindPropertyRelative("StateName").stringValue = UniqueName(states, "StateName", "新狀態", index);
         state.FindPropertyRelative("OnEnter.m_PersistentCalls.m_Calls").ClearArray();
         state.FindPropertyRelative("OnExit.m_PersistentCalls.m_Calls").ClearArray();
+        Select(group, index);
+        Commit();
+    }
+
+    private SerializedProperty GetSelectedState()
+    {
+        if (showChecks || selectedGroup < 0 || selectedState < 0) return null;
+        SerializedProperty groups = data.FindProperty("groups");
+        if (selectedGroup >= groups.arraySize) return null;
+        SerializedProperty states = groups.GetArrayElementAtIndex(selectedGroup).FindPropertyRelative("States");
+        return selectedState < states.arraySize ? states.GetArrayElementAtIndex(selectedState) : null;
+    }
+
+    private void CopySelectedState(SerializedProperty states, int group)
+    {
+        SerializedProperty source = GetSelectedState();
+        if (Locked || source == null) return;
+        // 先擷取完整內容，避免同組新增時使來源的序列化屬性失效。
+        string prefix = source.FindPropertyRelative("StateName").stringValue + "_副本";
+        List<EventValue> values = Capture(source);
+        int index = states.arraySize++;
+        SerializedProperty copy = states.GetArrayElementAtIndex(index);
+        ApplyValues(copy, values);
+        copy.FindPropertyRelative("StateName").stringValue = UniqueName(states, "StateName", prefix, index);
         Select(group, index);
         Commit();
     }
@@ -404,7 +542,13 @@ public sealed class GroupedStateControllerWindow : EditorWindow
         if (EditorUtility.IsPersistent(controller) && clipboard.Exists(value => value.Type == SerializedPropertyType.ObjectReference
             && value.Value is UnityEngine.Object reference && reference != null && !EditorUtility.IsPersistent(reference)))
         { ShowNotification(new GUIContent("場景物件參照無法貼入 Prefab 資產")); return; }
-        foreach (EventValue value in clipboard)
+        ApplyValues(property, clipboard);
+        Commit();
+    }
+
+    private static void ApplyValues(SerializedProperty property, List<EventValue> values)
+    {
+        foreach (EventValue value in values)
         {
             SerializedProperty destination = property.FindPropertyRelative(value.Path);
             if (value.IsArray) destination.arraySize = (int)value.Value;
@@ -418,13 +562,13 @@ public sealed class GroupedStateControllerWindow : EditorWindow
                 case SerializedPropertyType.ObjectReference: destination.objectReferenceValue = (UnityEngine.Object)value.Value; break;
             }
         }
-        Commit();
     }
 
     private void Commit()
     {
         // 結束本次 GUI，避免結構改動後使用失效的 SerializedProperty。
         data.ApplyModifiedProperties();
+        eventDrawers.Clear();
         Repaint();
         GUIUtility.ExitGUI();
     }
