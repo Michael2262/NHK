@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.Events;
 
 /// <summary>
-/// 女主角 Orgasm 專用液體 UI；只處理顯示，實際數值仍由 Model 管理。
+/// 女主角 Orgasm 專用液體 UI；閃白結束時轉交 Model 歸零，其餘衰退只處理顯示。
 /// 掛在填色用的獨立 UI 物件上，外框、背景與數字由其他 UI 物件提供。
 /// </summary>
 [DisallowMultipleComponent]
@@ -43,10 +43,18 @@ public class OrgasmSliderVisualizer2 : MonoBehaviour
     [Header("滿格閃白")]
     [Min(0.01f)] [SerializeField] private float flashDuration = 2f;
     [Min(0.1f)] [SerializeField] private float flashFrequency = 4f;
-    [Tooltip("填色實際抵達右端時觸發一次。可在此修改 Model，UI 會在閃白後追上新值。")]
+    [Tooltip("填色實際抵達右端時觸發一次；接著閃白，再將 Model 歸零並播放分段衰退。")]
     [SerializeField] private UnityEvent onReachedMax = new UnityEvent();
-    [Tooltip("閃白自然完成時觸發。關閉 UI、切換角色或讀檔會取消動畫，不觸發此事件。")]
+    [Tooltip("閃白自然完成、Model 已歸零並進入衰退時觸發。關閉 UI、切換角色或讀檔會取消動畫。")]
     [SerializeField] private UnityEvent onFlashCompleted = new UnityEvent();
+
+    [Header("高潮後分段衰退（僅顯示值）")]
+    [Tooltip("閃白之後，顯示值從滿格分段降到零的總秒數。期間實際值仍可累積。")]
+    [Min(0.01f)] [SerializeField] private float decayDuration = 5f;
+    [Tooltip("例如 5 波：100 → 80 → 60 → 40 → 20 → 0。")]
+    [Range(1, 20)] [SerializeField] private int decaySteps = 5;
+    [Tooltip("每波前段用來下降的時間比例，剩餘時間停留，形成分段節奏。")]
+    [Range(0.1f, 1f)] [SerializeField] private float decayMoveRatio = 0.5f;
 
     public UnityEvent OnReachedMax => onReachedMax;
     public UnityEvent OnFlashCompleted => onFlashCompleted;
@@ -64,6 +72,9 @@ public class OrgasmSliderVisualizer2 : MonoBehaviour
     private float wavePhase;
     private float flashElapsed;
     private bool flashing;
+    private bool decaying;
+    private float decayElapsed;
+    private int lastDecayStep;
     private bool fullArmed;
     private int lastNumber = -1;
     // 僅記錄此 UI 實例的顯示次數；由外部明確呼叫，不代表角色永久統計。
@@ -90,6 +101,7 @@ public class OrgasmSliderVisualizer2 : MonoBehaviour
         if (service != null) service.OnGameStatusLoaded -= HandleGameStatusLoaded;
         service = null;
         flashing = false;
+        decaying = false;
         waveEnergy = 0f;
         RenderVisual();
     }
@@ -191,6 +203,8 @@ public class OrgasmSliderVisualizer2 : MonoBehaviour
         transitionElapsed = 0f;
         waveEnergy = wavePhase = flashElapsed = 0f;
         flashing = false;
+        decaying = false;
+        decayElapsed = 0f;
         fullArmed = displayedValue < maximum;
         lastNumber = -1;
         RenderVisual();
@@ -199,6 +213,12 @@ public class OrgasmSliderVisualizer2 : MonoBehaviour
     private void HandleOrgasmChanged(int value)
     {
         float next = Mathf.Clamp(value, 0f, maximum);
+        if (flashing || decaying)
+        {
+            // 演出期間只保留最新實際值，不改變演出位置、節奏或波幅。
+            targetValue = next;
+            return;
+        }
         waveEnergy = Mathf.Clamp01(waveEnergy + Mathf.Abs(next - targetValue) / Mathf.Max(1f, changeForFullWave));
         targetValue = next;
         transitionStart = displayedValue;
@@ -222,23 +242,31 @@ public class OrgasmSliderVisualizer2 : MonoBehaviour
             if (flashElapsed >= Mathf.Max(0.01f, flashDuration))
             {
                 flashing = false;
-                transitionStart = displayedValue;
-                transitionElapsed = 0f;
-                // 閃白期間先暫存目標，真正開始退回時再推動波浪。
-                waveEnergy = Mathf.Clamp01(waveEnergy + Mathf.Abs(targetValue - displayedValue)
-                    / Mathf.Max(1f, changeForFullWave));
+                decaying = true;
+                decayElapsed = 0f;
+                lastDecayStep = -1;
+                // 先切入衰退，避免歸零所廣播的事件把顯示值直接拉走。
+                var resetModel = model;
+                resetModel.SetOrgasm(0);
+                // Model 訂閱者也可能關閉 UI、讀檔或換角，取消後不再發完成事件。
+                if (!isActiveAndEnabled || !decaying || !ReferenceEquals(model, resetModel)) return;
                 RenderVisual();
                 // 先完成內部狀態，再呼叫外部；事件內可改值、停用或切換角色。
                 onFlashCompleted.Invoke();
                 return;
             }
         }
+        else if (decaying)
+        {
+            UpdateDecay(dt);
+        }
         else
         {
             transitionElapsed += dt;
             float t = Mathf.Clamp01(transitionElapsed / Mathf.Max(0.01f, transitionDuration));
             displayedValue = Mathf.Lerp(transitionStart, targetValue, t * t * (3f - 2f * t));
-            if (displayedValue < maximum) fullArmed = true;
+            // 只有實際值低於滿格才重新武裝；演出自行下降不算新一輪高潮。
+            if (targetValue < maximum) fullArmed = true;
             if (fullArmed && targetValue >= maximum && t >= 1f)
             {
                 displayedValue = maximum;
@@ -252,6 +280,39 @@ public class OrgasmSliderVisualizer2 : MonoBehaviour
         }
 
         RenderVisual();
+    }
+
+    private void UpdateDecay(float dt)
+    {
+        decayElapsed += dt;
+        float duration = Mathf.Max(0.01f, decayDuration);
+        int steps = Mathf.Clamp(decaySteps, 1, 20);
+        float progress = Mathf.Clamp01(decayElapsed / duration) * steps;
+        int step = Mathf.Min(Mathf.FloorToInt(progress), steps - 1);
+        if (step != lastDecayStep)
+        {
+            lastDecayStep = step;
+            waveEnergy = Mathf.Clamp01(waveEnergy + maximum / steps / Mathf.Max(1f, changeForFullWave));
+        }
+
+        float t = Mathf.Clamp01((progress - step) / Mathf.Clamp(decayMoveRatio, 0.1f, 1f));
+        // OutBack：每波下降後稍微回彈，接著停留；最後一波限制在零以上。
+        float u = t - 1f;
+        float eased = 1f + 2.70158f * u * u * u + 1.70158f * u * u;
+        float from = maximum * (1f - (float)step / steps);
+        float to = maximum * (1f - (float)(step + 1) / steps);
+        displayedValue = Mathf.Clamp(Mathf.LerpUnclamped(from, to, eased), 0f, maximum);
+
+        if (decayElapsed < duration) return;
+        displayedValue = 0f;
+        decaying = false;
+        // 接回當下再讀一次，確保採用 Model 最終值（包含其他訂閱者的連鎖修改）。
+        targetValue = Mathf.Clamp(model.Orgasm, 0f, maximum);
+        transitionStart = displayedValue;
+        transitionElapsed = 0f;
+        // 保留本輪歸零後累積到滿格的機會；接回 100 時才觸發下一輪。
+        fullArmed = true;
+        waveEnergy = Mathf.Clamp01(waveEnergy + Mathf.Abs(targetValue) / Mathf.Max(1f, changeForFullWave));
     }
 
     private void RenderVisual()

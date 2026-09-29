@@ -599,7 +599,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &6113125393445259769
 RectTransform:
   m_ObjectHideFlags: 0
@@ -953,8 +953,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: -0.000015259}
+  m_AnchoredPosition: {x: 0, y: -10.29}
+  m_SizeDelta: {x: 0, y: -17.31}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!222 &2223612381968962343
 CanvasRenderer:
@@ -1029,6 +1029,9 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
+  decayDuration: 5
+  decaySteps: 5
+  decayMoveRatio: 0.5
 --- !u!1 &6271086850014238329
 GameObject:
   m_ObjectHideFlags: 0
@@ -1482,7 +1485,6 @@ GameObject:
   m_Component:
   - component: {fileID: 674768828045392114}
   - component: {fileID: 1601046446216697972}
-  - component: {fileID: 7707145149766564733}
   m_Layer: 5
   m_Name: Bridge
   m_TagString: Untagged
@@ -1521,26 +1523,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9beeaa3613465e643a5e9ad13325a07b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StoryBridge
---- !u!114 &7707145149766564733
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8313859756775244060}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8c86da9102454fc498b14942a9c9731e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SpineAniAndListBridge
-  controller: {fileID: 0}
-  playByList: {fileID: 0}
-  controllerID: sister
-  track: 1
-  animationName: 
-  clearMode: 0
-  clearDelaySeconds: -1
-  groupName: 
 --- !u!1001 &1253925013981511687
 PrefabInstance:
   m_ObjectHideFlags: 0
