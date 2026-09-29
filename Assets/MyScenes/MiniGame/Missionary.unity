@@ -14314,6 +14314,7 @@ GameObject:
   - component: {fileID: 1144469174}
   - component: {fileID: 1144469175}
   - component: {fileID: 1144469176}
+  - component: {fileID: 1144469177}
   m_Layer: 0
   m_Name: G1_Spine
   m_TagString: Untagged
@@ -14602,6 +14603,21 @@ MonoBehaviour:
     - Uniform
     - Jacket
     - Bra
+--- !u!114 &1144469177
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1144469167}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d1d1b4531e6729744b34f38b7d3fdc39, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SpinePlayByList
+  _controller: {fileID: 0}
+  groups: []
+  simulateConditionalTransitionCheck: 0
 --- !u!1 &1160196628 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 7809180963756628023, guid: 93b6af3cd2169af4d9ea84e723f44803, type: 3}
@@ -17128,6 +17144,180 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1298190476}
   m_CullTransparentMesh: 1
+--- !u!1 &1323234636
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1323234637}
+  - component: {fileID: 1323234638}
+  m_Layer: 5
+  m_Name: ActButtonGroup FSM Logic
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &1323234637
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1323234636}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1.00008, y: 1.00008, z: 1.00008}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1424981076}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 1663.596, y: -172.56459}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1323234638
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1323234636}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 1384774831, guid: e743331561ef77147ae48cda9bcb8209, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: PlayMaker.dll::PlayMakerFSM
+  fsm:
+    dataVersion: 2
+    usedInTemplate: {fileID: 0}
+    name: FSM
+    startState: "\u7B49\u5F85\u8B8A\u5316"
+    states:
+    - name: "\u7B49\u5F85\u8B8A\u5316"
+      description: 
+      colorIndex: 0
+      position:
+        serializedVersion: 2
+        x: 63
+        y: 111
+        width: 100
+        height: 16
+      isBreakpoint: 0
+      isSequence: 0
+      hideUnused: 0
+      transitions: []
+      actionData:
+        actionNames: []
+        customNames: []
+        actionEnabled: 
+        actionIsOpen: 
+        actionStartIndex: 
+        actionHashCodes: 
+        unityObjectParams: []
+        fsmGameObjectParams: []
+        fsmOwnerDefaultParams: []
+        animationCurveParams: []
+        functionCallParams: []
+        fsmTemplateControlParams: []
+        fsmEventTargetParams: []
+        fsmPropertyParams: []
+        layoutOptionParams: []
+        fsmStringParams: []
+        fsmObjectParams: []
+        fsmVarParams: []
+        fsmArrayParams: []
+        fsmEnumParams: []
+        fsmFloatParams: []
+        fsmIntParams: []
+        fsmBoolParams: []
+        fsmVector2Params: []
+        fsmVector3Params: []
+        fsmColorParams: []
+        fsmRectParams: []
+        fsmQuaternionParams: []
+        stringParams: []
+        byteData: 
+        arrayParamSizes: 
+        arrayParamTypes: []
+        customTypeSizes: 
+        customTypeNames: []
+        paramDataType: 
+        paramName: []
+        paramDataPos: 
+        paramByteDataSize: 
+    events: []
+    globalTransitions: []
+    variables:
+      floatVariables: []
+      intVariables: []
+      boolVariables: []
+      stringVariables: []
+      vector2Variables: []
+      vector3Variables: []
+      colorVariables: []
+      rectVariables: []
+      quaternionVariables: []
+      gameObjectVariables: []
+      objectVariables: []
+      materialVariables: []
+      textureVariables: []
+      arrayVariables: []
+      enumVariables: []
+      categories:
+      - 
+      variableCategoryIDs: 
+    description: 
+    docUrl: 
+    showStateLabel: 0
+    maxLoopCount: 0
+    watermark: 
+    password: 
+    locked: 0
+    manualUpdate: 0
+    outVariableIndices: 
+    keepDelayedEventsOnStateExit: 0
+    preprocessed: 0
+    ExposedEvents: []
+    OutputEvents: []
+    RestartOnEnable: 1
+    ResetVariablesOnEnable: 0
+    EnableDebugFlow: 0
+    EnableBreakpoints: 1
+    editorFlags: 225
+    activeStateName: 
+    mouseEvents: 0
+    handleLevelLoaded: 0
+    handleTriggerEnter2D: 0
+    handleTriggerExit2D: 0
+    handleTriggerStay2D: 0
+    handleCollisionEnter2D: 0
+    handleCollisionExit2D: 0
+    handleCollisionStay2D: 0
+    handleTriggerEnter: 0
+    handleTriggerExit: 0
+    handleTriggerStay: 0
+    handleCollisionEnter: 0
+    handleCollisionExit: 0
+    handleCollisionStay: 0
+    handleParticleCollision: 0
+    handleControllerColliderHit: 0
+    handleJointBreak: 0
+    handleJointBreak2D: 0
+    handleOnGUI: 0
+    handleFixedUpdate: 0
+    handleLateUpdate: 0
+    handleApplicationEvents: 0
+    handleUiEvents: 0
+    handleLegacyNetworking: 0
+    handleAnimatorMove: 0
+    handleAnimatorIK: 0
+  fsmTemplate: {fileID: 0}
+  eventHandlerComponentsAdded: 0
 --- !u!1 &1330800697
 GameObject:
   m_ObjectHideFlags: 0
@@ -18709,6 +18899,7 @@ RectTransform:
   - {fileID: 575431166}
   - {fileID: 2102085558}
   - {fileID: 796014183059587449}
+  - {fileID: 1323234637}
   - {fileID: 7496158893867688959}
   - {fileID: 8046546857503944646}
   m_Father: {fileID: 0}
@@ -27758,8 +27949,8 @@ MonoBehaviour:
       colorIndex: 0
       position:
         serializedVersion: 2
-        x: 725.3125
-        y: 234.34375
+        x: 736.3125
+        y: 192.34375
         width: 102.47
         height: 48
       isBreakpoint: 0
@@ -28090,8 +28281,8 @@ MonoBehaviour:
       colorIndex: 0
       position:
         serializedVersion: 2
-        x: 637.34375
-        y: 324.28906
+        x: 648.34375
+        y: 282.28906
         width: 100
         height: 32
       isBreakpoint: 0
@@ -28286,8 +28477,8 @@ MonoBehaviour:
       colorIndex: 0
       position:
         serializedVersion: 2
-        x: 806.14844
-        y: 325.41406
+        x: 817.14844
+        y: 283.41406
         width: 100
         height: 32
       isBreakpoint: 0
@@ -29209,8 +29400,8 @@ MonoBehaviour:
       colorIndex: 0
       position:
         serializedVersion: 2
-        x: 637.5547
-        y: 408.35938
+        x: 648.5547
+        y: 366.35938
         width: 100
         height: 32
       isBreakpoint: 0
@@ -29280,8 +29471,8 @@ MonoBehaviour:
       colorIndex: 0
       position:
         serializedVersion: 2
-        x: 817.96875
-        y: 403.08594
+        x: 828.96875
+        y: 361.08594
         width: 100
         height: 32
       isBreakpoint: 0
@@ -29292,7 +29483,7 @@ MonoBehaviour:
           name: NextAction
           isSystemEvent: 0
           isGlobal: 0
-        toState: Run Lua(dia)
+        toState: SetGroupID
         linkStyle: 0
         linkConstraint: 0
         linkTarget: 0
@@ -29439,8 +29630,8 @@ MonoBehaviour:
       colorIndex: 0
       position:
         serializedVersion: 2
-        x: 725
-        y: 111
+        x: 728
+        y: 90
         width: 114.08
         height: 32
       isBreakpoint: 0
@@ -29899,8 +30090,8 @@ MonoBehaviour:
       colorIndex: 0
       position:
         serializedVersion: 2
-        x: 734
-        y: 514
+        x: 731
+        y: 526
         width: 103.34
         height: 32
       isBreakpoint: 0
@@ -30009,6 +30200,87 @@ MonoBehaviour:
         - storeResult
         paramDataPos: 000000000000000000000000
         paramByteDataSize: 000000000000000000000000
+    - name: SetGroupID
+      description: 
+      colorIndex: 0
+      position:
+        serializedVersion: 2
+        x: 830
+        y: 444
+        width: 100
+        height: 32
+      isBreakpoint: 0
+      isSequence: 0
+      hideUnused: 0
+      transitions:
+      - fsmEvent:
+          name: FINISHED
+          isSystemEvent: 1
+          isGlobal: 0
+        toState: Run Lua(dia)
+        linkStyle: 0
+        linkConstraint: 0
+        linkTarget: 0
+        colorIndex: 0
+      actionData:
+        actionNames:
+        - MyGame.Actions.ToolButtonGroupNavigate
+        - MyGame.Actions.ToolButtonGroupNavigate
+        customNames:
+        - 
+        - 
+        actionEnabled: 0101
+        actionIsOpen: 0101
+        actionStartIndex: 0000000002000000
+        actionHashCodes: e929f701e929f701
+        unityObjectParams: []
+        fsmGameObjectParams: []
+        fsmOwnerDefaultParams: []
+        animationCurveParams: []
+        functionCallParams: []
+        fsmTemplateControlParams: []
+        fsmEventTargetParams: []
+        fsmPropertyParams: []
+        layoutOptionParams: []
+        fsmStringParams:
+        - useVariable: 0
+          name: 
+          tooltip: 
+          showInInspector: 0
+          networkSync: 0
+          value: ShowGG
+        - useVariable: 0
+          name: 
+          tooltip: 
+          showInInspector: 0
+          networkSync: 0
+          value: 
+        fsmObjectParams: []
+        fsmVarParams: []
+        fsmArrayParams: []
+        fsmEnumParams: []
+        fsmFloatParams: []
+        fsmIntParams: []
+        fsmBoolParams: []
+        fsmVector2Params: []
+        fsmVector3Params: []
+        fsmColorParams: []
+        fsmRectParams: []
+        fsmQuaternionParams: []
+        stringParams: []
+        byteData: 0000000004000000
+        arrayParamSizes: 
+        arrayParamTypes: []
+        customTypeSizes: 
+        customTypeNames: []
+        paramDataType: 07000000120000000700000012000000
+        paramName:
+        - operation
+        - groupName
+        - operation
+        - groupName
+        paramDataPos: 00000000000000000400000001000000
+        paramByteDataSize: 04000000000000000400000000000000
     events:
     - name: FINISHED
       isSystemEvent: 1
@@ -33552,40 +33824,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GroupedStateController
   groups:
-  - GroupName: "\u6E2C\u8A66"
+  - GroupName: "\u5973\u751F\u5DE6\u624B"
     States:
-    - StateName: 01
+    - StateName: Block
       OnEnter:
         m_PersistentCalls:
-          m_Calls:
-          - m_Target: {fileID: 1204007418}
-            m_TargetAssemblyTypeName: StoryBridge, Assembly-CSharp
-            m_MethodName: PlayConversation
-            m_Mode: 5
-            m_Arguments:
-              m_ObjectArgument: {fileID: 0}
-              m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-              m_IntArgument: 0
-              m_FloatArgument: 0
-              m_StringArgument: 
-              m_BoolArgument: 0
-            m_CallState: 2
+          m_Calls: []
       OnExit:
         m_PersistentCalls:
-          m_Calls:
-          - m_Target: {fileID: 1204007418}
-            m_TargetAssemblyTypeName: StoryBridge, Assembly-CSharp
-            m_MethodName: PlayConversation
-            m_Mode: 5
-            m_Arguments:
-              m_ObjectArgument: {fileID: 0}
-              m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-              m_IntArgument: 0
-              m_FloatArgument: 0
-              m_StringArgument: 
-              m_BoolArgument: 0
-            m_CallState: 2
-    - StateName: 02
+          m_Calls: []
+    - StateName: Eye
       OnEnter:
         m_PersistentCalls:
           m_Calls:
@@ -40137,6 +40385,86 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1659417886966762270, guid: 1b05c314449679144bcc6b14358301b5, type: 3}
+      propertyPath: groups.Array.size
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 1659417886966762270, guid: 1b05c314449679144bcc6b14358301b5, type: 3}
+      propertyPath: groups.Array.data[0].groupName
+      value: ShowGG
+      objectReference: {fileID: 0}
+    - target: {fileID: 1659417886966762270, guid: 1b05c314449679144bcc6b14358301b5, type: 3}
+      propertyPath: groups.Array.data[1].groupName
+      value: Main
+      objectReference: {fileID: 0}
+    - target: {fileID: 1659417886966762270, guid: 1b05c314449679144bcc6b14358301b5, type: 3}
+      propertyPath: groups.Array.data[0].options.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1659417886966762270, guid: 1b05c314449679144bcc6b14358301b5, type: 3}
+      propertyPath: groups.Array.data[1].options.Array.size
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 1659417886966762270, guid: 1b05c314449679144bcc6b14358301b5, type: 3}
+      propertyPath: groups.Array.data[0].options.Array.data[0].label
+      value: "\u9732\u51FA\u96DE\u96DE"
+      objectReference: {fileID: 0}
+    - target: {fileID: 1659417886966762270, guid: 1b05c314449679144bcc6b14358301b5, type: 3}
+      propertyPath: groups.Array.data[1].options.Array.data[0].label
+      value: "\u8863\u670D\u7A7F\u812B"
+      objectReference: {fileID: 0}
+    - target: {fileID: 1659417886966762270, guid: 1b05c314449679144bcc6b14358301b5, type: 3}
+      propertyPath: groups.Array.data[1].options.Array.data[1].label
+      value: "\u81EA\u6170"
+      objectReference: {fileID: 0}
+    - target: {fileID: 1659417886966762270, guid: 1b05c314449679144bcc6b14358301b5, type: 3}
+      propertyPath: groups.Array.data[1].options.Array.data[2].label
+      value: "\u7D20\u80A1"
+      objectReference: {fileID: 0}
+    - target: {fileID: 1659417886966762270, guid: 1b05c314449679144bcc6b14358301b5, type: 3}
+      propertyPath: groups.Array.data[1].options.Array.data[3].label
+      value: "\u6469\u64E6\u5C0F\u7A74"
+      objectReference: {fileID: 0}
+    - target: {fileID: 1659417886966762270, guid: 1b05c314449679144bcc6b14358301b5, type: 3}
+      propertyPath: groups.Array.data[1].options.Array.data[4].label
+      value: "\u6539\u8B8A\u59FF\u52E2"
+      objectReference: {fileID: 0}
+    - target: {fileID: 1659417886966762270, guid: 1b05c314449679144bcc6b14358301b5, type: 3}
+      propertyPath: groups.Array.data[0].options.Array.data[0].ngFlag
+      value: 
+      objectReference: {fileID: 11400000, guid: 77176fa921507494db665752b8058c26, type: 2}
+    - target: {fileID: 1659417886966762270, guid: 1b05c314449679144bcc6b14358301b5, type: 3}
+      propertyPath: groups.Array.data[0].options.Array.data[0].textKey
+      value: Act.ShowGG
+      objectReference: {fileID: 0}
+    - target: {fileID: 1659417886966762270, guid: 1b05c314449679144bcc6b14358301b5, type: 3}
+      propertyPath: groups.Array.data[0].options.Array.data[0].iconName
+      value: Heart
+      objectReference: {fileID: 0}
+    - target: {fileID: 1659417886966762270, guid: 1b05c314449679144bcc6b14358301b5, type: 3}
+      propertyPath: groups.Array.data[1].options.Array.data[0].iconName
+      value: Heart
+      objectReference: {fileID: 0}
+    - target: {fileID: 1659417886966762270, guid: 1b05c314449679144bcc6b14358301b5, type: 3}
+      propertyPath: groups.Array.data[1].options.Array.data[1].iconName
+      value: Heart
+      objectReference: {fileID: 0}
+    - target: {fileID: 1659417886966762270, guid: 1b05c314449679144bcc6b14358301b5, type: 3}
+      propertyPath: groups.Array.data[1].options.Array.data[2].iconName
+      value: Heart
+      objectReference: {fileID: 0}
+    - target: {fileID: 1659417886966762270, guid: 1b05c314449679144bcc6b14358301b5, type: 3}
+      propertyPath: groups.Array.data[1].options.Array.data[3].iconName
+      value: Heart
+      objectReference: {fileID: 0}
+    - target: {fileID: 1659417886966762270, guid: 1b05c314449679144bcc6b14358301b5, type: 3}
+      propertyPath: groups.Array.data[1].options.Array.data[4].iconName
+      value: Heart
+      objectReference: {fileID: 0}
+    - target: {fileID: 1659417886966762270, guid: 1b05c314449679144bcc6b14358301b5, type: 3}
+      propertyPath: groups.Array.data[0].options.Array.data[0].invertNgFlag
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 2212567859507537460, guid: 1b05c314449679144bcc6b14358301b5, type: 3}
       propertyPath: m_Name
       value: ActButtonZone
@@ -40183,7 +40511,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3575713894984921464, guid: 1b05c314449679144bcc6b14358301b5, type: 3}
       propertyPath: m_Alpha
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3605976394293774455, guid: 1b05c314449679144bcc6b14358301b5, type: 3}
       propertyPath: m_AnchorMax.y
@@ -40320,6 +40648,10 @@ PrefabInstance:
     - target: {fileID: 7175246472956752380, guid: 1b05c314449679144bcc6b14358301b5, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7262991128554474661, guid: 1b05c314449679144bcc6b14358301b5, type: 3}
+      propertyPath: groups.Array.size
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8233766648422976646, guid: 1b05c314449679144bcc6b14358301b5, type: 3}
       propertyPath: m_AnchorMax.y

@@ -7,6 +7,7 @@ using UnityEngine.UI;
 /// <summary>
 /// 群組選單顯示控制器：共用固定槽位，依選項順位、Flag 填入文字、圖示及事件。
 /// 首次開啟選擇 Main（不存在則第一組）；面板重開保留目前群組與返回歷史。
+/// 進場時立即隱藏 CanvasGroup，待外部呼叫 Show 後淡入。
 /// 群組與歷史僅供此 UI 使用，不寫入遊戲存檔。
 /// </summary>
 [DisallowMultipleComponent]
@@ -38,10 +39,16 @@ public class ToolButtonGroupDisplayControl : MonoBehaviour
         public ProgressFlagDefinition interactableFlag;
         public bool invertInteractable;
         [Header("狀態圖示")]
-        [Tooltip("true 顯示 Ng Icon 與紅字；false 或未設定則正常顯示。不影響可點條件。")]
+        [Tooltip("搭配 Invert Ng Flag 判斷是否為 NG；未設定永遠正常，不受反轉影響。不影響可點條件。")]
         public ProgressFlagDefinition ngFlag;
+        [Tooltip("預設勾選：Flag 為 false 時進入 NG；取消勾選則 Flag 為 true 時進入 NG。")]
+        public bool invertNgFlag = true;
         [Header("點擊事件")]
+        [Tooltip("Ng Flag 未設定或 NG 條件（含反轉）不成立時執行。")]
         public UnityEvent onClick = new UnityEvent();
+        [Header("NG 點擊事件")]
+        [Tooltip("NG 條件（含反轉）成立時只執行此事件；留空則不執行任何點擊事件，不會回退至一般事件。仍須符合可點條件。")]
+        public UnityEvent onNgClick = new UnityEvent();
     }
 
     [Serializable]
@@ -75,7 +82,6 @@ public class ToolButtonGroupDisplayControl : MonoBehaviour
     [Min(0f)] [SerializeField] private float submenuIndent = 40f;
     [Header("整體顯示（保持物件啟用，透過 CanvasGroup 隱藏）")]
     [SerializeField] private CanvasGroup canvasGroup;
-    [SerializeField] private bool startVisible = true;
     [Min(0.01f)] [SerializeField] private float fadeInDuration = 0.2f;
     [Tooltip("實際淡出時間會限制為淡入時間的一半以內。")]
     [Min(0f)] [SerializeField] private float fadeOutDuration = 0.1f;
@@ -103,6 +109,31 @@ public class ToolButtonGroupDisplayControl : MonoBehaviour
     private readonly HashSet<string> _iconWarnings = new HashSet<string>();
 
     public string CurrentGroupName => CurrentGroup != null ? CurrentGroup.groupName : string.Empty;
+    /// <summary>
+    /// 唯讀導覽快照，供編輯器標示實際索引（同名群組也能正確區分）。
+    /// 返回索引代表此刻呼叫 BackGroup 的目的地；-1 代表無有效目的地。
+    /// 不初始化、不修改歷史，也不輸出重複名稱警告。
+    /// </summary>
+    public bool TryGetNavigationSnapshot(out int currentIndex, out int backIndex)
+    {
+        currentIndex = backIndex = -1;
+        if (!Application.isPlaying || Instance != this || !_initialized || CurrentGroup == null) return false;
+        currentIndex = _currentIndex;
+        if (!string.IsNullOrWhiteSpace(CurrentGroup.backGroupName))
+        {
+            backIndex = FindGroup(CurrentGroup.backGroupName, false);
+            return true;
+        }
+        for (int i = _history.Count - 1; i >= 0; i--)
+        {
+            int candidate = _history[i];
+            if (candidate == _currentIndex || candidate < 0 || candidate >= groups.Count || groups[candidate] == null) continue;
+            backIndex = candidate;
+            break;
+        }
+        return true;
+    }
+
     private ButtonGroup CurrentGroup => _currentIndex >= 0 && _currentIndex < groups.Count
         ? groups[_currentIndex] : null;
 
@@ -118,7 +149,8 @@ public class ToolButtonGroupDisplayControl : MonoBehaviour
             return;
         }
         Instance = this;
-        _visible = startVisible;
+        // 固定進場隱藏，不受 CanvasGroup 原始 Alpha 或舊版顯示設定影響。
+        _visible = false;
         Initialize();
         ApplyVisibilityImmediately();
     }
@@ -220,7 +252,7 @@ public class ToolButtonGroupDisplayControl : MonoBehaviour
     private void HandleVariableChanged(string key, int value) => Refresh();
     private void HandleLanguageChanged(string language) => Refresh();
 
-    private int FindGroup(string groupName)
+    private int FindGroup(string groupName, bool reportDuplicates = true)
     {
         if (string.IsNullOrWhiteSpace(groupName)) return -1;
         int first = -1;
@@ -231,7 +263,7 @@ public class ToolButtonGroupDisplayControl : MonoBehaviour
             if (first < 0) first = i;
             count++;
         }
-        if (count > 1)
+        if (count > 1 && reportDuplicates)
             Debug.LogWarning($"[ToolButtonGroupDisplayControl] 群組名稱「{groupName}」重複 {count} 次，使用第一個。", this);
         return first;
     }
@@ -342,18 +374,18 @@ public class ToolButtonGroupDisplayControl : MonoBehaviour
                 binding.view.Hide();
                 continue;
             }
-            bool isNg = HasFlag(option.ngFlag);
+            bool isNg = IsNg(option);
             binding.view.Present(Localize(option.textKey),
                 Evaluate(option.interactableFlag, option.invertInteractable),
                 ResolveIcon(isNg ? "Ng" : option.iconName), isNg);
         }
     }
 
-    private bool HasFlag(ProgressFlagDefinition flag)
+    /// <summary>外觀與點擊共用 NG 判斷；未指定 Flag 時，反轉也不會進入 NG。</summary>
+    private bool IsNg(GroupOption option)
     {
-        var service = GameStatusService.Instance;
-        return flag != null && service != null && service.ProgressFlags != null
-            && service.ProgressFlags.Contains(flag.FlagID);
+        return option != null && option.ngFlag != null
+            && Evaluate(option.ngFlag, option.invertNgFlag);
     }
 
     private bool Evaluate(ProgressFlagDefinition flag, bool invert)
@@ -395,7 +427,9 @@ public class ToolButtonGroupDisplayControl : MonoBehaviour
             Refresh();
             return;
         }
-        option.onClick?.Invoke();
+        // 以點擊當下的 Flag 決定分支，一次點擊只執行其中一個事件。
+        if (IsNg(option)) option.onNgClick?.Invoke();
+        else option.onClick?.Invoke();
         // 事件可切組、改 Flag、關閉面板或銷毀控制器；刷新時使用最新群組。
         if (this != null && isActiveAndEnabled) Refresh();
     }
