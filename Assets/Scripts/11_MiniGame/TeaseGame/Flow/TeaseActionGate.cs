@@ -28,6 +28,9 @@ public class TeaseActionGate : MonoBehaviour
     /// <summary>目前跑條進度 0..1；空閒時為 0。</summary>
     public float Progress { get; private set; }
 
+    /// <summary>這次動作是否隱藏跑條；不影響計時與忙碌鎖定。</summary>
+    public bool HideProgressBar { get; private set; }
+
     private Coroutine _running;
 
     private void Awake()
@@ -50,20 +53,22 @@ public class TeaseActionGate : MonoBehaviour
     /// <summary>
     /// 嘗試開始一次動作。忙碌中回傳 false（本次操作無效）。
     /// duration ≤ 0 時使用 defaultDuration。
+    /// hideProgressBar 只控制顯示，不會略過計時或回呼。
     /// </summary>
-    public bool TryBegin(float duration, UnityEvent onStart, UnityEvent onComplete)
+    public bool TryBegin(float duration, UnityEvent onStart, UnityEvent onComplete, bool hideProgressBar = false)
     {
         if (IsBusy) return false;
 
         float d = duration > 0f ? duration : defaultDuration;
-        _running = StartCoroutine(RunAction(d, onStart, onComplete));
+        _running = StartCoroutine(RunAction(d, onStart, onComplete, hideProgressBar));
         return true;
     }
 
-    private IEnumerator RunAction(float duration, UnityEvent onStart, UnityEvent onComplete)
+    private IEnumerator RunAction(float duration, UnityEvent onStart, UnityEvent onComplete, bool hideProgressBar)
     {
         IsBusy = true;
         Progress = 0f;
+        HideProgressBar = hideProgressBar;
 
         // try/finally 確保就算 onStart / onComplete 丟例外，IsBusy 也一定會被還原，
         // 不會讓閘門永遠卡在忙碌狀態（把所有後續操作、含 -1 直達 onComplete 都擋死）。
@@ -86,6 +91,7 @@ public class TeaseActionGate : MonoBehaviour
         {
             IsBusy = false;
             Progress = 0f;
+            HideProgressBar = false;
             _running = null;
         }
     }
@@ -103,5 +109,6 @@ public class TeaseActionGate : MonoBehaviour
 
         IsBusy = false;
         Progress = 0f;
+        HideProgressBar = false;
     }
 }

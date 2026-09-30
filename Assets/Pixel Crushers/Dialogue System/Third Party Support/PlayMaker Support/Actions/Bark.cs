@@ -20,8 +20,7 @@ namespace PixelCrushers.DialogueSystem.PlayMaker {
 		[HutongGames.PlayMaker.TooltipAttribute("The conversation containing the bark lines")]
 		public FsmString conversation;
 		
-		[RequiredField]
-		[HutongGames.PlayMaker.TooltipAttribute("The character speaking the bark")]
+		[HutongGames.PlayMaker.TooltipAttribute("說話的角色。Conversation 模式可留空，依對話的 Actor 設定自動尋找場景角色；Text 模式需指定。")]
 		public FsmGameObject speaker;
 		
 		[HutongGames.PlayMaker.TooltipAttribute("The character being barked at (optional)")]
@@ -39,7 +38,7 @@ namespace PixelCrushers.DialogueSystem.PlayMaker {
 		public override void OnEnter() {
 			Transform speakerTransform = ((speaker != null) && (speaker.Value != null)) ? speaker.Value.transform : null;
 			Transform listenerTransform = ((listener != null) && (listener.Value != null)) ? listener.Value.transform : null;
-			if (speakerTransform == null) Debug.LogWarning(string.Format("{0}: PlayMaker Action Bark - speaker is null", DialogueDebug.Prefix));
+			if (barkSource == BarkSource.Text && speakerTransform == null) Debug.LogWarning(string.Format("{0}: PlayMaker Action Bark - Text 模式需指定 Speaker", DialogueDebug.Prefix));
 			switch (barkSource)
 			{
 				case BarkSource.Conversation:

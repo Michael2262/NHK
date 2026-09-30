@@ -65,6 +65,9 @@ public class TeaseZone : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
     [SerializeField] private float tapMoveTolerance = 20f;
 
     [Header("出現條件")]
+    [Tooltip("勾選後適用所有模式（含未來新增模式），觸碰與懸浮提示都不受 Modes 清單限制；仍須符合旗標條件。")]
+    [SerializeField] private bool allModes = false;
+
     [Tooltip("此觸碰點允許的操作模式，符合任一項即可。清單留空時沿用原本的單一模式；新元件預設為 Hand。")]
     [SerializeField] private TeaseMode[] modes;
 
@@ -88,6 +91,9 @@ public class TeaseZone : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
     [Header("跑條")]
     [Tooltip("這一點的跑條時長（秒）。\n0 = 使用 TeaseActionGate 的預設時長。\n-1 = 不跑跑條、也不觸發 onTouch，成功後直接觸發 onComplete。\n其他正值 = 該秒數。")]
     [SerializeField] private float duration = 0f;
+
+    [Tooltip("勾選後只隱藏這次動作的跑條，計時、忙碌鎖定與開始／完成回呼照常。Duration 為 -1 時仍維持直接完成。")]
+    [SerializeField] private bool hideProgressBar = false;
 
     [Header("提示")]
     [Tooltip("這一點的提示愛心（懸浮對應模式按鈕、且已解鎖時顯示）。可多個。")]
@@ -234,9 +240,10 @@ public class TeaseZone : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
         }
     }
 
-    /// <summary>符合清單中的任一模式即可；清單留空時相容既有單一模式設定。</summary>
+    /// <summary>勾選所有模式或符合清單中的任一模式即可；清單留空時相容既有單一模式設定。</summary>
     private bool MatchesMode(TeaseMode candidate)
     {
+        if (allModes) return true;
         if (modes == null || modes.Length == 0) return candidate == legacyMode;
         return System.Array.IndexOf(modes, candidate) >= 0;
     }
@@ -344,7 +351,7 @@ public class TeaseZone : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
             return;
         }
 
-        bool began = gate.TryBegin(d, onTouch, onComplete);
+        bool began = gate.TryBegin(d, onTouch, onComplete, hideProgressBar);
         if (logDebug)
             Debug.Log($"[TeaseZone] {name} Perform → gate.TryBegin(duration={d}) = {began}（false=跑條忙碌中）", this);
     }

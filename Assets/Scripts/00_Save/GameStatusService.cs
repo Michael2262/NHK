@@ -60,6 +60,7 @@ public class GameStatusService : MonoBehaviour
     public ProtagonistSkillModel Skills { get; private set; }
     public TimeSystemModel Time { get; private set; }
     public SceneActionQueueModel SceneActionQueue { get; private set; }
+    public TimedNormalRareRouterModel TimedRouters { get; private set; }
     public SpineSkinStateModel SpineSkins { get; private set; }
     public ShopStatusModel ShopStatus { get; private set; }
     public PendingDeliveryModel PendingDelivery { get; private set; }
@@ -150,6 +151,11 @@ public class GameStatusService : MonoBehaviour
 
         Inventory = new ProtagonistInventoryModel();
         ProgressFlags = new ProgressFlagModel();
+
+        // 分流倒數跨 State / FSM 共用，跟隨遊戲時間；切幕、新遊戲與讀檔清除，不存檔。
+        TimedRouters = new TimedNormalRareRouterModel(
+            () => UnityEngine.Time.timeAsDouble, () => UnityEngine.Random.value);
+        OnGameStatusLoaded += () => TimedRouters.ClearTimers();
 
         // 任務目標：目錄來自 Resources/Progress/Objective 下的 QuestObjectiveDefinition。
         // 依賴 ProgressFlags（完成映射用），故排在其後。
@@ -526,6 +532,9 @@ public class GameStatusService : MonoBehaviour
     private void HandleSceneChanged()
     {
         Debug.Log("GameStatusService: Handling Scene Changed. Clearing temporary flags...");
+
+        // 正規轉場完成載入後、ReadyHandlers 執行前清除共用倒數。
+        TimedRouters.ClearTimers();
 
         // 通知 ProgressFlags 清除所有標記為 "Temporary" 的 Flag
         // (前提是你的 ProgressFlagModel 已經照著上一步驟加了 OnSceneChanged 方法)
