@@ -151,17 +151,21 @@ namespace MyGame.Actions
         internal static GroupedStateController ResolveController(FsmStateAction action, FsmOwnerDefault target)
         {
             // 保留原有 Use Owner 與明確物件參照的行為；只有未指定目標才使用 Auto。
-            // ReferenceEquals 區分真正留空與 Unity 已銷毀的參照，後者不自動改找其他物件。
+            // Unity 序列化的空參照不一定是 CLR null，必須使用 Unity 的 == null 判斷。
+            // PlayMaker 的 None 也視為留空；具名變數即使值為空，仍維持指定目標模式。
             bool auto = target == null || (target.OwnerOption == OwnerDefaultOption.SpecifyGameObject
-                && (target.GameObject == null || (!target.GameObject.UseVariable
-                    && ReferenceEquals(target.GameObject.Value, null))));
+                && (target.GameObject == null || target.GameObject.IsNone
+                    || (!target.GameObject.UseVariable && target.GameObject.Value == null)));
             if (auto) return FindUniqueController(action);
 
             // 每次進入 State 重新取得目標，支援 FSM 變數更換物件，避免保留失效參照。
             GameObject targetObject = action.Fsm.GetOwnerDefaultTarget(target);
             if (targetObject == null)
             {
-                Warn(action, "找不到目標物件，請指定掛有 GroupedStateController 的物件。");
+                string source = target.OwnerOption == OwnerDefaultOption.SpecifyGameObject
+                    ? "指定變數「" + target.GameObject.Name + "」目前沒有目標物件"
+                    : "Use Owner 無法取得 FSM 所在物件";
+                Warn(action, source + "。若要使用 Auto，請選 Specify Game Object 並將目標留空（None）。");
                 return null;
             }
 

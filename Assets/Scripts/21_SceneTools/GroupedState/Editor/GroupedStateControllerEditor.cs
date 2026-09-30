@@ -100,7 +100,8 @@ public sealed class GroupedStateControllerEditor : Editor
                     int stateIndex = states.arraySize++;
                     SerializedProperty state = states.GetArrayElementAtIndex(stateIndex);
                     state.FindPropertyRelative("StateName").stringValue = UniqueName(states, "StateName", "新狀態", stateIndex);
-                    // Unity 插入陣列元素可能複製前一項，必須清除繼承的事件。
+                    // Unity 插入陣列元素可能複製前一項，必須清除繼承的 Flag 與事件。
+                    state.FindPropertyRelative("StateFlag").objectReferenceValue = null;
                     ClearEvent(state.FindPropertyRelative("OnEnter"));
                     ClearEvent(state.FindPropertyRelative("OnExit"));
                     state.isExpanded = true;
@@ -128,7 +129,11 @@ public sealed class GroupedStateControllerEditor : Editor
         if (state.isExpanded)
         {
             using (new EditorGUI.DisabledScope(Locked))
+            {
                 EditorGUILayout.PropertyField(name, new GUIContent("狀態名"));
+                EditorGUILayout.PropertyField(state.FindPropertyRelative("StateFlag"),
+                    new GUIContent("狀態 Flag（選填）", "進入時開啟場景 Flag，退出時移除，皆在對應事件之前執行。可同時成立的狀態請使用不同 Flag。"));
+            }
             DrawNameWarning(states, index, "StateName");
             DrawArrayButtons(states, index, "狀態");
             string label = groupId + " / " + name.stringValue;

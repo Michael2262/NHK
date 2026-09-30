@@ -18,17 +18,31 @@ public sealed class TimedNormalRareRouterModel
     }
 
     /// <summary>
-    /// true 為 Rare，false 為 Normal。Normal 會在回傳前啟動倒數，
-    /// 確保同幀內其他 Action 也能讀到；Rare 不啟動或延長倒數。
+    /// 啟動指定計時器；已啟動時從現在重新計時。0 秒會立即清除該計時器。
     /// </summary>
-    public bool Route(TimedRouterTimerId timerId, float rareChance, float duration)
+    public void StartTimer(TimedRouterTimerId timerId, float duration)
+    {
+        if (!Enum.IsDefined(typeof(TimedRouterTimerId), timerId))
+            throw new ArgumentOutOfRangeException(nameof(timerId), "未知的計時種類。");
+        if (float.IsNaN(duration) || float.IsInfinity(duration) || duration < 0f)
+            throw new ArgumentOutOfRangeException(nameof(duration), "倒數秒數必須為有限的非負數。");
+
+        if (duration == 0f)
+            expiresAt.Remove(timerId);
+        else
+            expiresAt[timerId] = getTime() + duration;
+    }
+
+    /// <summary>
+    /// true 為 Rare，false 為 Normal。倒數內強制 Rare，否則依初始機率抽選。
+    /// 分流不會啟動、重啟或延長倒數。
+    /// </summary>
+    public bool Route(TimedRouterTimerId timerId, float rareChance)
     {
         if (!Enum.IsDefined(typeof(TimedRouterTimerId), timerId))
             throw new ArgumentOutOfRangeException(nameof(timerId), "未知的計時種類。");
         if (float.IsNaN(rareChance) || rareChance < 0f || rareChance > 100f)
             throw new ArgumentOutOfRangeException(nameof(rareChance), "Rare 機率必須介於 0 到 100。");
-        if (float.IsNaN(duration) || float.IsInfinity(duration) || duration < 0f)
-            throw new ArgumentOutOfRangeException(nameof(duration), "倒數秒數必須為有限的非負數。");
 
         double now = getTime();
         if (expiresAt.TryGetValue(timerId, out double deadline) && now < deadline)
@@ -37,12 +51,8 @@ public sealed class TimedNormalRareRouterModel
         expiresAt.Remove(timerId);
 
         // 明確處理端點，避免亂數回傳 1 時讓 100% 機率落入 Normal。
-        bool isRare = rareChance >= 100f
+        return rareChance >= 100f
             || (rareChance > 0f && getRandomValue() < rareChance / 100f);
-        if (!isRare && duration > 0f)
-            expiresAt[timerId] = now + duration;
-
-        return isRare;
     }
 
     /// <summary>切幕、新遊戲或讀檔時清除全部暫存倒數，恢復各 Action 的初始機率。</summary>

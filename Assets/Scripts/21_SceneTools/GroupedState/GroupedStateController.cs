@@ -15,6 +15,8 @@ public sealed class GroupedStateController : MonoBehaviour
     {
         [Tooltip("同組內唯一，區分大小寫，不可空白或包含 /。")]
         public string StateName;
+        [Tooltip("選填：進入時開啟場景 Flag，退出時移除，皆在對應事件之前執行。可同時成立的狀態請使用不同 Flag。")]
+        public ProgressFlagDefinition StateFlag;
         public UnityEvent OnEnter = new UnityEvent();
         public UnityEvent OnExit = new UnityEvent();
     }
@@ -118,8 +120,11 @@ public sealed class GroupedStateController : MonoBehaviour
                     ValidateName(state.StateName, "狀態名");
                     UnityEvent enter = state.OnEnter;
                     UnityEvent exit = state.OnExit;
+                    // 與事件一起建立快照，確保退出時移除進入時使用的同一個 Flag。
+                    string flagId = state.StateFlag != null ? state.StateFlag.FlagID : null;
                     candidate.AddState(group.GroupName, state.StateName,
-                        () => InvokeSafely(enter), () => InvokeSafely(exit));
+                        () => { UpdateStateFlag(flagId, true); InvokeSafely(enter); },
+                        () => { UpdateStateFlag(flagId, false); InvokeSafely(exit); });
                 }
             }
             model = candidate;
@@ -150,6 +155,29 @@ public sealed class GroupedStateController : MonoBehaviour
         groupId = path.Substring(0, separator);
         stateId = path.Substring(separator + 1);
         return true;
+    }
+
+    private void UpdateStateFlag(string flagId, bool active)
+    {
+        if (string.IsNullOrEmpty(flagId)) return;
+        var service = GameStatusService.Instance;
+        var flags = service != null ? service.ProgressFlags : null;
+        if (flags == null)
+        {
+            Debug.LogWarning("[GroupedStateController] 進度旗標服務尚未初始化，無法更新狀態 Flag："
+                + flagId + "；仍會執行狀態事件。", this);
+            return;
+        }
+        try
+        {
+            if (active) flags.AddFlag(flagId, FlagLifetime.Scene);
+            else flags.RemoveFlag(flagId);
+        }
+        catch (Exception exception)
+        {
+            // Flag 通知的訂閱者若拋出例外，仍讓後續狀態事件與切換完成。
+            Debug.LogException(exception, this);
+        }
     }
 
     private void InvokeSafely(UnityEvent callback)

@@ -214,7 +214,7 @@ public sealed class GroupedStateControllerWindow : EditorWindow
         SerializedProperty states = group.FindPropertyRelative("States");
         string current = "", exited = "";
         bool ready = Application.isPlaying && controller.TryGetStateSnapshot(groupName, out current, out exited);
-        const float labelWidth = 174, gap = 7, tileWidth = 146, tileHeight = 68;
+        const float labelWidth = 174, gap = 7, tileWidth = 146, tileHeight = 86;
         int columns = Mathf.Max(1, Mathf.FloorToInt((position.width - labelWidth - 45) / (tileWidth + gap)));
         int rows = Mathf.Max(1, Mathf.CeilToInt((states.arraySize + 1f) / columns));
         Rect row = GUILayoutUtility.GetRect(0, rows * (tileHeight + gap) + 16, GUILayout.ExpandWidth(true));
@@ -235,7 +235,7 @@ public sealed class GroupedStateControllerWindow : EditorWindow
                 using (new EditorGUI.DisabledScope(Locked))
                     if (GUI.Button(addRect, "＋ 狀態")) AddState(states, g);
                 using (new EditorGUI.DisabledScope(Locked || GetSelectedState() == null))
-                    if (GUI.Button(copyRect, new GUIContent("＋ 從選中狀態複製", "將選中的狀態與進入／解除事件複製到此組，支援 Undo")))
+                    if (GUI.Button(copyRect, new GUIContent("＋ 從選中狀態複製", "將選中的狀態、Flag 與進入／解除事件複製到此組，支援 Undo")))
                         CopySelectedState(states, g);
                 continue;
             }
@@ -245,8 +245,10 @@ public sealed class GroupedStateControllerWindow : EditorWindow
             bool last = ready && stateName.Length > 0 && exited == stateName;
             string counts = $"進入 {Calls(state, "OnEnter")}　解除 {Calls(state, "OnExit")}";
             string badge = active ? "● 成立" : last ? "● 最後退出" : "未成立";
+            var flag = state.FindPropertyRelative("StateFlag").objectReferenceValue;
+            string flagLabel = flag != null ? "Flag：" + flag.name : "Flag：未設定";
             int index = s;
-            DrawTile(tile, stateName, badge + "\n" + counts, selectedGroup == g && selectedState == s && !showChecks,
+            DrawTile(tile, stateName, badge + "\n" + counts + "\n" + flagLabel, selectedGroup == g && selectedState == s && !showChecks,
                 active ? Active : last ? Exited : new Color(0.5f, 0.5f, 0.5f, 0.18f),
                 () => Select(g, index), () => ShowTestMenu(groupName, stateName, states, ready));
         }
@@ -266,7 +268,7 @@ public sealed class GroupedStateControllerWindow : EditorWindow
             EditorGUI.DrawRect(new Rect(rect.xMax - 2, rect.y, 2, rect.height), Selected);
         }
         GUI.Label(new Rect(rect.x + 6, rect.y + 5, rect.width - 12, 20), new GUIContent(title, title), EditorStyles.boldLabel);
-        GUI.Label(new Rect(rect.x + 6, rect.y + 27, rect.width - 12, rect.height - 29), subtitle, EditorStyles.miniLabel);
+        GUI.Label(new Rect(rect.x + 6, rect.y + 27, rect.width - 12, rect.height - 29), new GUIContent(subtitle, subtitle), EditorStyles.miniLabel);
         EditorGUIUtility.AddCursorRect(rect, MouseCursor.Link);
         Event e = Event.current;
         if (!rect.Contains(e.mousePosition)) return;
@@ -308,9 +310,13 @@ public sealed class GroupedStateControllerWindow : EditorWindow
         using (new EditorGUI.DisabledScope(Locked))
         {
             EditorGUILayout.PropertyField(state.FindPropertyRelative("StateName"), new GUIContent("狀態名"));
+            EditorGUILayout.PropertyField(state.FindPropertyRelative("StateFlag"),
+                new GUIContent("狀態 Flag（選填）", "拖入 ProgressFlagDefinition 資產；留空不處理 Flag。"));
             DrawManagement(states, selectedState, false);
         }
         ValidateName(states, selectedState, "StateName");
+        EditorGUILayout.LabelField("Flag：進入時開啟 → OnEnter；退出時移除 → OnExit。使用 Scene 生命週期；可同時成立的狀態請使用不同 Flag。",
+            EditorStyles.wordWrappedMiniLabel);
         if (Locked) EditorGUILayout.LabelField("執行中設定唯讀；在上方狀態方塊按右鍵測試。", EditorStyles.miniLabel);
         DrawEventPair(state.FindPropertyRelative("OnEnter"), state.FindPropertyRelative("OnExit"),
             "OnEnter · 進入事件", "OnExit · 解除事件", groupName + "/" + state.FindPropertyRelative("StateName").stringValue);
@@ -459,6 +465,7 @@ public sealed class GroupedStateControllerWindow : EditorWindow
         int index = states.arraySize++;
         SerializedProperty state = states.GetArrayElementAtIndex(index);
         state.FindPropertyRelative("StateName").stringValue = UniqueName(states, "StateName", "新狀態", index);
+        state.FindPropertyRelative("StateFlag").objectReferenceValue = null;
         state.FindPropertyRelative("OnEnter.m_PersistentCalls.m_Calls").ClearArray();
         state.FindPropertyRelative("OnExit.m_PersistentCalls.m_Calls").ClearArray();
         Select(group, index);
