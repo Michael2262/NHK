@@ -290,7 +290,16 @@ public sealed class ToolButtonGroupEditorWindow : EditorWindow
                     if (GUI.Button(item, GUIContent.none, GUIStyle.none)) Select(g, b);
                 }
                 using (new EditorGUI.DisabledScope(Locked))
+                using (new EditorGUILayout.HorizontalScope())
+                {
                     if (GUILayout.Button("＋ 此組按鈕", EditorStyles.miniButton)) AddButton(options, g);
+                    var source = GetSelectedButton();
+                    using (new EditorGUI.DisabledScope(source == null))
+                        if (GUILayout.Button(new GUIContent("＋ 從選中按鈕複製", source == null
+                            ? "請先選中一個來源按鈕。"
+                            : "將「" + ButtonName(source, selectedButton) + "」的完整設定與事件複製到此組末尾。"), EditorStyles.miniButton))
+                            CopySelectedButton(options, g);
+                }
                 GUILayout.Space(8);
             }
             if (!any) EditorGUILayout.HelpBox("尚無群組或沒有符合搜尋的項目。", MessageType.None);
@@ -476,6 +485,8 @@ public sealed class ToolButtonGroupEditorWindow : EditorWindow
         using (new EditorGUILayout.HorizontalScope())
         {
             GUILayout.FlexibleSpace();
+            if (GUILayout.Button(isGroup ? "複製此組" : "複製此按鈕", GUILayout.Width(100)))
+                Duplicate(array, index, isGroup);
             using (new EditorGUI.DisabledScope(index == 0))
                 if (GUILayout.Button("上移", GUILayout.Width(60))) Move(array, index, index - 1, isGroup);
             using (new EditorGUI.DisabledScope(index >= array.arraySize - 1))
@@ -488,6 +499,41 @@ public sealed class ToolButtonGroupEditorWindow : EditorWindow
                 Commit();
             }
         }
+    }
+
+    private void Duplicate(SerializedProperty array, int index, bool isGroup)
+    {
+        if (Locked || index < 0 || index >= array.arraySize) return;
+
+        string copyName = null;
+        if (isGroup)
+        {
+            var names = new HashSet<string>();
+            for (int i = 0; i < array.arraySize; i++)
+                names.Add(array.GetArrayElementAtIndex(i).FindPropertyRelative("groupName").stringValue);
+            string originalName = array.GetArrayElementAtIndex(index).FindPropertyRelative("groupName").stringValue;
+            string baseName = (string.IsNullOrWhiteSpace(originalName) ? "Group" : originalName) + "_副本";
+            copyName = baseName;
+            int suffix = 2;
+            while (names.Contains(copyName)) copyName = baseName + suffix++;
+        }
+
+        // 使用 Unity 的序列化複製，保留巢狀按鈕、完整事件參數及物件參照。
+        // 副本插在原項目後方，並由 Commit 統一處理 Undo 與 Prefab override。
+        if (!array.GetArrayElementAtIndex(index).DuplicateCommand())
+        {
+            ShowNotification(new GUIContent("無法複製此項目。"));
+            return;
+        }
+        int copyIndex = index + 1;
+        if (isGroup)
+        {
+            array.GetArrayElementAtIndex(copyIndex).FindPropertyRelative("groupName").stringValue = copyName;
+            collapsed.Clear();
+        }
+        else collapsed.Remove(selectedGroup);
+        search = string.Empty;
+        Select(isGroup ? copyIndex : selectedGroup, isGroup ? -1 : copyIndex);
     }
 
     private void Move(SerializedProperty array, int from, int to, bool isGroup)
@@ -513,6 +559,82 @@ public sealed class ToolButtonGroupEditorWindow : EditorWindow
         collapsed.Remove(index);
         search = string.Empty;
         Select(index, -1);
+    }
+
+    private SerializedProperty GetSelectedButton()
+    {
+        if (commonSettings || selectedGroup < 0 || selectedButton < 0) return null;
+        var groups = data.FindProperty("groups");
+        if (selectedGroup >= groups.arraySize) return null;
+        var options = groups.GetArrayElementAtIndex(selectedGroup).FindPropertyRelative("options");
+        return selectedButton < options.arraySize ? options.GetArrayElementAtIndex(selectedButton) : null;
+    }
+
+    private struct ButtonFieldValue
+    {
+        public string path;
+        public SerializedPropertyType type;
+        public bool isArray;
+        public object value;
+    }
+
+    private void CopySelectedButton(SerializedProperty options, int groupIndex)
+    {
+        var source = GetSelectedButton();
+        if (Locked || source == null) return;
+
+        // 先保存欄位快照再擴充陣列，同組複製也不會使用失效的來源屬性。
+        // 保留 Unity 物件參照與完整 UnityEvent，不使用 JSON 或共用按鈕實例。
+        var values = new List<ButtonFieldValue>();
+        var iterator = source.Copy();
+        var end = source.GetEndProperty();
+        bool children = true;
+        while (iterator.Next(children) && !SerializedProperty.EqualContents(iterator, end))
+        {
+            children = iterator.propertyType == SerializedPropertyType.Generic;
+            var field = new ButtonFieldValue
+            {
+                path = iterator.propertyPath.Substring(source.propertyPath.Length + 1),
+                type = iterator.propertyType,
+                isArray = iterator.isArray && iterator.propertyType != SerializedPropertyType.String
+            };
+            if (field.isArray) field.value = iterator.arraySize;
+            else switch (field.type)
+            {
+                case SerializedPropertyType.Generic:
+                case SerializedPropertyType.ArraySize: continue;
+                case SerializedPropertyType.Integer: field.value = iterator.longValue; break;
+                case SerializedPropertyType.Boolean: field.value = iterator.boolValue; break;
+                case SerializedPropertyType.Float: field.value = iterator.doubleValue; break;
+                case SerializedPropertyType.String: field.value = iterator.stringValue; break;
+                case SerializedPropertyType.Enum: field.value = iterator.intValue; break;
+                case SerializedPropertyType.ObjectReference: field.value = iterator.objectReferenceValue; break;
+                default:
+                    ShowNotification(new GUIContent("無法複製此欄位類型：" + field.type));
+                    return;
+            }
+            values.Add(field);
+        }
+
+        int index = options.arraySize++;
+        var copy = options.GetArrayElementAtIndex(index);
+        foreach (var field in values)
+        {
+            var destination = copy.FindPropertyRelative(field.path);
+            if (field.isArray) destination.arraySize = (int)field.value;
+            else switch (field.type)
+            {
+                case SerializedPropertyType.Integer: destination.longValue = (long)field.value; break;
+                case SerializedPropertyType.Boolean: destination.boolValue = (bool)field.value; break;
+                case SerializedPropertyType.Float: destination.doubleValue = (double)field.value; break;
+                case SerializedPropertyType.String: destination.stringValue = (string)field.value; break;
+                case SerializedPropertyType.Enum: destination.intValue = (int)field.value; break;
+                case SerializedPropertyType.ObjectReference: destination.objectReferenceValue = (UnityEngine.Object)field.value; break;
+            }
+        }
+        collapsed.Remove(groupIndex);
+        search = string.Empty;
+        Select(groupIndex, index);
     }
 
     private void AddButton(SerializedProperty options, int groupIndex)

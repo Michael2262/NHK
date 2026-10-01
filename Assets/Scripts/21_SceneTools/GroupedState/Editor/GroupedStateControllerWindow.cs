@@ -8,6 +8,11 @@ using UnityEngine;
 public sealed class GroupedStateControllerWindow : EditorWindow
 {
     [SerializeField] private GroupedStateController controller;
+    [SerializeField] private GroupedStateController editController;
+    [SerializeField] private string editControllerId;
+    [SerializeField] private GroupedStateController runtimeController;
+    [SerializeField] private string runtimeControllerId;
+    private bool changingPlayMode;
     [SerializeField] private Vector2 boardScroll, detailScroll;
     [SerializeField] private int selectedGroup = -1, selectedState = -1;
     [SerializeField] private string search = "";
@@ -83,6 +88,11 @@ public sealed class GroupedStateControllerWindow : EditorWindow
         ReleaseData();
         Undo.undoRedoPerformed += OnUndo;
         EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
+        changingPlayMode = EditorApplication.isPlayingOrWillChangePlaymode != EditorApplication.isPlaying;
+        if (!Locked && editController == null && string.IsNullOrEmpty(editControllerId) && controller != null)
+            RememberEditController(controller);
+        if (Application.isPlaying && !changingPlayMode && runtimeController == null && IsSceneController(controller))
+            runtimeController = controller;
     }
 
     private void OnDisable()
@@ -94,17 +104,31 @@ public sealed class GroupedStateControllerWindow : EditorWindow
 
     private void OnPlayModeStateChanged(PlayModeStateChange state)
     {
-        // 場景重載後必須重建序列化快取，即使元件參照看起來仍相同。
+        if (state == PlayModeStateChange.ExitingEditMode)
+        {
+            data?.ApplyModifiedProperties();
+            if (controller != null) RememberEditController(controller);
+            // 讓 Unity 重映射場景參照；若重映射失效，再依穩定 ID 找回原元件。
+            runtimeController = IsSceneController(controller) ? controller : null;
+            runtimeControllerId = runtimeController != null ? editControllerId : string.Empty;
+        }
+        changingPlayMode = state == PlayModeStateChange.ExitingEditMode || state == PlayModeStateChange.ExitingPlayMode;
         ReleaseData();
-        if (state == PlayModeStateChange.EnteredPlayMode || state == PlayModeStateChange.EnteredEditMode)
-            OnSelectionChange();
+        if (state == PlayModeStateChange.EnteredEditMode)
+        {
+            controller = null;
+            runtimeController = null;
+            runtimeControllerId = string.Empty;
+        }
+        ResolveController();
         Repaint();
     }
 
     private void OnSelectionChange()
     {
         // 有效目標維持固定；失效時才接上目前選取的元件。
-        if (controller == null) SetController(SelectedController());
+        if (!Locked && !changingPlayMode && controller == null && string.IsNullOrEmpty(editControllerId))
+            SetController(SelectedController());
         Repaint();
     }
 
@@ -116,7 +140,49 @@ public sealed class GroupedStateControllerWindow : EditorWindow
         Repaint();
     }
 
-    private void OnInspectorUpdate() => Repaint();
+    private void OnInspectorUpdate()
+    {
+        ResolveController();
+        Repaint();
+    }
+
+    private static bool IsSceneController(GroupedStateController target) => target != null
+        && !EditorUtility.IsPersistent(target) && target.gameObject.scene.IsValid() && target.gameObject.scene.isLoaded
+        && !UnityEditor.SceneManagement.EditorSceneManager.IsPreviewSceneObject(target.gameObject);
+
+    private void RememberEditController(GroupedStateController target)
+    {
+        editController = target;
+        editControllerId = target != null ? GlobalObjectId.GetGlobalObjectIdSlow(target).ToString() : string.Empty;
+    }
+
+    private static GroupedStateController FindController(string objectId)
+    {
+        if (string.IsNullOrEmpty(objectId) || !GlobalObjectId.TryParse(objectId, out var id)) return null;
+        return GlobalObjectId.GlobalObjectIdentifierToObjectSlow(id) as GroupedStateController;
+    }
+
+    private void ResolveController()
+    {
+        if (changingPlayMode) return;
+        if (Application.isPlaying)
+        {
+            if (!IsSceneController(runtimeController)) runtimeController = FindController(runtimeControllerId);
+            // 分組狀態允許多個控制器，只重連同一物件，不用名稱或第一個搜尋結果猜測。
+            BindController(IsSceneController(runtimeController) ? runtimeController : null);
+            return;
+        }
+        if (Locked) return;
+        if (editController == null) editController = FindController(editControllerId);
+        BindController(editController);
+    }
+
+    private void BindController(GroupedStateController target)
+    {
+        if (ReferenceEquals(controller, target)) return;
+        ReleaseData();
+        controller = target;
+    }
     private static GroupedStateController SelectedController() => Selection.activeGameObject == null
         ? null : Selection.activeGameObject.GetComponent<GroupedStateController>();
 
@@ -124,6 +190,19 @@ public sealed class GroupedStateControllerWindow : EditorWindow
 
     private void SetController(GroupedStateController value)
     {
+        if (changingPlayMode || (Locked && !Application.isPlaying)) return;
+        if (Application.isPlaying)
+        {
+            // 試玩中手動查看其他元件，不覆寫回到編輯模式時要還原的目標。
+            if (value != null && !IsSceneController(value)) return;
+            runtimeController = value;
+            runtimeControllerId = value != null ? GlobalObjectId.GetGlobalObjectIdSlow(value).ToString() : string.Empty;
+        }
+        else
+        {
+            if (controller != null) data?.ApplyModifiedProperties();
+            RememberEditController(value);
+        }
         // Unity 已銷毀的物件也會等於 null，仍須清掉其舊參照與快取。
         if (controller == value && (controller != null || ReferenceEquals(controller, null))) return;
         ReleaseData();
@@ -136,9 +215,14 @@ public sealed class GroupedStateControllerWindow : EditorWindow
 
     private void OnGUI()
     {
+        if (changingPlayMode)
+        {
+            EditorGUILayout.HelpBox("正在切換試玩模式，完成後會自動連接原控制器。", MessageType.Info);
+            return;
+        }
         using (new EditorGUILayout.HorizontalScope(EditorStyles.toolbar))
         {
-            GUILayout.Label("編輯目標", GUILayout.Width(56));
+            GUILayout.Label(Application.isPlaying ? "試玩目標" : "編輯目標", GUILayout.Width(56));
             var next = (GroupedStateController)EditorGUILayout.ObjectField(controller, typeof(GroupedStateController), true);
             if (next != controller) { SetController(next); GUIUtility.ExitGUI(); }
             if (GUILayout.Button("使用選取物件", EditorStyles.toolbarButton, GUILayout.Width(95)))
@@ -150,7 +234,7 @@ public sealed class GroupedStateControllerWindow : EditorWindow
         if (controller == null)
         {
             ReleaseData();
-            EditorGUILayout.HelpBox("請拖入 GroupedStateController，或選取場景物件後按「使用選取物件」。\n目標會固定，方便從 Hierarchy 拖入事件參照。", MessageType.Info);
+            EditorGUILayout.HelpBox("等待原控制器恢復，視窗會自動重連。也可拖入 GroupedStateController，或按「使用選取物件」。\n試玩中指定其他元件不會改變原編輯目標。", MessageType.Info);
             return;
         }
         if (data == null || data.targetObject != controller) { ReleaseData(); data = new SerializedObject(controller); }
@@ -301,7 +385,7 @@ public sealed class GroupedStateControllerWindow : EditorWindow
         using (new EditorGUI.DisabledScope(Locked))
         {
             EditorGUILayout.PropertyField(group.FindPropertyRelative("GroupName"), new GUIContent("組名"));
-            DrawManagement(groups, selectedGroup, true);
+            if (selectedState < 0) DrawManagement(groups, selectedGroup, true);
         }
         ValidateName(groups, selectedGroup, "GroupName");
         if (selectedState < 0 || selectedState >= states.arraySize)
@@ -327,6 +411,9 @@ public sealed class GroupedStateControllerWindow : EditorWindow
         using (new EditorGUILayout.HorizontalScope())
         {
             GUILayout.FlexibleSpace();
+            if (isGroup && GUILayout.Button(new GUIContent("複製所選 Group",
+                "建立此組的完整副本，包含所有狀態、Flag 與進入／解除事件，支援 Undo"), GUILayout.Width(125)))
+                CopySelectedGroup(array);
             using (new EditorGUI.DisabledScope(index == 0))
                 if (GUILayout.Button("前移", GUILayout.Width(55)))
                 { array.MoveArrayElement(index, index - 1); if (isGroup) selectedGroup--; else selectedState--; Commit(); }
@@ -455,6 +542,22 @@ public sealed class GroupedStateControllerWindow : EditorWindow
         SerializedProperty group = groups.GetArrayElementAtIndex(index);
         group.FindPropertyRelative("GroupName").stringValue = UniqueName(groups, "GroupName", "新分組", index);
         group.FindPropertyRelative("States").ClearArray();
+        search = "";
+        Select(index, -1);
+        Commit();
+    }
+
+    private void CopySelectedGroup(SerializedProperty groups)
+    {
+        if (Locked || showChecks || selectedGroup < 0 || selectedGroup >= groups.arraySize) return;
+        SerializedProperty source = groups.GetArrayElementAtIndex(selectedGroup);
+        // 先擷取完整內容，再擴充分組清單，避免來源屬性因陣列變動而失效。
+        string prefix = source.FindPropertyRelative("GroupName").stringValue + "_副本";
+        List<EventValue> values = Capture(source);
+        int index = groups.arraySize++;
+        SerializedProperty copy = groups.GetArrayElementAtIndex(index);
+        ApplyValues(copy, values);
+        copy.FindPropertyRelative("GroupName").stringValue = UniqueName(groups, "GroupName", prefix, index);
         search = "";
         Select(index, -1);
         Commit();

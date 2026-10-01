@@ -16376,6 +16376,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1114200271}
+  - component: {fileID: 1114200274}
+  - component: {fileID: 1114200273}
   - component: {fileID: 1114200272}
   m_Layer: 0
   m_Name: SpineAniBridge
@@ -16415,15 +16417,41 @@ MonoBehaviour:
   m_GameObject: {fileID: 1114200270}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bcc9edeba8f1adf40ab23e925df7c971, type: 3}
+  m_Script: {fileID: 11500000, guid: acc2e3139652d954887bce8aae1a7a9a, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SpineAniAndListBridge
-  controller: {fileID: 0}
+  m_EditorClassIdentifier: Assembly-CSharp::SpineAniStopBridge
+  controller: {fileID: 1144469169}
   controllerID: sister
-  track: 1
-  animationName: 
+--- !u!114 &1114200273
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1114200270}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 499553911a38bf84c9193f9e63581bea, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SpineAniPlayBridge
+  controller: {fileID: 1144469169}
+  controllerID: sister
   clearMode: 0
   clearDelaySeconds: -1
+--- !u!114 &1114200274
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1114200270}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9f1d2ccefe83b3044988eb80c6308bb1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SpineAniLoopBridge
+  controller: {fileID: 1144469169}
+  controllerID: sister
 --- !u!114 &1120398732 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 7383831375101309451, guid: 2cd72243b6de4404bb2a01baa6971026, type: 3}
@@ -16908,7 +16936,6 @@ MonoBehaviour:
   - id: test
     skins:
     - Casual
-    - Pants
 --- !u!114 &1144469177
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -38942,9 +38969,9 @@ MonoBehaviour:
       OnEnter:
         m_PersistentCalls:
           m_Calls:
-          - m_Target: {fileID: 693895100}
-            m_TargetAssemblyTypeName: SpineAniBridge, Assembly-CSharp
-            m_MethodName: PlayAnimation
+          - m_Target: {fileID: 1114200273}
+            m_TargetAssemblyTypeName: SpineAniPlayBridge, Assembly-CSharp
+            m_MethodName: Track03_LeftHand
             m_Mode: 5
             m_Arguments:
               m_ObjectArgument: {fileID: 0}
@@ -38962,9 +38989,9 @@ MonoBehaviour:
       OnEnter:
         m_PersistentCalls:
           m_Calls:
-          - m_Target: {fileID: 693895100}
-            m_TargetAssemblyTypeName: SpineAniBridge, Assembly-CSharp
-            m_MethodName: PlayAnimation
+          - m_Target: {fileID: 1114200273}
+            m_TargetAssemblyTypeName: SpineAniPlayBridge, Assembly-CSharp
+            m_MethodName: Track03_LeftHand
             m_Mode: 5
             m_Arguments:
               m_ObjectArgument: {fileID: 0}
@@ -38982,9 +39009,9 @@ MonoBehaviour:
       OnEnter:
         m_PersistentCalls:
           m_Calls:
-          - m_Target: {fileID: 693895100}
-            m_TargetAssemblyTypeName: SpineAniBridge, Assembly-CSharp
-            m_MethodName: PlayAnimation
+          - m_Target: {fileID: 1114200273}
+            m_TargetAssemblyTypeName: SpineAniPlayBridge, Assembly-CSharp
+            m_MethodName: Track03_LeftHand
             m_Mode: 5
             m_Arguments:
               m_ObjectArgument: {fileID: 0}
@@ -39002,9 +39029,9 @@ MonoBehaviour:
       OnEnter:
         m_PersistentCalls:
           m_Calls:
-          - m_Target: {fileID: 693895100}
-            m_TargetAssemblyTypeName: SpineAniBridge, Assembly-CSharp
-            m_MethodName: PlayAnimation
+          - m_Target: {fileID: 1114200273}
+            m_TargetAssemblyTypeName: SpineAniPlayBridge, Assembly-CSharp
+            m_MethodName: Track03_LeftHand
             m_Mode: 5
             m_Arguments:
               m_ObjectArgument: {fileID: 0}
@@ -39022,9 +39049,9 @@ MonoBehaviour:
       OnEnter:
         m_PersistentCalls:
           m_Calls:
-          - m_Target: {fileID: 693895100}
-            m_TargetAssemblyTypeName: SpineAniBridge, Assembly-CSharp
-            m_MethodName: PlayAnimation
+          - m_Target: {fileID: 1114200273}
+            m_TargetAssemblyTypeName: SpineAniPlayBridge, Assembly-CSharp
+            m_MethodName: Track03_LeftHand
             m_Mode: 5
             m_Arguments:
               m_ObjectArgument: {fileID: 0}
@@ -39044,9 +39071,9 @@ MonoBehaviour:
       OnEnter:
         m_PersistentCalls:
           m_Calls:
-          - m_Target: {fileID: 1571399243}
-            m_TargetAssemblyTypeName: SpineAniBridge, Assembly-CSharp
-            m_MethodName: PlayAnimation
+          - m_Target: {fileID: 1114200273}
+            m_TargetAssemblyTypeName: SpineAniPlayBridge, Assembly-CSharp
+            m_MethodName: Track04_RightHand
             m_Mode: 5
             m_Arguments:
               m_ObjectArgument: {fileID: 0}
@@ -39064,9 +39091,9 @@ MonoBehaviour:
       OnEnter:
         m_PersistentCalls:
           m_Calls:
-          - m_Target: {fileID: 1571399243}
-            m_TargetAssemblyTypeName: SpineAniBridge, Assembly-CSharp
-            m_MethodName: PlayAnimation
+          - m_Target: {fileID: 1114200273}
+            m_TargetAssemblyTypeName: SpineAniPlayBridge, Assembly-CSharp
+            m_MethodName: Track04_RightHand
             m_Mode: 5
             m_Arguments:
               m_ObjectArgument: {fileID: 0}
@@ -39084,9 +39111,9 @@ MonoBehaviour:
       OnEnter:
         m_PersistentCalls:
           m_Calls:
-          - m_Target: {fileID: 1571399243}
-            m_TargetAssemblyTypeName: SpineAniBridge, Assembly-CSharp
-            m_MethodName: PlayAnimation
+          - m_Target: {fileID: 1114200273}
+            m_TargetAssemblyTypeName: SpineAniPlayBridge, Assembly-CSharp
+            m_MethodName: Track04_RightHand
             m_Mode: 5
             m_Arguments:
               m_ObjectArgument: {fileID: 0}
@@ -39104,9 +39131,9 @@ MonoBehaviour:
       OnEnter:
         m_PersistentCalls:
           m_Calls:
-          - m_Target: {fileID: 1571399243}
-            m_TargetAssemblyTypeName: SpineAniBridge, Assembly-CSharp
-            m_MethodName: PlayAnimation
+          - m_Target: {fileID: 1114200273}
+            m_TargetAssemblyTypeName: SpineAniPlayBridge, Assembly-CSharp
+            m_MethodName: Track04_RightHand
             m_Mode: 5
             m_Arguments:
               m_ObjectArgument: {fileID: 0}
@@ -39124,9 +39151,9 @@ MonoBehaviour:
       OnEnter:
         m_PersistentCalls:
           m_Calls:
-          - m_Target: {fileID: 1571399243}
-            m_TargetAssemblyTypeName: SpineAniBridge, Assembly-CSharp
-            m_MethodName: PlayAnimation
+          - m_Target: {fileID: 1114200273}
+            m_TargetAssemblyTypeName: SpineAniPlayBridge, Assembly-CSharp
+            m_MethodName: Track04_RightHand
             m_Mode: 5
             m_Arguments:
               m_ObjectArgument: {fileID: 0}
@@ -39146,9 +39173,9 @@ MonoBehaviour:
       OnEnter:
         m_PersistentCalls:
           m_Calls:
-          - m_Target: {fileID: 725967047}
-            m_TargetAssemblyTypeName: SpineAniBridge, Assembly-CSharp
-            m_MethodName: PlayAnimation
+          - m_Target: {fileID: 1114200273}
+            m_TargetAssemblyTypeName: SpineAniPlayBridge, Assembly-CSharp
+            m_MethodName: Track06_LeftFoot
             m_Mode: 5
             m_Arguments:
               m_ObjectArgument: {fileID: 0}
@@ -39158,9 +39185,9 @@ MonoBehaviour:
               m_StringArgument: Thigh_L
               m_BoolArgument: 0
             m_CallState: 2
-          - m_Target: {fileID: 1751666743}
-            m_TargetAssemblyTypeName: SpineAniBridge, Assembly-CSharp
-            m_MethodName: PlayAnimation
+          - m_Target: {fileID: 1114200273}
+            m_TargetAssemblyTypeName: SpineAniPlayBridge, Assembly-CSharp
+            m_MethodName: Track02_BodyAttach
             m_Mode: 5
             m_Arguments:
               m_ObjectArgument: {fileID: 0}
@@ -39170,9 +39197,9 @@ MonoBehaviour:
               m_StringArgument: Vagina_Up
               m_BoolArgument: 0
             m_CallState: 2
-          - m_Target: {fileID: 536593399}
-            m_TargetAssemblyTypeName: SpineAniBridge, Assembly-CSharp
-            m_MethodName: PlayAnimation
+          - m_Target: {fileID: 1114200273}
+            m_TargetAssemblyTypeName: SpineAniPlayBridge, Assembly-CSharp
+            m_MethodName: Track05_OverBody1
             m_Mode: 5
             m_Arguments:
               m_ObjectArgument: {fileID: 0}
@@ -39190,9 +39217,9 @@ MonoBehaviour:
       OnEnter:
         m_PersistentCalls:
           m_Calls:
-          - m_Target: {fileID: 725967047}
-            m_TargetAssemblyTypeName: SpineAniBridge, Assembly-CSharp
-            m_MethodName: PlayAnimation
+          - m_Target: {fileID: 1114200273}
+            m_TargetAssemblyTypeName: SpineAniPlayBridge, Assembly-CSharp
+            m_MethodName: Track06_LeftFoot
             m_Mode: 5
             m_Arguments:
               m_ObjectArgument: {fileID: 0}
@@ -39202,9 +39229,9 @@ MonoBehaviour:
               m_StringArgument: Thigh_Up_L
               m_BoolArgument: 0
             m_CallState: 2
-          - m_Target: {fileID: 1751666743}
-            m_TargetAssemblyTypeName: SpineAniBridge, Assembly-CSharp
-            m_MethodName: PlayAnimation
+          - m_Target: {fileID: 1114200273}
+            m_TargetAssemblyTypeName: SpineAniPlayBridge, Assembly-CSharp
+            m_MethodName: Track02_BodyAttach
             m_Mode: 5
             m_Arguments:
               m_ObjectArgument: {fileID: 0}
@@ -39214,9 +39241,9 @@ MonoBehaviour:
               m_StringArgument: Vagina_Up
               m_BoolArgument: 0
             m_CallState: 2
-          - m_Target: {fileID: 536593399}
-            m_TargetAssemblyTypeName: SpineAniBridge, Assembly-CSharp
-            m_MethodName: PlayAnimation
+          - m_Target: {fileID: 1114200273}
+            m_TargetAssemblyTypeName: SpineAniPlayBridge, Assembly-CSharp
+            m_MethodName: Track05_OverBody1
             m_Mode: 5
             m_Arguments:
               m_ObjectArgument: {fileID: 0}
@@ -39234,9 +39261,9 @@ MonoBehaviour:
       OnEnter:
         m_PersistentCalls:
           m_Calls:
-          - m_Target: {fileID: 725967047}
-            m_TargetAssemblyTypeName: SpineAniBridge, Assembly-CSharp
-            m_MethodName: PlayAnimation
+          - m_Target: {fileID: 1114200273}
+            m_TargetAssemblyTypeName: SpineAniPlayBridge, Assembly-CSharp
+            m_MethodName: Track06_LeftFoot
             m_Mode: 5
             m_Arguments:
               m_ObjectArgument: {fileID: 0}
@@ -39246,21 +39273,9 @@ MonoBehaviour:
               m_StringArgument: Thigh_Splay_L
               m_BoolArgument: 0
             m_CallState: 2
-          - m_Target: {fileID: 536593399}
-            m_TargetAssemblyTypeName: SpineAniBridge, Assembly-CSharp
-            m_MethodName: PlayAnimation
-            m_Mode: 5
-            m_Arguments:
-              m_ObjectArgument: {fileID: 0}
-              m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-              m_IntArgument: 0
-              m_FloatArgument: 0
-              m_StringArgument: Thigh_Off_L
-              m_BoolArgument: 0
-            m_CallState: 2
-          - m_Target: {fileID: 1751666743}
-            m_TargetAssemblyTypeName: SpineAniBridge, Assembly-CSharp
-            m_MethodName: PlayAnimation
+          - m_Target: {fileID: 1114200274}
+            m_TargetAssemblyTypeName: SpineAniLoopBridge, Assembly-CSharp
+            m_MethodName: Track02_BodyAttach
             m_Mode: 5
             m_Arguments:
               m_ObjectArgument: {fileID: 0}
@@ -39268,6 +39283,18 @@ MonoBehaviour:
               m_IntArgument: 0
               m_FloatArgument: 0
               m_StringArgument: Vagina_Up
+              m_BoolArgument: 0
+            m_CallState: 2
+          - m_Target: {fileID: 1114200273}
+            m_TargetAssemblyTypeName: SpineAniPlayBridge, Assembly-CSharp
+            m_MethodName: Track05_OverBody1
+            m_Mode: 5
+            m_Arguments:
+              m_ObjectArgument: {fileID: 0}
+              m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+              m_IntArgument: 0
+              m_FloatArgument: 0
+              m_StringArgument: Thigh_Off_L
               m_BoolArgument: 0
             m_CallState: 2
       OnExit:
@@ -39278,9 +39305,9 @@ MonoBehaviour:
       OnEnter:
         m_PersistentCalls:
           m_Calls:
-          - m_Target: {fileID: 725967047}
-            m_TargetAssemblyTypeName: SpineAniBridge, Assembly-CSharp
-            m_MethodName: PlayAnimation
+          - m_Target: {fileID: 1114200273}
+            m_TargetAssemblyTypeName: SpineAniPlayBridge, Assembly-CSharp
+            m_MethodName: Track06_LeftFoot
             m_Mode: 5
             m_Arguments:
               m_ObjectArgument: {fileID: 0}
@@ -39290,21 +39317,9 @@ MonoBehaviour:
               m_StringArgument: Thigh_Spread_L
               m_BoolArgument: 0
             m_CallState: 2
-          - m_Target: {fileID: 536593399}
-            m_TargetAssemblyTypeName: SpineAniBridge, Assembly-CSharp
-            m_MethodName: PlayAnimation
-            m_Mode: 5
-            m_Arguments:
-              m_ObjectArgument: {fileID: 0}
-              m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-              m_IntArgument: 0
-              m_FloatArgument: 0
-              m_StringArgument: Thigh_Off_L
-              m_BoolArgument: 0
-            m_CallState: 2
-          - m_Target: {fileID: 1751666743}
-            m_TargetAssemblyTypeName: SpineAniBridge, Assembly-CSharp
-            m_MethodName: PlayAnimation
+          - m_Target: {fileID: 1114200273}
+            m_TargetAssemblyTypeName: SpineAniPlayBridge, Assembly-CSharp
+            m_MethodName: Track02_BodyAttach
             m_Mode: 5
             m_Arguments:
               m_ObjectArgument: {fileID: 0}
@@ -39312,6 +39327,18 @@ MonoBehaviour:
               m_IntArgument: 0
               m_FloatArgument: 0
               m_StringArgument: Vagina_Down
+              m_BoolArgument: 0
+            m_CallState: 2
+          - m_Target: {fileID: 1114200273}
+            m_TargetAssemblyTypeName: SpineAniPlayBridge, Assembly-CSharp
+            m_MethodName: Track05_OverBody1
+            m_Mode: 5
+            m_Arguments:
+              m_ObjectArgument: {fileID: 0}
+              m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+              m_IntArgument: 0
+              m_FloatArgument: 0
+              m_StringArgument: Thigh_Off_L
               m_BoolArgument: 0
             m_CallState: 2
       OnExit:
@@ -39322,9 +39349,9 @@ MonoBehaviour:
       OnEnter:
         m_PersistentCalls:
           m_Calls:
-          - m_Target: {fileID: 725967047}
-            m_TargetAssemblyTypeName: SpineAniBridge, Assembly-CSharp
-            m_MethodName: PlayAnimation
+          - m_Target: {fileID: 1114200273}
+            m_TargetAssemblyTypeName: SpineAniPlayBridge, Assembly-CSharp
+            m_MethodName: Track06_LeftFoot
             m_Mode: 5
             m_Arguments:
               m_ObjectArgument: {fileID: 0}
@@ -39334,21 +39361,9 @@ MonoBehaviour:
               m_StringArgument: Thigh_Closed_L
               m_BoolArgument: 0
             m_CallState: 2
-          - m_Target: {fileID: 536593399}
-            m_TargetAssemblyTypeName: SpineAniBridge, Assembly-CSharp
-            m_MethodName: PlayAnimation
-            m_Mode: 5
-            m_Arguments:
-              m_ObjectArgument: {fileID: 0}
-              m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-              m_IntArgument: 0
-              m_FloatArgument: 0
-              m_StringArgument: Thigh_Off_L
-              m_BoolArgument: 0
-            m_CallState: 2
-          - m_Target: {fileID: 1751666743}
-            m_TargetAssemblyTypeName: SpineAniBridge, Assembly-CSharp
-            m_MethodName: PlayAnimation
+          - m_Target: {fileID: 1114200273}
+            m_TargetAssemblyTypeName: SpineAniPlayBridge, Assembly-CSharp
+            m_MethodName: Track02_BodyAttach
             m_Mode: 5
             m_Arguments:
               m_ObjectArgument: {fileID: 0}
@@ -39358,66 +39373,238 @@ MonoBehaviour:
               m_StringArgument: Vagina_Down
               m_BoolArgument: 0
             m_CallState: 2
+          - m_Target: {fileID: 1114200273}
+            m_TargetAssemblyTypeName: SpineAniPlayBridge, Assembly-CSharp
+            m_MethodName: Track05_OverBody1
+            m_Mode: 5
+            m_Arguments:
+              m_ObjectArgument: {fileID: 0}
+              m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+              m_IntArgument: 0
+              m_FloatArgument: 0
+              m_StringArgument: Thigh_Off_L
+              m_BoolArgument: 0
+            m_CallState: 2
       OnExit:
         m_PersistentCalls:
           m_Calls: []
-  - GroupName: test
+  - GroupName: "\u5973\u751F\u53F3\u8173"
     States:
-    - StateName: "\u65B0\u72C0\u614B1"
+    - StateName: Normal
       StateFlag: {fileID: 0}
       OnEnter:
         m_PersistentCalls:
           m_Calls:
-          - m_Target: {fileID: 536593399}
-            m_TargetAssemblyTypeName: SpineAniBridge, Assembly-CSharp
-            m_MethodName: PlayAnimation
+          - m_Target: {fileID: 1114200273}
+            m_TargetAssemblyTypeName: SpineAniPlayBridge, Assembly-CSharp
+            m_MethodName: Track07_RightFoot
             m_Mode: 5
             m_Arguments:
               m_ObjectArgument: {fileID: 0}
               m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
               m_IntArgument: 0
               m_FloatArgument: 0
-              m_StringArgument: "test_\u5408\u9AD45"
+              m_StringArgument: Thigh_R
+              m_BoolArgument: 0
+            m_CallState: 2
+          - m_Target: {fileID: 1114200273}
+            m_TargetAssemblyTypeName: SpineAniPlayBridge, Assembly-CSharp
+            m_MethodName: Track02_BodyAttach
+            m_Mode: 5
+            m_Arguments:
+              m_ObjectArgument: {fileID: 0}
+              m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+              m_IntArgument: 0
+              m_FloatArgument: 0
+              m_StringArgument: Vagina_Up
+              m_BoolArgument: 0
+            m_CallState: 2
+          - m_Target: {fileID: 1114200273}
+            m_TargetAssemblyTypeName: SpineAniPlayBridge, Assembly-CSharp
+            m_MethodName: Track05_OverBody1
+            m_Mode: 5
+            m_Arguments:
+              m_ObjectArgument: {fileID: 0}
+              m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+              m_IntArgument: 0
+              m_FloatArgument: 0
+              m_StringArgument: Thigh_Off_R
               m_BoolArgument: 0
             m_CallState: 2
       OnExit:
         m_PersistentCalls:
           m_Calls: []
-    - StateName: "\u65B0\u72C0\u614B2"
+    - StateName: Up
       StateFlag: {fileID: 0}
       OnEnter:
         m_PersistentCalls:
           m_Calls:
-          - m_Target: {fileID: 536593399}
-            m_TargetAssemblyTypeName: SpineAniBridge, Assembly-CSharp
-            m_MethodName: PlayAnimation
+          - m_Target: {fileID: 1114200273}
+            m_TargetAssemblyTypeName: SpineAniPlayBridge, Assembly-CSharp
+            m_MethodName: Track07_RightFoot
             m_Mode: 5
             m_Arguments:
               m_ObjectArgument: {fileID: 0}
               m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
               m_IntArgument: 0
               m_FloatArgument: 0
-              m_StringArgument: "test_\u5408\u9AD44"
+              m_StringArgument: Thigh_Up_R
+              m_BoolArgument: 0
+            m_CallState: 2
+          - m_Target: {fileID: 1114200273}
+            m_TargetAssemblyTypeName: SpineAniPlayBridge, Assembly-CSharp
+            m_MethodName: Track02_BodyAttach
+            m_Mode: 5
+            m_Arguments:
+              m_ObjectArgument: {fileID: 0}
+              m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+              m_IntArgument: 0
+              m_FloatArgument: 0
+              m_StringArgument: Vagina_Up
+              m_BoolArgument: 0
+            m_CallState: 2
+          - m_Target: {fileID: 1114200273}
+            m_TargetAssemblyTypeName: SpineAniPlayBridge, Assembly-CSharp
+            m_MethodName: Track05_OverBody1
+            m_Mode: 5
+            m_Arguments:
+              m_ObjectArgument: {fileID: 0}
+              m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+              m_IntArgument: 0
+              m_FloatArgument: 0
+              m_StringArgument: Thigh_Off_R
               m_BoolArgument: 0
             m_CallState: 2
       OnExit:
         m_PersistentCalls:
           m_Calls: []
-    - StateName: "\u65B0\u72C0\u614B3"
+    - StateName: Splay
       StateFlag: {fileID: 0}
       OnEnter:
         m_PersistentCalls:
           m_Calls:
-          - m_Target: {fileID: 536593399}
-            m_TargetAssemblyTypeName: SpineAniBridge, Assembly-CSharp
-            m_MethodName: PlayAnimation
+          - m_Target: {fileID: 1114200273}
+            m_TargetAssemblyTypeName: SpineAniPlayBridge, Assembly-CSharp
+            m_MethodName: Track07_RightFoot
             m_Mode: 5
             m_Arguments:
               m_ObjectArgument: {fileID: 0}
               m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
               m_IntArgument: 0
               m_FloatArgument: 0
-              m_StringArgument: "test_\u5408\u9AD41"
+              m_StringArgument: Thigh_Splay_R
+              m_BoolArgument: 0
+            m_CallState: 2
+          - m_Target: {fileID: 1114200274}
+            m_TargetAssemblyTypeName: SpineAniLoopBridge, Assembly-CSharp
+            m_MethodName: Track02_BodyAttach
+            m_Mode: 5
+            m_Arguments:
+              m_ObjectArgument: {fileID: 0}
+              m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+              m_IntArgument: 0
+              m_FloatArgument: 0
+              m_StringArgument: Vagina_Up
+              m_BoolArgument: 0
+            m_CallState: 2
+          - m_Target: {fileID: 1114200273}
+            m_TargetAssemblyTypeName: SpineAniPlayBridge, Assembly-CSharp
+            m_MethodName: Track05_OverBody1
+            m_Mode: 5
+            m_Arguments:
+              m_ObjectArgument: {fileID: 0}
+              m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+              m_IntArgument: 0
+              m_FloatArgument: 0
+              m_StringArgument: Thigh_Off_R
+              m_BoolArgument: 0
+            m_CallState: 2
+      OnExit:
+        m_PersistentCalls:
+          m_Calls: []
+    - StateName: Spread
+      StateFlag: {fileID: 0}
+      OnEnter:
+        m_PersistentCalls:
+          m_Calls:
+          - m_Target: {fileID: 1114200273}
+            m_TargetAssemblyTypeName: SpineAniPlayBridge, Assembly-CSharp
+            m_MethodName: Track07_RightFoot
+            m_Mode: 5
+            m_Arguments:
+              m_ObjectArgument: {fileID: 0}
+              m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+              m_IntArgument: 0
+              m_FloatArgument: 0
+              m_StringArgument: Thigh_Spread_R
+              m_BoolArgument: 0
+            m_CallState: 2
+          - m_Target: {fileID: 1114200273}
+            m_TargetAssemblyTypeName: SpineAniPlayBridge, Assembly-CSharp
+            m_MethodName: Track02_BodyAttach
+            m_Mode: 5
+            m_Arguments:
+              m_ObjectArgument: {fileID: 0}
+              m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+              m_IntArgument: 0
+              m_FloatArgument: 0
+              m_StringArgument: Vagina_Down
+              m_BoolArgument: 0
+            m_CallState: 2
+          - m_Target: {fileID: 1114200273}
+            m_TargetAssemblyTypeName: SpineAniPlayBridge, Assembly-CSharp
+            m_MethodName: Track05_OverBody1
+            m_Mode: 5
+            m_Arguments:
+              m_ObjectArgument: {fileID: 0}
+              m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+              m_IntArgument: 0
+              m_FloatArgument: 0
+              m_StringArgument: Thigh_Off_R
+              m_BoolArgument: 0
+            m_CallState: 2
+      OnExit:
+        m_PersistentCalls:
+          m_Calls: []
+    - StateName: Closed
+      StateFlag: {fileID: 0}
+      OnEnter:
+        m_PersistentCalls:
+          m_Calls:
+          - m_Target: {fileID: 1114200273}
+            m_TargetAssemblyTypeName: SpineAniPlayBridge, Assembly-CSharp
+            m_MethodName: Track07_RightFoot
+            m_Mode: 5
+            m_Arguments:
+              m_ObjectArgument: {fileID: 0}
+              m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+              m_IntArgument: 0
+              m_FloatArgument: 0
+              m_StringArgument: Thigh_Closed_R
+              m_BoolArgument: 0
+            m_CallState: 2
+          - m_Target: {fileID: 1114200273}
+            m_TargetAssemblyTypeName: SpineAniPlayBridge, Assembly-CSharp
+            m_MethodName: Track02_BodyAttach
+            m_Mode: 5
+            m_Arguments:
+              m_ObjectArgument: {fileID: 0}
+              m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+              m_IntArgument: 0
+              m_FloatArgument: 0
+              m_StringArgument: Vagina_Down
+              m_BoolArgument: 0
+            m_CallState: 2
+          - m_Target: {fileID: 1114200273}
+            m_TargetAssemblyTypeName: SpineAniPlayBridge, Assembly-CSharp
+            m_MethodName: Track05_OverBody1
+            m_Mode: 5
+            m_Arguments:
+              m_ObjectArgument: {fileID: 0}
+              m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+              m_IntArgument: 0
+              m_FloatArgument: 0
+              m_StringArgument: Thigh_Off_R
               m_BoolArgument: 0
             m_CallState: 2
       OnExit:
@@ -46612,7 +46799,31 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7262991128554474661, guid: 1b05c314449679144bcc6b14358301b5, type: 3}
       propertyPath: groups.Array.data[0].id
-      value: test
+      value: slang
+      objectReference: {fileID: 0}
+    - target: {fileID: 7262991128554474661, guid: 1b05c314449679144bcc6b14358301b5, type: 3}
+      propertyPath: groups.Array.data[0].fast.onClick.m_PersistentCalls.m_Calls.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7262991128554474661, guid: 1b05c314449679144bcc6b14358301b5, type: 3}
+      propertyPath: groups.Array.data[0].play.onClick.m_PersistentCalls.m_Calls.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7262991128554474661, guid: 1b05c314449679144bcc6b14358301b5, type: 3}
+      propertyPath: groups.Array.data[0].pause.onClick.m_PersistentCalls.m_Calls.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7262991128554474661, guid: 1b05c314449679144bcc6b14358301b5, type: 3}
+      propertyPath: groups.Array.data[0].fast.onClick.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 7262991128554474661, guid: 1b05c314449679144bcc6b14358301b5, type: 3}
+      propertyPath: groups.Array.data[0].play.onClick.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 7262991128554474661, guid: 1b05c314449679144bcc6b14358301b5, type: 3}
+      propertyPath: groups.Array.data[0].pause.onClick.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 8233766648422976646, guid: 1b05c314449679144bcc6b14358301b5, type: 3}
       propertyPath: m_AnchorMax.y
