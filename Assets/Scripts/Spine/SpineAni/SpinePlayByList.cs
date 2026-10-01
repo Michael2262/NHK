@@ -66,6 +66,8 @@ public class SpinePlayByList : MonoBehaviour
     [Serializable]
     public class SpinePlayGroup
     {
+        [Tooltip("編輯用集合名稱；留空顯示為未分類。播放仍使用個別 groupName。")]
+        public string collection = "";
         public string groupName;
         public List<SpineClip> clips = new List<SpineClip>();
 

@@ -14,6 +14,10 @@ public sealed class SpinePlayByListWindow : EditorWindow
     [SerializeField] private string search = "";
     [SerializeField] private Vector2 listScroll, detailScroll;
     [SerializeField] private bool condition;
+    [SerializeField] private int editSelected = -1;
+    [SerializeField] private string editSearch = "";
+    [SerializeField] private List<string> collapsedCollections = new List<string>();
+    private int bindingVersion;
     private bool transitioning;
     private SerializedObject data;
     private SpineListPreview preview;
@@ -35,6 +39,11 @@ public sealed class SpinePlayByListWindow : EditorWindow
     {
         minSize = new Vector2(1050, 620);
         preview = new SpineListPreview();
+        if (!Locked && target != null && string.IsNullOrEmpty(editId))
+        {
+            editTarget = target;
+            editId = GlobalObjectId.GetGlobalObjectIdSlow(target).ToString();
+        }
         transitioning = EditorApplication.isPlayingOrWillChangePlaymode != EditorApplication.isPlaying;
         EditorApplication.update += Tick;
         EditorApplication.playModeStateChanged += ModeChanged;
@@ -57,7 +66,7 @@ public sealed class SpinePlayByListWindow : EditorWindow
     private void StopPreview() => preview?.Dispose();
     private void BeforeSceneSave(Scene scene, string path) => StopPreview();
     private void BeforeSceneClose(Scene scene, bool removingScene) => StopPreview();
-    private void OnUndo() { StopPreview(); ReleaseData(); selected = -1; Repaint(); }
+    private void OnUndo() { bindingVersion++; StopPreview(); ReleaseData(); selected = -1; Repaint(); }
     private void ReleaseData() { data?.Dispose(); data = null; }
     private void Tick()
     {
@@ -68,16 +77,19 @@ public sealed class SpinePlayByListWindow : EditorWindow
     {
         if (!transitioning && target == null)
         {
+            var previous = target;
             string id = Application.isPlaying ? runtimeId : editId;
             if (!string.IsNullOrEmpty(id) && GlobalObjectId.TryParse(id, out var global))
                 target = GlobalObjectId.GlobalObjectIdentifierToObjectSlow(global) as SpinePlayByList;
             if (!Locked && target == null && editTarget != null) target = editTarget;
+            if (!ReferenceEquals(previous, target)) { ReleaseData(); bindingVersion++; }
         }
         if (preview != null && preview.Active && target == null) StopPreview();
         Repaint();
     }
     private void ModeChanged(PlayModeStateChange mode)
     {
+        bindingVersion++;
         StopPreview();
         if (mode == PlayModeStateChange.ExitingEditMode && target != null)
         {
@@ -85,15 +97,24 @@ public sealed class SpinePlayByListWindow : EditorWindow
             editTarget = target;
             editId = GlobalObjectId.GetGlobalObjectIdSlow(target).ToString();
             runtimeId = editId;
+            editSelected = selected;
+            editSearch = search;
         }
         transitioning = mode == PlayModeStateChange.ExitingEditMode || mode == PlayModeStateChange.ExitingPlayMode;
         ReleaseData();
-        if (mode == PlayModeStateChange.EnteredEditMode) target = editTarget;
+        if (mode == PlayModeStateChange.EnteredEditMode)
+        {
+            // 回到編輯模式後以記住的場景 ID 重連，不沿用執行期的目標參照。
+            target = null;
+            selected = editSelected;
+            search = editSearch;
+        }
         OnInspectorUpdate();
     }
     private void SelectTarget(SpinePlayByList next)
     {
         if (transitioning) return;
+        bindingVersion++;
         StopPreview();
         if (target != null) data?.ApplyModifiedProperties();
         ReleaseData();
@@ -122,7 +143,7 @@ public sealed class SpinePlayByListWindow : EditorWindow
         var groups = data.FindProperty("groups");
         using (new EditorGUILayout.HorizontalScope())
         {
-            using (new EditorGUILayout.VerticalScope(GUILayout.Width(245))) DrawGroups(groups);
+            using (new EditorGUILayout.VerticalScope(GUILayout.Width(290))) DrawGroups(groups);
             using (var scroll = new EditorGUILayout.ScrollViewScope(detailScroll))
             { detailScroll = scroll.scrollPosition; DrawDetails(groups); }
         }
@@ -139,6 +160,7 @@ public sealed class SpinePlayByListWindow : EditorWindow
                 selected = groups.arraySize++;
                 var group = groups.GetArrayElementAtIndex(selected);
                 group.FindPropertyRelative("groupName").stringValue = name;
+                group.FindPropertyRelative("collection").stringValue = "";
                 group.FindPropertyRelative("clips").ClearArray();
                 group.FindPropertyRelative("track").intValue = 0;
                 group.FindPropertyRelative("nextGroupName").stringValue = "";
@@ -150,18 +172,63 @@ public sealed class SpinePlayByListWindow : EditorWindow
         {
             listScroll = scroll.scrollPosition;
             string active = Application.isPlaying ? target.CurrentGroupName : preview.Group;
+            var collections = new List<string>();
             for (int i = 0; i < groups.arraySize; i++)
             {
-                var group = groups.GetArrayElementAtIndex(i);
-                string name = group.FindPropertyRelative("groupName").stringValue;
-                if (!string.IsNullOrEmpty(search) && name.IndexOf(search, StringComparison.OrdinalIgnoreCase) < 0) continue;
-                Color old = GUI.backgroundColor;
-                GUI.backgroundColor = name == active ? new Color(0.35f, 0.9f, 0.45f)
-                    : selected == i ? new Color(0.4f, 0.7f, 1f) : old;
-                bool clicked = GUILayout.Button((i == selected ? "▶ " : "") + name + "  (" + group.FindPropertyRelative("clips").arraySize + ")", GUILayout.Height(30));
-                GUI.backgroundColor = old;
-                if (clicked) { selected = i; detailScroll = Vector2.zero; Commit(false); }
+                string collection = CollectionOf(groups.GetArrayElementAtIndex(i));
+                if (!collections.Contains(collection)) collections.Add(collection);
             }
+            foreach (string collection in collections)
+            {
+                int count = 0;
+                bool matches = MatchesSearch(CollectionLabel(collection));
+                bool playing = false;
+                for (int i = 0; i < groups.arraySize; i++)
+                {
+                    var item = groups.GetArrayElementAtIndex(i);
+                    if (CollectionOf(item) != collection) continue;
+                    count++;
+                    string name = item.FindPropertyRelative("groupName").stringValue;
+                    matches |= MatchesSearch(name);
+                    playing |= !string.IsNullOrEmpty(active) && name == active;
+                }
+                if (!matches) continue;
+                using (new EditorGUILayout.HorizontalScope(EditorStyles.helpBox))
+                {
+                    bool open = !collapsedCollections.Contains(collection);
+                    bool next = EditorGUILayout.Foldout(open, (playing ? "● " : "") + CollectionLabel(collection) + " (" + count + ")", true);
+                    if (open != next)
+                    {
+                        if (next) collapsedCollections.Remove(collection); else collapsedCollections.Add(collection);
+                        Commit(false);
+                    }
+                    using (new EditorGUI.DisabledScope(Locked))
+                        if (GUILayout.Button(new GUIContent("複製", "複製整個 Collection 及其所有 Group"), GUILayout.Width(45)))
+                            DuplicateCollection(groups, collection);
+                }
+                if (collapsedCollections.Contains(collection) && string.IsNullOrEmpty(search)) continue;
+                DrawCollectionGroups(groups, collection, active);
+            }
+        }
+    }
+    private static string CollectionOf(SerializedProperty group) => group.FindPropertyRelative("collection").stringValue ?? "";
+    private static string CollectionLabel(string collection) => string.IsNullOrEmpty(collection) ? "（未分類）" : collection;
+    private bool MatchesSearch(string name) => string.IsNullOrEmpty(search)
+        || (name ?? "").IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0;
+    private void DrawCollectionGroups(SerializedProperty groups, string collection, string active)
+    {
+        for (int i = 0; i < groups.arraySize; i++)
+        {
+            var group = groups.GetArrayElementAtIndex(i);
+            if (CollectionOf(group) != collection) continue;
+            string name = group.FindPropertyRelative("groupName").stringValue;
+            if (!MatchesSearch(name) && !MatchesSearch(CollectionLabel(collection))) continue;
+            Color old = GUI.backgroundColor;
+            GUI.backgroundColor = name == active ? new Color(0.35f, 0.9f, 0.45f)
+                : selected == i ? new Color(0.4f, 0.7f, 1f) : old;
+            bool clicked = GUILayout.Button((i == selected ? "▶ " : "") + name + "  (" + group.FindPropertyRelative("clips").arraySize + ")", GUILayout.Height(30));
+            GUI.backgroundColor = old;
+            if (clicked) { selected = i; detailScroll = Vector2.zero; Commit(false); }
         }
     }
     private void DrawDetails(SerializedProperty groups)
@@ -172,6 +239,10 @@ public sealed class SpinePlayByListWindow : EditorWindow
         var group = groups.GetArrayElementAtIndex(selected);
         using (new EditorGUI.DisabledScope(Locked))
         {
+            var collection = group.FindPropertyRelative("collection");
+            EditorGUI.BeginChangeCheck();
+            string collectionName = EditorGUILayout.DelayedTextField(new GUIContent("Collection（集合）", "相同名稱的組歸入同一集合；留空為未分類。"), collection.stringValue);
+            if (EditorGUI.EndChangeCheck()) { collection.stringValue = collectionName; Commit(); }
             using (new EditorGUILayout.HorizontalScope())
             {
                 EditorGUILayout.PropertyField(group.FindPropertyRelative("groupName"), new GUIContent("組名"));
@@ -267,14 +338,140 @@ public sealed class SpinePlayByListWindow : EditorWindow
         int next = EditorGUILayout.Popup(index, options.ToArray());
         if (next != index) property.stringValue = next == 0 ? "" : options[next];
     }
-    private static void DrawGroupLink(SerializedProperty property, SerializedProperty groups, string label)
+    private void DrawGroupLink(SerializedProperty property, SerializedProperty groups, string label)
     {
-        var names = new List<string> { "（無）" };
-        for (int i = 0; i < groups.arraySize; i++) names.Add(groups.GetArrayElementAtIndex(i).FindPropertyRelative("groupName").stringValue);
-        int index = string.IsNullOrEmpty(property.stringValue) ? 0 : names.IndexOf(property.stringValue);
-        if (index < 0) { index = names.Count; names.Add("⚠ 找不到：" + property.stringValue); }
-        int next = EditorGUILayout.Popup(label, index, names.ToArray());
-        if (next != index) property.stringValue = next == 0 ? "" : names[next];
+        string value = property.stringValue;
+        string display = string.IsNullOrEmpty(value) ? "（無）" : "⚠ 找不到：" + value;
+        for (int i = 0; i < groups.arraySize; i++)
+        {
+            var item = groups.GetArrayElementAtIndex(i);
+            if (item.FindPropertyRelative("groupName").stringValue == value && !string.IsNullOrEmpty(value))
+            { display = CollectionLabel(CollectionOf(item)) + " → " + value; break; }
+        }
+        Rect rect = EditorGUILayout.GetControlRect();
+        rect = EditorGUI.PrefixLabel(rect, new GUIContent(label));
+        if (!EditorGUI.DropdownButton(rect, new GUIContent(display), FocusType.Keyboard)) return;
+        // 選單回呼不持有 SerializedProperty，避免模式切換或結構變更後寫到錯誤的組。
+        string path = property.propertyPath;
+        int ownerIndex = selected;
+        string ownerName = groups.GetArrayElementAtIndex(ownerIndex).FindPropertyRelative("groupName").stringValue;
+        var menuTarget = target;
+        int version = bindingVersion;
+        var menu = new GenericMenu();
+        Action<string> choose = next =>
+        {
+            if (this == null || Locked || transitioning || menuTarget == null || target != menuTarget || version != bindingVersion) return;
+            using (var fresh = new SerializedObject(menuTarget))
+            {
+                var freshGroups = fresh.FindProperty("groups");
+                if (ownerIndex < 0 || ownerIndex >= freshGroups.arraySize
+                    || freshGroups.GetArrayElementAtIndex(ownerIndex).FindPropertyRelative("groupName").stringValue != ownerName) return;
+                var destination = fresh.FindProperty(path);
+                if (destination == null) return;
+                destination.stringValue = next;
+                fresh.ApplyModifiedProperties();
+            }
+            ReleaseData();
+            Repaint();
+        };
+        menu.AddItem(new GUIContent("（無）"), string.IsNullOrEmpty(value), () => choose(""));
+        menu.AddSeparator("");
+        for (int i = 0; i < groups.arraySize; i++)
+        {
+            var item = groups.GetArrayElementAtIndex(i);
+            string name = item.FindPropertyRelative("groupName").stringValue;
+            string menuPath = MenuText(CollectionLabel(CollectionOf(item))) + "/" + MenuText(name) + " [" + (i + 1) + "]";
+            if (string.IsNullOrWhiteSpace(name)) menu.AddDisabledItem(new GUIContent(menuPath));
+            else menu.AddItem(new GUIContent(menuPath), name == value, () => choose(name));
+        }
+        data.ApplyModifiedProperties();
+        menu.DropDown(rect);
+    }
+    private static string MenuText(string value) => (value ?? "").Replace("/", "／").Replace("&", "＆");
+
+    private void DuplicateCollection(SerializedProperty groups, string collection)
+    {
+        if (Locked) return;
+        var indices = new List<int>();
+        var names = new HashSet<string>(StringComparer.Ordinal);
+        var collectionNames = new HashSet<string>(StringComparer.Ordinal);
+        for (int i = 0; i < groups.arraySize; i++)
+        {
+            var group = groups.GetArrayElementAtIndex(i);
+            string name = group.FindPropertyRelative("groupName").stringValue;
+            // 播放以全域組名定位，歧義名稱不能安全重接副本內的跳轉。
+            if (string.IsNullOrWhiteSpace(name) || !names.Add(name))
+            { ShowNotification(new GUIContent("請先修正空白或重複的 Group 名稱，再複製 Collection。")); return; }
+            collectionNames.Add(CollectionOf(group));
+            if (CollectionOf(group) == collection) indices.Add(i);
+        }
+        if (indices.Count == 0) return;
+        string copyCollection = ReserveName(collectionNames, (string.IsNullOrEmpty(collection) ? "未分類" : collection) + "_副本");
+        var nameMap = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (int index in indices)
+        {
+            string original = groups.GetArrayElementAtIndex(index).FindPropertyRelative("groupName").stringValue;
+            nameMap.Add(original, ReserveName(names, original + "_副本"));
+        }
+        int firstCopy = groups.arraySize;
+        // 先完成所有名稱映射；複製值再附加到末尾，原組及其順位保持不變。
+        foreach (int index in indices)
+        {
+            var source = groups.GetArrayElementAtIndex(index);
+            string original = source.FindPropertyRelative("groupName").stringValue;
+            // SpinePlayGroup 只有字串、enum 與純資料清單；用序列化快照保留完整內容。
+            var snapshot = new SpinePlayByList.SpinePlayGroup
+            {
+                collection = copyCollection,
+                groupName = nameMap[original],
+                track = (MySpineSystem.AnimationTrack)source.FindPropertyRelative("track").intValue,
+                nextGroupName = source.FindPropertyRelative("nextGroupName").stringValue,
+                checkGroupName = source.FindPropertyRelative("checkGroupName").stringValue
+            };
+            var clips = source.FindPropertyRelative("clips");
+            for (int c = 0; c < clips.arraySize; c++)
+            {
+                var clip = clips.GetArrayElementAtIndex(c);
+                snapshot.clips.Add(new SpinePlayByList.SpineClip
+                {
+                    animationName = clip.FindPropertyRelative("animationName").stringValue,
+                    repeatCount = clip.FindPropertyRelative("repeatCount").intValue,
+                    isLoop = clip.FindPropertyRelative("isLoop").boolValue,
+                    isRandom = clip.FindPropertyRelative("isRandom").boolValue
+                });
+            }
+            if (nameMap.TryGetValue(snapshot.nextGroupName ?? "", out string next)) snapshot.nextGroupName = next;
+            if (nameMap.TryGetValue(snapshot.checkGroupName ?? "", out string check)) snapshot.checkGroupName = check;
+            int destinationIndex = groups.arraySize++;
+            var destination = groups.GetArrayElementAtIndex(destinationIndex);
+            destination.FindPropertyRelative("collection").stringValue = snapshot.collection;
+            destination.FindPropertyRelative("groupName").stringValue = snapshot.groupName;
+            destination.FindPropertyRelative("track").intValue = (int)snapshot.track;
+            destination.FindPropertyRelative("nextGroupName").stringValue = snapshot.nextGroupName;
+            destination.FindPropertyRelative("checkGroupName").stringValue = snapshot.checkGroupName;
+            var destinationClips = destination.FindPropertyRelative("clips");
+            destinationClips.arraySize = snapshot.clips.Count;
+            for (int c = 0; c < snapshot.clips.Count; c++)
+            {
+                var clip = destinationClips.GetArrayElementAtIndex(c);
+                clip.FindPropertyRelative("animationName").stringValue = snapshot.clips[c].animationName;
+                clip.FindPropertyRelative("repeatCount").intValue = snapshot.clips[c].repeatCount;
+                clip.FindPropertyRelative("isLoop").boolValue = snapshot.clips[c].isLoop;
+                clip.FindPropertyRelative("isRandom").boolValue = snapshot.clips[c].isRandom;
+            }
+        }
+        selected = firstCopy;
+        search = "";
+        collapsedCollections.Remove(copyCollection);
+        Undo.SetCurrentGroupName("複製 Spine Collection");
+        Commit();
+    }
+    private static string ReserveName(HashSet<string> names, string prefix)
+    {
+        string name = prefix;
+        int suffix = 2;
+        while (!names.Add(name)) name = prefix + suffix++;
+        return name;
     }
     private void DrawPlayback(SerializedProperty groups)
     {
@@ -325,6 +522,7 @@ public sealed class SpinePlayByListWindow : EditorWindow
     }
     private void Commit(bool stop = true)
     {
+        bindingVersion++;
         if (stop) StopPreview();
         data.ApplyModifiedProperties(); GUI.FocusControl(null); Repaint(); GUIUtility.ExitGUI();
     }
