@@ -478,17 +478,26 @@ public sealed class SpinePlayByListWindow : EditorWindow
         using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
         {
             EditorGUILayout.LabelField(Application.isPlaying ? "Quick Test｜遊戲播放" : "Quick Test｜Scene View 試播", EditorStyles.boldLabel);
-            EditorGUILayout.LabelField(Application.isPlaying ? (target.IsPlaying ? "正在播放：" + target.CurrentGroupName : "未播放")
+            EditorGUILayout.LabelField(Application.isPlaying ? (target.IsPaused ? "已暫停：" + target.CurrentGroupName : target.IsPlaying ? "正在播放：" + target.CurrentGroupName : "未播放")
                 : (preview.Paused ? "已暫停｜" : "") + preview.Status, EditorStyles.wordWrappedLabel);
             using (new EditorGUILayout.HorizontalScope())
             {
                 bool valid = selected >= 0 && selected < groups.arraySize && !EditorUtility.IsPersistent(target);
                 using (new EditorGUI.DisabledScope(!valid))
                 {
-                    if (GUILayout.Button(Application.isPlaying ? "播放所選組" : "試播所選組／重新播放")) Play(false);
+                    bool resumeSelected = valid && (Application.isPlaying
+                        ? target.IsPaused && target.CurrentGroupName == groups.GetArrayElementAtIndex(selected).FindPropertyRelative("groupName").stringValue
+                        : preview.Active && preview.Paused && preview.Group == groups.GetArrayElementAtIndex(selected).FindPropertyRelative("groupName").stringValue);
+                    if (GUILayout.Button(resumeSelected ? "繼續所選組" : Application.isPlaying ? "播放所選組" : "試播所選組／重新播放")) Play(false);
                     if (Application.isPlaying && GUILayout.Button("播放後返回")) Play(true);
                 }
-                if (!Application.isPlaying)
+                if (Application.isPlaying)
+                {
+                    using (new EditorGUI.DisabledScope(!target.IsPlaying))
+                        if (GUILayout.Button(target.IsPaused ? "繼續" : "暫停"))
+                        { if (target.IsPaused) target.ResumePlaying(); else target.PausePlaying(); }
+                }
+                else
                     using (new EditorGUI.DisabledScope(!preview.Active))
                         if (GUILayout.Button(preview.Paused ? "繼續" : "暫停")) preview.Paused = !preview.Paused;
                 if (GUILayout.Button("停止"))
@@ -500,7 +509,7 @@ public sealed class SpinePlayByListWindow : EditorWindow
                 }
             }
             if (!Application.isPlaying)
-                EditorGUILayout.LabelField("預覽不觸發遊戲事件。編輯後按重新播放套用；停止、存場景或關閉視窗會清理預覽。", EditorStyles.wordWrappedMiniLabel);
+                EditorGUILayout.LabelField("預覽不觸發遊戲事件。暫停後播放同組會接續；要套用編輯內容請停止後重新試播。停止、存場景或關閉視窗會清理預覽。", EditorStyles.wordWrappedMiniLabel);
         }
     }
     private void Play(bool back)
@@ -509,7 +518,13 @@ public sealed class SpinePlayByListWindow : EditorWindow
         string name = target.groups[selected].groupName;
         if (Application.isPlaying)
         { if (back) target.PlayGroupAndGoBack(name); else target.PlayGroup(name); }
-        else { preview.Condition = condition; preview.Start(target, name); SceneView.RepaintAll(); }
+        else
+        {
+            preview.Condition = condition;
+            if (preview.Active && preview.Paused && preview.Group == name) preview.Paused = false;
+            else preview.Start(target, name);
+            SceneView.RepaintAll();
+        }
         GUI.FocusControl(null); Repaint(); GUIUtility.ExitGUI();
     }
     private static string UniqueName(SerializedProperty groups, string prefix)

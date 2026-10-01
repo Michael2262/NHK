@@ -17,10 +17,11 @@ using SpineAnimationState = Spine.AnimationState; // 避免與 UnityEngine.Anima
 /// - ConditionalTransitionCheck: 外部條件檢查委派，返回 true 表示條件滿足。
 /// - checkGroupName: 各組可自訂，當條件滿足時要跳轉的目標組名。
 /// - StopPlaying(): 停止並清除正在播放的軌道。
+/// - PausePlaying() / ResumePlaying(): 保留目前軌道與清單進度，暫停／接續播放。
 /// - PlayGroup(name): 中斷現有播放、清除目標軌道後從指定組開始；若該組含 NextGroup 會一路串接到鏈末端。
-///   若指定組「已在播放中」(CurrentGroupName == name) 則略過不重播。
+///   若指定組已暫停則接續；若正在播放則略過不重播。
 /// - PlayGroupAndGoBack(name): 播放指定組一次（會先檢查外部條件轉場），然後返回播放呼叫前的組。
-///   若指定組正是當前播放組則略過。
+///   若指定組正是當前播放組，暫停時接續原流程，播放中則略過。
 /// - OnGroupCompleted(string startGroupName): 整條鏈播放完畢後觸發，回傳最初 PlayGroup() 的組名。
 /// - GetByControllerID(id): 透過 SpineAnimationController 的 ID 系統取得對應的 SpinePlayByList。
 /// </summary>
@@ -95,11 +96,15 @@ public class SpinePlayByList : MonoBehaviour
     public event Action<string> OnGroupStarted;
     public event Action<string> OnGroupCompleted;
 
+    // 暫停仍保有播放流程，既有呼叫端可繼續判斷軌道是否被此播放器佔用。
     public bool IsPlaying => _playRoutine != null;
+    public bool IsPaused { get; private set; }
     public string CurrentGroupName { get; private set; }
 
     Coroutine _playRoutine;
     SpineAnimationState _state; // 快取，透過 controller 取得
+    TrackEntry _pausedEntry;
+    float _pausedTimeScale;
 
     string _rootGroupNameForCompletion;
     string _returnGroupName = null;
@@ -137,8 +142,46 @@ public class SpinePlayByList : MonoBehaviour
         return true;
     }
 
+    /// <summary>暫停目前組的軌道與清單進度，不清軌、不重新建立動畫。</summary>
+    public void PausePlaying()
+    {
+        if (IsPaused || string.IsNullOrEmpty(CurrentGroupName)) return;
+        var group = FindGroup(CurrentGroupName);
+        if (group == null || _state == null) return;
+
+        IsPaused = true;
+        _pausedEntry = _state.GetTrack((int)group.track);
+        if (_pausedEntry != null)
+        {
+            _pausedTimeScale = _pausedEntry.TimeScale;
+            _pausedEntry.Dispose += OnPausedEntryDisposed;
+            _pausedEntry.TimeScale = 0f;
+        }
+    }
+
+    /// <summary>保留原本的動畫位置、重複次數與隨機順序，接續暫停中的流程。</summary>
+    public void ResumePlaying()
+    {
+        if (!IsPaused) return;
+        IsPaused = false;
+        if (_pausedEntry != null)
+        {
+            _pausedEntry.Dispose -= OnPausedEntryDisposed;
+            _pausedEntry.TimeScale = _pausedTimeScale;
+            _pausedEntry = null;
+        }
+    }
+
+    private void OnPausedEntryDisposed(TrackEntry entry)
+    {
+        // Spine 會回收並重用 TrackEntry，不能在恢復時修改已回收的物件。
+        entry.Dispose -= OnPausedEntryDisposed;
+        if (ReferenceEquals(_pausedEntry, entry)) _pausedEntry = null;
+    }
+
     public void StopPlaying()
     {
+        ResumePlaying();
         if (_playRoutine != null)
         {
             StopCoroutine(_playRoutine);
@@ -163,9 +206,10 @@ public class SpinePlayByList : MonoBehaviour
 
     public void PlayGroup(string groupName)
     {
-        // 已在播放同一組 → 略過不重播（loop 現在留在同一組內，CurrentGroupName 會整段等於此組）
+        // 同組暫停時接續；播放中略過，不重建流程或重抽隨機順序。
         if (IsPlaying && string.Equals(CurrentGroupName, groupName, StringComparison.Ordinal))
         {
+            if (IsPaused) { ResumePlaying(); return; }
             Debug.Log($"[{nameof(SpinePlayByList)}] 組 '{groupName}' 已在播放中，略過重複呼叫。", this);
             return;
         }
@@ -190,6 +234,8 @@ public class SpinePlayByList : MonoBehaviour
             }
         }
 
+        // 目標驗證成功才解除暫停，無效的播放要求不改變原本狀態。
+        ResumePlaying();
         _returnGroupName = null;
 
         if (_playRoutine != null) StopCoroutine(_playRoutine);
@@ -200,9 +246,10 @@ public class SpinePlayByList : MonoBehaviour
 
     public void PlayGroupAndGoBack(string groupName)
     {
-        // 已在播放同一組 → 略過（沒必要插播自己）
+        // 同組暫停時接續原流程（包括原本的返回目標），不重新插播自己。
         if (IsPlaying && string.Equals(CurrentGroupName, groupName, StringComparison.Ordinal))
         {
+            if (IsPaused) { ResumePlaying(); return; }
             Debug.Log($"[{nameof(SpinePlayByList)}] [PlayGroupAndGoBack] 組 '{groupName}' 已在播放中，略過插播。", this);
             return;
         }
@@ -241,6 +288,7 @@ public class SpinePlayByList : MonoBehaviour
             return;
         }
 
+        ResumePlaying();
         _returnGroupName = CurrentGroupName;
 
         if (_playRoutine != null) StopCoroutine(_playRoutine);
@@ -252,6 +300,7 @@ public class SpinePlayByList : MonoBehaviour
     {
         CurrentGroupName = groupToPlay.groupName;
         OnGroupStarted?.Invoke(CurrentGroupName);
+        while (IsPaused) yield return null;
 
         int trackIndex = (int)groupToPlay.track;
         int clipCount = groupToPlay.clips?.Count ?? 0;
@@ -259,6 +308,7 @@ public class SpinePlayByList : MonoBehaviour
 
         // 播放整組一次（隨機後段依 randomStart 打亂；此處保證無 loop）
         yield return CoPlayRange(groupToPlay, trackIndex, 0, clipCount, randomStart);
+        while (IsPaused) yield return null;
         if (_state == null) { _playRoutine = null; yield break; }
 
         CurrentGroupName = null;
@@ -288,6 +338,7 @@ public class SpinePlayByList : MonoBehaviour
 
             CurrentGroupName = group.groupName;
             OnGroupStarted?.Invoke(CurrentGroupName);
+            while (IsPaused) yield return null;
 
             int trackIndex = (int)group.track;
             int clipCount = group.clips?.Count ?? 0;
@@ -308,6 +359,7 @@ public class SpinePlayByList : MonoBehaviour
                 if (_state == null) { _playRoutine = null; yield break; }
             }
 
+            while (IsPaused) yield return null;
             // intro 播完檢查一次外部條件
             string ctarget = GetConditionTransitionTarget(group);
             if (ctarget != null)
@@ -322,6 +374,7 @@ public class SpinePlayByList : MonoBehaviour
                 while (true)
                 {
                     yield return CoPlayRange(group, trackIndex, loopStart, clipCount, randomStart);
+                    while (IsPaused) yield return null;
                     if (_state == null) { _playRoutine = null; yield break; }
 
                     ctarget = GetConditionTransitionTarget(group);
@@ -375,12 +428,14 @@ public class SpinePlayByList : MonoBehaviour
             int times = Mathf.Max(1, clip.repeatCount);
             for (int r = 0; r < times; r++)
             {
+                while (IsPaused) yield return null;
                 if (_state == null) yield break;
 
                 _controller.ClearTrack(group.track);
                 TrackEntry te = _state.SetAnimation(trackIndex, clip.animationName, false);
 
-                while (te != null && !te.IsComplete)
+                // 即使剛好在動畫完成的影格按暫停，也不能前進到下一段。
+                while (IsPaused || (te != null && !te.IsComplete))
                 {
                     yield return null;
                 }

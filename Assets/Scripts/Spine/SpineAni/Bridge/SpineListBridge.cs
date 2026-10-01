@@ -45,6 +45,20 @@ public class SpineListBridge : MonoBehaviour
         if (target != null) target.PlayGroupAndGoBack(name);
     }
 
+    /// <summary>暫停目前清單並保留姿勢與播放進度。</summary>
+    public void PauseList()
+    {
+        var target = ResolvePlayByList();
+        if (target != null) target.PausePlaying();
+    }
+
+    /// <summary>接續暫停的清單；也可以透過播放同組來恢復。</summary>
+    public void ResumeList()
+    {
+        var target = ResolvePlayByList();
+        if (target != null) target.ResumePlaying();
+    }
+
     /// <summary>
     /// 停止清單並清除目前群組軌道；自然完成後的殘留軌道沿用原播放器行為，不額外清除。
     /// </summary>

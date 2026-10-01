@@ -16611,6 +16611,8 @@ MeshRenderer:
   - {fileID: 2100000, guid: 4033de8e65058804695c08de198b1b57, type: 2}
   - {fileID: 2100000, guid: 843e4e875220e404fae4fa6eb646d58f, type: 2}
   - {fileID: 2100000, guid: 4033de8e65058804695c08de198b1b57, type: 2}
+  - {fileID: 2100000, guid: 12df8399dc0c6514985bae7140d01786, type: 2}
+  - {fileID: 2100000, guid: 4033de8e65058804695c08de198b1b57, type: 2}
   - {fileID: 2100000, guid: 843e4e875220e404fae4fa6eb646d58f, type: 2}
   - {fileID: 2100000, guid: 4033de8e65058804695c08de198b1b57, type: 2}
   - {fileID: 2100000, guid: 843e4e875220e404fae4fa6eb646d58f, type: 2}
@@ -16624,20 +16626,34 @@ MeshRenderer:
   - {fileID: 2100000, guid: 12df8399dc0c6514985bae7140d01786, type: 2}
   - {fileID: 2100000, guid: 4033de8e65058804695c08de198b1b57, type: 2}
   - {fileID: 2100000, guid: 843e4e875220e404fae4fa6eb646d58f, type: 2}
+  - {fileID: 2100000, guid: 4033de8e65058804695c08de198b1b57, type: 2}
+  - {fileID: 2100000, guid: 843e4e875220e404fae4fa6eb646d58f, type: 2}
+  - {fileID: 2100000, guid: 4033de8e65058804695c08de198b1b57, type: 2}
+  - {fileID: 2100000, guid: 843e4e875220e404fae4fa6eb646d58f, type: 2}
+  - {fileID: 2100000, guid: 4033de8e65058804695c08de198b1b57, type: 2}
+  - {fileID: 2100000, guid: 843e4e875220e404fae4fa6eb646d58f, type: 2}
+  - {fileID: 2100000, guid: 4033de8e65058804695c08de198b1b57, type: 2}
+  - {fileID: 2100000, guid: 843e4e875220e404fae4fa6eb646d58f, type: 2}
+  - {fileID: 2100000, guid: 4033de8e65058804695c08de198b1b57, type: 2}
+  - {fileID: 2100000, guid: 843e4e875220e404fae4fa6eb646d58f, type: 2}
   - {fileID: 2100000, guid: 12df8399dc0c6514985bae7140d01786, type: 2}
   - {fileID: 2100000, guid: 4033de8e65058804695c08de198b1b57, type: 2}
   - {fileID: 2100000, guid: 12df8399dc0c6514985bae7140d01786, type: 2}
   - {fileID: 2100000, guid: 843e4e875220e404fae4fa6eb646d58f, type: 2}
   - {fileID: 2100000, guid: 4033de8e65058804695c08de198b1b57, type: 2}
   - {fileID: 2100000, guid: 12df8399dc0c6514985bae7140d01786, type: 2}
+  - {fileID: 2100000, guid: 4033de8e65058804695c08de198b1b57, type: 2}
   - {fileID: 2100000, guid: 843e4e875220e404fae4fa6eb646d58f, type: 2}
   - {fileID: 2100000, guid: 12df8399dc0c6514985bae7140d01786, type: 2}
+  - {fileID: 2100000, guid: 843e4e875220e404fae4fa6eb646d58f, type: 2}
+  - {fileID: 2100000, guid: 4033de8e65058804695c08de198b1b57, type: 2}
   - {fileID: 2100000, guid: 843e4e875220e404fae4fa6eb646d58f, type: 2}
   - {fileID: 2100000, guid: 12df8399dc0c6514985bae7140d01786, type: 2}
   - {fileID: 2100000, guid: 4033de8e65058804695c08de198b1b57, type: 2}
   - {fileID: 2100000, guid: 843e4e875220e404fae4fa6eb646d58f, type: 2}
   - {fileID: 2100000, guid: 4033de8e65058804695c08de198b1b57, type: 2}
   - {fileID: 2100000, guid: 12df8399dc0c6514985bae7140d01786, type: 2}
+  - {fileID: 2100000, guid: 843e4e875220e404fae4fa6eb646d58f, type: 2}
   - {fileID: 2100000, guid: 4033de8e65058804695c08de198b1b57, type: 2}
   - {fileID: 2100000, guid: 12df8399dc0c6514985bae7140d01786, type: 2}
   - {fileID: 2100000, guid: 4033de8e65058804695c08de198b1b57, type: 2}
@@ -16765,7 +16781,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SpineSkinReceiver
   skeletonAnimation: {fileID: 1144469170}
   receiverID: 
-  defaultPresetID: test
+  defaultPresetID: Uniform
   defaultSkins: []
   groups:
   - id: Uniform
@@ -16777,6 +16793,7 @@ MonoBehaviour:
   - id: test
     skins:
     - Casual
+    - Pants
 --- !u!114 &1144469177
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -16791,18 +16808,34 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SpinePlayByList
   _controller: {fileID: 1144469169}
   groups:
-  - groupName: Slang
+  - collection: Slang
+    groupName: Slang_S1
     clips:
     - animationName: GG_Slang_S1
       repeatCount: 1
       isLoop: 1
       isRandom: 0
-    track: 1
+    track: 16
     nextGroupName: 
     checkGroupName: 
-  - groupName: "\u65B0\u5206\u7D442"
-    clips: []
-    track: 0
+  - collection: Slang
+    groupName: Slang_S2
+    clips:
+    - animationName: GG_Slang_S2
+      repeatCount: 1
+      isLoop: 1
+      isRandom: 0
+    track: 16
+    nextGroupName: 
+    checkGroupName: 
+  - collection: Slang
+    groupName: Slang_S3
+    clips:
+    - animationName: GG_Slang_S3
+      repeatCount: 1
+      isLoop: 1
+      isRandom: 0
+    track: 16
     nextGroupName: 
     checkGroupName: 
   simulateConditionalTransitionCheck: 0
