@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using UnityEditor;
-using UnityEditorInternal;
 using UnityEngine;
 
 /// <summary>分組方塊總覽與選取項目編輯面板。</summary>
@@ -17,6 +16,7 @@ public sealed class GroupedStateControllerWindow : EditorWindow
     [SerializeField] private int selectedGroup = -1, selectedState = -1;
     [SerializeField] private string search = "";
     [SerializeField] private bool showChecks;
+    [SerializeField] private bool commonSettings, showUnityFunctions;
     private SerializedObject data;
     private static List<EventValue> clipboard;
     private static string clipboardLabel;
@@ -24,7 +24,7 @@ public sealed class GroupedStateControllerWindow : EditorWindow
     private static List<EventValue> selectedEventClipboard;
     private static string selectedEventClipboardLabel;
     private static bool selectedEventClipboardFromPlay;
-    private readonly Dictionary<string, SelectableEventDrawer> eventDrawers = new Dictionary<string, SelectableEventDrawer>();
+    private readonly Dictionary<string, FilteredUnityEventDrawer> eventDrawers = new Dictionary<string, FilteredUnityEventDrawer>();
     private static readonly Color Active = new Color(0.18f, 0.65f, 0.34f, 0.55f);
     private static readonly Color Exited = new Color(0.9f, 0.5f, 0.12f, 0.5f);
     private static readonly Color Selected = new Color(0.25f, 0.65f, 1f);
@@ -36,33 +36,6 @@ public sealed class GroupedStateControllerWindow : EditorWindow
         public SerializedPropertyType Type;
         public object Value;
         public bool IsArray;
-    }
-
-    // 沿用原生事件欄位與函式選單，只追蹤使用者實際選中的清單項目。
-    private sealed class SelectableEventDrawer : UnityEventDrawer
-    {
-        private ReorderableList eventList;
-        private bool hasSelection;
-        public int SelectedIndex => hasSelection && eventList != null ? eventList.index : -1;
-
-        protected override void SetupReorderableList(ReorderableList list)
-        {
-            base.SetupReorderableList(list);
-            eventList = list;
-            hasSelection = false;
-        }
-
-        protected override void OnSelectEvent(ReorderableList list)
-        {
-            base.OnSelectEvent(list);
-            hasSelection = true;
-        }
-
-        protected override void OnReorderEvent(ReorderableList list)
-        {
-            base.OnReorderEvent(list);
-            hasSelection = true;
-        }
     }
 
     [MenuItem("Tools/NHK/分組狀態編輯器")]
@@ -230,6 +203,9 @@ public sealed class GroupedStateControllerWindow : EditorWindow
             using (new EditorGUI.DisabledScope(controller == null))
                 if (GUILayout.Button("定位", EditorStyles.toolbarButton, GUILayout.Width(40)))
                     EditorGUIUtility.PingObject(controller.gameObject);
+            bool nextCommon = GUILayout.Toggle(commonSettings, "共用設定", EditorStyles.toolbarButton, GUILayout.Width(80));
+            if (nextCommon != commonSettings)
+            { commonSettings = nextCommon; detailScroll = Vector2.zero; GUIUtility.ExitGUI(); }
         }
         if (controller == null)
         {
@@ -249,7 +225,7 @@ public sealed class GroupedStateControllerWindow : EditorWindow
             using (new EditorGUI.DisabledScope(Locked))
                 if (GUILayout.Button("＋ 分組", EditorStyles.toolbarButton, GUILayout.Width(65))) AddGroup(groups);
             bool checks = GUILayout.Toggle(showChecks, "判斷事件", EditorStyles.toolbarButton, GUILayout.Width(70));
-            if (checks != showChecks) { showChecks = checks; detailScroll = Vector2.zero; GUIUtility.ExitGUI(); }
+            if (checks != showChecks) { showChecks = checks; commonSettings = false; detailScroll = Vector2.zero; GUIUtility.ExitGUI(); }
         }
         EditorGUILayout.LabelField("單擊方塊：編輯　｜　右鍵：測試切換　｜　藍框：選取　綠底：成立　橘底：最後退出", EditorStyles.miniLabel);
         using (var scroll = new EditorGUILayout.ScrollViewScope(boardScroll, GUILayout.Height(Mathf.Max(180, position.height * 0.43f))))
@@ -362,6 +338,7 @@ public sealed class GroupedStateControllerWindow : EditorWindow
 
     private void Select(int group, int state)
     {
+        commonSettings = false;
         selectedGroup = group; selectedState = state; showChecks = false;
         detailScroll = Vector2.zero;
         GUI.FocusControl(null);
@@ -370,6 +347,13 @@ public sealed class GroupedStateControllerWindow : EditorWindow
 
     private void DrawDetails(SerializedProperty groups)
     {
+        if (commonSettings)
+        {
+            EditorGUILayout.LabelField("共用設定", EditorStyles.largeLabel);
+            EditorGUILayout.LabelField("事件選單顯示", EditorStyles.boldLabel);
+            showUnityFunctions = EditorGUILayout.ToggleLeft(new GUIContent("顯示 Unity 內建功能", "統一套用此視窗所有進入、解除及 CheckState 判斷事件。預設關閉；既有綁定不受影響。"), showUnityFunctions);
+            return;
+        }
         if (showChecks)
         {
             EditorGUILayout.LabelField("CheckState 判斷結果", EditorStyles.boldLabel);
@@ -454,9 +438,9 @@ public sealed class GroupedStateControllerWindow : EditorWindow
                 using (new EditorGUI.DisabledScope(Locked || clipboard == null || clipboardFromPlay))
                     if (GUILayout.Button(new GUIContent("貼上", "覆蓋此事件，支援 Undo"), GUILayout.Width(45))) Paste(property);
             }
-            if (!eventDrawers.TryGetValue(property.propertyPath, out SelectableEventDrawer drawer))
+            if (!eventDrawers.TryGetValue(property.propertyPath, out FilteredUnityEventDrawer drawer))
             {
-                drawer = new SelectableEventDrawer();
+                drawer = new FilteredUnityEventDrawer(this, () => controller, () => showUnityFunctions, () => !Locked && !changingPlayMode, item => eventDrawers.ContainsValue(item));
                 eventDrawers.Add(property.propertyPath, drawer);
             }
             var label = new GUIContent(title);

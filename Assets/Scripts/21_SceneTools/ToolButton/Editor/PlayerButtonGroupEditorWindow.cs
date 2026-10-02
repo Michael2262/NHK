@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using UnityEditor;
-using UnityEditorInternal;
 using UnityEngine;
 
 /// <summary>固定三欄的播放按鈕分組編輯器。</summary>
@@ -14,8 +13,9 @@ public sealed class PlayerButtonGroupEditorWindow : EditorWindow
     [SerializeField] private int selectedGroup = -1;
     [SerializeField] private Vector2 groupScroll, detailScroll;
     [SerializeField] private bool commonSettings;
+    [SerializeField] private bool showUnityFunctions;
     private SerializedObject data;
-    private readonly Dictionary<string, SelectableEventDrawer> drawers = new Dictionary<string, SelectableEventDrawer>();
+    private readonly Dictionary<string, FilteredUnityEventDrawer> drawers = new Dictionary<string, FilteredUnityEventDrawer>();
     private static readonly string[] Actions = { "pause", "play", "fast" };
     private static readonly string[] Titles = { "暫停", "播放", "快速" };
     private static readonly Color ActiveColor = new Color(0.18f, 0.65f, 0.34f, 0.6f);
@@ -36,30 +36,6 @@ public sealed class PlayerButtonGroupEditorWindow : EditorWindow
         public readonly List<Value> Values = new List<Value>();
         public string Label;
         public bool FromPlay;
-    }
-
-    // 保留原生 UnityEvent 的函式選單、參數編輯與拖曳排序。
-    private sealed class SelectableEventDrawer : UnityEventDrawer
-    {
-        private ReorderableList eventList;
-        private bool hasSelection;
-        public int SelectedIndex => hasSelection && eventList != null ? eventList.index : -1;
-        protected override void SetupReorderableList(ReorderableList list)
-        {
-            base.SetupReorderableList(list);
-            eventList = list;
-            hasSelection = false;
-        }
-        protected override void OnSelectEvent(ReorderableList list)
-        {
-            base.OnSelectEvent(list);
-            hasSelection = true;
-        }
-        protected override void OnReorderEvent(ReorderableList list)
-        {
-            base.OnReorderEvent(list);
-            hasSelection = true;
-        }
     }
 
     [MenuItem("Tools/NHK/PlayerButtonGroup編輯器")]
@@ -336,9 +312,9 @@ public sealed class PlayerButtonGroupEditorWindow : EditorWindow
                 using (new EditorGUI.DisabledScope(!CanPaste(eventClipboard)))
                     if (GUILayout.Button("貼上全部（覆蓋）")) Paste(property, eventClipboard, false);
             }
-            if (!drawers.TryGetValue(property.propertyPath, out SelectableEventDrawer drawer))
+            if (!drawers.TryGetValue(property.propertyPath, out FilteredUnityEventDrawer drawer))
             {
-                drawer = new SelectableEventDrawer();
+                drawer = new FilteredUnityEventDrawer(this, () => controller, () => showUnityFunctions, () => !Locked && !changingPlayMode, item => drawers.ContainsValue(item));
                 drawers.Add(property.propertyPath, drawer);
             }
             var label = new GUIContent("點擊事件");
@@ -371,6 +347,9 @@ public sealed class PlayerButtonGroupEditorWindow : EditorWindow
 
     private void DrawCommonSettings()
     {
+        EditorGUILayout.LabelField("事件選單顯示", EditorStyles.boldLabel);
+        showUnityFunctions = EditorGUILayout.ToggleLeft(new GUIContent("顯示 Unity 內建功能", "統一套用此視窗所有組的三顆按鈕事件選單。預設關閉；勾選後使用原生完整選單，既有綁定不受影響。"), showUnityFunctions);
+        EditorGUILayout.Space();
         EditorGUILayout.LabelField("固定按鈕與整體顯示", EditorStyles.boldLabel);
         using (new EditorGUI.DisabledScope(Locked))
             foreach (string field in new[] { "pauseButton", "playButton", "fastButton", "canvasGroup", "fadeInDuration", "fadeOutDuration" })

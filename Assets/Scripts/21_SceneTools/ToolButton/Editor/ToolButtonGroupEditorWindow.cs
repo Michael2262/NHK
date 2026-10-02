@@ -13,6 +13,8 @@ public sealed class ToolButtonGroupEditorWindow : EditorWindow
     private bool changingPlayMode;
     [SerializeField] private int selectedGroup = -1, selectedButton = -1;
     [SerializeField] private bool commonSettings;
+    [SerializeField] private bool showUnityFunctions;
+    private readonly Dictionary<string, FilteredUnityEventDrawer> eventDrawers = new Dictionary<string, FilteredUnityEventDrawer>();
     [SerializeField] private string search = string.Empty;
     [SerializeField] private Vector2 treeScroll, detailScroll;
     private readonly HashSet<int> collapsed = new HashSet<int>();
@@ -130,7 +132,7 @@ public sealed class ToolButtonGroupEditorWindow : EditorWindow
         ReleaseData();
         Repaint();
     }
-    private void ReleaseData() { data?.Dispose(); data = null; }
+    private void ReleaseData() { eventDrawers.Clear(); data?.Dispose(); data = null; }
 
     private void SetController(ToolButtonGroupDisplayControl target)
     {
@@ -424,6 +426,9 @@ public sealed class ToolButtonGroupEditorWindow : EditorWindow
     private void DrawCommonSettings()
     {
         EditorGUILayout.LabelField("共用設定", EditorStyles.largeLabel);
+        EditorGUILayout.LabelField("事件選單顯示", EditorStyles.boldLabel);
+        showUnityFunctions = EditorGUILayout.ToggleLeft(new GUIContent("顯示 Unity 內建功能", "統一套用此視窗所有一般與 NG 點擊事件。預設關閉；既有綁定不受影響。"), showUnityFunctions);
+        EditorGUILayout.Space();
         using (new EditorGUI.DisabledScope(Locked))
         {
             foreach (string field in new[] { "slots", "icons", "backTextKey", "backBackgroundColor", "submenuIndent",
@@ -462,8 +467,15 @@ public sealed class ToolButtonGroupEditorWindow : EditorWindow
                 using (new EditorGUI.DisabledScope(!ToolButtonEventClipboard.CanPaste(1)))
                     if (GUILayout.Button("貼上覆蓋", GUILayout.Width(75))) PasteEvents(property);
             }
-            using (new EditorGUI.DisabledScope(Locked))
-                EditorGUILayout.PropertyField(property, new GUIContent(title), true);
+            if (!eventDrawers.TryGetValue(property.propertyPath, out var drawer))
+            {
+                drawer = new FilteredUnityEventDrawer(this, () => controller, () => showUnityFunctions,
+                    () => !Locked && !changingPlayMode, item => eventDrawers.ContainsValue(item));
+                eventDrawers.Add(property.propertyPath, drawer);
+            }
+            var label = new GUIContent(title);
+            Rect eventRect = EditorGUILayout.GetControlRect(false, drawer.GetPropertyHeight(property, label));
+            using (new EditorGUI.DisabledScope(Locked)) drawer.OnGUI(eventRect, property, label);
         }
     }
 
@@ -661,6 +673,7 @@ public sealed class ToolButtonGroupEditorWindow : EditorWindow
     {
         // Unity 的 SerializedObject 處理 Undo、場景 dirty 與 Prefab override。
         data.ApplyModifiedProperties();
+        eventDrawers.Clear();
         Repaint();
         GUIUtility.ExitGUI();
     }
