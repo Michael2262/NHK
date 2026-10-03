@@ -287,8 +287,10 @@ public sealed class ToolButtonGroupEditorWindow : EditorWindow
                         new Color(0.4f, 0.5f, 0.6f, 0.09f));
                     GUI.Label(new Rect(item.x + 8, item.y + 3, item.width - 16, 20),
                         new GUIContent($"{b + 1}. {ButtonName(option, b)}", ButtonName(option, b)), EditorStyles.label);
+                    string ngSummary = option.FindPropertyRelative("useNgClickEvent").boolValue
+                        ? $" / NG {CallCount(option, "onNgClick")}" : " / NG 分流關閉";
                     GUI.Label(new Rect(item.x + 8, item.y + 24, item.width - 16, 18),
-                        $"Icon: {option.FindPropertyRelative("iconName").stringValue}  ·  一般 {CallCount(option, "onClick")} / NG {CallCount(option, "onNgClick")}", EditorStyles.miniLabel);
+                        $"Icon: {option.FindPropertyRelative("iconName").stringValue}  ·  一般 {CallCount(option, "onClick")}{ngSummary}", EditorStyles.miniLabel);
                     if (GUI.Button(item, GUIContent.none, GUIStyle.none)) Select(g, b);
                 }
                 using (new EditorGUI.DisabledScope(Locked))
@@ -395,7 +397,7 @@ public sealed class ToolButtonGroupEditorWindow : EditorWindow
                 EditorGUILayout.LabelField("NG 條件", EditorStyles.boldLabel);
                 Field(option, "ngFlag", "NG Flag");
                 Field(option, "invertNgFlag", "反轉 NG 條件");
-                EditorGUILayout.HelpBox("未指定 NG Flag 永遠正常。勾選反轉時，Flag 為 false 才進入 NG；兩種點擊分支仍須符合可點條件。", MessageType.None);
+                EditorGUILayout.HelpBox("未指定 NG Flag 永遠正常。勾選反轉時，Flag 為 false 才進入 NG。圖示與紅字照此條件顯示；點擊是否分流由下方開關決定，仍須符合可點條件。", MessageType.None);
             }
         }
         DrawEvents(option, name + " / " + ButtonName(option, selectedButton));
@@ -443,6 +445,14 @@ public sealed class ToolButtonGroupEditorWindow : EditorWindow
         var normal = option.FindPropertyRelative("onClick");
         var ng = option.FindPropertyRelative("onNgClick");
         EditorGUILayout.Space();
+        var useNg = option.FindPropertyRelative("useNgClickEvent");
+        using (new EditorGUI.DisabledScope(Locked))
+        {
+            EditorGUI.BeginChangeCheck();
+            EditorGUILayout.PropertyField(useNg, new GUIContent("啟用 NG 點擊事件", "關閉時，NG 也走一般點擊事件；NG 圖示與紅字仍正常顯示，既有 NG 事件保留。"));
+            if (EditorGUI.EndChangeCheck()) Commit();
+        }
+        if (useNg.boolValue)
         using (new EditorGUILayout.HorizontalScope())
         {
             if (GUILayout.Button("複製兩組事件")) CopyEvents(source + "（一般＋NG）", normal, ng);
@@ -452,7 +462,7 @@ public sealed class ToolButtonGroupEditorWindow : EditorWindow
         if (!string.IsNullOrEmpty(ToolButtonEventClipboard.Label))
             EditorGUILayout.LabelField("事件剪貼簿：" + ToolButtonEventClipboard.Label, EditorStyles.wordWrappedMiniLabel);
         DrawEvent(normal, "一般點擊事件", source);
-        DrawEvent(ng, "NG 點擊事件", source);
+        if (useNg.boolValue) DrawEvent(ng, "NG 點擊事件", source);
     }
 
     private void DrawEvent(SerializedProperty property, string title, string source)
@@ -662,6 +672,7 @@ public sealed class ToolButtonGroupEditorWindow : EditorWindow
         option.FindPropertyRelative("invertVisibility").boolValue = false;
         option.FindPropertyRelative("invertInteractable").boolValue = false;
         option.FindPropertyRelative("invertNgFlag").boolValue = true;
+        option.FindPropertyRelative("useNgClickEvent").boolValue = false;
         option.FindPropertyRelative("onClick.m_PersistentCalls.m_Calls").ClearArray();
         option.FindPropertyRelative("onNgClick.m_PersistentCalls.m_Calls").ClearArray();
         collapsed.Remove(groupIndex);
