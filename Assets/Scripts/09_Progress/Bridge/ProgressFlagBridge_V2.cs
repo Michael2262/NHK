@@ -106,8 +106,40 @@ public class ProgressFlagBridge_V2Editor : Editor
             }
 
             EditorUtility.FocusProjectWindow();
-            Selection.activeObject = folder;
-            EditorGUIUtility.PingObject(folder);
+            // 延後到 Inspector 繪製結束，再讓 Project 視窗直接顯示資料夾內容。
+            EditorApplication.delayCall += () => OpenFlagFolder(folder);
+        }
+    }
+
+    private static void OpenFlagFolder(DefaultAsset folder)
+    {
+        if (folder == null) return;
+
+        // Unity 未公開進入資料夾的 API，透過 ProjectBrowser 的內部方法開啟。
+        var browserType = typeof(Editor).Assembly.GetType("UnityEditor.ProjectBrowser");
+        const System.Reflection.BindingFlags flags =
+            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+        var showFolder = browserType?.GetMethod("ShowFolderContents", flags, null,
+            new[] { typeof(int), typeof(bool) }, null);
+        var setViewMode = browserType?.GetMethod("SetViewMode", flags);
+        if (showFolder == null || setViewMode == null)
+        {
+            Debug.LogWarning("[ProgressFlagBridge_V2] 此 Unity 版本不支援直接開啟 Project 資料夾。");
+            return;
+        }
+
+        try
+        {
+            var browser = EditorWindow.GetWindow(browserType);
+            var viewModeType = setViewMode.GetParameters()[0].ParameterType;
+            setViewMode.Invoke(browser, new[] { System.Enum.Parse(viewModeType, "TwoColumns") });
+            showFolder.Invoke(browser, new object[] { folder.GetInstanceID(), true });
+            browser.Focus();
+            browser.Repaint();
+        }
+        catch (System.Exception exception)
+        {
+            Debug.LogWarning($"[ProgressFlagBridge_V2] 無法開啟 Flag 資料夾：{exception.GetBaseException().Message}");
         }
     }
 }

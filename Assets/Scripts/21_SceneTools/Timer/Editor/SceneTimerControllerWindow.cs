@@ -179,7 +179,9 @@ public sealed class SceneTimerControllerWindow : EditorWindow
             foreach (TimerId timer in Enum.GetValues(typeof(TimerId))) if (!timers.Contains((int)timer)) timers.Add((int)timer);
             for (int i = 0; i < behaviors.arraySize; i++)
             {
-                int timer = behaviors.GetArrayElementAtIndex(i).FindPropertyRelative("Timer").intValue;
+                var definition = behaviors.GetArrayElementAtIndex(i);
+                if (definition.FindPropertyRelative("StartMode").intValue == (int)TimerStartMode.Parallel) continue;
+                int timer = definition.FindPropertyRelative("Timer").intValue;
                 if (!timers.Contains(timer)) timers.Add(timer);
             }
             foreach (int value in timers)
@@ -190,6 +192,7 @@ public sealed class SceneTimerControllerWindow : EditorWindow
                 for (int i = 0; i < behaviors.arraySize; i++)
                 {
                     var item = behaviors.GetArrayElementAtIndex(i);
+                    if (item.FindPropertyRelative("StartMode").intValue == (int)TimerStartMode.Parallel) continue;
                     if (item.FindPropertyRelative("Timer").intValue != value) continue;
                     string id = item.FindPropertyRelative("ID").stringValue;
                     if (!string.IsNullOrEmpty(search) && id.IndexOf(search, StringComparison.OrdinalIgnoreCase) < 0
@@ -203,6 +206,18 @@ public sealed class SceneTimerControllerWindow : EditorWindow
                     if (click) { selected = i; page = 0; detailScroll = Vector2.zero; Commit(); }
                 }
             }
+            EditorGUILayout.LabelField("Parallel｜獨立倒數", EditorStyles.boldLabel);
+            for (int i = 0; i < behaviors.arraySize; i++)
+            {
+                var item = behaviors.GetArrayElementAtIndex(i);
+                if (item.FindPropertyRelative("StartMode").intValue != (int)TimerStartMode.Parallel) continue;
+                string id = item.FindPropertyRelative("ID").stringValue;
+                if (!string.IsNullOrEmpty(search) && id.IndexOf(search, StringComparison.OrdinalIgnoreCase) < 0
+                    && "Parallel".IndexOf(search, StringComparison.OrdinalIgnoreCase) < 0) continue;
+                bool active = controller.TryGetParallelSnapshot(id, out var state);
+                if (GUILayout.Button((selected == i ? "▶ " : "") + id + (active ? "｜倒數中" : ""), GUILayout.Height(28)))
+                { selected = i; page = 0; detailScroll = Vector2.zero; Commit(); }
+            }
         }
     }
 
@@ -214,9 +229,10 @@ public sealed class SceneTimerControllerWindow : EditorWindow
         using (new EditorGUI.DisabledScope(Locked))
         {
             EditorGUILayout.PropertyField(item.FindPropertyRelative("ID"), new GUIContent("行為 ID"));
-            EditorGUILayout.PropertyField(item.FindPropertyRelative("Timer"), new GUIContent("所屬 Timer"));
-            EditorGUILayout.PropertyField(item.FindPropertyRelative("Duration"), new GUIContent("倒數秒數"));
             EditorGUILayout.PropertyField(item.FindPropertyRelative("StartMode"), new GUIContent("啟動模式"));
+            using (new EditorGUI.DisabledScope(item.FindPropertyRelative("StartMode").intValue == (int)TimerStartMode.Parallel))
+                EditorGUILayout.PropertyField(item.FindPropertyRelative("Timer"), new GUIContent("所屬 Timer"));
+            EditorGUILayout.PropertyField(item.FindPropertyRelative("Duration"), new GUIContent("倒數秒數"));
             using (new EditorGUILayout.HorizontalScope())
             {
                 if (GUILayout.Button("複製行為"))
@@ -235,10 +251,11 @@ public sealed class SceneTimerControllerWindow : EditorWindow
         float duration = item.FindPropertyRelative("Duration").floatValue;
         if (float.IsNaN(duration) || float.IsInfinity(duration) || duration <= 0f)
             EditorGUILayout.HelpBox("倒數秒數必須為有限的正數。", MessageType.Error);
-        if (!Enum.IsDefined(typeof(TimerId), item.FindPropertyRelative("Timer").intValue)
+        if ((item.FindPropertyRelative("StartMode").intValue != (int)TimerStartMode.Parallel
+            && !Enum.IsDefined(typeof(TimerId), item.FindPropertyRelative("Timer").intValue))
             || !Enum.IsDefined(typeof(TimerStartMode), item.FindPropertyRelative("StartMode").intValue))
             EditorGUILayout.HelpBox("Timer 或啟動模式無效，請重新選擇。", MessageType.Error);
-        EditorGUILayout.HelpBox("Interrupt：取代目前工作；Skip：忙碌時忽略；Queue：排隊；Priority：插至隊首。\n有效的 StartTimer 會恢復所屬 Timer；相同 ID 不重複啟動或排隊。", MessageType.None);
+        EditorGUILayout.HelpBox("Interrupt：取代目前工作；Skip：忙碌時忽略；Queue：排隊；Priority：插至隊首；Parallel：獨立倒數，不佔用或恢復所屬 Timer。\n一般模式的 StartTimer 會恢復所屬 Timer；所有模式的相同 ID 都不重複啟動或排隊。", MessageType.None);
         DrawEvent(item.FindPropertyRelative("OnCompleted"), "倒數完成事件");
         if (Application.isPlaying) DrawSelectedTest(behaviors);
     }
@@ -252,6 +269,7 @@ public sealed class SceneTimerControllerWindow : EditorWindow
         using (new EditorGUILayout.HorizontalScope())
         {
             if (GUILayout.Button("開始／接續此行為")) Run(() => controller.StartTimer(id));
+            if (GUILayout.Button("取消此行為")) Run(() => controller.CancelID(id));
             if (GUILayout.Button("EvaluateID（觸發判斷事件）")) Run(() => controller.EvaluateID(id));
         }
     }
@@ -288,7 +306,21 @@ public sealed class SceneTimerControllerWindow : EditorWindow
                 }
             }
         }
-        EditorGUILayout.HelpBox("倒數使用 Time.deltaTime，受遊戲 Time Scale 影響。暫停仍佔用 Timer；取消會清除該 Timer 的工作與佇列。", MessageType.None);
+        EditorGUILayout.LabelField("Parallel｜執行中的獨立倒數", EditorStyles.boldLabel);
+        for (int i = 0; i < behaviors.arraySize; i++)
+        {
+            string id = behaviors.GetArrayElementAtIndex(i).FindPropertyRelative("ID").stringValue;
+            if (!controller.TryGetParallelSnapshot(id, out var state)) continue;
+            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            {
+                EditorGUILayout.LabelField(id, EditorStyles.boldLabel);
+                EditorGUI.ProgressBar(EditorGUILayout.GetControlRect(false, 22),
+                    Mathf.Clamp01((float)(1d - state.Remaining / state.Duration)), "剩餘 " + state.Remaining.ToString("0.00") + " 秒");
+                using (new EditorGUI.DisabledScope(!CanTest))
+                    if (GUILayout.Button("取消此行為")) Run(() => controller.CancelID(id));
+            }
+        }
+        EditorGUILayout.HelpBox("倒數使用 Time.deltaTime，受遊戲 Time Scale 影響。暫停仍佔用 Timer；取消此 Timer 不影響 Parallel。取消全部會一併清除獨立倒數。", MessageType.None);
     }
 
     private void Run(Action action)

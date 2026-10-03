@@ -21,7 +21,12 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
             var bridge = NhkAutoDialogueBridge.Find();
             if (!enable)
             {
-                if (bridge != null) bridge.DisableAutoDialogue();
+                if (bridge != null)
+                {
+                    bridge.DisableAutoDialogue();
+                    if (bridge.IsDefaultWaitActive)
+                        sequencer.PlayCommand("NhkDefaultDialogueWait", false, 0, null, null);
+                }
                 Stop();
                 return;
             }

@@ -4,16 +4,14 @@ using UnityEngine.Events;
 
 /// <summary>
 /// 女主角 Orgasm 專用液體 UI；閃白結束時轉交 Model 歸零，其餘衰退只處理顯示。
-/// 掛在填色用的獨立 UI 物件上，外框、背景與數字由其他 UI 物件提供。
+/// 掛在填色用的獨立 UI 物件上，外框與背景由其他 UI 物件提供。
 /// </summary>
 [DisallowMultipleComponent]
 [RequireComponent(typeof(OrgasmWaveGraphic))]
 public class OrgasmSliderVisualizer2 : MonoBehaviour
 {
-    [Header("連動角色與數字")]
+    [Header("連動角色")]
     [SerializeField] private string heroineID = "sister";
-    [Tooltip("放在填色上方的右側 TMP 數字；顯示值隨填色動畫變動。")]
-    [SerializeField] private TMP_Text valueText;
 
     [Header("高潮次數顯示")]
     [Tooltip("心形圖示與次數文字的共同父物件。請指定獨立的顯示群組，不可包含本腳本所在物件。零次時隱藏。")]
@@ -76,7 +74,6 @@ public class OrgasmSliderVisualizer2 : MonoBehaviour
     private float decayElapsed;
     private int lastDecayStep;
     private bool fullArmed;
-    private int lastNumber = -1;
     // 僅記錄此 UI 實例的顯示次數；由外部明確呼叫，不代表角色永久統計。
     private int displayedOrgasmCount;
 
@@ -206,7 +203,6 @@ public class OrgasmSliderVisualizer2 : MonoBehaviour
         decaying = false;
         decayElapsed = 0f;
         fullArmed = displayedValue < maximum;
-        lastNumber = -1;
         RenderVisual();
     }
 
@@ -326,14 +322,5 @@ public class OrgasmSliderVisualizer2 : MonoBehaviour
         if (waveGraphic != null)
             waveGraphic.SetVisual(displayedValue / maximum, waveAmplitude * waveEnergy,
                 wavePhase, waveCycles, waveSegments, tint);
-
-        // 尚未真正滿格時不提早顯示 100。
-        int number = displayedValue >= maximum ? Mathf.RoundToInt(maximum)
-            : Mathf.Min(Mathf.RoundToInt(displayedValue), Mathf.CeilToInt(maximum) - 1);
-        if (valueText != null && number != lastNumber)
-        {
-            valueText.SetText("{0:0}", number);
-            lastNumber = number;
-        }
     }
 }

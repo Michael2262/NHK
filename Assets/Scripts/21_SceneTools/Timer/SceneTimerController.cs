@@ -17,7 +17,7 @@ public sealed class SceneTimerController : MonoBehaviour
         public string ID;
         public TimerId Timer = TimerId.Main;
         [Min(0.001f)] public float Duration = 10f;
-        [Tooltip("Interrupt：取代目前工作；Skip：忙碌時忽略；Queue：排隊；Priority：插至隊首。")]
+        [Tooltip("Interrupt：取代目前工作；Skip：忙碌時忽略；Queue：排隊；Priority：插至隊首；Parallel：獨立倒數，不使用所屬 Timer。")]
         public TimerStartMode StartMode = TimerStartMode.Interrupt;
         public UnityEvent OnCompleted = new UnityEvent();
     }
@@ -38,6 +38,12 @@ public sealed class SceneTimerController : MonoBehaviour
     {
         snapshot = null;
         return model != null && model.TryGetTimerSnapshot(id, out snapshot);
+    }
+
+    public bool TryGetParallelSnapshot(string id, out SceneTimerModel.TimerSnapshot snapshot)
+    {
+        snapshot = null;
+        return model != null && model.TryGetParallelSnapshot(id, out snapshot);
     }
 
     private void Awake() { EnsureInitialized(); }
@@ -96,6 +102,12 @@ public sealed class SceneTimerController : MonoBehaviour
         if (ValidateTimer(id) && EnsureInitialized()) model.CancelTimer(id);
     }
     public void CancelAllTimers() { model?.CancelAllTimers(); }
+
+    /// <summary>取消執行中或排隊中的指定行為，包含 Parallel；不觸發完成事件。</summary>
+    public void CancelID(string behaviorID)
+    {
+        if (ValidateID(behaviorID)) model.CancelID(behaviorID);
+    }
 
     private bool EnsureInitialized()
     {

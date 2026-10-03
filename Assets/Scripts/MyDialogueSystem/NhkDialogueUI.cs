@@ -87,8 +87,8 @@ namespace PixelCrushers.DialogueSystem
 
         public override void Close()
         {
-            // 在 Queue 的下一段啟動前結束自動模式，即使這次 Close 被無縫交接吞掉。
-            NhkAutoDialogueBridge.Find()?.DisableAutoDialogue();
+            // 在 Queue 的下一段啟動前清除兩種等待模式，即使這次 Close 被無縫交接吞掉。
+            NhkAutoDialogueBridge.Find()?.DisableWaitModes();
             if (_suppressNextCloseForQueuedHandoff)
             {
                 _suppressNextCloseForQueuedHandoff = false; // 一次性，只吞這次 Close
@@ -109,7 +109,7 @@ namespace PixelCrushers.DialogueSystem
 
         public override void CloseImmediately()
         {
-            NhkAutoDialogueBridge.Find()?.DisableAutoDialogue();
+            NhkAutoDialogueBridge.Find()?.DisableWaitModes();
             base.CloseImmediately();
         }
 

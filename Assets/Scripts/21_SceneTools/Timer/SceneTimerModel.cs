@@ -6,7 +6,8 @@ public enum TimerStartMode
     Interrupt = 0,
     Skip = 1,
     Queue = 2,
-    Priority = 3
+    Priority = 3,
+    Parallel = 4
 }
 
 /// <summary>場景內的倒數與佇列。不依賴 Unity、不存檔，由 Controller 推進時間。</summary>
@@ -55,7 +56,7 @@ public sealed class SceneTimerModel
         {
             if (string.IsNullOrWhiteSpace(id) || id != id.Trim())
                 throw new ArgumentException("行為 ID 不可空白或含前後空格。");
-            if (!Enum.IsDefined(typeof(TimerId), timer))
+            if (mode != TimerStartMode.Parallel && !Enum.IsDefined(typeof(TimerId), timer))
                 throw new ArgumentException("未知的計時器。");
             if (float.IsNaN(duration) || float.IsInfinity(duration) || duration <= 0f)
                 throw new ArgumentException("倒數秒數必須為有限的正數。");
@@ -85,7 +86,18 @@ public sealed class SceneTimerModel
 
     private readonly Dictionary<string, Behavior> behaviors = new Dictionary<string, Behavior>(StringComparer.Ordinal);
     private readonly Dictionary<TimerId, Timer> timers = new Dictionary<TimerId, Timer>();
+    private readonly Dictionary<string, Run> parallelRuns = new Dictionary<string, Run>(StringComparer.Ordinal);
     private bool ticking;
+
+    /// <summary>只回傳正在執行的獨立倒數；完成或取消後便不存在。</summary>
+    public bool TryGetParallelSnapshot(string id, out TimerSnapshot snapshot)
+    {
+        snapshot = null;
+        Run run;
+        if (id == null || !parallelRuns.TryGetValue(id, out run)) return false;
+        snapshot = new TimerSnapshot(id, run.Remaining, run.Behavior.Duration, false, new string[0]);
+        return true;
+    }
 
     public SceneTimerModel(IEnumerable<Behavior> definitions)
     {
@@ -112,6 +124,7 @@ public sealed class SceneTimerModel
     {
         Behavior behavior;
         if (id == null || !behaviors.TryGetValue(id, out behavior)) return false;
+        if (behavior.Mode == TimerStartMode.Parallel) return parallelRuns.ContainsKey(id);
         Timer timer = timers[behavior.Timer];
         return (timer.Current != null && timer.Current.Behavior == behavior) || timer.Queue.Contains(behavior);
     }
@@ -121,6 +134,11 @@ public sealed class SceneTimerModel
     {
         Behavior behavior;
         if (id == null || !behaviors.TryGetValue(id, out behavior)) return;
+        if (behavior.Mode == TimerStartMode.Parallel)
+        {
+            if (!parallelRuns.ContainsKey(id)) parallelRuns.Add(id, new Run(behavior));
+            return;
+        }
         Timer timer = timers[behavior.Timer];
         timer.Paused = false;
         if (CheckID(id)) return;
@@ -155,6 +173,26 @@ public sealed class SceneTimerModel
     public void CancelAllTimers()
     {
         foreach (TimerId id in timers.Keys) CancelTimer(id);
+        parallelRuns.Clear();
+    }
+
+    /// <summary>只取消指定行為，不觸發完成事件；一般計時器接續佇列，暫停狀態保留。</summary>
+    public void CancelID(string id)
+    {
+        Behavior behavior;
+        if (id == null || !behaviors.TryGetValue(id, out behavior)) return;
+        if (behavior.Mode == TimerStartMode.Parallel)
+        {
+            parallelRuns.Remove(id);
+            return;
+        }
+        Timer timer = timers[behavior.Timer];
+        if (timer.Current != null && timer.Current.Behavior == behavior)
+        {
+            timer.Current = null;
+            StartNext(timer);
+        }
+        else timer.Queue.Remove(behavior);
     }
 
     public void Tick(float deltaTime)
@@ -165,6 +203,12 @@ public sealed class SceneTimerModel
         {
             // 先扣除所有既有工作的時間，再派送事件，避免事件新建的工作被扣到本幀時間。
             var due = new List<KeyValuePair<Timer, Run>>();
+            var parallelDue = new List<Run>();
+            foreach (Run run in parallelRuns.Values)
+            {
+                run.Remaining -= deltaTime;
+                if (run.Remaining <= 0d) parallelDue.Add(run);
+            }
             foreach (Timer timer in timers.Values)
             {
                 if (timer.Paused || timer.Current == null) continue;
@@ -182,6 +226,14 @@ public sealed class SceneTimerModel
             }
             // 完成事件中暫停的空閒計時器，恢復後也能繼續佇列。
             foreach (Timer timer in timers.Values) StartNext(timer);
+            foreach (Run run in parallelDue)
+            {
+                Run current;
+                // 前面的事件可能取消並重啟同一 ID，舊工作不可觸發新工作的完成事件。
+                if (!parallelRuns.TryGetValue(run.Behavior.Id, out current) || current != run) continue;
+                parallelRuns.Remove(run.Behavior.Id);
+                run.Behavior.Completed?.Invoke();
+            }
         }
         finally { ticking = false; }
     }
