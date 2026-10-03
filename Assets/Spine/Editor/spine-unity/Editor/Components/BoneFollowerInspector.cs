@@ -138,6 +138,9 @@ namespace Spine.Unity.Editor {
 				EditorGUI.BeginChangeCheck();
 				DrawDefaultInspector();
 				needsReset |= EditorGUI.EndChangeCheck();
+				serializedObject.Update();
+				DrawManualBoneName();
+				serializedObject.ApplyModifiedProperties();
 				return;
 			}
 
@@ -170,6 +173,8 @@ namespace Spine.Unity.Editor {
 			if (!targetBoneFollower.valid) {
 				needsReset = true;
 			}
+
+			DrawManualBoneName();
 
 			if (targetBoneFollower.valid) {
 				EditorGUI.BeginChangeCheck();
@@ -214,6 +219,14 @@ namespace Spine.Unity.Editor {
 				targetBoneFollower.Initialize();
 
 			serializedObject.ApplyModifiedProperties();
+		}
+
+		void DrawManualBoneName () {
+			// 與骨骼選單共用序列化欄位，按 Enter 或離開輸入框後才更新跟隨目標。
+			EditorGUI.BeginChangeCheck();
+			EditorGUI.DelayedTextField(EditorGUILayout.GetControlRect(), boneName,
+				new GUIContent("骨骼名稱（手動輸入）", "可直接輸入完整骨骼名稱（區分大小寫），或使用 Bone Name 選單。仍需指定 Skeleton Renderer 才能跟隨。"));
+			needsReset |= EditorGUI.EndChangeCheck();
 		}
 
 		internal static void RecommendRigidbodyButton (Component component) {

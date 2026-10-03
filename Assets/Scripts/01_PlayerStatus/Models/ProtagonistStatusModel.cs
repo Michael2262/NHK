@@ -34,6 +34,7 @@ public class ProtagonistStatusModel
     public const int INITIAL_DEPENDENCY = 0;
     public const int INITIAL_MONEY = 0;
     public const int INITIAL_SKILL_POINTS = 0;
+    public const int INITIAL_SEMEN = 0;
 
     // ───── ShootTimes ─────
     public const int SHOOT_TIMES_MAX = 3;
@@ -118,6 +119,10 @@ public class ProtagonistStatusModel
     /// <summary>射精次數。每日重製回 Max。可加超過 Max，但不可扣低於 Min。<= 0 時為耗盡狀態。</summary>
     public int ShootTimes { get; private set; } = INITIAL_SHOOT_TIMES;
 
+    /// <summary>射精感：0～100 的獨立累積值，每日歸零。</summary>
+    public int Semen { get; private set; } = INITIAL_SEMEN;
+    public int SemenMax => 100;
+
     /// <summary>射精耗盡狀態：ShootTimes <= 0 即為 true。</summary>
     public bool IsOverShoot => ShootTimes <= 0;
 
@@ -170,6 +175,8 @@ public class ProtagonistStatusModel
     public event Action<int> OnMoneyChanged;        // delta
     public event Action<int> OnSkillPointsChanged;  // delta
     public event Action<int> OnShootTimesChanged;   // delta
+    /// <summary>射精感改變時傳回新值；新遊戲與讀檔後透過 OnGameStatusLoaded 統一刷新。</summary>
+    public event Action<int> OnSemenChanged;
     public event Action<int> OnRoomMessLevelChanged; // delta
     public event Action<int> OnBodyDirtyLevelChanged; // delta
     public event Action<bool> OnBadHealthyChanged;   // 新狀態值
@@ -190,6 +197,7 @@ public class ProtagonistStatusModel
         Money = INITIAL_MONEY;
         SkillPoints = INITIAL_SKILL_POINTS;
         ShootTimes = INITIAL_SHOOT_TIMES;
+        Semen = INITIAL_SEMEN;
         RoomMessLevel = INITIAL_ROOM_MESS_LEVEL;
         BodyDirtyLevel = INITIAL_BODY_DIRTY_LEVEL;
         BadHealthy = false;
@@ -209,6 +217,7 @@ public class ProtagonistStatusModel
             Money = Money,
             SkillPoints = SkillPoints,
             ShootTimes = ShootTimes,
+            Semen = Semen,
             RoomMessLevel = RoomMessLevel,
             BodyDirtyLevel = BodyDirtyLevel,
             BadHealthy = BadHealthy,
@@ -231,6 +240,8 @@ public class ProtagonistStatusModel
         Money = Math.Max(0, data.Money);
         SkillPoints = Math.Max(0, data.SkillPoints);
         ShootTimes = Math.Max(SHOOT_TIMES_MIN, Math.Min(data.ShootTimes, int.MaxValue));
+        // 直接還原，不廣播射精感事件；舊存檔缺少此欄位時預設為 0。
+        Semen = Math.Max(0, Math.Min(SemenMax, data.Semen));
         RoomMessLevel = ClampRoomMessLevel(data.RoomMessLevel);
         BodyDirtyLevel = ClampBodyDirtyLevel(data.BodyDirtyLevel); // 舊存檔缺欄位時反序列化為 0（= 身體最乾淨）
         BadHealthy = data.BadHealthy; // 舊存檔沒有此欄位時，Newtonsoft 預設為 false
@@ -259,6 +270,7 @@ public class ProtagonistStatusModel
     public void OnDayStart()
     {
         ResetShootTimes();
+        ApplySemenDailyReset();
         DisableBadHealthy(); // 「狀態不好」換日自動解除
     }
 
@@ -491,6 +503,29 @@ public class ProtagonistStatusModel
         SkillPoints = Math.Max(0, amount);
         if (SkillPoints != prev) OnSkillPointsChanged?.Invoke(SkillPoints - prev);
     }
+
+    // ───── Semen（射精感） ─────
+
+    public int GetSemen() => Semen;
+
+    /// <summary>設定射精感，限制在 0～100；只有實際改變時通知新值。</summary>
+    public void SetSemen(int value)
+    {
+        value = Math.Max(0, Math.Min(SemenMax, value));
+        if (Semen == value) return;
+        Semen = value;
+        OnSemenChanged?.Invoke(Semen);
+    }
+
+    /// <summary>增減射精感，不套用倍率、不改變射精次數；超出範圍的部分捨棄。</summary>
+    public void AddSemen(int amount)
+    {
+        long newValue = (long)Semen + amount;
+        SetSemen((int)Math.Max(0L, Math.Min(SemenMax, newValue)));
+    }
+
+    /// <summary>每日開始時將射精感歸零。</summary>
+    public void ApplySemenDailyReset() => SetSemen(0);
 
     // ───── ShootTimes（射精次數） ─────
 

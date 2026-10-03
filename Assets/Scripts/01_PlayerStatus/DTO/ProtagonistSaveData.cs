@@ -20,6 +20,9 @@ public class ProtagonistSaveData
     // ───── 射精次數 ─────
     public int ShootTimes;
 
+    // ───── 射精感（0～100；舊存檔缺欄位時預設為 0） ─────
+    public int Semen;
+
     // ───── 房間髒亂度 ─────
     public int RoomMessLevel;
 

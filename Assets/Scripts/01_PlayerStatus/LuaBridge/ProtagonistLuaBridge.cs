@@ -8,6 +8,8 @@ using PixelCrushers.DialogueSystem;
 ///   GetLifePower() &gt;= 50;
 ///   GetStressGrade() == "High";
 ///   IsStressHigh();
+///   GetSemen() &gt;= 100;
+///   SetSemen(50); AddSemen(20); AddSemen(-10);
 /// </summary>
 public class ProtagonistLuaBridge : MonoBehaviour
 {
@@ -33,6 +35,11 @@ public class ProtagonistLuaBridge : MonoBehaviour
         Lua.RegisterFunction("GetDependency", this, SymbolExtensions.GetMethodInfo(() => GetDependency()));
         Lua.RegisterFunction("GetMoney", this, SymbolExtensions.GetMethodInfo(() => GetMoney()));
         Lua.RegisterFunction("GetSkillPoints", this, SymbolExtensions.GetMethodInfo(() => GetSkillPoints()));
+
+        // ── 射精感讀寫 ──
+        Lua.RegisterFunction("GetSemen", this, SymbolExtensions.GetMethodInfo(() => GetSemen()));
+        Lua.RegisterFunction("SetSemen", this, SymbolExtensions.GetMethodInfo(() => SetSemen((double)0)));
+        Lua.RegisterFunction("AddSemen", this, SymbolExtensions.GetMethodInfo(() => AddSemen((double)0)));
 
         // ── 分級查詢（回傳 "Low" / "Medium" / "High" / "Extreme"） ──
         Lua.RegisterFunction("GetStressGrade", this, SymbolExtensions.GetMethodInfo(() => GetStressGrade()));
@@ -65,6 +72,9 @@ public class ProtagonistLuaBridge : MonoBehaviour
         Lua.UnregisterFunction("GetDependency");
         Lua.UnregisterFunction("GetMoney");
         Lua.UnregisterFunction("GetSkillPoints");
+        Lua.UnregisterFunction("GetSemen");
+        Lua.UnregisterFunction("SetSemen");
+        Lua.UnregisterFunction("AddSemen");
 
         Lua.UnregisterFunction("GetStressGrade");
         Lua.UnregisterFunction("GetLifeGrade");
@@ -110,6 +120,12 @@ public class ProtagonistLuaBridge : MonoBehaviour
     public double GetDependency() => GetModel()?.Dependency ?? 0;
     public double GetMoney() => GetModel()?.Money ?? 0;
     public double GetSkillPoints() => GetModel()?.SkillPoints ?? 0;
+
+    // ───── 射精感：Lua 數值轉成整數後交由 Model 處理 ─────
+    public double GetSemen() => GetModel()?.GetSemen() ?? 0;
+    public void SetSemen(double value) => GetModel()?.SetSemen((int)value);
+    /// <summary>正數增加、負數減少射精感；小數部分截去。</summary>
+    public void AddSemen(double amount) => GetModel()?.AddSemen((int)amount);
 
     // ───── 分級查詢 ─────
     public string GetStressGrade() => GetModel()?.GetStressGrade().ToString() ?? "Low";

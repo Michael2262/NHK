@@ -4,7 +4,7 @@ using UnityEngine;
 /// NHK 版主角數值變化 UnityEvent 橋接 API。
 /// 保留原檔名 / class 名，供 Inspector 的 UnityEvent 拖曳使用。
 /// 
-/// 提供核心數值、金錢、技能點、時間、射精次數、房間／身體髒污度及狀態開關。
+/// 提供核心數值、金錢、技能點、時間、射精感、射精次數、房間／身體髒污度及狀態開關。
 /// </summary>
 [AddComponentMenu("Game/API/Protagonist Bridge API")]
 public class ProtagonistBridgeAPI : MonoBehaviour
@@ -72,6 +72,15 @@ public class ProtagonistBridgeAPI : MonoBehaviour
         }
         t.AdvanceTime(slots);
     }
+
+    // ==========================================
+    // 射精感：範圍與變更通知由 Model 處理。
+    // ==========================================
+
+    public int GetSemen() => P?.GetSemen() ?? 0;
+    public void SetSemen(int value) => P?.SetSemen(value);
+    /// <summary>正數增加、負數減少射精感。</summary>
+    public void AddSemen(int amount) => P?.AddSemen(amount);
 
     // ==========================================
     // 射精次數
