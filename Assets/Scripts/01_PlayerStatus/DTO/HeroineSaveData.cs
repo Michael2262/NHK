@@ -15,6 +15,9 @@ public class HeroineSaveData
     public int Excitement;
     // 獨立高潮度；舊存檔缺少欄位時預設為 0。
     public int Orgasm;
+    // 獨立不滿值與可調上限；舊存檔缺少欄位時為 0 / 5。
+    public int Frustration;
+    public int FrustrationMax = HeroineStatusModel.DefaultFrustrationMax;
     public int Trust;
     public int Affinity;
     public int HCount;

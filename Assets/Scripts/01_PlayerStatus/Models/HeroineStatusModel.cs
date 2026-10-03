@@ -63,6 +63,12 @@ public class HeroineStatusModel
     public int Orgasm { get; private set; }
     public int OrgasmMax => 100;
 
+    /// <summary>獨立不滿值，0～FrustrationMax；不直接改變主導情緒。</summary>
+    public int Frustration { get; private set; }
+    public const int DefaultFrustrationMax = 5;
+    public int FrustrationMax { get; private set; } = DefaultFrustrationMax;
+    private int frustrationRevision;
+
     /// <summary>信賴值，0~TrustMax。</summary>
     public int Trust { get; private set; }
     public const int TrustMax = 150;
@@ -99,6 +105,12 @@ public class HeroineStatusModel
     public event Action<int> OnExcitementValueChanged;
     /// <summary>高潮度改變時傳回新值；讀檔後透過 OnGameStatusLoaded 統一刷新。</summary>
     public event Action<int> OnOrgasmChanged;
+    /// <summary>不滿值改變時傳回新值；讀檔後透過 OnGameStatusLoaded 統一刷新。</summary>
+    public event Action<int> OnFrustrationChanged;
+    /// <summary>不滿值上限改變時傳回新上限。</summary>
+    public event Action<int> OnFrustrationMaxChanged;
+    /// <summary>不滿值由未滿轉為滿值時通知；滿值不自動歸零，也不改變心情。</summary>
+    public event Action OnFrustrationFull;
     public event Action<int> OnTrustChanged;
     public event Action<int> OnAffinityChanged;
     public event Action<int> OnHCountChanged;
@@ -154,6 +166,7 @@ public class HeroineStatusModel
         Libido = 0;
         Excitement = 0;
         Orgasm = 0;
+        Frustration = 0;
         Trust = 0;
         Affinity = 0;
         HCount = 0;
@@ -401,6 +414,50 @@ public class HeroineStatusModel
     public void ReduceOrgasm(int amount) => AddOrgasm((int)Math.Min(int.MaxValue, -(long)amount));
     public void ResetOrgasm() => SetOrgasm(0);
 
+    // ───── Frustration（不滿值） ─────
+    public int GetFrustration() => Frustration;
+
+    /// <summary>設定不滿值，限制在 0～目前上限。</summary>
+    public void SetFrustration(int value) => ApplyFrustration(value, FrustrationMax);
+
+    /// <summary>正數增加、負數減少；超出範圍的部分捨棄。</summary>
+    public void AddFrustration(int amount)
+    {
+        long newValue = (long)Frustration + amount;
+        SetFrustration((int)Math.Max(0L, Math.Min(FrustrationMax, newValue)));
+    }
+
+    /// <summary>設定上限，最低為 1；同步限制目前值，未滿轉滿時也會通知。</summary>
+    public void SetFrustrationMax(int value) => ApplyFrustration(Frustration, Math.Max(1, value));
+
+    private void ApplyFrustration(int value, int maximum)
+    {
+        value = Mathf.Clamp(value, 0, maximum);
+        bool valueChanged = Frustration != value;
+        bool maxChanged = FrustrationMax != maximum;
+        if (!valueChanged && !maxChanged) return;
+
+        bool reachedFull = Frustration < FrustrationMax && value == maximum;
+        Frustration = value;
+        FrustrationMax = maximum;
+        int revision = unchecked(++frustrationRevision);
+
+        // 先完成數值與上限更新；訂閱者若再次修改或讀檔，停止本次過期通知。
+        if (maxChanged) OnFrustrationMaxChanged?.Invoke(maximum);
+        if (revision != frustrationRevision) return;
+        if (valueChanged) OnFrustrationChanged?.Invoke(value);
+        if (revision != frustrationRevision) return;
+        if (reachedFull) OnFrustrationFull?.Invoke();
+    }
+
+    /// <summary>生氣或失望時保留目前值，最多上限減 2（最低 0）；其他心情歸零。</summary>
+    public void ApplyFrustrationDailyReset()
+    {
+        bool retain = CurrentEmotion == HeroineEmotionCardType.Angry
+            || CurrentEmotion == HeroineEmotionCardType.Disappointed;
+        SetFrustration(retain ? Math.Min(Frustration, Math.Max(0, FrustrationMax - 2)) : 0);
+    }
+
     // ─────────────────────────────────────────────────────────────
     // Trust（信賴）
     // ─────────────────────────────────────────────────────────────
@@ -621,6 +678,8 @@ public class HeroineStatusModel
             Libido = Libido,
             Excitement = Excitement,
             Orgasm = Orgasm,
+            Frustration = Frustration,
+            FrustrationMax = FrustrationMax,
             Trust = Trust,
             Affinity = Affinity,
             HCount = HCount,
@@ -651,6 +710,10 @@ public class HeroineStatusModel
         // 直接還原，不逐項廣播；缺少此欄位的舊存檔預設為 0。
         Excitement = Mathf.Clamp(data.Excitement, 0, ExcitementMax);
         Orgasm = Mathf.Clamp(data.Orgasm, 0, OrgasmMax);
+        // 不廣播變更或滿值事件；舊存檔使用 DTO 的預設上限 5。
+        FrustrationMax = Math.Max(1, data.FrustrationMax);
+        Frustration = Mathf.Clamp(data.Frustration, 0, FrustrationMax);
+        unchecked { frustrationRevision++; }
         Trust = Mathf.Clamp(data.Trust, 0, TrustMax);
         Affinity = Mathf.Clamp(data.Affinity, 0, AffinityMax);
         IsInHeat = data.IsInHeat;

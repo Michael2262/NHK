@@ -44,12 +44,10 @@ public class ToolButtonGroupDisplayControl : MonoBehaviour
         [Tooltip("預設勾選：Flag 為 false 時進入 NG；取消勾選則 Flag 為 true 時進入 NG。")]
         public bool invertNgFlag = true;
         [Header("點擊事件")]
-        [Tooltip("未啟用 NG 點擊事件，或 NG 條件（含反轉）不成立時執行。")]
+        [Tooltip("Ng Flag 未設定或 NG 條件（含反轉）不成立時執行。")]
         public UnityEvent onClick = new UnityEvent();
         [Header("NG 點擊事件")]
-        [Tooltip("預設關閉。開啟後，NG 時才改走 NG 點擊事件；關閉時一律走一般事件，不影響 NG 圖示與紅字。")]
-        public bool useNgClickEvent = false;
-        [Tooltip("啟用 NG 點擊事件且 NG 條件（含反轉）成立時只執行此事件；留空不會回退至一般事件。仍須符合可點條件。")]
+        [Tooltip("NG 條件（含反轉）成立時只執行此事件；留空則不執行任何點擊事件，不會回退至一般事件。仍須符合可點條件。")]
         public UnityEvent onNgClick = new UnityEvent();
     }
 
@@ -430,7 +428,7 @@ public class ToolButtonGroupDisplayControl : MonoBehaviour
             return;
         }
         // 以點擊當下的 Flag 決定分支，一次點擊只執行其中一個事件。
-        if (option.useNgClickEvent && IsNg(option)) option.onNgClick?.Invoke();
+        if (IsNg(option)) option.onNgClick?.Invoke();
         else option.onClick?.Invoke();
         // 事件可切組、改 Flag、關閉面板或銷毀控制器；刷新時使用最新群組。
         if (this != null && isActiveAndEnabled) Refresh();

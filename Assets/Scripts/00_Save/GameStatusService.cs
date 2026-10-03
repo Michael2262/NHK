@@ -314,6 +314,7 @@ public class GameStatusService : MonoBehaviour
                 heroine.ApplyLibidoDecay();
                 heroine.ApplyExcitementDailyReset();
                 heroine.ApplyOrgasmDailyReset();
+                heroine.ApplyFrustrationDailyReset();
                 heroine.AdvanceCycleDay(); // 推進排卵週期計數器
             }
         };
