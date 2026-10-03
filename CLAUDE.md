@@ -215,9 +215,17 @@ public List<HeroineSaveData> HeroineSaveDataList; // value（與 IDs 同 index �
 
 5. **邏輯放 Model，不要放 MonoBehaviour**：Bridge / UI / Trigger 只做轉接與顯示。
 
-6. **`HeroineStatusModel` 的相容層勿用**：檔案後段（約 558 行起）的 `AddAttack`、`Discomfort`、
-   `Virginity`、`Excitement` 等是**舊專案遺留 stub**，NHK 新功能請改用情緒卡池 / `Libido` / `Trust` /
-   `HCount` 等現役 API，不要依賴那些相容成員。
+6. **區分 `HeroineStatusModel` 的現役數值與舊相容層**：
+   - `Excitement` 已是 **0～100 的獨立興奮度**，使用 `GetExcitement()`、`SetExcitement(int value)`、
+     `AddExcitement(int amount)`；一般增減與直接設定不套用性慾倍率。
+   - `WeightedAddExcitement(int amount)` 僅對正數依 `Libido` 套用 1～2 倍：性慾 ≤50 為 1 倍、
+     ≥120 為 2 倍，中間線性變化，結果四捨五入（中點遠離零）；零或負數沿用一般增減。
+   - 興奮度跨日由 `ApplyExcitementDailyReset()` 處理：平時歸零；發情中保留目前值，但最多 50。
+     數值範圍、倍率與跨日規則集中在 Model，Bridge 只負責轉接。
+   - 舊版興奮等級／經驗值入口，如 `BaseExcitementLevel`、`AddExcitementExp`、
+     `SetExcitement(int level, int exp)`，仍屬相容層，新功能不得使用。
+   - `AddAttack`、`Discomfort`、`Virginity` 等舊相容成員也不應用於新功能；請使用情緒卡池、
+     `Libido`、`Trust`、`Affinity`、獨立 `Excitement`／`Orgasm`、`HCount`、`IsInHeat` 等現役 API。
 
 ---
 

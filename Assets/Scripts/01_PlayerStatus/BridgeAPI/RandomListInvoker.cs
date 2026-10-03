@@ -8,7 +8,7 @@ using UnityEngine.Events;
 /// 
 /// 用法：
 ///   1. 在 Inspector 的 Entries 中新增項目，填入 Key 和多個候選值
-///   2. 在 On Random Value 拖入目標方法（例如 ProtagonistBridgeAPI.ReduceStamina）
+///   2. 在 On Random Value 拖入目標方法（例如 ProtagonistBridgeAPI.ReduceLifePower）
 ///   3. 按鈕或其他 UnityEvent 呼叫 Invoke("你的Key")
 ///
 /// 範例設定：

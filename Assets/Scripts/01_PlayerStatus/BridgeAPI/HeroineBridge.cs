@@ -12,6 +12,8 @@ using UnityEngine;
 /// - Libido 性慾值
 /// - Excitement 獨立興奮度（一般／加權增減）
 /// - Orgasm 獨立高潮度
+/// - Trust 信賴值 / Affinity 好感度
+/// - IsInHeat 發情開關
 /// - HCount H 次數
 /// - Emotion Card 情緒卡池
 /// - CurrentEmotion 主導情緒
@@ -98,12 +100,43 @@ public class HeroineBridge : MonoBehaviour
     public int GetExcitement() => H?.GetExcitement() ?? 0;
     public void SetExcitement(int value) => H?.SetExcitement(value);
     public void AddExcitement(int amount) => H?.AddExcitement(amount);
+    /// <summary>依輸入的絕對值減少興奮度，不套用性慾倍率。</summary>
+    public void ReduceExcitement(int amount) => H?.AddExcitement(ToReductionDelta(amount));
+    public void SetExcitementZero() => SetExcitement(0);
     public void WeightedAddExcitement(int amount) => H?.WeightedAddExcitement(amount);
 
     // 獨立高潮度
     public int GetOrgasm() => H?.GetOrgasm() ?? 0;
     public void SetOrgasm(int value) => H?.SetOrgasm(value);
     public void AddOrgasm(int amount) => H?.AddOrgasm(amount);
+    /// <summary>依輸入的絕對值減少高潮度。</summary>
+    public void ReduceOrgasm(int amount) => H?.AddOrgasm(ToReductionDelta(amount));
+    public void SetOrgasmZero() => SetOrgasm(0);
+
+    // ==========================================================
+    // 信賴 / 好感度：範圍限制由 Model 處理。
+    // ==========================================================
+
+    public void AddTrust(int amount) => H?.AddTrust(amount);
+    /// <summary>依輸入的絕對值減少信賴。</summary>
+    public void ReduceTrust(int amount) => H?.AddTrust(ToReductionDelta(amount));
+    public void SetTrust(int value) => H?.SetTrust(value);
+
+    public void AddAffinity(int amount) => H?.AddAffinity(amount);
+    /// <summary>依輸入的絕對值減少好感度。</summary>
+    public void ReduceAffinity(int amount) => H?.AddAffinity(ToReductionDelta(amount));
+    public void SetAffinity(int value) => H?.SetAffinity(value);
+
+    // ==========================================================
+    // 發情開關
+    // ==========================================================
+
+    public void SetInHeat(bool value) => H?.SetInHeat(value);
+    public void EnableInHeat() => SetInHeat(true);
+    public void DisableInHeat() => SetInHeat(false);
+
+    // 正數轉為負數，負數維持原值，避免 int.MinValue 取絕對值時溢位。
+    private static int ToReductionDelta(int amount) => amount > 0 ? -amount : amount;
 
     // ==========================================================
     // H Count

@@ -7,7 +7,7 @@ using UnityEngine.Events;
 /// 用法：
 ///   1. 掛在按鈕（或任何物件）上
 ///   2. 設定 Min / Max（含兩端）
-///   3. 在 OnRandomValue 拖入目標方法（例如 ProtagonistBridgeAPI.ReduceStamina）
+///   3. 在 OnRandomValue 拖入目標方法（例如 ProtagonistBridgeAPI.ReduceLifePower）
 ///   4. 按鈕的 OnClick 呼叫此腳本的 Invoke()
 /// </summary>
 [AddComponentMenu("Game/Tools/Random Value Invoker")]

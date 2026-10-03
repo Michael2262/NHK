@@ -18,6 +18,9 @@ public class SpineUnityEventMapping
 
 public class SpineEventToUnityEvent : MonoBehaviour
 {
+    [Tooltip("共用的事件 ID 目錄，供 Inspector 選取；不指定時沿用既有手填字串。")]
+    public SpineEventDatabase eventDatabase;
+
     // 在 Inspector 中設定所有的事件連結
     public List<SpineUnityEventMapping> eventMappings;
 
@@ -28,8 +31,18 @@ public class SpineEventToUnityEvent : MonoBehaviour
     {
         // 將 List 轉換為 Dictionary 以便快速查找，提升效能
         eventMap = new Dictionary<string, UnityEvent>();
+        if (eventMappings == null) return;
         foreach (var mapping in eventMappings)
         {
+            if (mapping == null || string.IsNullOrWhiteSpace(mapping.spineEventName))
+            {
+                Debug.LogWarning("[SpineEventToUnityEvent] 映射未填寫事件 ID，已跳過。", this);
+                continue;
+            }
+            if (eventDatabase != null && eventDatabase.Find(mapping.spineEventName) == null)
+                Debug.LogWarning($"[SpineEventToUnityEvent] ID「{mapping.spineEventName}」未收錄於共用資料庫，沿用既有映射。", this);
+            if (eventMap.ContainsKey(mapping.spineEventName))
+                Debug.LogWarning($"[SpineEventToUnityEvent] ID「{mapping.spineEventName}」重複，只使用第一筆映射。", this);
             if (!string.IsNullOrEmpty(mapping.spineEventName) && !eventMap.ContainsKey(mapping.spineEventName))
             {
                 eventMap.Add(mapping.spineEventName, mapping.onEventTriggered);

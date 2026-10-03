@@ -4,7 +4,7 @@ using UnityEngine;
 /// NHK 版主角數值變化 UnityEvent 橋接 API。
 /// 保留原檔名 / class 名，供 Inspector 的 UnityEvent 拖曳使用。
 /// 
-/// 核心：Stress / LifePower / Sociality / Dependency / Money / SkillPoints / Time。
+/// 提供核心數值、金錢、技能點、時間、射精次數、房間／身體髒污度及狀態開關。
 /// </summary>
 [AddComponentMenu("Game/API/Protagonist Bridge API")]
 public class ProtagonistBridgeAPI : MonoBehaviour
@@ -74,61 +74,55 @@ public class ProtagonistBridgeAPI : MonoBehaviour
     }
 
     // ==========================================
-    // Legacy Compatibility Wrappers
+    // 射精次數
     // ==========================================
-    // 這些方法保留是為了避免舊場景 UnityEvent 綁定直接斷掉。
-    // NHK 版不再有 Stamina / Spirit / Action / ShootTimes / Suspicion / EnergyDrink。
 
-    [System.Obsolete("NHK uses LifePower instead of Stamina. Use AddLifePower / ReduceLifePower instead.")]
-    public void ReduceStamina(float amount) => ReduceLifePower(Mathf.RoundToInt(amount));
-    [System.Obsolete("NHK uses LifePower instead of Stamina. Use AddLifePower / ReduceLifePower instead.")]
-    public void AddStamina(float amount) => AddLifePower(Mathf.RoundToInt(amount));
-    [System.Obsolete("NHK uses LifePower instead of Stamina. Use SetLifePower instead.")]
-    public void SetStaminaToZero() => SetLifePower(0);
-    [System.Obsolete("NHK uses LifePower instead of Stamina. Use SetLifePower instead.")]
-    public void SetStaminaToMax() => SetLifePower(100);
-    public void ReduceStamina(int amount) => ReduceStamina((float)amount);
-    public void AddStamina(int amount) => AddStamina((float)amount);
+    /// <summary>增加射精次數，沿用 Model 規則，可超過每日重設值。</summary>
+    public void AddShootTimes(int amount) => P?.AddShootTimes(amount);
 
-    [System.Obsolete("NHK no longer uses StaminaMax. This call is ignored.")]
-    public void AddStaminaMax(float amount) => Debug.LogWarning("[ProtagonistBridgeAPI] AddStaminaMax ignored in NHK.");
-    public void AddStaminaMax(int amount) => AddStaminaMax((float)amount);
-    [System.Obsolete("NHK no longer uses StaminaMax. This call is ignored.")]
-    public void SetStaminaMax(float value) => Debug.LogWarning("[ProtagonistBridgeAPI] SetStaminaMax ignored in NHK.");
-
-    [System.Obsolete("NHK no longer uses ShootTimes. This call is ignored.")]
-    public void ReduceShootTimes(int amount) => Debug.LogWarning("[ProtagonistBridgeAPI] ReduceShootTimes ignored in NHK.");
-    [System.Obsolete("NHK no longer uses ShootTimes. This call is ignored.")]
-    public void AddShootTimes(int amount) => Debug.LogWarning("[ProtagonistBridgeAPI] AddShootTimes ignored in NHK.");
-    [System.Obsolete("NHK no longer uses ShootTimes. This call is ignored.")]
-    public void SetShootTimes(int value) => Debug.LogWarning("[ProtagonistBridgeAPI] SetShootTimes ignored in NHK.");
-    [System.Obsolete("NHK no longer uses ShootTimes depletion. This call is ignored.")]
-    public void AddShootPhysicalDepletionPenalty(int amount) => Debug.LogWarning("[ProtagonistBridgeAPI] AddShootPhysicalDepletionPenalty ignored in NHK.");
-    [System.Obsolete("NHK no longer uses ShootTimes depletion. This call is ignored.")]
-    public void SetShootItemDepletion(int value) => Debug.LogWarning("[ProtagonistBridgeAPI] SetShootItemDepletion ignored in NHK.");
-
-    [System.Obsolete("NHK no longer uses ExcuseCharges. This call is ignored.")]
-    public void ReduceExcuseCharge(int amount = 1) => Debug.LogWarning("[ProtagonistBridgeAPI] ReduceExcuseCharge ignored in NHK.");
-    [System.Obsolete("NHK no longer uses ExcuseCharges. This call is ignored.")]
-    public void AddExcuseCharge(int amount = 1) => Debug.LogWarning("[ProtagonistBridgeAPI] AddExcuseCharge ignored in NHK.");
-
-    [System.Obsolete("NHK uses Stress reduction for rest. Use ReduceStress instead.")]
-    public void Rest(int slots)
+    /// <summary>以正數指定扣除次數；低於 Model 下限時不扣除並提示。</summary>
+    public void ReduceShootTimes(int amount)
     {
-        int reduce = Mathf.Max(0, slots) * 10;
-        ReduceStress(reduce);
-        Debug.Log($"[ProtagonistBridgeAPI] Legacy Rest({slots}) mapped to ReduceStress({reduce}).");
+        var model = P;
+        if (model == null)
+        {
+            Debug.LogWarning("[ProtagonistBridgeAPI] 主角 Model 尚未初始化，無法扣除射精次數。", this);
+            return;
+        }
+
+        if (!model.TryReduceShootTimes(amount))
+        {
+            Debug.LogWarning($"[ProtagonistBridgeAPI] 射精次數不足，無法扣除 {amount}；下限為 {ProtagonistStatusModel.SHOOT_TIMES_MIN}。", this);
+        }
     }
 
-    [System.Obsolete("NHK no longer uses RestRecoveryPerSlot. This call is ignored.")]
-    public void SetRestRecoveryPerSlot(int value) => Debug.LogWarning("[ProtagonistBridgeAPI] SetRestRecoveryPerSlot ignored in NHK.");
-    [System.Obsolete("NHK no longer uses RestRecoveryPerSlot. This call is ignored.")]
-    public void AddRestRecoveryPerSlot(int delta) => Debug.LogWarning("[ProtagonistBridgeAPI] AddRestRecoveryPerSlot ignored in NHK.");
+    /// <summary>重設射精次數為 Model 的每日初始值，目前為 3。</summary>
+    public void ResetShootTimes() => P?.ResetShootTimes();
 
-    [System.Obsolete("NHK no longer uses EnergyDrink. This call is ignored.")]
-    public void TryReduceEnergyDrink(int amount = 1) => Debug.LogWarning("[ProtagonistBridgeAPI] TryReduceEnergyDrink ignored in NHK.");
-    [System.Obsolete("NHK no longer uses EnergyDrink. This call is ignored.")]
-    public void RefillEnergyDrink() => Debug.LogWarning("[ProtagonistBridgeAPI] RefillEnergyDrink ignored in NHK.");
-    [System.Obsolete("NHK no longer uses EnergyDrink. This call is ignored.")]
-    public void SetEnergyDrinkMax(int value) => Debug.LogWarning("[ProtagonistBridgeAPI] SetEnergyDrinkMax ignored in NHK.");
+    // ==========================================
+    // 房間髒亂度 / 身體髒污度：範圍由 Model 處理。
+    // ==========================================
+
+    public void AddRoomMessLevel(int amount) => P?.AddRoomMessLevel(amount);
+    /// <summary>以正數指定減少的房間髒亂度。</summary>
+    public void ReduceRoomMessLevel(int amount) => P?.ReduceRoomMessLevel(amount);
+    public void SetRoomMessLevel(int value) => P?.SetRoomMessLevel(value);
+
+    public void AddBodyDirtyLevel(int amount) => P?.AddBodyDirtyLevel(amount);
+    /// <summary>以正數指定減少的身體髒污度。</summary>
+    public void ReduceBodyDirtyLevel(int amount) => P?.ReduceBodyDirtyLevel(amount);
+    public void SetBodyDirtyLevel(int value) => P?.SetBodyDirtyLevel(value);
+
+    // ==========================================
+    // 狀態開關
+    // ==========================================
+
+    public void SetBadHealthy(bool value) => P?.SetBadHealthy(value);
+    public void EnableBadHealthy() => SetBadHealthy(true);
+    public void DisableBadHealthy() => SetBadHealthy(false);
+
+    /// <summary>設定不良依賴；能否開啟及自動解除門檻由 Model 決定。</summary>
+    public void SetBadDependency(bool value) => P?.SetBadDependency(value);
+    public void EnableBadDependency() => SetBadDependency(true);
+    public void DisableBadDependency() => SetBadDependency(false);
 }
