@@ -10,6 +10,8 @@ using PixelCrushers.DialogueSystem;
 ///   IsStressHigh();
 ///   GetSemen() &gt;= 100;
 ///   SetSemen(50); AddSemen(20); AddSemen(-10);
+///   AddStress(10); SetLifePower(50); ReduceMoney(100); ResetShootTimes();
+/// 調整函式供 Script 使用；ReduceMoney / ReduceSkillPoints / ReduceShootTimes 會實際扣除，勿用於 Conditions。
 /// </summary>
 public class ProtagonistLuaBridge : MonoBehaviour
 {
@@ -28,6 +30,29 @@ public class ProtagonistLuaBridge : MonoBehaviour
 
     void OnEnable()
     {
+        // ── 主角數值調整（Script） ──
+        Lua.RegisterFunction("AddStress", this, SymbolExtensions.GetMethodInfo(() => AddStress((double)0)));
+        Lua.RegisterFunction("ReduceStress", this, SymbolExtensions.GetMethodInfo(() => ReduceStress((double)0)));
+        Lua.RegisterFunction("SetStress", this, SymbolExtensions.GetMethodInfo(() => SetStress((double)0)));
+        Lua.RegisterFunction("AddLifePower", this, SymbolExtensions.GetMethodInfo(() => AddLifePower((double)0)));
+        Lua.RegisterFunction("ReduceLifePower", this, SymbolExtensions.GetMethodInfo(() => ReduceLifePower((double)0)));
+        Lua.RegisterFunction("SetLifePower", this, SymbolExtensions.GetMethodInfo(() => SetLifePower((double)0)));
+        Lua.RegisterFunction("AddSociality", this, SymbolExtensions.GetMethodInfo(() => AddSociality((double)0)));
+        Lua.RegisterFunction("ReduceSociality", this, SymbolExtensions.GetMethodInfo(() => ReduceSociality((double)0)));
+        Lua.RegisterFunction("SetSociality", this, SymbolExtensions.GetMethodInfo(() => SetSociality((double)0)));
+        Lua.RegisterFunction("AddDependency", this, SymbolExtensions.GetMethodInfo(() => AddDependency((double)0)));
+        Lua.RegisterFunction("ReduceDependency", this, SymbolExtensions.GetMethodInfo(() => ReduceDependency((double)0)));
+        Lua.RegisterFunction("SetDependency", this, SymbolExtensions.GetMethodInfo(() => SetDependency((double)0)));
+        Lua.RegisterFunction("AddMoney", this, SymbolExtensions.GetMethodInfo(() => AddMoney((double)0)));
+        Lua.RegisterFunction("ReduceMoney", this, SymbolExtensions.GetMethodInfo(() => ReduceMoney((double)0)));
+        Lua.RegisterFunction("SetMoney", this, SymbolExtensions.GetMethodInfo(() => SetMoney((double)0)));
+        Lua.RegisterFunction("AddSkillPoints", this, SymbolExtensions.GetMethodInfo(() => AddSkillPoints((double)0)));
+        Lua.RegisterFunction("ReduceSkillPoints", this, SymbolExtensions.GetMethodInfo(() => ReduceSkillPoints((double)0)));
+        Lua.RegisterFunction("SetSkillPoints", this, SymbolExtensions.GetMethodInfo(() => SetSkillPoints((double)0)));
+        Lua.RegisterFunction("AddShootTimes", this, SymbolExtensions.GetMethodInfo(() => AddShootTimes((double)0)));
+        Lua.RegisterFunction("ReduceShootTimes", this, SymbolExtensions.GetMethodInfo(() => ReduceShootTimes((double)0)));
+        Lua.RegisterFunction("ResetShootTimes", this, SymbolExtensions.GetMethodInfo(() => ResetShootTimes()));
+
         // ── 數值直讀 ──
         Lua.RegisterFunction("GetStress", this, SymbolExtensions.GetMethodInfo(() => GetStress()));
         Lua.RegisterFunction("GetLifePower", this, SymbolExtensions.GetMethodInfo(() => GetLifePower()));
@@ -66,6 +91,28 @@ public class ProtagonistLuaBridge : MonoBehaviour
 
     void OnDisable()
     {
+        Lua.UnregisterFunction("AddStress");
+        Lua.UnregisterFunction("ReduceStress");
+        Lua.UnregisterFunction("SetStress");
+        Lua.UnregisterFunction("AddLifePower");
+        Lua.UnregisterFunction("ReduceLifePower");
+        Lua.UnregisterFunction("SetLifePower");
+        Lua.UnregisterFunction("AddSociality");
+        Lua.UnregisterFunction("ReduceSociality");
+        Lua.UnregisterFunction("SetSociality");
+        Lua.UnregisterFunction("AddDependency");
+        Lua.UnregisterFunction("ReduceDependency");
+        Lua.UnregisterFunction("SetDependency");
+        Lua.UnregisterFunction("AddMoney");
+        Lua.UnregisterFunction("ReduceMoney");
+        Lua.UnregisterFunction("SetMoney");
+        Lua.UnregisterFunction("AddSkillPoints");
+        Lua.UnregisterFunction("ReduceSkillPoints");
+        Lua.UnregisterFunction("SetSkillPoints");
+        Lua.UnregisterFunction("AddShootTimes");
+        Lua.UnregisterFunction("ReduceShootTimes");
+        Lua.UnregisterFunction("ResetShootTimes");
+
         Lua.UnregisterFunction("GetStress");
         Lua.UnregisterFunction("GetLifePower");
         Lua.UnregisterFunction("GetSociality");
@@ -126,6 +173,32 @@ public class ProtagonistLuaBridge : MonoBehaviour
     public void SetSemen(double value) => GetModel()?.SetSemen((int)value);
     /// <summary>正數增加、負數減少射精感；小數部分截去。</summary>
     public void AddSemen(double amount) => GetModel()?.AddSemen((int)amount);
+
+    // ───── 主角數值調整：小數截去，數值限制與狀態修正交由 Model 處理 ─────
+    public void AddStress(double value) => GetModel()?.AddStress((int)value);
+    public void ReduceStress(double value) => GetModel()?.ReduceStress((int)value);
+    public void SetStress(double value) => GetModel()?.SetStress((int)value);
+    public void AddLifePower(double value) => GetModel()?.AddLifePower((int)value);
+    public void ReduceLifePower(double value) => GetModel()?.ReduceLifePower((int)value);
+    public void SetLifePower(double value) => GetModel()?.SetLifePower((int)value);
+    public void AddSociality(double value) => GetModel()?.AddSociality((int)value);
+    public void ReduceSociality(double value) => GetModel()?.ReduceSociality((int)value);
+    public void SetSociality(double value) => GetModel()?.SetSociality((int)value);
+    public void AddDependency(double value) => GetModel()?.AddDependency((int)value);
+    public void ReduceDependency(double value) => GetModel()?.ReduceDependency((int)value);
+    public void SetDependency(double value) => GetModel()?.SetDependency((int)value);
+    public void AddMoney(double value) => GetModel()?.AddMoney((int)value);
+    public void SetMoney(double value) => GetModel()?.SetMoney((int)value);
+    /// <summary>以正數指定扣除量；不足時不扣除，回傳是否成功。僅供 Script 操作。</summary>
+    public bool ReduceMoney(double amount) => GetModel()?.TryReduceMoney((int)amount) ?? false;
+    public void AddSkillPoints(double value) => GetModel()?.AddSkillPoints((int)value);
+    public void SetSkillPoints(double value) => GetModel()?.SetSkillPoints((int)value);
+    /// <summary>以正數指定扣除量；不足時不扣除，回傳是否成功。僅供 Script 操作。</summary>
+    public bool ReduceSkillPoints(double amount) => GetModel()?.TryReduceSkillPoints((int)amount) ?? false;
+    public void AddShootTimes(double amount) => GetModel()?.AddShootTimes((int)amount);
+    /// <summary>以正數指定扣除次數；低於下限時不扣除。僅供 Script 操作。</summary>
+    public bool ReduceShootTimes(double amount) => GetModel()?.TryReduceShootTimes((int)amount) ?? false;
+    public void ResetShootTimes() => GetModel()?.ResetShootTimes();
 
     // ───── 分級查詢 ─────
     public string GetStressGrade() => GetModel()?.GetStressGrade().ToString() ?? "Low";

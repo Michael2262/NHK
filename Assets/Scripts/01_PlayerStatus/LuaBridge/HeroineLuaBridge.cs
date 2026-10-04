@@ -33,6 +33,10 @@ using PixelCrushers.DialogueSystem;
 ///   GetOrgasm("sister")、SetOrgasm("sister", 50)、AddOrgasm("sister", -10)。
 ///   範圍 0~100，每日歸零。
 ///
+/// ── 獨立不滿值 ──
+///   滿值條件：GetFrustration("sister") >= GetFrustrationMax("sister")。
+///   調整：SetFrustration("sister", 3)、AddFrustration("sister", -1)、SetFrustrationMax("sister", 7)。
+///
 /// ── 信賴 ──
 ///   GetTrust("sister")                             → 信賴值 (0~150)
 ///   SetTrust("sister", 50)                         → 設定信賴值
@@ -67,6 +71,18 @@ public class HeroineLuaBridge : MonoBehaviour
 
     void OnEnable()
     {
+        // 獨立不滿值與目前上限（條件查詢與 Script 調整）
+        Lua.RegisterFunction("GetFrustration", this,
+            SymbolExtensions.GetMethodInfo(() => GetFrustration(string.Empty)));
+        Lua.RegisterFunction("GetFrustrationMax", this,
+            SymbolExtensions.GetMethodInfo(() => GetFrustrationMax(string.Empty)));
+        Lua.RegisterFunction("SetFrustration", this,
+            SymbolExtensions.GetMethodInfo(() => SetFrustration(string.Empty, (double)0)));
+        Lua.RegisterFunction("AddFrustration", this,
+            SymbolExtensions.GetMethodInfo(() => AddFrustration(string.Empty, (double)0)));
+        Lua.RegisterFunction("SetFrustrationMax", this,
+            SymbolExtensions.GetMethodInfo(() => SetFrustrationMax(string.Empty, (double)0)));
+
         // 獨立高潮度
         Lua.RegisterFunction("GetOrgasm", this,
             SymbolExtensions.GetMethodInfo(() => GetOrgasm(string.Empty)));
@@ -148,6 +164,12 @@ public class HeroineLuaBridge : MonoBehaviour
 
     void OnDisable()
     {
+        Lua.UnregisterFunction("GetFrustration");
+        Lua.UnregisterFunction("GetFrustrationMax");
+        Lua.UnregisterFunction("SetFrustration");
+        Lua.UnregisterFunction("AddFrustration");
+        Lua.UnregisterFunction("SetFrustrationMax");
+
         Lua.UnregisterFunction("GetOrgasm");
         Lua.UnregisterFunction("SetOrgasm");
         Lua.UnregisterFunction("AddOrgasm");
@@ -288,6 +310,17 @@ public class HeroineLuaBridge : MonoBehaviour
     public void SetExcitement(string heroineID, double value) => GetModel(heroineID)?.SetExcitement((int)value);
     public void AddExcitement(string heroineID, double amount) => GetModel(heroineID)?.AddExcitement((int)amount);
     public void WeightedAddExcitement(string heroineID, double amount) => GetModel(heroineID)?.WeightedAddExcitement((int)amount);
+
+    /// <summary>取得指定女主角的不滿值。</summary>
+    public double GetFrustration(string heroineID) => GetModel(heroineID)?.GetFrustration() ?? 0;
+    /// <summary>取得目前上限；找不到角色時使用預設上限，避免 0 >= 0 誤判滿值。</summary>
+    public double GetFrustrationMax(string heroineID) => GetModel(heroineID)?.FrustrationMax ?? HeroineStatusModel.DefaultFrustrationMax;
+    /// <summary>設定不滿值；沿用其他 Lua 數值入口，小數部分截去，範圍由 Model 處理。</summary>
+    public void SetFrustration(string heroineID, double value) => GetModel(heroineID)?.SetFrustration((int)value);
+    /// <summary>正數增加、負數減少不滿值。</summary>
+    public void AddFrustration(string heroineID, double amount) => GetModel(heroineID)?.AddFrustration((int)amount);
+    /// <summary>設定不滿值上限；最低值與目前數值校正由 Model 處理。</summary>
+    public void SetFrustrationMax(string heroineID, double value) => GetModel(heroineID)?.SetFrustrationMax((int)value);
 
     public double GetOrgasm(string heroineID) => GetModel(heroineID)?.GetOrgasm() ?? 0;
     public void SetOrgasm(string heroineID, double value) => GetModel(heroineID)?.SetOrgasm((int)value);

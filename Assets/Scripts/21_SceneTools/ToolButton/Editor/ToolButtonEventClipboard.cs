@@ -16,6 +16,11 @@ internal static class ToolButtonEventClipboard
 
     private static List<Value>[] events;
     private static bool fromPlayMode;
+    private static List<Value> singleEvent;
+    private static bool singleFromPlayMode;
+    public static string SingleLabel { get; private set; }
+    public static bool CanPasteSingle => singleEvent != null && !singleFromPlayMode
+        && !EditorApplication.isPlayingOrWillChangePlaymode;
     public static string Label { get; private set; }
     public static bool CanPaste(int count) => events != null && events.Length == count && !fromPlayMode
         && !EditorApplication.isPlayingOrWillChangePlaymode;
@@ -38,6 +43,33 @@ internal static class ToolButtonEventClipboard
 
         // 先檢查全部參照，兩組事件貼上時不會只套用一半。
         foreach (var snapshot in events)
+            if (!ValidateReferences(target, snapshot, out error)) return false;
+        for (int i = 0; i < destinations.Length; i++) Apply(destinations[i], events[i]);
+        return true;
+    }
+
+    public static void CopySingle(string label, SerializedProperty property)
+    {
+        singleEvent = Capture(property);
+        SingleLabel = label;
+        singleFromPlayMode = EditorApplication.isPlayingOrWillChangePlaymode;
+    }
+
+    public static bool PasteSingle(ToolButtonGroupDisplayControl target, SerializedProperty destination,
+        out string error)
+    {
+        error = string.Empty;
+        if (target == null || destination == null || !CanPasteSingle)
+        { error = "尚未複製單項事件、未選取貼上目標，或目前不允許貼上。"; return false; }
+        if (!ValidateReferences(target, singleEvent, out error)) return false;
+        Apply(destination, singleEvent);
+        return true;
+    }
+
+    private static bool ValidateReferences(ToolButtonGroupDisplayControl target, List<Value> snapshot,
+        out string error)
+    {
+        error = string.Empty;
         foreach (var value in snapshot)
         {
             if (value.Type != SerializedPropertyType.ObjectReference || ReferenceEquals(value.Data, null)) continue;
@@ -52,7 +84,6 @@ internal static class ToolButtonEventClipboard
             if (referencedObject == null || referencedObject.scene != target.gameObject.scene)
             { error = "事件含其他場景或 Prefab Stage 的物件，請在相同場景貼上或重新指定參照。"; return false; }
         }
-        for (int i = 0; i < destinations.Length; i++) Apply(destinations[i], events[i]);
         return true;
     }
 

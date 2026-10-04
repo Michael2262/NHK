@@ -527476,8 +527476,8 @@ MonoBehaviour:
         width: 160
         height: 30
     entryGroups: []
-    canvasScrollPosition: {x: 67, y: 53}
-    canvasZoom: 1
+    canvasScrollPosition: {x: 328.81445, y: 27.587666}
+    canvasZoom: 0.97
   - id: 267
     fields:
     - title: Title
@@ -528553,8 +528553,8 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 156.0989
-        y: 179
+        x: 154.0989
+        y: 162
         width: 160
         height: 30
     - id: 5
@@ -533337,7 +533337,7 @@ MonoBehaviour:
           Brow_Sad1);
 
 
-          SpinePlay(sister,Eye, Eye_Narrow);
+          SpinePlay(sister,Eye, Eye_Narrow2_LookAway);
 
 
           SetAutoDialogue(false);'
@@ -533422,8 +533422,8 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 470
-        y: 543
+        x: 469
+        y: 633
         width: 160
         height: 30
     - id: 16
@@ -533541,8 +533541,8 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 470.95056
-        y: 486
+        x: 469.95056
+        y: 577
         width: 160
         height: 30
     - id: 18
@@ -533779,8 +533779,8 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 568.1759
-        y: 182.40659
+        x: 569.1759
+        y: 163.40659
         width: 160
         height: 30
     - id: 20
@@ -533925,11 +533925,20 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Dialogue Text
-        value: "\u55DA\u2026\u2026"
+        value: "\u2026\u2026"
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: SpineListPlay(sister,Slang_S1);
+        value: 'SpineListPlay(sister,Slang_S1);
+
+
+
+
+          SpinePlay(sister,Mouth,
+          Mouth_Close2);
+
+
+          SpinePlay(sister,Brow, Brow_Angry1);'
         type: 0
         typeString: CustomFieldType_Text
       - title: zh-TW
@@ -534007,7 +534016,7 @@ MonoBehaviour:
       - originConversationID: 270
         originDialogueID: 21
         destinationConversationID: 270
-        destinationDialogueID: 22
+        destinationDialogueID: 30
         isConnector: 0
         priority: 2
       conditionsString: 
@@ -534017,8 +534026,8 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 580.1759
-        y: 230.40659
+        x: 590.1759
+        y: 211.40659
         width: 160
         height: 30
     - id: 22
@@ -534048,7 +534057,8 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: 
+        value: "GroupedState(Set, \u5973\u751F\u5DE6\u624B, Eye)@0.3;\nGroupedState(Set,
+          \u5973\u751F\u53F3\u624B, Eye)@0.3;\n\n\n\n"
         type: 0
         typeString: CustomFieldType_Text
       - title: zh-TW
@@ -534136,8 +534146,8 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 580.1759
-        y: 279.4066
+        x: 595.1759
+        y: 388.4066
         width: 160
         height: 30
     - id: 23
@@ -534167,7 +534177,10 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: 
+        value: 'SpinePlay(sister,Mouth, Mouth_Open4);
+
+
+'
         type: 0
         typeString: CustomFieldType_Text
       - title: zh-TW
@@ -534255,8 +534268,8 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 581.1759
-        y: 329.4066
+        x: 587.1759
+        y: 440.4066
         width: 160
         height: 30
     - id: 24
@@ -534374,8 +534387,8 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 581.1759
-        y: 379.4066
+        x: 588.1759
+        y: 490.4066
         width: 160
         height: 30
     - id: 25
@@ -534616,8 +534629,530 @@ MonoBehaviour:
         y: 336.4066
         width: 160
         height: 30
+    - id: 27
+      fields:
+      - title: Title
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Description
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Narration
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Conversant
+        value: 9
+        type: 5
+        typeString: CustomFieldType_Actor
+      - title: Menu Text
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Dialogue Text
+        value: "\u7576\u7136\u4E0D\u53EF\u4EE5\u554A\uFF01"
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Sequence
+        value: '
+
+
+
+          SpinePlay(sister,Eye, Eye_Narrow);
+
+
+          SpinePlay(sister,Mouth,
+          Mouth_Open2);
+
+
+          SpinePlay(sister,Brow, Brow_Angry2);
+
+
+'
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: zh-TW
+        value: 
+        type: 4
+        typeString: CustomFieldType_Localization
+      - title: zh-CN
+        value: 
+        type: 4
+        typeString: CustomFieldType_Localization
+      - title: en
+        value: 
+        type: 4
+        typeString: CustomFieldType_Localization
+      - title: ja
+        value: "\u3082\u3061\u308D\u3093\u30C0\u30E1\u306B\u6C7A\u307E\u3063\u3066\u308B\u3067\u3057\u3087\uFF01"
+        type: 4
+        typeString: CustomFieldType_Localization
+      - title: ko
+        value: 
+        type: 4
+        typeString: CustomFieldType_Localization
+      - title: StaminaPreview
+        value: 0
+        type: 1
+        typeString: CustomFieldType_Number
+      - title: canvasRect
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Response Menu Sequence
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Notes
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: DontTranslate
+        value: False
+        type: 2
+        typeString: CustomFieldType_Boolean
+      - title: Guid
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Show Invalid
+        value: False
+        type: 2
+        typeString: CustomFieldType_Boolean
+      - title: Enable Conditions
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Option Image
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: NarrationFlag
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Actor
+        value: 8
+        type: 5
+        typeString: CustomFieldType_Actor
+      conversationID: 270
+      isRoot: 0
+      isGroup: 0
+      nodeColor: 
+      delaySimStatus: 0
+      falseConditionAction: Block
+      conditionPriority: 2
+      outgoingLinks:
+      - originConversationID: 270
+        originDialogueID: 27
+        destinationConversationID: 270
+        destinationDialogueID: 28
+        isConnector: 0
+        priority: 2
+      conditionsString: 
+      userScript: 
+      onExecute:
+        m_PersistentCalls:
+          m_Calls: []
+      canvasRect:
+        serializedVersion: 2
+        x: 806.98346
+        y: 204.45053
+        width: 160
+        height: 30
+    - id: 28
+      fields:
+      - title: Title
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Description
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Narration
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Conversant
+        value: 9
+        type: 5
+        typeString: CustomFieldType_Actor
+      - title: Menu Text
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Dialogue Text
+        value: "\u8DDF\u59B9\u59B9\u8AAA\u4EC0\u9EBC\u5566\uFF01\u5927\u8B8A\u614B\uFF01"
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Sequence
+        value: '
+
+
+
+
+
+          SpinePlay(sister,Mouth, Mouth_Loathe1);
+
+
+          SpinePlay(sister,Brow,
+          Brow_Angry4);
+
+'
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: zh-TW
+        value: 
+        type: 4
+        typeString: CustomFieldType_Localization
+      - title: zh-CN
+        value: 
+        type: 4
+        typeString: CustomFieldType_Localization
+      - title: en
+        value: 
+        type: 4
+        typeString: CustomFieldType_Localization
+      - title: ja
+        value: "\u59B9\u306B\u5411\u304B\u3063\u3066\u4F55\u8A00\u3063\u3066\u3093\u306E\u3088\uFF01\u5927\u5909\u614B\uFF01"
+        type: 4
+        typeString: CustomFieldType_Localization
+      - title: ko
+        value: 
+        type: 4
+        typeString: CustomFieldType_Localization
+      - title: StaminaPreview
+        value: 0
+        type: 1
+        typeString: CustomFieldType_Number
+      - title: canvasRect
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Response Menu Sequence
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Notes
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: DontTranslate
+        value: False
+        type: 2
+        typeString: CustomFieldType_Boolean
+      - title: Guid
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Show Invalid
+        value: False
+        type: 2
+        typeString: CustomFieldType_Boolean
+      - title: Enable Conditions
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Option Image
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: NarrationFlag
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Actor
+        value: 8
+        type: 5
+        typeString: CustomFieldType_Actor
+      conversationID: 270
+      isRoot: 0
+      isGroup: 0
+      nodeColor: 
+      delaySimStatus: 0
+      falseConditionAction: Block
+      conditionPriority: 2
+      outgoingLinks: []
+      conditionsString: 
+      userScript: 
+      onExecute:
+        m_PersistentCalls:
+          m_Calls: []
+      canvasRect:
+        serializedVersion: 2
+        x: 805.98346
+        y: 263.45053
+        width: 160
+        height: 30
+    - id: 29
+      fields:
+      - title: Title
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Description
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Narration
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Conversant
+        value: 9
+        type: 5
+        typeString: CustomFieldType_Actor
+      - title: Menu Text
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Dialogue Text
+        value: "\u5440\u554A\uFF01\uFF01"
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Sequence
+        value: 'SpinePlay(sister,Face, Head_Normal);
+
+
+
+          SpinePlay(sister,Eye,
+          Eye_Close_Happy);
+
+
+          SpinePlay(sister,Mouth, Mouth_Open3);
+
+
+          SpinePlay(sister,Brow,
+          Brow_Sad1);
+
+
+'
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: zh-TW
+        value: 
+        type: 4
+        typeString: CustomFieldType_Localization
+      - title: zh-CN
+        value: 
+        type: 4
+        typeString: CustomFieldType_Localization
+      - title: en
+        value: 
+        type: 4
+        typeString: CustomFieldType_Localization
+      - title: ja
+        value: 
+        type: 4
+        typeString: CustomFieldType_Localization
+      - title: ko
+        value: 
+        type: 4
+        typeString: CustomFieldType_Localization
+      - title: StaminaPreview
+        value: 0
+        type: 1
+        typeString: CustomFieldType_Number
+      - title: canvasRect
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Response Menu Sequence
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Notes
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: DontTranslate
+        value: False
+        type: 2
+        typeString: CustomFieldType_Boolean
+      - title: Guid
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Show Invalid
+        value: False
+        type: 2
+        typeString: CustomFieldType_Boolean
+      - title: Enable Conditions
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Option Image
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: NarrationFlag
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Actor
+        value: 8
+        type: 5
+        typeString: CustomFieldType_Actor
+      conversationID: 270
+      isRoot: 0
+      isGroup: 0
+      nodeColor: 
+      delaySimStatus: 0
+      falseConditionAction: Block
+      conditionPriority: 2
+      outgoingLinks:
+      - originConversationID: 270
+        originDialogueID: 29
+        destinationConversationID: 270
+        destinationDialogueID: 22
+        isConnector: 0
+        priority: 2
+      conditionsString: 
+      userScript: 
+      onExecute:
+        m_PersistentCalls:
+          m_Calls: []
+      canvasRect:
+        serializedVersion: 2
+        x: 593.0165
+        y: 323
+        width: 160
+        height: 30
+    - id: 30
+      fields:
+      - title: Title
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Description
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Narration
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Conversant
+        value: 9
+        type: 5
+        typeString: CustomFieldType_Actor
+      - title: Menu Text
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Dialogue Text
+        value: "\u2026\u54A6\uFF1F"
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Sequence
+        value: 'SpinePlay(sister,Eye, Eye_Surprise_LookDown);
+
+
+          SpinePlay(sister,Mouth,
+          Mouth_Small4);
+
+
+          SpinePlay(sister,Brow, Brow_Angry1);
+
+
+          SpinePlay(sister,Face,
+          Head_Down1);'
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: zh-TW
+        value: 
+        type: 4
+        typeString: CustomFieldType_Localization
+      - title: zh-CN
+        value: 
+        type: 4
+        typeString: CustomFieldType_Localization
+      - title: en
+        value: 
+        type: 4
+        typeString: CustomFieldType_Localization
+      - title: ja
+        value: 
+        type: 4
+        typeString: CustomFieldType_Localization
+      - title: ko
+        value: 
+        type: 4
+        typeString: CustomFieldType_Localization
+      - title: StaminaPreview
+        value: 0
+        type: 1
+        typeString: CustomFieldType_Number
+      - title: canvasRect
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Response Menu Sequence
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Notes
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: DontTranslate
+        value: False
+        type: 2
+        typeString: CustomFieldType_Boolean
+      - title: Guid
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Show Invalid
+        value: False
+        type: 2
+        typeString: CustomFieldType_Boolean
+      - title: Enable Conditions
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Option Image
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: NarrationFlag
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Actor
+        value: 8
+        type: 5
+        typeString: CustomFieldType_Actor
+      conversationID: 270
+      isRoot: 0
+      isGroup: 0
+      nodeColor: 
+      delaySimStatus: 0
+      falseConditionAction: Block
+      conditionPriority: 2
+      outgoingLinks:
+      - originConversationID: 270
+        originDialogueID: 30
+        destinationConversationID: 270
+        destinationDialogueID: 29
+        isConnector: 0
+        priority: 2
+      conditionsString: 
+      userScript: 
+      onExecute:
+        m_PersistentCalls:
+          m_Calls: []
+      canvasRect:
+        serializedVersion: 2
+        x: 596.1759
+        y: 268.4066
+        width: 160
+        height: 30
     entryGroups: []
-    canvasScrollPosition: {x: 0, y: 0}
+    canvasScrollPosition: {x: 55, y: 2}
     canvasZoom: 1
   syncInfo:
     syncActors: 0
