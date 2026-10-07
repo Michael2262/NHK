@@ -31,6 +31,7 @@ public class ToolButtonGroupDisplayControl : MonoBehaviour
         [Tooltip("Text Table 的多語系文字 Key。")]
         public string textKey;
         [ToolButtonIconName]
+        [Tooltip("選擇 Ng 時強制視為 NG：顯示 NG 圖示與紅字；啟用 NG 點擊事件時走 NG 事件。")]
         public string iconName = "Heart";
         [Header("是否出現（留空永遠成立）")]
         public ProgressFlagDefinition visibilityFlag;
@@ -39,7 +40,7 @@ public class ToolButtonGroupDisplayControl : MonoBehaviour
         public ProgressFlagDefinition interactableFlag;
         public bool invertInteractable;
         [Header("狀態圖示")]
-        [Tooltip("搭配 Invert Ng Flag 判斷是否為 NG；未設定永遠正常，不受反轉影響。不影響可點條件。")]
+        [Tooltip("Icon 為 Ng 時強制 NG；其他 Icon 依此 Flag 與反轉設定判斷，未設定 Flag 則正常。不影響可點條件。")]
         public ProgressFlagDefinition ngFlag;
         [Tooltip("預設勾選：Flag 為 false 時進入 NG；取消勾選則 Flag 為 true 時進入 NG。")]
         public bool invertNgFlag = true;
@@ -383,10 +384,12 @@ public class ToolButtonGroupDisplayControl : MonoBehaviour
         }
     }
 
-    /// <summary>外觀與點擊共用 NG 判斷；未指定 Flag 時，反轉也不會進入 NG。</summary>
+    /// <summary>外觀與點擊共用 NG 判斷；Icon 為 Ng 時強制 NG，其他情況依 Flag 判斷。</summary>
     private bool IsNg(GroupOption option)
     {
-        return option != null && option.ngFlag != null
+        if (option == null) return false;
+        if (string.Equals(option.iconName, "Ng", StringComparison.Ordinal)) return true;
+        return option.ngFlag != null
             && Evaluate(option.ngFlag, option.invertNgFlag);
     }
 
@@ -429,7 +432,7 @@ public class ToolButtonGroupDisplayControl : MonoBehaviour
             Refresh();
             return;
         }
-        // 以點擊當下的 Flag 決定分支，一次點擊只執行其中一個事件。
+        // 以點擊當下的 Icon 與 Flag 決定分支，一次點擊只執行其中一個事件。
         if (option.useNgClickEvent && IsNg(option)) option.onNgClick?.Invoke();
         else option.onClick?.Invoke();
         // 事件可切組、改 Flag、關閉面板或銷毀控制器；刷新時使用最新群組。
