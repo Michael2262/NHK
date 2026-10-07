@@ -21,6 +21,26 @@ public sealed class ToolButtonGroupEditorWindow : EditorWindow
     private SerializedObject data;
     private int currentIndex = -1, backIndex = -1;
     private bool hasSnapshot;
+    private bool refreshData = true;
+    private int observedDirtyCount = -1;
+    private double nextResolveTime;
+    private readonly List<GroupSummary> groupSummaries = new List<GroupSummary>();
+    private string cachedSearch;
+
+    // 導覽只需要文字與事件數量，不必每次重繪都走完整個 SerializedProperty 樹。
+    private sealed class GroupSummary
+    {
+        public string name;
+        public bool matches, buttonMatches;
+        public readonly List<ButtonSummary> buttons = new List<ButtonSummary>();
+        public readonly List<bool> searchMatches = new List<bool>();
+    }
+
+    private struct ButtonSummary
+    {
+        public string name, textKey, description;
+        public GUIContent label;
+    }
     private static readonly Color CurrentColor = new Color(0.16f, 0.65f, 0.35f, 0.35f);
     private static readonly Color BackColor = new Color(1f, 0.55f, 0.12f, 0.35f);
     private static readonly Color SelectedColor = new Color(0.2f, 0.6f, 1f);
@@ -62,8 +82,38 @@ public sealed class ToolButtonGroupEditorWindow : EditorWindow
 
     private void OnInspectorUpdate()
     {
-        ResolveController();
+        if (changingPlayMode) return;
+        // 找不到目標時才降低搜尋頻率，避免反覆掃描整個場景。
+        if (controller != null || EditorApplication.timeSinceStartup >= nextResolveTime)
+        {
+            nextResolveTime = EditorApplication.timeSinceStartup + 1d;
+            ResolveController();
+        }
+        bool changed = UpdateNavigationSnapshot();
+        if (controller != null && observedDirtyCount != EditorUtility.GetDirtyCount(controller))
+            InvalidateData();
+        if (changed || refreshData) Repaint();
+    }
+
+    private void OnFocus()
+    {
+        nextResolveTime = 0d;
+        InvalidateData();
         Repaint();
+    }
+
+    private void InvalidateData() => refreshData = true;
+
+    private bool UpdateNavigationSnapshot()
+    {
+        int nextCurrent = -1, nextBack = -1;
+        bool nextSnapshot = controller != null
+            && controller.TryGetNavigationSnapshot(out nextCurrent, out nextBack);
+        bool changed = hasSnapshot != nextSnapshot || currentIndex != nextCurrent || backIndex != nextBack;
+        hasSnapshot = nextSnapshot;
+        currentIndex = nextCurrent;
+        backIndex = nextBack;
+        return changed;
     }
 
     private void OnPlayModeChanged(PlayModeStateChange state)
@@ -132,7 +182,16 @@ public sealed class ToolButtonGroupEditorWindow : EditorWindow
         ReleaseData();
         Repaint();
     }
-    private void ReleaseData() { eventDrawers.Clear(); data?.Dispose(); data = null; }
+    private void ReleaseData()
+    {
+        eventDrawers.Clear();
+        data?.Dispose();
+        data = null;
+        groupSummaries.Clear();
+        cachedSearch = null;
+        observedDirtyCount = -1;
+        InvalidateData();
+    }
 
     private void SetController(ToolButtonGroupDisplayControl target)
     {
@@ -159,7 +218,8 @@ public sealed class ToolButtonGroupEditorWindow : EditorWindow
         DrawTargetToolbar();
         if (controller == null)
         {
-            ReleaseData();
+            if (data != null) ReleaseData();
+            refreshData = false;
             EditorGUILayout.HelpBox(Application.isPlaying
                 ? "等待場景的 ToolButtonGroupDisplayControl 單例初始化，視窗會自動連接。"
                 : "場景只有一個控制器時會自動連接。若有多個控制器或要編輯 Prefab，請指定目標或按「使用選取物件」。", MessageType.Info);
@@ -167,9 +227,17 @@ public sealed class ToolButtonGroupEditorWindow : EditorWindow
         }
         if (data == null || data.targetObject != controller)
         { ReleaseData(); data = new SerializedObject(controller); }
-        data.Update();
+        // 只在設定失效時同步；試玩中的導覽顏色變更不需重新序列化 UnityEvent。
+        if (refreshData || (Event.current.type == EventType.Layout
+            && observedDirtyCount != EditorUtility.GetDirtyCount(controller)))
+        {
+            data.Update();
+            RebuildGroupSummaries(data.FindProperty("groups"));
+            observedDirtyCount = EditorUtility.GetDirtyCount(controller);
+            refreshData = false;
+        }
         var groups = data.FindProperty("groups");
-        hasSnapshot = controller.TryGetNavigationSnapshot(out currentIndex, out backIndex);
+        UpdateNavigationSnapshot();
         DrawRuntimeStatus(groups);
 
         using (new EditorGUILayout.HorizontalScope())
@@ -193,7 +261,51 @@ public sealed class ToolButtonGroupEditorWindow : EditorWindow
                 finally { EditorGUIUtility.labelWidth = oldWidth; EditorGUIUtility.wideMode = oldWide; }
             }
         }
-        if (data.ApplyModifiedProperties()) Repaint();
+        if (data.ApplyModifiedProperties()) { InvalidateData(); Repaint(); }
+    }
+
+    private void RebuildGroupSummaries(SerializedProperty groups)
+    {
+        groupSummaries.Clear();
+        cachedSearch = null;
+        for (int g = 0; g < groups.arraySize; g++)
+        {
+            var summary = new GroupSummary { name = GroupName(groups, g) };
+            var options = groups.GetArrayElementAtIndex(g).FindPropertyRelative("options");
+            for (int b = 0; b < options.arraySize; b++)
+            {
+                var option = options.GetArrayElementAtIndex(b);
+                string name = ButtonName(option, b);
+                string ng = option.FindPropertyRelative(nameof(ToolButtonGroupDisplayControl.GroupOption.useNgClickEvent)).boolValue
+                    ? $" / NG {CallCount(option, "onNgClick")}" : " / NG 分流關閉";
+                summary.buttons.Add(new ButtonSummary
+                {
+                    name = name,
+                    textKey = option.FindPropertyRelative("textKey").stringValue,
+                    label = new GUIContent($"{b + 1}. {name}", name),
+                    description = $"Icon: {option.FindPropertyRelative("iconName").stringValue}  ·  一般 {CallCount(option, "onClick")}{ng}"
+                });
+            }
+            groupSummaries.Add(summary);
+        }
+    }
+
+    private void RefreshSearchResults()
+    {
+        if (string.Equals(cachedSearch, search, StringComparison.Ordinal)) return;
+        cachedSearch = search;
+        foreach (var group in groupSummaries)
+        {
+            group.matches = Matches(group.name);
+            group.buttonMatches = false;
+            group.searchMatches.Clear();
+            foreach (var button in group.buttons)
+            {
+                bool matches = group.matches || MatchesButton(button);
+                group.searchMatches.Add(matches);
+                group.buttonMatches |= matches;
+            }
+        }
     }
 
     private void DrawTargetToolbar()
@@ -248,17 +360,15 @@ public sealed class ToolButtonGroupEditorWindow : EditorWindow
         using (var scroll = new EditorGUILayout.ScrollViewScope(treeScroll))
         {
             treeScroll = scroll.scrollPosition;
+            RefreshSearchResults();
             bool any = false;
             for (int g = 0; g < groups.arraySize; g++)
             {
                 var group = groups.GetArrayElementAtIndex(g);
                 var options = group.FindPropertyRelative("options");
-                string name = GroupName(groups, g);
-                bool groupMatches = Matches(name);
-                bool buttonMatches = false;
-                for (int b = 0; b < options.arraySize; b++)
-                    if (MatchesButton(options.GetArrayElementAtIndex(b), b)) { buttonMatches = true; break; }
-                if (!groupMatches && !buttonMatches) continue;
+                var summary = groupSummaries[g];
+                string name = summary.name;
+                if (!summary.matches && !summary.buttonMatches) continue;
                 any = true;
                 bool current = hasSnapshot && currentIndex == g;
                 bool back = hasSnapshot && backIndex == g;
@@ -279,18 +389,16 @@ public sealed class ToolButtonGroupEditorWindow : EditorWindow
                 if (!expanded) continue;
                 for (int b = 0; b < options.arraySize; b++)
                 {
-                    var option = options.GetArrayElementAtIndex(b);
-                    if (!groupMatches && !MatchesButton(option, b)) continue;
+                    var button = summary.buttons[b];
+                    if (!summary.searchMatches[b]) continue;
                     Rect item = EditorGUILayout.GetControlRect(false, 46);
                     item.xMin += 18;
                     PaintRow(item, !commonSettings && selectedGroup == g && selectedButton == b,
                         new Color(0.4f, 0.5f, 0.6f, 0.09f));
                     GUI.Label(new Rect(item.x + 8, item.y + 3, item.width - 16, 20),
-                        new GUIContent($"{b + 1}. {ButtonName(option, b)}", ButtonName(option, b)), EditorStyles.label);
-                    string ngSummary = option.FindPropertyRelative(nameof(ToolButtonGroupDisplayControl.GroupOption.useNgClickEvent)).boolValue
-                        ? $" / NG {CallCount(option, "onNgClick")}" : " / NG 分流關閉";
+                        button.label, EditorStyles.label);
                     GUI.Label(new Rect(item.x + 8, item.y + 24, item.width - 16, 18),
-                        $"Icon: {option.FindPropertyRelative("iconName").stringValue}  ·  一般 {CallCount(option, "onClick")}{ngSummary}", EditorStyles.miniLabel);
+                        button.description, EditorStyles.miniLabel);
                     if (GUI.Button(item, GUIContent.none, GUIStyle.none)) Select(g, b);
                 }
                 using (new EditorGUI.DisabledScope(Locked))
@@ -322,8 +430,7 @@ public sealed class ToolButtonGroupEditorWindow : EditorWindow
 
     private bool Matches(string value) => string.IsNullOrEmpty(search)
         || (value ?? string.Empty).IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0;
-    private bool MatchesButton(SerializedProperty option, int index) => Matches(ButtonName(option, index))
-        || Matches(option.FindPropertyRelative("textKey").stringValue);
+    private bool MatchesButton(ButtonSummary button) => Matches(button.name) || Matches(button.textKey);
     private static string GroupName(SerializedProperty groups, int index)
     {
         if (index < 0 || index >= groups.arraySize) return "無";
@@ -497,13 +604,22 @@ public sealed class ToolButtonGroupEditorWindow : EditorWindow
                         // 複製不清除選取，方便接著選擇貼上目標。
                         Repaint();
                     }
-                using (new EditorGUI.DisabledScope(Locked || changingPlayMode || !hasSelected
+                using (new EditorGUI.DisabledScope(Locked || changingPlayMode || calls == null
                     || !ToolButtonEventClipboard.CanPasteSingle))
-                    if (GUILayout.Button(new GUIContent("貼上所選", "以單項剪貼簿覆蓋目前選中的事件，不新增或變更其他項目。"), GUILayout.Width(75)))
+                    if (GUILayout.Button(new GUIContent("貼上所選", hasSelected
+                        ? "以單項剪貼簿覆蓋目前選中的事件。"
+                        : "將複製的單項事件新增到清單末尾，可跨 Group 貼上。"), GUILayout.Width(75)))
                     {
-                        if (ToolButtonEventClipboard.PasteSingle(controller, calls.GetArrayElementAtIndex(selected), out string error))
-                            Commit();
-                        else ShowNotification(new GUIContent(error));
+                        int destinationIndex = hasSelected ? selected : calls.arraySize;
+                        if (!hasSelected) calls.arraySize++;
+                        if (!ToolButtonEventClipboard.PasteSingle(controller,
+                            calls.GetArrayElementAtIndex(destinationIndex), out string error))
+                        {
+                            // 參照檢查失敗時撤銷新增，避免留下複製自上一列的事件。
+                            if (!hasSelected) calls.DeleteArrayElementAtIndex(destinationIndex);
+                            ShowNotification(new GUIContent(error));
+                        }
+                        Commit();
                     }
                 GUILayout.FlexibleSpace();
                 if (GUILayout.Button("複製全部", GUILayout.Width(75))) CopyEvents(source + " / " + title, property);
@@ -513,7 +629,7 @@ public sealed class ToolButtonGroupEditorWindow : EditorWindow
             var label = new GUIContent(title);
             Rect eventRect = EditorGUILayout.GetControlRect(false, drawer.GetPropertyHeight(property, label));
             using (new EditorGUI.DisabledScope(Locked)) drawer.OnGUI(eventRect, property, label);
-            EditorGUILayout.LabelField("點選事件列後，可刪除、複製或貼上覆蓋單一項目；修改可使用 Undo 復原。", EditorStyles.wordWrappedMiniLabel);
+            EditorGUILayout.LabelField("單項事件可跨 Group 貼上：有選取時覆蓋該項，未選取時新增至末尾；修改可使用 Undo 復原。", EditorStyles.wordWrappedMiniLabel);
         }
     }
 
@@ -712,6 +828,7 @@ public sealed class ToolButtonGroupEditorWindow : EditorWindow
     {
         // Unity 的 SerializedObject 處理 Undo、場景 dirty 與 Prefab override。
         data.ApplyModifiedProperties();
+        InvalidateData();
         eventDrawers.Clear();
         Repaint();
         GUIUtility.ExitGUI();

@@ -25,6 +25,7 @@ public class SpineEventToUnityEventEditor : Editor
             EditorGUILayout.HelpBox("事件映射在 Awake 建立。請停止播放後修改設定，再重新進入 Play Mode 驗證。", MessageType.Info);
 
         EditorGUILayout.PropertyField(serializedObject.FindProperty("eventMappings"), new GUIContent("事件映射"), true);
+        EditorGUILayout.PropertyField(serializedObject.FindProperty("enableEventLog"), new GUIContent("顯示事件 Log", "開啟時顯示 Spine 事件觸發訊息，可在 Play Mode 即時切換。"));
         serializedObject.ApplyModifiedProperties();
 
         var receiver = (SpineEventToUnityEvent)target;

@@ -24,6 +24,9 @@ public class SpineEventToUnityEvent : MonoBehaviour
     // 在 Inspector 中設定所有的事件連結
     public List<SpineUnityEventMapping> eventMappings;
 
+    [Tooltip("是否顯示 Spine 事件觸發的 Log；關閉時仍會正常執行 UnityEvent。")]
+    public bool enableEventLog = false;
+
     private SkeletonAnimation skeletonAnimation;
     private Dictionary<string, UnityEvent> eventMap;
 
@@ -78,7 +81,8 @@ public class SpineEventToUnityEvent : MonoBehaviour
         if (eventMap.TryGetValue(e.Data.Name, out UnityEvent unityEventToInvoke))
         {
             // 如果找到了，就觸發 (Invoke) 它
-            Debug.Log($"觸發 Spine Event: '{e.Data.Name}', 執行對應的 UnityEvent。");
+            if (enableEventLog)
+                Debug.Log($"觸發 Spine Event: '{e.Data.Name}', 執行對應的 UnityEvent。");
             unityEventToInvoke?.Invoke(); // ?. 是一個安全檢查，確保 unityEventToInvoke 不是 null
         }
     }

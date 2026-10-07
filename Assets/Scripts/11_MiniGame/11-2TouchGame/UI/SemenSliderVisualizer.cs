@@ -3,7 +3,8 @@ using UnityEngine.Events;
 using UnityEngine.UI;
 
 /// <summary>
-/// 主角 Semen 填色 UI；滿格後等待玩家操作，由外部停止閃白或開始分段衰退。
+/// 主角 Semen 填色 UI；滿格後等待玩家操作，由外部取消等待或開始分段衰退。
+/// 按鈕的滿值閃爍由 ShootButtonGroup 自行控制。
 /// 掛在獨立的填色 Image 上，外框與背景由其他 UI 物件提供。
 /// </summary>
 [DisallowMultipleComponent]
@@ -16,13 +17,12 @@ public class SemenSliderVisualizer : MonoBehaviour
     [Min(0.01f)] [SerializeField] private float transitionDuration = 0.45f;
     [SerializeField] private bool useUnscaledTime = true;
 
-    [Header("滿格閃白與等待")]
-    [Tooltip("開始閃白後，等待多久才觸發 On Flash Wait；事件觸發後仍持續閃白。")]
+    [Header("滿格事件與等待")]
+    [Tooltip("填色抵達滿格後，等待多久才觸發 On Flash Wait。保留原欄位名稱以相容既有設定。")]
     [Min(0f)] [SerializeField] private float flashWaitDuration = 2f;
-    [Min(0.1f)] [SerializeField] private float flashFrequency = 4f;
-    [Tooltip("填色抵達滿格、開始閃白時觸發一次。")]
+    [Tooltip("填色抵達滿格時觸發一次。")]
     [SerializeField] private UnityEvent onReachedMax = new UnityEvent();
-    [Tooltip("閃白等待時間到達時觸發一次，不會自動停止閃白、歸零或衰退。提前停止閃白會取消等待。")]
+    [Tooltip("滿格等待時間到達時觸發一次，不會自動歸零或衰退。呼叫 StopFlashing 可取消等待，不影響按鈕閃爍。")]
     [SerializeField] private UnityEvent onFlashWait = new UnityEvent();
 
     [Header("高潮後分段衰退（由外部呼叫開始）")]
@@ -37,7 +37,7 @@ public class SemenSliderVisualizer : MonoBehaviour
     public UnityEvent OnFlashWait => onFlashWait;
     public float DisplayedValue => displayedValue;
 
-    private enum VisualState { Tracking, Flashing, Holding, Decaying }
+    private enum VisualState { Tracking, Waiting, Holding, Decaying }
 
     private Image fillImage;
     private GameStatusService service;
@@ -88,12 +88,12 @@ public class SemenSliderVisualizer : MonoBehaviour
         if (TryGetModel()) model.AddSemen(amount);
     }
 
-    /// <summary>供 UnityEvent 呼叫：停止閃白並保持滿格，不歸零、不開始衰退。</summary>
+    /// <summary>保留舊 UnityEvent 入口：取消滿格等待並保持滿格，不歸零、不衰退，也不控制按鈕閃爍。</summary>
     public void StopFlashing()
     {
         if (!isActiveAndEnabled) return;
         RefreshBinding();
-        if (state != VisualState.Flashing) return;
+        if (state != VisualState.Waiting) return;
         state = VisualState.Holding;
         RenderVisual();
     }
@@ -102,7 +102,7 @@ public class SemenSliderVisualizer : MonoBehaviour
     public void StartDecay()
     {
         if (!TryGetModel()) return;
-        if (state != VisualState.Flashing && state != VisualState.Holding) return;
+        if (state != VisualState.Waiting && state != VisualState.Holding) return;
         // 先切入衰退，避免歸零事件把顯示值直接拉走；重複呼叫也不會再次歸零。
         state = VisualState.Decaying;
         decayElapsed = 0f;
@@ -178,14 +178,14 @@ public class SemenSliderVisualizer : MonoBehaviour
         if (model == null) return;
         float dt = useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
 
-        if (state == VisualState.Flashing)
+        if (state == VisualState.Waiting)
         {
             flashElapsed += dt;
             if (!flashWaitInvoked && flashElapsed >= Mathf.Max(0f, flashWaitDuration))
             {
                 flashWaitInvoked = true;
                 RenderVisual();
-                // 先完成內部更新；事件可停止閃白、開始衰退、停用 UI 或讀檔。
+                // 先完成內部更新；事件可取消等待、開始衰退、停用 UI 或讀檔。
                 onFlashWait.Invoke();
                 return;
             }
@@ -204,7 +204,7 @@ public class SemenSliderVisualizer : MonoBehaviour
             {
                 displayedValue = maximum;
                 fullArmed = false;
-                state = VisualState.Flashing;
+                state = VisualState.Waiting;
                 flashElapsed = 0f;
                 flashWaitInvoked = false;
                 RenderVisual();
@@ -242,13 +242,7 @@ public class SemenSliderVisualizer : MonoBehaviour
     private void RenderVisual()
     {
         if (fillImage == null) return;
-        Color tint = fillColor;
-        if (state == VisualState.Flashing)
-        {
-            float pulse = 0.5f + 0.5f * Mathf.Cos(flashElapsed * flashFrequency * Mathf.PI * 2f);
-            tint = Color.Lerp(fillColor, new Color(1f, 1f, 1f, fillColor.a), pulse);
-        }
-        fillImage.color = tint;
+        fillImage.color = fillColor;
         fillImage.fillAmount = Mathf.Clamp01(displayedValue / maximum);
     }
 }

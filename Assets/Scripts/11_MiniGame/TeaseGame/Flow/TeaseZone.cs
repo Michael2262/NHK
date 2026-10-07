@@ -19,7 +19,7 @@ public enum TeaseSwipeDir
 ///
 /// 這一個元件就包含一個觸碰點的完整定義：
 ///   - 手勢：點一下（Tap）或往某方向滑（Swipe）
-///   - 出現條件：符合任一模式（modes，OR）＋多筆進度旗標條件（flagConditions，AND）
+///   - 出現條件：符合任一模式（modes，OR）＋多筆進度旗標條件（flagConditions，可選 AND / OR）
 ///   - 跑條：這次觸碰要跑多久（duration）
 ///   - 提示：這一點的愛心（hint，懸浮對應模式按鈕時亮）
 ///   - 成功回呼：onTouch（觸碰當下）、onComplete（跑條結束、女主角反應）
@@ -37,6 +37,8 @@ public enum TeaseSwipeDir
 public class TeaseZone : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
 {
     public enum GestureType { Tap, Swipe }
+
+    public enum FlagConditionMode { AND = 0, OR = 1 }
 
     [System.Serializable]
     private class FlagCondition
@@ -75,7 +77,10 @@ public class TeaseZone : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
     [FormerlySerializedAs("mode")]
     [SerializeField, HideInInspector] private TeaseMode legacyMode = TeaseMode.Hand;
 
-    [Tooltip("旗標條件；每項可獨立設定 Invert，所有非空條件都成立才出現（AND）。")]
+    [Tooltip("旗標條件的組合方式：AND = 所有有效條件都成立；OR = 任一有效條件成立。預設 AND。")]
+    [SerializeField] private FlagConditionMode flagConditionMode = FlagConditionMode.AND;
+
+    [Tooltip("旗標條件；每項先依 Invert 判斷，再以 Flag Condition Mode 組合。未指定旗標的項目會忽略。")]
     [SerializeField] private FlagCondition[] flagConditions;
 
     // 保留上一版已序列化的多 Flag；新的逐項條件有設定時便不再使用。
@@ -193,6 +198,7 @@ public class TeaseZone : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
     {
         get
         {
+            bool useOr = flagConditionMode == FlagConditionMode.OR;
             bool hasIndividualConditions = false;
 
             if (flagConditions != null)
@@ -203,12 +209,14 @@ public class TeaseZone : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
 
                     hasIndividualConditions = true;
                     bool has = HasFlag(condition.flag.FlagID);
-                    if (condition.invert ? has : !has) return false;
+                    bool satisfied = condition.invert ? !has : has;
+                    if (useOr && satisfied) return true;
+                    if (!useOr && !satisfied) return false;
                 }
             }
 
             // 新條件有任一有效項目時，完全取代舊版設定。
-            if (hasIndividualConditions) return true;
+            if (hasIndividualConditions) return !useOr;
 
             bool hasLegacyArrayConditions = false;
 
@@ -220,11 +228,14 @@ public class TeaseZone : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
 
                     hasLegacyArrayConditions = true;
                     bool has = HasFlag(requiredFlag.FlagID);
-                    if (invertFlag ? has : !has) return false;
+                    bool satisfied = invertFlag ? !has : has;
+                    if (useOr && satisfied) return true;
+                    if (!useOr && !satisfied) return false;
                 }
             }
 
-            if (hasLegacyArrayConditions || legacyRequiredFlag == null) return true;
+            if (hasLegacyArrayConditions) return !useOr;
+            if (legacyRequiredFlag == null) return true;
 
             bool hasLegacyFlag = HasFlag(legacyRequiredFlag.FlagID);
             return invertFlag ? !hasLegacyFlag : hasLegacyFlag;

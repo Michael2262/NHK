@@ -189,6 +189,17 @@ public sealed class ShootButtonGroupEditorWindow : EditorWindow
         if (data == null || data.targetObject != controller) { ReleaseData(); data = new SerializedObject(controller); }
         data.Update();
         var groups = data.FindProperty("groups");
+        using (new EditorGUI.DisabledScope(Locked))
+            EditorGUILayout.PropertyField(data.FindProperty("defaultID"), new GUIContent("預設 ID"));
+        string defaultID = data.FindProperty("defaultID").stringValue;
+        if (!string.IsNullOrWhiteSpace(defaultID))
+        {
+            bool found = false;
+            for (int i = 0; i < groups.arraySize; i++)
+                if (string.Equals(groups.GetArrayElementAtIndex(i).FindPropertyRelative("id").stringValue,
+                    defaultID, StringComparison.Ordinal)) { found = true; break; }
+            if (!found) EditorGUILayout.HelpBox("預設 ID 找不到對應分組，初始化後按鈕將保持不可用。", MessageType.Warning);
+        }
         DrawGroups(groups);
         if (Locked)
             EditorGUILayout.HelpBox("目前使用的組：" + (controller == ShootButtonGroup.Instance ? controller.CurrentID ?? "無" : "此元件不是執行中的實例")

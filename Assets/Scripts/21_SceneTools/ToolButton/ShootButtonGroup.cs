@@ -27,9 +27,15 @@ public class ShootButtonGroup : MonoBehaviour
     [Tooltip("只顯示 (剩餘/每日初始值)，請使用獨立 TMP，勿掛 LocalizeUI。")]
     [SerializeField] private TMP_Text shootTimesText;
     [SerializeField] private List<ButtonAction> groups = new List<ButtonAction>();
+    [Tooltip("初始化時套用的組名／ID，必須與 Groups 其中一筆完全相同；留空不指定 ID，不會自動顯示。")]
+    [SerializeField] private string defaultID;
+    [Header("滿值閃爍（Button 使用 Color Tint）")]
+    [SerializeField] private Color flashColorA = new Color(156f / 255f, 253f / 255f, 1f, 1f);
+    [SerializeField] private Color flashColorB = Color.white;
+    [Tooltip("每秒交替的完整週期數，使用不受時間縮放影響的時間。")]
+    [Min(0.1f)] [SerializeField] private float flashFrequency = 4f;
     [Header("整體顯示")]
     [SerializeField] private CanvasGroup canvasGroup;
-    [Range(0f, 1f)] [SerializeField] private float disabledAlpha = 0.5f;
     [Min(0.01f)] [SerializeField] private float fadeInDuration = 0.2f;
     [Tooltip("淡出時間最多為淡入時間的一半。")]
     [Min(0f)] [SerializeField] private float fadeOutDuration = 0.1f;
@@ -46,6 +52,10 @@ public class ShootButtonGroup : MonoBehaviour
     private float _fadeStart;
     private float _fadeElapsed;
     private float _fadeDuration;
+    private bool _flashDismissed;
+    private bool _flashApplied;
+    private float _flashElapsed;
+    private ColorBlock _originalButtonColors;
 
     public string CurrentID => _currentGroup != null ? _currentGroup.id : null;
 
@@ -74,7 +84,7 @@ public class ShootButtonGroup : MonoBehaviour
             if (!ids.Add(group.id))
                 Debug.LogWarning($"[ShootButtonGroup] ID「{group.id}」重複，切換時使用第一筆。", this);
         }
-        ApplyPresentation();
+        SetID(defaultID);
     }
 
     private void OnEnable()
@@ -88,7 +98,7 @@ public class ShootButtonGroup : MonoBehaviour
             _protagonist.OnSemenChanged += HandleValueChanged;
             _protagonist.OnShootTimesChanged += HandleValueChanged;
         }
-        if (_service != null) _service.OnGameStatusLoaded += Refresh;
+        if (_service != null) _service.OnGameStatusLoaded += HandleGameStatusLoaded;
         _visibility = _visible ? 1f : 0f;
         Refresh();
     }
@@ -102,7 +112,7 @@ public class ShootButtonGroup : MonoBehaviour
             _protagonist.OnSemenChanged -= HandleValueChanged;
             _protagonist.OnShootTimesChanged -= HandleValueChanged;
         }
-        if (_service != null) _service.OnGameStatusLoaded -= Refresh;
+        if (_service != null) _service.OnGameStatusLoaded -= HandleGameStatusLoaded;
         _service = null;
         _protagonist = null;
         _fading = false;
@@ -139,6 +149,30 @@ public class ShootButtonGroup : MonoBehaviour
 
     private void HandleValueChanged(int value) => Refresh();
 
+    private void HandleGameStatusLoaded()
+    {
+        _flashDismissed = false;
+        _flashElapsed = 0f;
+        Refresh();
+    }
+
+    /// <summary>滿值且可用時重新啟動提醒，不修改主角數值。</summary>
+    public void StartFlashing()
+    {
+        if (Instance != this || !isActiveAndEnabled || !CanClick()) return;
+        _flashDismissed = false;
+        _flashElapsed = 0f;
+        Refresh();
+    }
+
+    /// <summary>解除這一次滿值提醒；降到未滿後再次滿值才會自動重新提醒。</summary>
+    public void StopFlashing()
+    {
+        if (Instance != this) return;
+        _flashDismissed = true;
+        RestoreButtonColors();
+    }
+
     private bool CanClick()
     {
         var service = GameStatusService.Instance;
@@ -152,6 +186,11 @@ public class ShootButtonGroup : MonoBehaviour
         if (Instance != this) return;
         var service = GameStatusService.Instance;
         var protagonist = service != null ? service.Protagonist : null;
+        if (protagonist == null || protagonist.Semen != protagonist.SemenMax)
+        {
+            _flashDismissed = false;
+            _flashElapsed = 0f;
+        }
         if (shootTimesText != null)
         {
             shootTimesText.text = protagonist != null
@@ -176,6 +215,8 @@ public class ShootButtonGroup : MonoBehaviour
             Refresh();
             return;
         }
+        // 先解除提醒，事件即使未消耗 Semen，後續刷新也不會再次啟動。
+        StopFlashing();
         _currentGroup.onClick?.Invoke();
         if (this != null) Refresh();
     }
@@ -217,9 +258,46 @@ public class ShootButtonGroup : MonoBehaviour
         bool interactable = _canClick && _visible && !_fading && isActiveAndEnabled;
         if (shootButton != null) shootButton.interactable = interactable;
         if (canvasGroup == null) return;
-        // 淡入淡出與不可用透明度分開計算，數值變更不會中斷顯示動畫。
-        canvasGroup.alpha = _visibility * (_canClick ? 1f : Mathf.Clamp01(disabledAlpha));
-        canvasGroup.interactable = interactable;
+        // CanvasGroup 只控制顯示淡入淡出；不可用外觀交由 Button 的 Disabled 設定。
+        canvasGroup.alpha = _visibility;
+        canvasGroup.interactable = _visible && !_fading && _configured && isActiveAndEnabled;
         canvasGroup.blocksRaycasts = _visible && _configured && isActiveAndEnabled;
+        UpdateFlashing(0f);
+    }
+
+    private void LateUpdate() => UpdateFlashing(Time.unscaledDeltaTime);
+
+    private void UpdateFlashing(float deltaTime)
+    {
+        if (Instance != this) return;
+        bool shouldFlash = _canClick && !_flashDismissed && _visible && !_fading
+            && isActiveAndEnabled && shootButton != null && shootButton.isActiveAndEnabled
+            && shootButton.IsInteractable() && shootButton.transition == Selectable.Transition.ColorTint;
+        if (!shouldFlash)
+        {
+            RestoreButtonColors();
+            return;
+        }
+        if (!_flashApplied)
+        {
+            _originalButtonColors = shootButton.colors;
+            _flashApplied = true;
+        }
+        _flashElapsed += deltaTime;
+        float pulse = 0.5f - 0.5f * Mathf.Cos(_flashElapsed * Mathf.Max(0.1f, flashFrequency) * Mathf.PI * 2f);
+        Color tint = Color.Lerp(flashColorA, flashColorB, pulse);
+        // 透過 Button 自己的狀態色閃爍，避免另一個圖片動畫與 Color Tint 搶控制權。
+        // Disabled 保持原設定；滑鼠移入、選取、按住時沿用同一組閃爍色。
+        var colors = _originalButtonColors;
+        colors.normalColor = colors.highlightedColor = colors.pressedColor = colors.selectedColor = tint;
+        colors.fadeDuration = 0f;
+        shootButton.colors = colors;
+    }
+
+    private void RestoreButtonColors()
+    {
+        if (!_flashApplied) return;
+        if (shootButton != null) shootButton.colors = _originalButtonColors;
+        _flashApplied = false;
     }
 }
