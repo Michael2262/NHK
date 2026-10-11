@@ -26,7 +26,7 @@ public class SemenSliderVisualizer : MonoBehaviour
     [SerializeField] private UnityEvent onFlashWait = new UnityEvent();
 
     [Header("高潮後分段衰退（由外部呼叫開始）")]
-    [Tooltip("呼叫 StartDecay 時將 Model 歸零，顯示值分段下降。期間實際值仍可累積。")]
+    [Tooltip("自動衰退的總時間，也是手動衰退從首次觸發起算的期限；到期後將剩餘量一次降完。期間實際值仍可累積。")]
     [Min(0.01f)] [SerializeField] private float decayDuration = 5f;
     [Tooltip("例如 5 段：100 → 80 → 60 → 40 → 20 → 0。")]
     [Range(1, 20)] [SerializeField] private int decaySteps = 5;
@@ -37,7 +37,7 @@ public class SemenSliderVisualizer : MonoBehaviour
     public UnityEvent OnFlashWait => onFlashWait;
     public float DisplayedValue => displayedValue;
 
-    private enum VisualState { Tracking, Waiting, Holding, Decaying }
+    private enum VisualState { Tracking, Waiting, Holding, Decaying, ManualDecaying }
 
     private Image fillImage;
     private GameStatusService service;
@@ -50,6 +50,11 @@ public class SemenSliderVisualizer : MonoBehaviour
     private float transitionElapsed;
     private float flashElapsed;
     private float decayElapsed;
+    private int manualStepsTriggered;
+    private float manualMoveStart;
+    private float manualMoveTarget;
+    private float manualMoveElapsed;
+    private bool manualTimeoutFinishing;
     private bool flashWaitInvoked;
     private bool fullArmed;
 
@@ -109,6 +114,37 @@ public class SemenSliderVisualizer : MonoBehaviour
         model.SetSemen(0);
         // 訂閱者若關閉 UI 或讀檔，沿用其同步後的狀態，不再覆寫。
         RenderVisual();
+    }
+
+    /// <summary>供 UnityEvent 呼叫：每次下降一段；首次歸零 Model 並開始計時，逾時一次降完剩餘量。</summary>
+    public void TriggerDecayStep()
+    {
+        if (!TryGetModel()) return;
+        if (state == VisualState.Waiting || state == VisualState.Holding)
+        {
+            state = VisualState.ManualDecaying;
+            decayElapsed = 0f;
+            manualStepsTriggered = 0;
+            manualTimeoutFinishing = false;
+            QueueManualDecayStep();
+            // 先完成演出狀態設定，避免歸零事件中的停用、讀檔或重入呼叫被覆寫。
+            model.SetSemen(0);
+            RenderVisual();
+            return;
+        }
+
+        if (state != VisualState.ManualDecaying || manualTimeoutFinishing) return;
+        QueueManualDecayStep();
+    }
+
+    private void QueueManualDecayStep()
+    {
+        int steps = Mathf.Clamp(decaySteps, 1, 20);
+        if (manualStepsTriggered >= steps) return;
+        manualStepsTriggered++;
+        manualMoveStart = displayedValue;
+        manualMoveTarget = maximum * (1f - (float)manualStepsTriggered / steps);
+        manualMoveElapsed = 0f;
     }
 
     private bool TryGetModel()
@@ -194,6 +230,10 @@ public class SemenSliderVisualizer : MonoBehaviour
         {
             UpdateDecay(dt);
         }
+        else if (state == VisualState.ManualDecaying)
+        {
+            UpdateManualDecay(dt);
+        }
         else if (state == VisualState.Tracking)
         {
             transitionElapsed += dt;
@@ -231,6 +271,35 @@ public class SemenSliderVisualizer : MonoBehaviour
         displayedValue = Mathf.Clamp(Mathf.LerpUnclamped(from, to, eased), 0f, maximum);
 
         if (decayElapsed < duration) return;
+        CompleteDecay();
+    }
+
+    private void UpdateManualDecay(float dt)
+    {
+        decayElapsed += dt;
+        float duration = Mathf.Max(0.01f, decayDuration);
+        float moveDuration = duration / Mathf.Clamp(decaySteps, 1, 20)
+            * Mathf.Clamp(decayMoveRatio, 0.1f, 1f);
+        if (!manualTimeoutFinishing && decayElapsed >= duration && manualMoveTarget > 0f)
+        {
+            // 期限不因再次觸發而延長；到期後以一段動畫收完剩餘量。
+            manualTimeoutFinishing = true;
+            manualMoveStart = displayedValue;
+            manualMoveTarget = 0f;
+            manualMoveElapsed = 0f;
+        }
+
+        manualMoveElapsed += dt;
+        float t = Mathf.Clamp01(manualMoveElapsed / moveDuration);
+        float u = t - 1f;
+        float eased = 1f + 2.70158f * u * u * u + 1.70158f * u * u;
+        displayedValue = Mathf.Clamp(Mathf.LerpUnclamped(manualMoveStart, manualMoveTarget, eased), 0f, maximum);
+        // 回彈可能提早碰到零，等最後一段動畫完成才接回實際值。
+        if (manualMoveTarget <= 0f && t >= 1f) CompleteDecay();
+    }
+
+    private void CompleteDecay()
+    {
         displayedValue = 0f;
         state = VisualState.Tracking;
         targetValue = Mathf.Clamp(model.Semen, 0f, maximum);
