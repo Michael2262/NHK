@@ -537236,7 +537236,7 @@ MonoBehaviour:
         destinationDialogueID: 40
         isConnector: 0
         priority: 2
-      conditionsString: 'Flag("Flag_Missionary_ImComing") '
+      conditionsString: 
       userScript: 
       onExecute:
         m_PersistentCalls:
@@ -537366,8 +537366,8 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 136.17587
-        y: 406
+        x: 1
+        y: 405
         width: 160
         height: 30
     - id: 40
@@ -537487,7 +537487,7 @@ MonoBehaviour:
       - originConversationID: 272
         originDialogueID: 40
         destinationConversationID: 272
-        destinationDialogueID: 39
+        destinationDialogueID: 52
         isConnector: 0
         priority: 2
       conditionsString: 
@@ -537613,7 +537613,7 @@ MonoBehaviour:
       - originConversationID: 272
         originDialogueID: 41
         destinationConversationID: 272
-        destinationDialogueID: 51
+        destinationDialogueID: 49
         isConnector: 0
         priority: 2
       conditionsString: 
@@ -537623,8 +537623,8 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 133.17587
-        y: 468
+        x: 179.17587
+        y: 494
         width: 160
         height: 30
     - id: 42
@@ -537746,7 +537746,7 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 367.1759
+        x: 368.1759
         y: 438
         width: 160
         height: 30
@@ -537912,7 +537912,10 @@ MonoBehaviour:
 
 
           SpinePlay(sister,Mouth,
-          Mouth_Small1);'
+          Mouth_Small3);
+
+
+          SpinePlay(sister,Brow, Brow_Angry1);'
         type: 0
         typeString: CustomFieldType_Text
       - title: zh-TW
@@ -538122,7 +538125,7 @@ MonoBehaviour:
         destinationDialogueID: 47
         isConnector: 0
         priority: 2
-      conditionsString: 'not Flag("Flag_Missionary_ImComing") '
+      conditionsString: 
       userScript: 
       onExecute:
         m_PersistentCalls:
@@ -538371,14 +538374,14 @@ MonoBehaviour:
         destinationDialogueID: 46
         isConnector: 0
         priority: 2
-      conditionsString: 
+      conditionsString: 'not Flag("Flag_Missionary_ImComing") '
       userScript: 
       onExecute:
         m_PersistentCalls:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 366.17587
+        x: 365.17587
         y: 189
         width: 160
         height: 30
@@ -538611,7 +538614,7 @@ MonoBehaviour:
         destinationDialogueID: 37
         isConnector: 0
         priority: 2
-      conditionsString: 
+      conditionsString: 'Flag("Flag_Missionary_ImComing") '
       userScript: 
       onExecute:
         m_PersistentCalls:
@@ -538656,7 +538659,7 @@ MonoBehaviour:
           Mouth_Small4);
 
 
-          SpinePlay(sister,Brow, Brow_Sad);'
+          SpinePlay(sister,Brow, Brow_Sad1);'
         type: 0
         typeString: CustomFieldType_Text
       - title: zh-TW
@@ -538744,8 +538747,131 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 133.17587
-        y: 518
+        x: 23.175873
+        y: 547
+        width: 160
+        height: 30
+    - id: 52
+      fields:
+      - title: Title
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Description
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Narration
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Conversant
+        value: 9
+        type: 5
+        typeString: CustomFieldType_Actor
+      - title: Menu Text
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Dialogue Text
+        value: "\u2026\u2026\u2026\u54E5\u54E5"
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Sequence
+        value: 'SpinePlay(sister,Eye, Eye_Half);
+
+
+          SpinePlay(sister,Mouth,
+          Mouth_Small1);'
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: zh-TW
+        value: 
+        type: 4
+        typeString: CustomFieldType_Localization
+      - title: zh-CN
+        value: 
+        type: 4
+        typeString: CustomFieldType_Localization
+      - title: en
+        value: 
+        type: 4
+        typeString: CustomFieldType_Localization
+      - title: ja
+        value: 
+        type: 4
+        typeString: CustomFieldType_Localization
+      - title: ko
+        value: 
+        type: 4
+        typeString: CustomFieldType_Localization
+      - title: StaminaPreview
+        value: 0
+        type: 1
+        typeString: CustomFieldType_Number
+      - title: canvasRect
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Response Menu Sequence
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Notes
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: DontTranslate
+        value: False
+        type: 2
+        typeString: CustomFieldType_Boolean
+      - title: Guid
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Show Invalid
+        value: False
+        type: 2
+        typeString: CustomFieldType_Boolean
+      - title: Enable Conditions
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Option Image
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: NarrationFlag
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Actor
+        value: 8
+        type: 5
+        typeString: CustomFieldType_Actor
+      conversationID: 272
+      isRoot: 0
+      isGroup: 0
+      nodeColor: 
+      delaySimStatus: 0
+      falseConditionAction: Block
+      conditionPriority: 2
+      outgoingLinks:
+      - originConversationID: 272
+        originDialogueID: 52
+        destinationConversationID: 272
+        destinationDialogueID: 41
+        isConnector: 0
+        priority: 2
+      conditionsString: 
+      userScript: 
+      onExecute:
+        m_PersistentCalls:
+          m_Calls: []
+      canvasRect:
+        serializedVersion: 2
+        x: 163.17587
+        y: 421
         width: 160
         height: 30
     entryGroups: []
@@ -548242,7 +548368,7 @@ MonoBehaviour:
           Mouth_Small3);
 
 
-          SpinePlay(sister,Brow, Brow_Sad1);'
+          SpinePlay(sister,Brow, Brow_Angry1);'
         type: 0
         typeString: CustomFieldType_Text
       - title: zh-TW
@@ -548873,7 +548999,7 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: 'SpinePlay(sister,Mouth, Mouth_Close3);
+        value: 'SpinePlay(sister,Mouth, Mouth_Close2);
 
 
           SpinePlay(sister,Eye,
@@ -548970,7 +549096,7 @@ MonoBehaviour:
         width: 160
         height: 30
     entryGroups: []
-    canvasScrollPosition: {x: 351, y: 23}
+    canvasScrollPosition: {x: 64, y: 39}
     canvasZoom: 1
   - id: 277
     fields:
@@ -549360,13 +549486,7 @@ MonoBehaviour:
       delaySimStatus: 0
       falseConditionAction: Block
       conditionPriority: 2
-      outgoingLinks:
-      - originConversationID: 277
-        originDialogueID: 6
-        destinationConversationID: 277
-        destinationDialogueID: 34
-        isConnector: 0
-        priority: 2
+      outgoingLinks: []
       conditionsString: 
       userScript: 
       onExecute:
@@ -549530,7 +549650,7 @@ MonoBehaviour:
 
 
           SpinePlay(sister,Mouth,
-          Mouth_Loathe2);
+          Mouth_Small1);
 
 
           SpinePlay(sister,Brow, Brow_Sad1);
@@ -549628,7 +549748,7 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 471.17587
+        x: 470.17587
         y: 257.4066
         width: 160
         height: 30
@@ -549659,7 +549779,7 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: 'SpinePlay(sister,Mouth, Mouth_Loathe2);
+        value: 'SpinePlay(sister,Mouth, Mouth_Small3);
 
 
           SpinePlay(sister,Brow,
@@ -549754,7 +549874,7 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 472.17587
+        x: 474.17587
         y: 324.4066
         width: 160
         height: 30
@@ -549781,7 +549901,7 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Dialogue Text
-        value: "\u88D9\u5B50\u6703\u5F04\u9AD2\uFF01"
+        value: "\u8863\u670D\u6703\u5F04\u9AD2\uFF01"
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
@@ -549790,7 +549910,7 @@ MonoBehaviour:
 
 
           SpinePlay(sister,Mouth,
-          Mouth_Loathe1);
+          Mouth_Loathe2);
 
 
 '
@@ -549885,119 +550005,6 @@ MonoBehaviour:
         y: 386.4066
         width: 160
         height: 30
-    - id: 34
-      fields:
-      - title: Title
-        value: 
-        type: 0
-        typeString: CustomFieldType_Text
-      - title: Description
-        value: 
-        type: 0
-        typeString: CustomFieldType_Text
-      - title: Narration
-        value: 
-        type: 0
-        typeString: CustomFieldType_Text
-      - title: Conversant
-        value: 9
-        type: 5
-        typeString: CustomFieldType_Actor
-      - title: Menu Text
-        value: 
-        type: 0
-        typeString: CustomFieldType_Text
-      - title: Dialogue Text
-        value: 
-        type: 0
-        typeString: CustomFieldType_Text
-      - title: Sequence
-        value: ToolButtonGroupNavigate(ShowGroup, Main);
-        type: 0
-        typeString: CustomFieldType_Text
-      - title: zh-TW
-        value: 
-        type: 4
-        typeString: CustomFieldType_Localization
-      - title: zh-CN
-        value: 
-        type: 4
-        typeString: CustomFieldType_Localization
-      - title: en
-        value: 
-        type: 4
-        typeString: CustomFieldType_Localization
-      - title: ja
-        value: 
-        type: 4
-        typeString: CustomFieldType_Localization
-      - title: ko
-        value: 
-        type: 4
-        typeString: CustomFieldType_Localization
-      - title: StaminaPreview
-        value: 0
-        type: 1
-        typeString: CustomFieldType_Number
-      - title: canvasRect
-        value: 
-        type: 0
-        typeString: CustomFieldType_Text
-      - title: Response Menu Sequence
-        value: 
-        type: 0
-        typeString: CustomFieldType_Text
-      - title: Notes
-        value: 
-        type: 0
-        typeString: CustomFieldType_Text
-      - title: DontTranslate
-        value: False
-        type: 2
-        typeString: CustomFieldType_Boolean
-      - title: Guid
-        value: 
-        type: 0
-        typeString: CustomFieldType_Text
-      - title: Show Invalid
-        value: False
-        type: 2
-        typeString: CustomFieldType_Boolean
-      - title: Enable Conditions
-        value: 
-        type: 0
-        typeString: CustomFieldType_Text
-      - title: Option Image
-        value: 
-        type: 0
-        typeString: CustomFieldType_Text
-      - title: NarrationFlag
-        value: 
-        type: 0
-        typeString: CustomFieldType_Text
-      - title: Actor
-        value: 8
-        type: 5
-        typeString: CustomFieldType_Actor
-      conversationID: 277
-      isRoot: 0
-      isGroup: 0
-      nodeColor: 
-      delaySimStatus: 0
-      falseConditionAction: Block
-      conditionPriority: 2
-      outgoingLinks: []
-      conditionsString: 
-      userScript: 
-      onExecute:
-        m_PersistentCalls:
-          m_Calls: []
-      canvasRect:
-        serializedVersion: 2
-        x: 475
-        y: 622
-        width: 160
-        height: 30
     - id: 36
       fields:
       - title: Title
@@ -550030,7 +550037,7 @@ MonoBehaviour:
 
 
           SpinePlay(sister,Mouth,
-          Mouth_Loathe2);'
+          Mouth_Small3);'
         type: 0
         typeString: CustomFieldType_Text
       - title: zh-TW
