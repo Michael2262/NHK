@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
 
-/// <summary>單顆射擊按鈕：依 ID 切換事件，顯示主角射精感與剩餘次數。</summary>
+/// <summary>單顆射擊按鈕：滿值閃爍結束後依 ID 自動 Shoot，玩家點擊則取消並交由外部控制。</summary>
 [DisallowMultipleComponent]
 [DefaultExecutionOrder(-100)]
 [RequireComponent(typeof(CanvasGroup))]
@@ -18,11 +18,13 @@ public class ShootButtonGroup : MonoBehaviour
     {
         [Tooltip("切換用 ID，區分大小寫。")]
         public string id;
+        // 保留欄位名稱，相容既有場景與編輯器的事件綁定。
+        [Tooltip("滿值閃爍結束且玩家未點擊時執行的 Shoot 事件；不由 Button 點擊觸發。")]
         public UnityEvent onClick = new UnityEvent();
     }
 
     [Header("按鈕與次數顯示")]
-    [Tooltip("事件請設定在下方各 ID，Button 原本的 On Click 請留空。")]
+    [Tooltip("Button 的 On Click 可自行綁定事件；控制器只監聽點擊以取消這次自動 Shoot。")]
     [SerializeField] private Button shootButton;
     [Tooltip("只顯示 (剩餘/每日初始值)，請使用獨立 TMP，勿掛 LocalizeUI。")]
     [SerializeField] private TMP_Text shootTimesText;
@@ -34,6 +36,8 @@ public class ShootButtonGroup : MonoBehaviour
     [SerializeField] private Color flashColorB = Color.white;
     [Tooltip("每秒交替的完整週期數，使用不受時間縮放影響的時間。")]
     [Min(0.1f)] [SerializeField] private float flashFrequency = 4f;
+    [Tooltip("滿值閃爍持續秒數；期間未點擊則執行目前 ID 的 Shoot 事件，使用不受時間縮放影響的時間。")]
+    [Min(0.01f)] [SerializeField] private float flashDuration = 2f;
     [Header("整體顯示")]
     [SerializeField] private CanvasGroup canvasGroup;
     [Min(0.01f)] [SerializeField] private float fadeInDuration = 0.2f;
@@ -156,7 +160,7 @@ public class ShootButtonGroup : MonoBehaviour
         Refresh();
     }
 
-    /// <summary>滿值且可用時重新啟動提醒，不修改主角數值。</summary>
+    /// <summary>滿值且可用時重新啟動閃爍與自動 Shoot 倒數，不修改主角數值。</summary>
     public void StartFlashing()
     {
         if (Instance != this || !isActiveAndEnabled || !CanClick()) return;
@@ -165,7 +169,7 @@ public class ShootButtonGroup : MonoBehaviour
         Refresh();
     }
 
-    /// <summary>解除這一次滿值提醒；降到未滿後再次滿值才會自動重新提醒。</summary>
+    /// <summary>取消這一次閃爍與自動 Shoot；降到未滿後再次滿值，或呼叫 StartFlashing 才會重新啟動。</summary>
     public void StopFlashing()
     {
         if (Instance != this) return;
@@ -206,19 +210,10 @@ public class ShootButtonGroup : MonoBehaviour
 
     private void HandleClick()
     {
-        if (Instance != this || !_configured || !isActiveAndEnabled || !_visible || _fading
-            || canvasGroup == null || !canvasGroup.interactable || !canvasGroup.blocksRaycasts
-            || !shootButton.isActiveAndEnabled || !shootButton.IsInteractable()) return;
-        // 點擊當下重查主角狀態，避免畫面尚未刷新時觸發事件。
-        if (!CanClick())
-        {
-            Refresh();
-            return;
-        }
-        // 先解除提醒，事件即使未消耗 Semen，後續刷新也不會再次啟動。
+        if (Instance != this) return;
+        // Inspector 綁定的事件可能先改變數值、ID 或顯示狀態，因此不再以這些狀態阻擋取消。
+        // 玩家操作完全交給 Button 自己的 On Click，不執行目前 ID 的 Shoot 事件。
         StopFlashing();
-        _currentGroup.onClick?.Invoke();
-        if (this != null) Refresh();
     }
 
     public void SetVisible(bool visible)
@@ -284,6 +279,21 @@ public class ShootButtonGroup : MonoBehaviour
             _flashApplied = true;
         }
         _flashElapsed += deltaTime;
+        // 只在逐幀更新完成倒數，避免 Refresh 或事件重入時同步觸發 Shoot。
+        if (deltaTime > 0f && _flashElapsed >= Mathf.Max(0.01f, flashDuration))
+        {
+            if (!CanClick())
+            {
+                Refresh();
+                return;
+            }
+            var action = _currentGroup;
+            // 先結束閃爍再呼叫外部事件，滿值未消耗時也只執行一次。
+            StopFlashing();
+            action.onClick?.Invoke();
+            if (this != null) Refresh();
+            return;
+        }
         float pulse = 0.5f - 0.5f * Mathf.Cos(_flashElapsed * Mathf.Max(0.1f, flashFrequency) * Mathf.PI * 2f);
         Color tint = Color.Lerp(flashColorA, flashColorB, pulse);
         // 透過 Button 自己的狀態色閃爍，避免另一個圖片動畫與 Color Tint 搶控制權。

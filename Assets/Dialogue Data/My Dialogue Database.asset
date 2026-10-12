@@ -526586,7 +526586,13 @@ MonoBehaviour:
       delaySimStatus: 0
       falseConditionAction: Block
       conditionPriority: 2
-      outgoingLinks: []
+      outgoingLinks:
+      - originConversationID: 266
+        originDialogueID: 16
+        destinationConversationID: 266
+        destinationDialogueID: 26
+        isConnector: 0
+        priority: 2
       conditionsString: 
       userScript: Variable["Missionary.GrabHandSuccessCount"] = Variable["Missionary.GrabHandSuccessCount"]
         + 1
@@ -526884,15 +526890,15 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Dialogue Text
-        value: "\u5E79\u561B\u4E00\u76F4\u8981\u628A\u6211\u7684\u624B\u79FB\u958B\u5566\uFF01"
+        value: "\u5E79\u561B\u628A\u6211\u7684\u624B\u79FB\u958B\u5566\uFF01"
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: 'SpinePlay(sister,Eye, Eye_Narrow);
+        value: 'SpinePlay(sister,Eye, Eye_Close_Happy);
 
 
           SpinePlay(sister,Mouth,
-          Mouth_Loathe1);
+          Mouth_Loathe2);
 
 
           SpinePlay(sister,Brow, Brow_Angry1);
@@ -526985,7 +526991,7 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 911.5808
+        x: 910.54987
         y: 190.15463
         width: 160
         height: 30
@@ -527016,11 +527022,11 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: 'SpinePlay(sister,Eye, Eye_Close_Sad);
+        value: 'SpinePlay(sister,Eye, Eye_Half);
 
 
           SpinePlay(sister,Mouth,
-          Mouth_Open2);
+          Mouth_Loathe1);
 
 
 
@@ -527112,7 +527118,7 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 911.5808
+        x: 909.51904
         y: 260.09277
         width: 160
         height: 30
@@ -527146,11 +527152,11 @@ MonoBehaviour:
         value: '
 
 
-          SpinePlay(sister,Eye, Eye_Half);
+          SpinePlay(sister,Eye, Eye_Half_LookAway);
 
 
           SpinePlay(sister,Mouth,
-          Mouth_Small1);
+          Mouth_Loathe3);
 
 
 
@@ -527237,7 +527243,7 @@ MonoBehaviour:
         isConnector: 0
         priority: 2
       conditionsString: 
-      userScript: 
+      userScript: 'AddFrustration("sister", 1) '
       onExecute:
         m_PersistentCalls:
           m_Calls: []
@@ -527401,7 +527407,16 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: 
+        value: 'SpinePlay(sister,Eye, Eye_Half);
+
+
+          SpinePlay(sister,Mouth,
+          Mouth_Loathe1);
+
+
+          SpinePlay(sister,Brow, Brow_Sad1);
+
+'
         type: 0
         typeString: CustomFieldType_Text
       - title: zh-TW
@@ -527489,7 +527504,7 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 1103.457
+        x: 1104.488
         y: 192.64949
         width: 160
         height: 30
@@ -527520,7 +527535,11 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: 
+        value: 'SpinePlay(sister,Eye, Eye_Half2);
+
+
+          SpinePlay(sister,Mouth,
+          Mouth_Loathe3);'
         type: 0
         typeString: CustomFieldType_Text
       - title: zh-TW
@@ -527602,7 +527621,7 @@ MonoBehaviour:
         isConnector: 0
         priority: 2
       conditionsString: 
-      userScript: 
+      userScript: 'AddFrustration("sister", 1) '
       onExecute:
         m_PersistentCalls:
           m_Calls: []
@@ -527639,7 +527658,7 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: 
+        value: SpinePlay(sister,Mouth, Mouth_Close1);
         type: 0
         typeString: CustomFieldType_Text
       - title: zh-TW
@@ -527731,8 +527750,121 @@ MonoBehaviour:
         y: 394.7113
         width: 160
         height: 30
+    - id: 26
+      fields:
+      - title: Title
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Description
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Narration
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Conversant
+        value: 9
+        type: 5
+        typeString: CustomFieldType_Actor
+      - title: Menu Text
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Dialogue Text
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Sequence
+        value: Continue();
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: zh-TW
+        value: 
+        type: 4
+        typeString: CustomFieldType_Localization
+      - title: zh-CN
+        value: 
+        type: 4
+        typeString: CustomFieldType_Localization
+      - title: en
+        value: 
+        type: 4
+        typeString: CustomFieldType_Localization
+      - title: ja
+        value: 
+        type: 4
+        typeString: CustomFieldType_Localization
+      - title: ko
+        value: 
+        type: 4
+        typeString: CustomFieldType_Localization
+      - title: StaminaPreview
+        value: 0
+        type: 1
+        typeString: CustomFieldType_Number
+      - title: canvasRect
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Response Menu Sequence
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Notes
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: DontTranslate
+        value: False
+        type: 2
+        typeString: CustomFieldType_Boolean
+      - title: Guid
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Show Invalid
+        value: False
+        type: 2
+        typeString: CustomFieldType_Boolean
+      - title: Enable Conditions
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Option Image
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: NarrationFlag
+        value: 
+        type: 0
+        typeString: CustomFieldType_Text
+      - title: Actor
+        value: 8
+        type: 5
+        typeString: CustomFieldType_Actor
+      conversationID: 266
+      isRoot: 0
+      isGroup: 0
+      nodeColor: 
+      delaySimStatus: 0
+      falseConditionAction: Block
+      conditionPriority: 2
+      outgoingLinks: []
+      conditionsString: 
+      userScript: 
+      onExecute:
+        m_PersistentCalls:
+          m_Calls: []
+      canvasRect:
+        serializedVersion: 2
+        x: 1048.6112
+        y: 533.4697
+        width: 160
+        height: 30
     entryGroups: []
-    canvasScrollPosition: {x: 328.81445, y: 27.587666}
+    canvasScrollPosition: {x: 630.8762, y: 0}
     canvasZoom: 0.97
   - id: 267
     fields:
@@ -534625,7 +534757,7 @@ MonoBehaviour:
         isConnector: 0
         priority: 2
       conditionsString: 
-      userScript: 'AddFrustration("sister", 1) '
+      userScript: 'AddFrustration("sister", 3) '
       onExecute:
         m_PersistentCalls:
           m_Calls: []
@@ -541028,7 +541160,14 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: 
+        value: '
+
+
+          SpinePlay(sister,Mouth, Mouth_Loathe1);
+
+
+          SpinePlay(sister,Brow,
+          Brow_Angry4);'
         type: 0
         typeString: CustomFieldType_Text
       - title: zh-TW

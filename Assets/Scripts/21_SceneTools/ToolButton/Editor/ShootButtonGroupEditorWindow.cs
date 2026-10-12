@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-/// <summary>單顆射擊按鈕的組名／ID 與點擊事件編輯器。</summary>
+/// <summary>單顆射擊按鈕的組名／ID 與閃爍結束後自動 Shoot 事件編輯器。</summary>
 public sealed class ShootButtonGroupEditorWindow : EditorWindow
 {
     [SerializeField] private ShootButtonGroup controller;
@@ -190,7 +190,11 @@ public sealed class ShootButtonGroupEditorWindow : EditorWindow
         data.Update();
         var groups = data.FindProperty("groups");
         using (new EditorGUI.DisabledScope(Locked))
+        {
             EditorGUILayout.PropertyField(data.FindProperty("defaultID"), new GUIContent("預設 ID"));
+            EditorGUILayout.PropertyField(data.FindProperty("flashDuration"), new GUIContent("滿值閃爍秒數"));
+        }
+        EditorGUILayout.HelpBox("閃爍結束且玩家未點擊時，執行目前 ID 的 Shoot 事件。玩家點擊會取消自動 Shoot；手動事件請綁定在 Button 的 On Click。", MessageType.Info);
         string defaultID = data.FindProperty("defaultID").stringValue;
         if (!string.IsNullOrWhiteSpace(defaultID))
         {
@@ -221,7 +225,7 @@ public sealed class ShootButtonGroupEditorWindow : EditorWindow
             GUILayout.Label("分組", EditorStyles.boldLabel, GUILayout.Width(40));
             using (new EditorGUI.DisabledScope(Locked))
                 if (GUILayout.Button("＋ 新增組", GUILayout.Width(90))) AddGroup(groups);
-            GUILayout.Label("上方選擇 ID，下方編輯點擊事件。", EditorStyles.miniLabel);
+            GUILayout.Label("上方選擇 ID，下方編輯自動 Shoot 事件。", EditorStyles.miniLabel);
         }
         using (var scroll = new EditorGUILayout.ScrollViewScope(groupScroll, GUILayout.Height(72)))
         {
@@ -286,7 +290,7 @@ public sealed class ShootButtonGroupEditorWindow : EditorWindow
     {
         using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
         {
-            EditorGUILayout.LabelField("按鈕點擊事件", EditorStyles.largeLabel);
+            EditorGUILayout.LabelField("閃爍結束後自動 Shoot 事件", EditorStyles.largeLabel);
             var property = action.FindPropertyRelative("onClick");
             string source = controller.name + " / " + id;
             using (new EditorGUILayout.HorizontalScope())
@@ -304,7 +308,7 @@ public sealed class ShootButtonGroupEditorWindow : EditorWindow
                 drawer = new FilteredUnityEventDrawer(this, () => controller, () => showUnityFunctions, () => !Locked && !changingPlayMode, item => drawers.ContainsValue(item));
                 drawers.Add(property.propertyPath, drawer);
             }
-            var label = new GUIContent("點擊事件");
+            var label = new GUIContent("Shoot 事件");
             Rect eventRect = EditorGUILayout.GetControlRect(false, drawer.GetPropertyHeight(property, label));
             using (new EditorGUI.DisabledScope(Locked)) drawer.OnGUI(eventRect, property, label);
             var calls = property.FindPropertyRelative("m_PersistentCalls.m_Calls");
