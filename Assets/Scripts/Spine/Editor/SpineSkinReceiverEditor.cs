@@ -6,18 +6,31 @@ using UnityEngine;
 public class SpineSkinReceiverEditor : Editor
 {
     private SpineSkinReceiver receiver;
+    private bool showPlayModeSettings;
+    private readonly List<string> skinNames = new List<string>();
+    private readonly HashSet<string> selectedSkinNames = new HashSet<string>(System.StringComparer.Ordinal);
+    private readonly HashSet<string> groupIDs = new HashSet<string>(System.StringComparer.Ordinal);
 
     private void OnEnable()
     {
         receiver = (SpineSkinReceiver)target;
         Undo.undoRedoPerformed += Refresh;
         EditorApplication.delayCall += Refresh;
+        EditorApplication.playModeStateChanged += HandlePlayModeStateChanged;
     }
 
     private void OnDisable()
     {
         Undo.undoRedoPerformed -= Refresh;
         EditorApplication.delayCall -= Refresh;
+        EditorApplication.playModeStateChanged -= HandlePlayModeStateChanged;
+    }
+
+    private void HandlePlayModeStateChanged(PlayModeStateChange state)
+    {
+        // 即使停用 Domain Reload，每次開始試玩仍預設使用精簡介面。
+        showPlayModeSettings = false;
+        Repaint();
     }
 
     private void Refresh()
@@ -31,6 +44,19 @@ public class SpineSkinReceiverEditor : Editor
 
     public override void OnInspectorGUI()
     {
+        if (receiver == null) return;
+
+        if (Application.isPlaying)
+        {
+            showPlayModeSettings = EditorGUILayout.Foldout(showPlayModeSettings, "試玩中編輯換裝設定（展開才繪製清單）", true);
+            if (!showPlayModeSettings)
+            {
+                // 略過序列化清單、選單及大量勾選框，保留觀察狀態與手動刷新。
+                DrawStatus();
+                return;
+            }
+        }
+
         serializedObject.Update();
         EditorGUILayout.PropertyField(serializedObject.FindProperty("skeletonAnimation"), new GUIContent("Spine 目標"));
         EditorGUILayout.PropertyField(serializedObject.FindProperty("receiverID"), new GUIContent("接收器 ID"));
@@ -42,7 +68,7 @@ public class SpineSkinReceiverEditor : Editor
         EditorGUILayout.HelpBox("組合 ID 留空時使用手動清單。此起始設定會保留到直接試玩；遊戲保存狀態優先。", MessageType.None);
 
         var data = receiver.DataAsset != null ? receiver.DataAsset.GetSkeletonData(true) : null;
-        var skinNames = new List<string>();
+        skinNames.Clear();
         if (data != null)
             foreach (var skin in data.Skins) skinNames.Add(skin.Name);
         if (data == null) EditorGUILayout.HelpBox("請指定已設定 SkeletonDataAsset 的 SkeletonAnimation，才能列出可選 skin。", MessageType.Warning);
@@ -52,7 +78,7 @@ public class SpineSkinReceiverEditor : Editor
         var groups = serializedObject.FindProperty("groups");
         EditorGUILayout.Space();
         EditorGUILayout.LabelField("本地 skin 組合", EditorStyles.boldLabel);
-        var ids = new HashSet<string>(System.StringComparer.Ordinal);
+        groupIDs.Clear();
         for (int i = 0; i < groups.arraySize; i++)
         {
             var group = groups.GetArrayElementAtIndex(i);
@@ -60,7 +86,7 @@ public class SpineSkinReceiverEditor : Editor
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
                 EditorGUILayout.PropertyField(id, new GUIContent("組合 ID"));
-                if (string.IsNullOrWhiteSpace(id.stringValue) || !ids.Add(id.stringValue))
+                if (string.IsNullOrWhiteSpace(id.stringValue) || !groupIDs.Add(id.stringValue))
                     EditorGUILayout.HelpBox("組合 ID 必須填寫且不可重複。", MessageType.Warning);
                 DrawSkins(group.FindPropertyRelative("skins"), "啟用的 skin", skinNames);
                 using (new EditorGUILayout.HorizontalScope())
@@ -86,6 +112,11 @@ public class SpineSkinReceiverEditor : Editor
         bool changed = serializedObject.ApplyModifiedProperties();
         if (changed) Refresh();
 
+        DrawStatus();
+    }
+
+    private void DrawStatus()
+    {
         EditorGUILayout.Space();
         EditorGUILayout.LabelField("本次接收的組合 ID", receiver.RequestedPresetID ?? "（無）");
         EditorGUILayout.LabelField("目前顯示來源", receiver.DisplaySource ?? "（尚未初始化）");
@@ -115,27 +146,31 @@ public class SpineSkinReceiverEditor : Editor
         if (EditorGUI.EndChangeCheck() && next >= 0) defaults.stringValue = values[next];
     }
 
-    private static void DrawSkins(SerializedProperty list, string label, List<string> available)
+    private void DrawSkins(SerializedProperty list, string label, List<string> available)
     {
         list.isExpanded = EditorGUILayout.Foldout(list.isExpanded, label, true);
         if (!list.isExpanded) return;
         EditorGUI.indentLevel++;
+        // 每份清單只讀一次選取狀態，避免每個 skin 都掃描全部序列化項目。
+        selectedSkinNames.Clear();
+        for (int i = 0; i < list.arraySize; i++)
+            selectedSkinNames.Add(list.GetArrayElementAtIndex(i).stringValue);
         foreach (string name in available)
         {
-            int found = -1;
-            for (int i = 0; i < list.arraySize; i++)
-                if (list.GetArrayElementAtIndex(i).stringValue == name) { found = i; break; }
-            bool selected = EditorGUILayout.ToggleLeft(name, found >= 0);
-            if (selected && found < 0)
+            bool wasSelected = selectedSkinNames.Contains(name);
+            bool selected = EditorGUILayout.ToggleLeft(name, wasSelected);
+            if (selected && !wasSelected)
             {
                 int index = list.arraySize;
                 list.InsertArrayElementAtIndex(index);
                 list.GetArrayElementAtIndex(index).stringValue = name;
+                selectedSkinNames.Add(name);
             }
-            else if (!selected && found >= 0)
+            else if (!selected && wasSelected)
             {
                 for (int i = list.arraySize - 1; i >= 0; i--)
                     if (list.GetArrayElementAtIndex(i).stringValue == name) list.DeleteArrayElementAtIndex(i);
+                selectedSkinNames.Remove(name);
             }
         }
         EditorGUILayout.LabelField("合成順序（相同附件由後方覆蓋）", EditorStyles.miniBoldLabel);

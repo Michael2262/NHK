@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-/// <summary>單顆射擊按鈕的組名／ID 與閃爍結束後自動 Shoot 事件編輯器。</summary>
+/// <summary>左側 ID／選項導覽，右側條件與事件編輯；場景綁定由 Inspector 設定。</summary>
 public sealed class ShootButtonGroupEditorWindow : EditorWindow
 {
     [SerializeField] private ShootButtonGroup controller;
@@ -11,6 +11,8 @@ public sealed class ShootButtonGroupEditorWindow : EditorWindow
     [SerializeField] private string editControllerId;
     private bool changingPlayMode;
     [SerializeField] private int selectedGroup = -1;
+    [SerializeField] private int selectedOption = -1;
+    private readonly HashSet<int> collapsed = new HashSet<int>();
     [SerializeField] private Vector2 groupScroll, detailScroll;
     [SerializeField] private bool showUnityFunctions;
     private SerializedObject data;
@@ -54,7 +56,7 @@ public sealed class ShootButtonGroupEditorWindow : EditorWindow
 
     private void OnEnable()
     {
-        minSize = new Vector2(700, 540);
+        minSize = new Vector2(960, 540);
         ReleaseData();
         Undo.undoRedoPerformed += OnUndo;
         EditorApplication.playModeStateChanged += OnPlayModeChanged;
@@ -71,7 +73,7 @@ public sealed class ShootButtonGroupEditorWindow : EditorWindow
     }
 
     private void ReleaseData() { drawers.Clear(); data?.Dispose(); data = null; }
-    private void OnUndo() { ReleaseData(); selectedGroup = -1; Repaint(); }
+    private void OnUndo() { ReleaseData(); selectedGroup = selectedOption = -1; collapsed.Clear(); Repaint(); }
     private void OnInspectorUpdate()
     {
         ResolveController();
@@ -151,7 +153,8 @@ public sealed class ShootButtonGroupEditorWindow : EditorWindow
         RememberEditController(next);
         ReleaseData();
         controller = next;
-        selectedGroup = -1;
+        selectedGroup = selectedOption = -1;
+        collapsed.Clear();
         groupScroll = detailScroll = Vector2.zero;
         Repaint();
     }
@@ -189,12 +192,7 @@ public sealed class ShootButtonGroupEditorWindow : EditorWindow
         if (data == null || data.targetObject != controller) { ReleaseData(); data = new SerializedObject(controller); }
         data.Update();
         var groups = data.FindProperty("groups");
-        using (new EditorGUI.DisabledScope(Locked))
-        {
-            EditorGUILayout.PropertyField(data.FindProperty("defaultID"), new GUIContent("預設 ID"));
-            EditorGUILayout.PropertyField(data.FindProperty("flashDuration"), new GUIContent("滿值閃爍秒數"));
-        }
-        EditorGUILayout.HelpBox("閃爍結束且玩家未點擊時，執行目前 ID 的 Shoot 事件。玩家點擊會取消自動 Shoot；手動事件請綁定在 Button 的 On Click。", MessageType.Info);
+        EditorGUILayout.LabelField("左側選擇 ID／選項，右側編輯。綠底＝目前使用的 ID；藍框＝目前選取。", EditorStyles.miniLabel);
         string defaultID = data.FindProperty("defaultID").stringValue;
         if (!string.IsNullOrWhiteSpace(defaultID))
         {
@@ -204,16 +202,30 @@ public sealed class ShootButtonGroupEditorWindow : EditorWindow
                     defaultID, StringComparison.Ordinal)) { found = true; break; }
             if (!found) EditorGUILayout.HelpBox("預設 ID 找不到對應分組，初始化後按鈕將保持不可用。", MessageType.Warning);
         }
-        DrawGroups(groups);
         if (Locked)
             EditorGUILayout.HelpBox("目前使用的組：" + (controller == ShootButtonGroup.Instance ? controller.CurrentID ?? "無" : "此元件不是執行中的實例")
                 + "。綠底＝遊戲目前使用；藍框＝編輯器選取。試玩期間設定唯讀。", MessageType.Info);
 
-        using (var scroll = new EditorGUILayout.ScrollViewScope(detailScroll))
+        using (new EditorGUILayout.HorizontalScope())
         {
-            detailScroll = scroll.scrollPosition;
-            if (selectedGroup >= 0 && selectedGroup < groups.arraySize) DrawGroup(groups);
-            else EditorGUILayout.HelpBox("請從上方選擇一組，或新增分組。", MessageType.Info);
+            using (new EditorGUILayout.VerticalScope(GUILayout.Width(Mathf.Clamp(position.width * 0.31f, 270, 400))))
+                DrawGroups(groups);
+            GUILayout.Space(8);
+            using (new EditorGUILayout.VerticalScope(GUILayout.ExpandWidth(true)))
+            using (var scroll = new EditorGUILayout.ScrollViewScope(detailScroll))
+            {
+                detailScroll = scroll.scrollPosition;
+                float oldWidth = EditorGUIUtility.labelWidth;
+                bool oldWide = EditorGUIUtility.wideMode;
+                try
+                {
+                    EditorGUIUtility.labelWidth = 135;
+                    EditorGUIUtility.wideMode = true;
+                    if (selectedGroup >= 0 && selectedGroup < groups.arraySize) DrawGroup(groups);
+                    else EditorGUILayout.HelpBox("請從左側選擇 ID 或選項，或新增分組。", MessageType.Info);
+                }
+                finally { EditorGUIUtility.labelWidth = oldWidth; EditorGUIUtility.wideMode = oldWide; }
+            }
         }
         data.ApplyModifiedProperties();
     }
@@ -222,76 +234,231 @@ public sealed class ShootButtonGroupEditorWindow : EditorWindow
     {
         using (new EditorGUILayout.HorizontalScope())
         {
-            GUILayout.Label("分組", EditorStyles.boldLabel, GUILayout.Width(40));
             using (new EditorGUI.DisabledScope(Locked))
-                if (GUILayout.Button("＋ 新增組", GUILayout.Width(90))) AddGroup(groups);
-            GUILayout.Label("上方選擇 ID，下方編輯自動 Shoot 事件。", EditorStyles.miniLabel);
+                if (GUILayout.Button("＋ 新增 ID")) AddGroup(groups);
+            if (GUILayout.Button("全部展開")) { collapsed.Clear(); Commit(); }
+            if (GUILayout.Button("收合"))
+            {
+                for (int i = 0; i < groups.arraySize; i++) collapsed.Add(i);
+                Commit();
+            }
         }
-        using (var scroll = new EditorGUILayout.ScrollViewScope(groupScroll, GUILayout.Height(72)))
+        using (var scroll = new EditorGUILayout.ScrollViewScope(groupScroll))
         {
             groupScroll = scroll.scrollPosition;
-            using (new EditorGUILayout.HorizontalScope())
+            bool activeDrawn = false;
+            for (int i = 0; i < groups.arraySize; i++)
             {
-                bool activeDrawn = false;
-                for (int i = 0; i < groups.arraySize; i++)
+                var group = groups.GetArrayElementAtIndex(i);
+                var options = group.FindPropertyRelative("options");
+                string id = group.FindPropertyRelative("id").stringValue;
+                bool active = !activeDrawn && Application.isPlaying && controller == ShootButtonGroup.Instance
+                    && !string.IsNullOrWhiteSpace(id) && string.Equals(id, controller.CurrentID, StringComparison.Ordinal);
+                if (active) activeDrawn = true;
+                string name = string.IsNullOrWhiteSpace(id) ? "未命名 ID " + (i + 1) : id;
+                Rect row = EditorGUILayout.GetControlRect(false, 32);
+                PaintRow(row, selectedGroup == i && selectedOption < 0, active);
+                bool expanded = !collapsed.Contains(i);
+                bool next = EditorGUI.Foldout(new Rect(row.x + 4, row.y + 7, 16, 18), expanded, GUIContent.none);
+                if (expanded != next)
                 {
-                    string id = groups.GetArrayElementAtIndex(i).FindPropertyRelative("id").stringValue;
-                    bool active = !activeDrawn && Application.isPlaying && controller == ShootButtonGroup.Instance
-                        && !string.IsNullOrWhiteSpace(id) && string.Equals(id, controller.CurrentID, StringComparison.Ordinal);
-                    if (active) activeDrawn = true; // ID 重複時執行端只使用第一組。
-                    string label = (active ? "● " : "") + (string.IsNullOrWhiteSpace(id) ? "未命名組 " + (i + 1) : id);
-                    float width = Mathf.Clamp(EditorStyles.boldLabel.CalcSize(new GUIContent(label)).x + 30, 130, 320);
-                    Rect rect = GUILayoutUtility.GetRect(width, 40, GUILayout.Width(width), GUILayout.Height(40));
-                    GUI.Box(rect, GUIContent.none, EditorStyles.helpBox);
-                    if (active) EditorGUI.DrawRect(rect, ActiveColor);
-                    if (i == selectedGroup)
-                    {
-                        EditorGUI.DrawRect(new Rect(rect.x, rect.y, rect.width, 2), SelectedColor);
-                        EditorGUI.DrawRect(new Rect(rect.x, rect.yMax - 2, rect.width, 2), SelectedColor);
-                        EditorGUI.DrawRect(new Rect(rect.x, rect.y, 2, rect.height), SelectedColor);
-                        EditorGUI.DrawRect(new Rect(rect.xMax - 2, rect.y, 2, rect.height), SelectedColor);
-                    }
-                    GUI.Label(new Rect(rect.x + 8, rect.y + 10, rect.width - 16, 22), new GUIContent(label, id), EditorStyles.boldLabel);
-                    if (GUI.Button(rect, GUIContent.none, GUIStyle.none))
-                    {
-                        selectedGroup = i;
-                        detailScroll = Vector2.zero;
-                        Commit();
-                    }
+                    if (next) collapsed.Remove(i); else collapsed.Add(i);
+                    Commit();
+                }
+                if (GUI.Button(new Rect(row.x + 24, row.y, row.width - 28, row.height),
+                    new GUIContent(name + "  (" + (options.arraySize + 1) + ")" + (active ? " [目前]" : ""), name),
+                    EditorStyles.boldLabel)) Select(i, -1);
+                if (!expanded) continue;
+                for (int b = 0; b <= options.arraySize; b++)
+                {
+                    var option = b == 0 ? group : options.GetArrayElementAtIndex(b - 1);
+                    Rect item = EditorGUILayout.GetControlRect(false, 44);
+                    item.xMin += 18;
+                    PaintRow(item, selectedGroup == i && selectedOption == b, false);
+                    string caption = (b + 1) + ". " + OptionName(option, b) + (b == 0 ? " [預設]" : "");
+                    GUI.Label(new Rect(item.x + 8, item.y + 3, item.width - 16, 20), new GUIContent(caption, caption));
+                    string description = "Icon: " + option.FindPropertyRelative("iconName").stringValue
+                        + (option.FindPropertyRelative("useNgClickEvent").boolValue ? " · NG 分流開啟" : " · NG 分流關閉");
+                    GUI.Label(new Rect(item.x + 8, item.y + 24, item.width - 16, 18), description, EditorStyles.miniLabel);
+                    if (GUI.Button(item, GUIContent.none, GUIStyle.none)) Select(i, b);
+                }
+                using (new EditorGUI.DisabledScope(Locked))
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    if (GUILayout.Button("＋ 新增選項", EditorStyles.miniButton)) AddOption(group, i);
+                    var source = GetSelectedButton();
+                    using (new EditorGUI.DisabledScope(source == null))
+                        if (GUILayout.Button(new GUIContent("＋ 從選中按鈕複製", source == null
+                            ? "請先選中一個來源選項。"
+                            : "將「" + OptionName(source, selectedOption) + "」的完整設定與事件複製到此 ID 末尾。"),
+                            EditorStyles.miniButton)) CopySelectedButton(options, i);
                 }
             }
         }
     }
 
+    private static string OptionName(SerializedProperty option, int index)
+    {
+        string label = option.FindPropertyRelative("label").stringValue;
+        if (!string.IsNullOrWhiteSpace(label)) return label;
+        string key = option.FindPropertyRelative("textKey").stringValue;
+        return string.IsNullOrWhiteSpace(key) ? "選項 " + (index + 1) : key;
+    }
+
+    private static void PaintRow(Rect rect, bool selected, bool active)
+    {
+        EditorGUI.DrawRect(rect, active ? ActiveColor : new Color(0.4f, 0.5f, 0.6f, 0.09f));
+        if (!selected) return;
+        EditorGUI.DrawRect(new Rect(rect.x, rect.y, rect.width, 2), SelectedColor);
+        EditorGUI.DrawRect(new Rect(rect.x, rect.yMax - 2, rect.width, 2), SelectedColor);
+        EditorGUI.DrawRect(new Rect(rect.x, rect.y, 2, rect.height), SelectedColor);
+        EditorGUI.DrawRect(new Rect(rect.xMax - 2, rect.y, 2, rect.height), SelectedColor);
+    }
+
+    private void Select(int group, int option)
+    {
+        selectedGroup = group;
+        selectedOption = option;
+        detailScroll = Vector2.zero;
+        Commit();
+    }
+
+    private void AddOption(SerializedProperty group, int groupIndex)
+    {
+        var options = group.FindPropertyRelative("options");
+        int index = options.arraySize++;
+        ResetOption(options.GetArrayElementAtIndex(index));
+        collapsed.Remove(groupIndex);
+        Select(groupIndex, index + 1);
+    }
+
+    private SerializedProperty GetSelectedButton()
+    {
+        if (data == null || selectedGroup < 0 || selectedOption < 0) return null;
+        var groups = data.FindProperty("groups");
+        if (selectedGroup >= groups.arraySize) return null;
+        var group = groups.GetArrayElementAtIndex(selectedGroup);
+        if (selectedOption == 0) return group;
+        var options = group.FindPropertyRelative("options");
+        return selectedOption <= options.arraySize ? options.GetArrayElementAtIndex(selectedOption - 1) : null;
+    }
+
+    private void CopySelectedButton(SerializedProperty options, int groupIndex)
+    {
+        if (Locked || changingPlayMode) return;
+        var source = GetSelectedButton();
+        if (source == null) return;
+        // 先取快照再擴充陣列，支援同組與跨 ID 複製，保留完整 UnityEvent 參數及物件參照。
+        // 第一項與 ID 共用資料容器，只複製選項內容，不帶入 ID 或其他選項。
+        var snapshot = Capture(source, OptionName(source, selectedOption), true);
+        int index = options.arraySize++;
+        Apply(options.GetArrayElementAtIndex(index), snapshot);
+        collapsed.Remove(groupIndex);
+        Select(groupIndex, index + 1);
+    }
+
     private void DrawGroup(SerializedProperty groups)
     {
         var group = groups.GetArrayElementAtIndex(selectedGroup);
-        using (new EditorGUI.DisabledScope(Locked))
-        using (new EditorGUILayout.HorizontalScope())
+        var options = group.FindPropertyRelative("options");
+        string id = group.FindPropertyRelative("id").stringValue;
+        if (selectedOption < 0 || selectedOption > options.arraySize)
         {
-            EditorGUILayout.PropertyField(group.FindPropertyRelative("id"), new GUIContent("組名／ID"));
-            if (GUILayout.Button("複製選中的組", GUILayout.Width(110))) DuplicateGroup(groups, group);
-            if (GUILayout.Button("刪除此組", GUILayout.Width(85)))
+            EditorGUILayout.LabelField("ID / " + id, EditorStyles.largeLabel);
+            using (new EditorGUI.DisabledScope(Locked))
             {
-                groups.DeleteArrayElementAtIndex(selectedGroup);
-                selectedGroup = -1;
-                Commit();
+                EditorGUILayout.PropertyField(group.FindPropertyRelative("id"), new GUIContent("組名／ID"));
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    if (GUILayout.Button("複製此組")) DuplicateGroup(groups, group);
+                    if (GUILayout.Button("刪除此組"))
+                    {
+                        groups.DeleteArrayElementAtIndex(selectedGroup);
+                        selectedGroup = selectedOption = -1;
+                        collapsed.Clear();
+                        Commit();
+                    }
+                    if (GUILayout.Button("新增選項")) AddOption(group, selectedGroup);
+                }
+            }
+            if (string.IsNullOrWhiteSpace(id)) EditorGUILayout.HelpBox("組名／ID 不可空白。", MessageType.Warning);
+            for (int i = 0; i < groups.arraySize; i++)
+                if (i != selectedGroup && groups.GetArrayElementAtIndex(i).FindPropertyRelative("id").stringValue == id)
+                { EditorGUILayout.HelpBox("ID 重複，遊戲切換時只會使用第一組。", MessageType.Warning); break; }
+            EditorGUILayout.HelpBox("共有 " + (options.arraySize + 1)
+                + " 個選項。請從左側選取要編輯的選項。第一項是預設自動播放；其他選項可調整順位。", MessageType.None);
+            EditorGUILayout.HelpBox("中央按鈕依顯示條件動態生成；Prefab 與 Content 請在 Inspector 指定。", MessageType.None);
+            return;
+        }
+
+        var selected = selectedOption == 0 ? group : options.GetArrayElementAtIndex(selectedOption - 1);
+        EditorGUILayout.LabelField(id + " / " + OptionName(selected, selectedOption), EditorStyles.largeLabel);
+        if (selectedOption == 0)
+            EditorGUILayout.HelpBox("第一項為預設自動播放選項，沿用原 ID 的事件。", MessageType.None);
+        else
+        {
+            int index = selectedOption - 1;
+            using (new EditorGUI.DisabledScope(Locked))
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                using (new EditorGUI.DisabledScope(index == 0))
+                    if (GUILayout.Button("上移"))
+                    { options.MoveArrayElement(index, index - 1); selectedOption--; Commit(); }
+                using (new EditorGUI.DisabledScope(index + 1 >= options.arraySize))
+                    if (GUILayout.Button("下移"))
+                    { options.MoveArrayElement(index, index + 1); selectedOption++; Commit(); }
+                if (GUILayout.Button("刪除此選項"))
+                { options.DeleteArrayElementAtIndex(index); selectedOption = -1; Commit(); }
             }
         }
-        string id = group.FindPropertyRelative("id").stringValue;
-        if (string.IsNullOrWhiteSpace(id)) EditorGUILayout.HelpBox("組名／ID 不可空白。", MessageType.Warning);
-        for (int i = 0; i < groups.arraySize; i++)
-            if (i != selectedGroup && groups.GetArrayElementAtIndex(i).FindPropertyRelative("id").stringValue == id)
-            { EditorGUILayout.HelpBox("ID 重複，遊戲切換時只會使用第一組。", MessageType.Warning); break; }
-        DrawAction(group, id);
+        DrawOption(selected, id + " / " + (selectedOption + 1), "選項設定");
     }
 
-    private void DrawAction(SerializedProperty action, string id)
+    private void DrawOption(SerializedProperty option, string id, string title)
+    {
+        EditorGUILayout.LabelField(title, EditorStyles.boldLabel);
+        string[] fields = { "label", "textKey", "iconName", "visibilityFlag", "invertVisibility",
+            "interactableFlag", "invertInteractable", "ngFlag", "invertNgFlag", "useNgClickEvent" };
+        string[] labels = { "備註", "文字 Key", "Icon", "顯示條件", "反轉顯示條件",
+            "可點條件", "反轉可點條件", "NG 條件", "反轉 NG 條件", "啟用 NG 點擊事件" };
+        using (new EditorGUI.DisabledScope(Locked))
+        {
+            for (int i = 0; i < fields.Length; i++)
+            {
+                if (i == 0 || i == 3 || i == 7 || i == 9)
+                {
+                    EditorGUILayout.Space();
+                    EditorGUILayout.LabelField(i == 0 ? "名稱與 Icon" : i == 3 ? "顯示與可點條件"
+                        : i == 7 ? "NG 條件" : "事件分流", EditorStyles.boldLabel);
+                }
+                EditorGUILayout.PropertyField(option.FindPropertyRelative(fields[i]), new GUIContent(labels[i]));
+            }
+        }
+        DrawAction(option, id, "onClick", "一般 Shoot 事件");
+        if (option.FindPropertyRelative("useNgClickEvent").boolValue)
+            DrawAction(option, id, "onNgClick", "NG Shoot 事件");
+    }
+
+    private static void ResetOption(SerializedProperty option)
+    {
+        option.FindPropertyRelative("label").stringValue = string.Empty;
+        option.FindPropertyRelative("textKey").stringValue = string.Empty;
+        option.FindPropertyRelative("iconName").stringValue = "Heart";
+        foreach (string name in new[] { "visibilityFlag", "interactableFlag", "ngFlag" })
+            option.FindPropertyRelative(name).objectReferenceValue = null;
+        foreach (string name in new[] { "invertVisibility", "invertInteractable", "useNgClickEvent" })
+            option.FindPropertyRelative(name).boolValue = false;
+        option.FindPropertyRelative("invertNgFlag").boolValue = true;
+        option.FindPropertyRelative("onClick.m_PersistentCalls.m_Calls").ClearArray();
+        option.FindPropertyRelative("onNgClick.m_PersistentCalls.m_Calls").ClearArray();
+    }
+
+    private void DrawAction(SerializedProperty action, string id, string field, string title)
     {
         using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
         {
-            EditorGUILayout.LabelField("閃爍結束後自動 Shoot 事件", EditorStyles.largeLabel);
-            var property = action.FindPropertyRelative("onClick");
+            EditorGUILayout.LabelField(title, EditorStyles.largeLabel);
+            var property = action.FindPropertyRelative(field);
             string source = controller.name + " / " + id;
             using (new EditorGUILayout.HorizontalScope())
             {
@@ -344,9 +511,10 @@ public sealed class ShootButtonGroupEditorWindow : EditorWindow
         var group = groups.GetArrayElementAtIndex(index);
         group.FindPropertyRelative("id").stringValue = id;
         // Unity 擴充清單可能複製上一組，新增 ID 時明確清空事件。
-        group.FindPropertyRelative("onClick.m_PersistentCalls.m_Calls").ClearArray();
-        selectedGroup = index;
-        Commit();
+        ResetOption(group);
+        group.FindPropertyRelative("options").ClearArray();
+        collapsed.Remove(index);
+        Select(index, -1);
     }
 
     private void DuplicateGroup(SerializedProperty groups, SerializedProperty source)
@@ -358,8 +526,8 @@ public sealed class ShootButtonGroupEditorWindow : EditorWindow
         var copy = groups.GetArrayElementAtIndex(index);
         Apply(copy, snapshot);
         copy.FindPropertyRelative("id").stringValue = id;
-        selectedGroup = index;
-        Commit();
+        collapsed.Remove(index);
+        Select(index, -1);
     }
 
     private static string UniqueName(SerializedProperty groups, string prefix)
@@ -399,7 +567,7 @@ public sealed class ShootButtonGroupEditorWindow : EditorWindow
     }
 
     // 擷取值與 Unity 物件參照，避免來源變動或陣列擴充使剪貼簿失效。
-    private static Snapshot Capture(SerializedProperty property, string label)
+    private static Snapshot Capture(SerializedProperty property, string label, bool optionOnly = false)
     {
         var result = new Snapshot { Label = label, FromPlay = EditorApplication.isPlayingOrWillChangePlaymode };
         var iterator = property.Copy();
@@ -407,6 +575,12 @@ public sealed class ShootButtonGroupEditorWindow : EditorWindow
         bool children = true;
         while (iterator.Next(children) && !SerializedProperty.EqualContents(iterator, end))
         {
+            if (optionOnly && iterator.depth == property.depth + 1
+                && (iterator.name == "id" || iterator.name == "options"))
+            {
+                children = false;
+                continue;
+            }
             children = iterator.propertyType == SerializedPropertyType.Generic;
             var value = new Value { Path = iterator.propertyPath.Substring(property.propertyPath.Length + 1),
                 Type = iterator.propertyType, IsArray = iterator.isArray && iterator.propertyType != SerializedPropertyType.String };

@@ -36,6 +36,9 @@ public class ToolButtonGroupItemView : MonoBehaviour
     private Color _originalTextColor;
     private Color _originalIconColor;
     private Color _originalBackgroundColor;
+    private bool _backgroundFlashing;
+    private Color _backgroundRestoreColor;
+    private Color _backgroundFlashColor;
 
     private void CaptureDefaults()
     {
@@ -79,7 +82,11 @@ public class ToolButtonGroupItemView : MonoBehaviour
         if (text != null) text.text = caption;
         text.color = isNg ? ngTextColor : _originalTextColor;
         if (backgroundImage != null)
-            backgroundImage.color = isBack ? backColor : _originalBackgroundColor;
+        {
+            Color normalColor = isBack ? backColor : _originalBackgroundColor;
+            if (_backgroundFlashing) _backgroundRestoreColor = normalColor;
+            backgroundImage.color = _backgroundFlashing ? _backgroundFlashColor : normalColor;
+        }
         if (button != null) button.interactable = interactable;
         if (iconImage != null)
         {
@@ -94,6 +101,7 @@ public class ToolButtonGroupItemView : MonoBehaviour
 
     public void Hide()
     {
+        StopBackgroundFlash();
         if (text != null) text.text = string.Empty;
         if (button != null) button.interactable = false;
         if (iconImage != null)
@@ -103,6 +111,26 @@ public class ToolButtonGroupItemView : MonoBehaviour
         }
         if (gameObject.activeSelf) gameObject.SetActive(false);
     }
+
+    /// <summary>由 Shoot 選單傳入同步閃爍色；僅改變背景，不改變 NG 文字、圖示或可點條件。</summary>
+    public void SetBackgroundFlash(Color color)
+    {
+        if (backgroundImage == null) return;
+        CaptureDefaults();
+        if (!_backgroundFlashing) _backgroundRestoreColor = backgroundImage.color;
+        _backgroundFlashing = true;
+        _backgroundFlashColor = color;
+        backgroundImage.color = color;
+    }
+
+    public void StopBackgroundFlash()
+    {
+        if (!_backgroundFlashing) return;
+        if (backgroundImage != null) backgroundImage.color = _backgroundRestoreColor;
+        _backgroundFlashing = false;
+    }
+
+    private void OnDisable() => StopBackgroundFlash();
 
     private void OnDestroy() => Unbind();
 }

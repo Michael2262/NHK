@@ -11,6 +11,8 @@ public sealed class SpinePlayByListWindow : EditorWindow
     [SerializeField] private SpinePlayByList target, editTarget;
     [SerializeField] private string editId, runtimeId;
     [SerializeField] private int selected = -1;
+    [SerializeField] private bool editingCollection;
+    [SerializeField] private string selectedCollection = "";
     [SerializeField] private string search = "";
     [SerializeField] private Vector2 listScroll, detailScroll;
     [SerializeField] private bool condition;
@@ -66,7 +68,7 @@ public sealed class SpinePlayByListWindow : EditorWindow
     private void StopPreview() => preview?.Dispose();
     private void BeforeSceneSave(Scene scene, string path) => StopPreview();
     private void BeforeSceneClose(Scene scene, bool removingScene) => StopPreview();
-    private void OnUndo() { bindingVersion++; StopPreview(); ReleaseData(); selected = -1; Repaint(); }
+    private void OnUndo() { bindingVersion++; StopPreview(); ReleaseData(); selected = -1; editingCollection = false; Repaint(); }
     private void ReleaseData() { data?.Dispose(); data = null; }
     private void Tick()
     {
@@ -89,6 +91,7 @@ public sealed class SpinePlayByListWindow : EditorWindow
     }
     private void ModeChanged(PlayModeStateChange mode)
     {
+        editingCollection = false;
         bindingVersion++;
         StopPreview();
         if (mode == PlayModeStateChange.ExitingEditMode && target != null)
@@ -123,6 +126,7 @@ public sealed class SpinePlayByListWindow : EditorWindow
         if (!Locked) { editTarget = next; editId = id; }
         else runtimeId = id;
         selected = -1;
+        editingCollection = false;
         search = "";
     }
     private void OnGUI()
@@ -158,6 +162,7 @@ public sealed class SpinePlayByListWindow : EditorWindow
             {
                 string name = UniqueName(groups, "新分組");
                 selected = groups.arraySize++;
+                editingCollection = false;
                 var group = groups.GetArrayElementAtIndex(selected);
                 group.FindPropertyRelative("groupName").stringValue = name;
                 group.FindPropertyRelative("collection").stringValue = "";
@@ -196,10 +201,25 @@ public sealed class SpinePlayByListWindow : EditorWindow
                 using (new EditorGUILayout.HorizontalScope(EditorStyles.helpBox))
                 {
                     bool open = !collapsedCollections.Contains(collection);
-                    bool next = EditorGUILayout.Foldout(open, (playing ? "● " : "") + CollectionLabel(collection) + " (" + count + ")", true);
+                    Rect foldoutRect = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight, GUILayout.Width(15));
+                    bool next = EditorGUI.Foldout(foldoutRect, open, GUIContent.none, false);
                     if (open != next)
                     {
                         if (next) collapsedCollections.Remove(collection); else collapsedCollections.Add(collection);
+                        Commit(false);
+                    }
+                    Color old = GUI.backgroundColor;
+                    bool isSelected = editingCollection && selectedCollection == collection;
+                    if (isSelected) GUI.backgroundColor = new Color(0.4f, 0.7f, 1f);
+                    bool clicked = GUILayout.Button((isSelected ? "▶ " : "") + (playing ? "● " : "")
+                        + CollectionLabel(collection) + " (" + count + ")", EditorStyles.miniButton);
+                    GUI.backgroundColor = old;
+                    if (clicked)
+                    {
+                        editingCollection = true;
+                        selectedCollection = collection;
+                        selected = -1;
+                        detailScroll = Vector2.zero;
                         Commit(false);
                     }
                     using (new EditorGUI.DisabledScope(Locked))
@@ -228,21 +248,19 @@ public sealed class SpinePlayByListWindow : EditorWindow
                 : selected == i ? new Color(0.4f, 0.7f, 1f) : old;
             bool clicked = GUILayout.Button((i == selected ? "▶ " : "") + name + "  (" + group.FindPropertyRelative("clips").arraySize + ")", GUILayout.Height(30));
             GUI.backgroundColor = old;
-            if (clicked) { selected = i; detailScroll = Vector2.zero; Commit(false); }
+            if (clicked) { selected = i; editingCollection = false; detailScroll = Vector2.zero; Commit(false); }
         }
     }
     private void DrawDetails(SerializedProperty groups)
     {
         using (new EditorGUI.DisabledScope(Locked))
             EditorGUILayout.PropertyField(data.FindProperty("_controller"), new GUIContent("Spine 控制器"));
-        if (selected < 0 || selected >= groups.arraySize) { EditorGUILayout.HelpBox("從左側選組，右側即可編輯動畫清單。", MessageType.Info); return; }
+        if (editingCollection) { DrawCollectionDetails(groups); return; }
+        if (selected < 0 || selected >= groups.arraySize) { EditorGUILayout.HelpBox("從左側點選集合名稱可改集合名；點選組可改組名與動畫清單。", MessageType.Info); return; }
         var group = groups.GetArrayElementAtIndex(selected);
         using (new EditorGUI.DisabledScope(Locked))
         {
-            var collection = group.FindPropertyRelative("collection");
-            EditorGUI.BeginChangeCheck();
-            string collectionName = EditorGUILayout.DelayedTextField(new GUIContent("Collection（集合）", "相同名稱的組歸入同一集合；留空為未分類。"), collection.stringValue);
-            if (EditorGUI.EndChangeCheck()) { collection.stringValue = collectionName; Commit(); }
+            EditorGUILayout.LabelField("所屬集合", CollectionLabel(CollectionOf(group)));
             using (new EditorGUILayout.HorizontalScope())
             {
                 EditorGUILayout.PropertyField(group.FindPropertyRelative("groupName"), new GUIContent("組名"));
@@ -320,6 +338,35 @@ public sealed class SpinePlayByListWindow : EditorWindow
                 clip.FindPropertyRelative("isRandom").boolValue = false;
                 Commit();
             }
+        }
+    }
+    private void DrawCollectionDetails(SerializedProperty groups)
+    {
+        EditorGUILayout.LabelField("集合設定", EditorStyles.boldLabel);
+        EditorGUILayout.HelpBox("改名會套用至此集合內的所有組；留空則移至未分類。要改組名，請點選左側的組。", MessageType.Info);
+        using (new EditorGUI.DisabledScope(Locked))
+        {
+            EditorGUI.BeginChangeCheck();
+            string next = EditorGUILayout.DelayedTextField("集合名", selectedCollection);
+            if (!EditorGUI.EndChangeCheck() || next == selectedCollection) return;
+            // 集合以名稱識別，避免改名時意外合併至另一個已有名稱的集合。
+            for (int i = 0; i < groups.arraySize; i++)
+                if (!string.IsNullOrEmpty(next) && CollectionOf(groups.GetArrayElementAtIndex(i)) == next)
+                {
+                    ShowNotification(new GUIContent("此集合名已存在，請使用其他名稱。"));
+                    return;
+                }
+            for (int i = 0; i < groups.arraySize; i++)
+            {
+                var group = groups.GetArrayElementAtIndex(i);
+                if (CollectionOf(group) == selectedCollection)
+                    group.FindPropertyRelative("collection").stringValue = next;
+            }
+            bool collapsed = collapsedCollections.Remove(selectedCollection);
+            if (collapsed && !collapsedCollections.Contains(next)) collapsedCollections.Add(next);
+            selectedCollection = next;
+            Undo.SetCurrentGroupName("重新命名 Spine 集合");
+            Commit();
         }
     }
     private List<string> AnimationNames()
@@ -461,6 +508,7 @@ public sealed class SpinePlayByListWindow : EditorWindow
             }
         }
         selected = firstCopy;
+        editingCollection = false;
         search = "";
         collapsedCollections.Remove(copyCollection);
         Undo.SetCurrentGroupName("複製 Spine Collection");
