@@ -24,11 +24,12 @@ public class TeaseModeButton : MonoBehaviour,
 
     private bool _over;      // 滑鼠是否懸浮在按鈕上
     private bool _pressed;   // 是否按住中（尚未放開）
+    private TeaseModeController _previewController; // 本次預覽實際使用的控制器
 
     public void OnPointerClick(PointerEventData eventData)
     {
-        if (TeaseModeController.Instance != null)
-            TeaseModeController.Instance.SetMode(mode);
+        var mc = TeaseModeController.GetForScene(gameObject.scene);
+        if (mc != null) mc.SetMode(mode);
     }
 
     public void OnPointerEnter(PointerEventData eventData)
@@ -58,17 +59,17 @@ public class TeaseModeButton : MonoBehaviour,
     /// <summary>懸浮或按住時預覽本模式提示；兩者都解除才取消。</summary>
     private void UpdatePreview()
     {
-        var mc = TeaseModeController.Instance;
-        if (mc == null) return;
+        var mc = TeaseModeController.GetForScene(gameObject.scene);
+        if (_previewController != mc) ClearPreview();
 
-        if (_over || _pressed)
+        if (mc != null && (_over || _pressed))
         {
+            _previewController = mc;
             mc.SetHoveredMode(mode);
         }
-        else if (mc.IsHovered(mode))
+        else
         {
-            // 只有目前預覽的是自己時才取消，避免蓋掉別顆按鈕的預覽
-            mc.ClearHoveredMode();
+            ClearPreview();
         }
     }
 
@@ -77,7 +78,14 @@ public class TeaseModeButton : MonoBehaviour,
         _over = false;
         _pressed = false;
 
-        var mc = TeaseModeController.Instance;
+        ClearPreview();
+    }
+
+    private void ClearPreview()
+    {
+        // 不重新查詢單例，避免舊按鈕卸載時清掉新場景的預覽。
+        var mc = _previewController;
+        _previewController = null;
         if (mc != null && mc.IsHovered(mode)) mc.ClearHoveredMode();
     }
 }

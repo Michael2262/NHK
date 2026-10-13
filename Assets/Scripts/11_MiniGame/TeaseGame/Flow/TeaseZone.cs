@@ -158,9 +158,14 @@ public class TeaseZone : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
 
     private void TrySubscribe()
     {
-        if (_subscribed) return;
-
+        // 訂閱可保留在本場景暫停中的控制器，才能收到重新啟用的刷新；
+        // 實際觸碰與提示仍由 GetForScene 排除停用中的控制器。
         var mc = TeaseModeController.Instance;
+        if (mc != null && mc.gameObject.scene != gameObject.scene) mc = null;
+        if (_subscribed && _mc == mc && mc != null) return;
+
+        // 控制器失效或更換時，先解除舊訂閱，再綁定本場景的新控制器。
+        Unsubscribe();
         if (mc == null) return;
 
         mc.OnModeChanged += HandleModeChanged;
@@ -188,6 +193,7 @@ public class TeaseZone : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
     /// <summary>重算啟用狀態與提示（模式或 flag 改變時）。</summary>
     public void Refresh()
     {
+        if (isActiveAndEnabled) TrySubscribe();
         RefreshActivation();
         RefreshHint();
     }
@@ -246,7 +252,7 @@ public class TeaseZone : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
     {
         get
         {
-            var mc = TeaseModeController.Instance;
+            var mc = TeaseModeController.GetForScene(gameObject.scene);
             return mc != null && MatchesMode(mc.CurrentMode);
         }
     }
@@ -275,7 +281,7 @@ public class TeaseZone : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
     {
         if (hints == null || hints.Length == 0) return;
 
-        var mc = TeaseModeController.Instance;
+        var mc = TeaseModeController.GetForScene(gameObject.scene);
         bool visible = mc != null && mc.HoveredMode.HasValue
             && MatchesMode(mc.HoveredMode.Value) && FlagOk;
 

@@ -42,42 +42,85 @@ public class TeaseModeController : MonoBehaviour
     public event Action<TeaseMode?> OnHintPreviewChanged;
 
     private Action<string, bool> _onFlagChanged;
+    private ProgressFlagModel _flags;
+
+    /// <summary>只取得指定場景目前可用的控制器，避免轉場期間跨場景操作。</summary>
+    public static TeaseModeController GetForScene(UnityEngine.SceneManagement.Scene scene)
+    {
+        var controller = Instance;
+        return controller != null && controller.isActiveAndEnabled
+            && controller.gameObject.scene == scene ? controller : null;
+    }
 
     private void Awake()
     {
         if (Instance != null && Instance != this)
         {
-            Debug.LogWarning($"[TeaseModeController] 場上已有一個實例，銷毀重複的 {name}。", this);
-            Destroy(this);
-            return;
+            if (Instance.gameObject.scene == gameObject.scene)
+            {
+                Debug.LogWarning($"[TeaseModeController] 同一場景已有一個實例，銷毀重複的 {name}。", this);
+                enabled = false;
+                Destroy(this);
+                return;
+            }
+
+            // Additive 轉場先停用舊控制器，解除旗標訂閱與預覽，再由新場景接管。
+            Instance.enabled = false;
         }
 
         Instance = this;
         CurrentMode = initialMode;
+        HoveredMode = null;
+    }
+
+    private void OnEnable()
+    {
+        if (Instance != this) return;
+        SubscribeFlags();
+        RefreshZones();
     }
 
     private void Start()
     {
+        if (Instance != this || !isActiveAndEnabled) return;
+        // 補上 OnEnable 時服務尚未就緒的訂閱，並刷新已完成初始化的 Zone。
+        SubscribeFlags();
+        RefreshZones();
+    }
+
+    private void SubscribeFlags()
+    {
+        if (_flags != null) return;
         // 訂閱旗標變動：flag 解鎖時自動刷新各 Zone
         var gss = GameStatusService.Instance;
         if (gss != null && gss.ProgressFlags != null)
         {
             _onFlagChanged = (flag, state) => RefreshZones();
-            gss.ProgressFlags.OnFlagChanged += _onFlagChanged;
+            _flags = gss.ProgressFlags;
+            _flags.OnFlagChanged += _onFlagChanged;
         }
+    }
 
-        // 初始廣播：讓已在 OnEnable 訂閱的 Zone 依預設狀態初始化
+    private void OnDisable()
+    {
+        UnsubscribeFlags();
+        HoveredMode = null;
+        // 此時 GetForScene 已不會回傳本控制器，讓舊 Zone 關閉觸碰與提示。
         OnModeChanged?.Invoke(CurrentMode);
         OnHintPreviewChanged?.Invoke(HoveredMode);
     }
 
+    private void UnsubscribeFlags()
+    {
+        if (_flags != null && _onFlagChanged != null)
+            _flags.OnFlagChanged -= _onFlagChanged;
+        _flags = null;
+        _onFlagChanged = null;
+    }
+
     private void OnDestroy()
     {
-        var gss = GameStatusService.Instance;
-        if (gss != null && gss.ProgressFlags != null && _onFlagChanged != null)
-            gss.ProgressFlags.OnFlagChanged -= _onFlagChanged;
-        _onFlagChanged = null;
-
+        UnsubscribeFlags();
         if (Instance == this) Instance = null;
     }
 
@@ -86,6 +129,7 @@ public class TeaseModeController : MonoBehaviour
     /// <summary>切換當前操作模式（給模式按鈕呼叫）。</summary>
     public void SetMode(TeaseMode mode)
     {
+        if (Instance != this || !isActiveAndEnabled) return;
         if (CurrentMode == mode) return;
 
         CurrentMode = mode;
@@ -106,6 +150,7 @@ public class TeaseModeController : MonoBehaviour
     /// <summary>設定懸浮預覽的模式（滑鼠移到/按住某模式按鈕時呼叫）。</summary>
     public void SetHoveredMode(TeaseMode mode)
     {
+        if (Instance != this || !isActiveAndEnabled) return;
         HoveredMode = mode;
         OnHintPreviewChanged?.Invoke(HoveredMode);
     }
@@ -113,6 +158,7 @@ public class TeaseModeController : MonoBehaviour
     /// <summary>清除懸浮預覽（滑鼠離開且放開模式按鈕時呼叫）。</summary>
     public void ClearHoveredMode()
     {
+        if (Instance != this || !isActiveAndEnabled) return;
         HoveredMode = null;
         OnHintPreviewChanged?.Invoke(null);
     }
@@ -125,6 +171,7 @@ public class TeaseModeController : MonoBehaviour
     /// <summary>強制各 Zone 重算啟用與提示（改 flag 後由旗標事件自動呼叫，也可手動呼叫）。</summary>
     public void RefreshZones()
     {
+        if (Instance != this || !isActiveAndEnabled) return;
         OnModeChanged?.Invoke(CurrentMode);
         OnHintPreviewChanged?.Invoke(HoveredMode);
     }

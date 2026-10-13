@@ -37,12 +37,26 @@ public class TeaseActionGate : MonoBehaviour
     {
         if (Instance != null && Instance != this)
         {
-            Debug.LogWarning($"[TeaseActionGate] 場上已有一個實例，銷毀重複的 {name}。", this);
-            Destroy(this);
-            return;
+            if (Instance.gameObject.scene == gameObject.scene)
+            {
+                Debug.LogWarning($"[TeaseActionGate] 同一場景已有一個實例，銷毀重複的 {name}。", this);
+                enabled = false;
+                Destroy(this);
+                return;
+            }
+
+            // Additive 轉場期間先取消舊場景動作，不觸發完成回呼，再交給新 Gate。
+            Instance.Cancel();
+            Instance.enabled = false;
         }
 
         Instance = this;
+    }
+
+    private void OnDisable()
+    {
+        // 停用 MonoBehaviour 不會自動停止 Coroutine，需明確取消跑條。
+        Cancel();
     }
 
     private void OnDestroy()
@@ -57,7 +71,7 @@ public class TeaseActionGate : MonoBehaviour
     /// </summary>
     public bool TryBegin(float duration, UnityEvent onStart, UnityEvent onComplete, bool hideProgressBar = false)
     {
-        if (IsBusy) return false;
+        if (Instance != this || !isActiveAndEnabled || IsBusy) return false;
 
         float d = duration > 0f ? duration : defaultDuration;
         _running = StartCoroutine(RunAction(d, onStart, onComplete, hideProgressBar));

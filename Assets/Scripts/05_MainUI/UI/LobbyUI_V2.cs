@@ -422,53 +422,49 @@ public class LobbyUI_V2 : MonoBehaviour
     /// </summary>
     private void UpdateStressTitleUI()
     {
+        ApplyStressColor();
         if (textStressTitle == null) return;
 
         string key = TITLE_KEY_STRESS;
-        Color color = _stressTitleDefaultColor;
 
         if (_protagonistModel != null && _protagonistModel.IsStressExtreme())
         {
             key = TITLE_KEY_OVER_STRESS;
-            color = UIColorPalette.Red;
         }
         else if (_protagonistModel != null && _protagonistModel.BadHealthy)
         {
             key = TITLE_KEY_BAD_HEALTHY;
-            color = UIColorPalette.DarkRed;
         }
 
         textStressTitle.text = Localize(key);
-        textStressTitle.color = color;
+        textStressTitle.color = GetStressColor(_stressTitleDefaultColor);
     }
 
     /// <summary>
     /// 依賴度標題三規則（優先度高→低）：
     /// 1. BadDependency == true    → "BadDependency"（DarkRed）
-    /// 2. IsDependencyExtreme() == true → "OverDependency"（Pink）
+    /// 2. IsDependencyExtreme() == true → "OverDependency"（Red）
     /// 3. 平常                     → "Dependency"（原始顏色）
     /// 每次都重新查表，語言重進場景後會跟著刷新。
     /// </summary>
     private void UpdateDependencyTitleUI()
     {
+        ApplyDependencyColor();
         if (textDependencyTitle == null) return;
 
         string key = TITLE_KEY_DEPENDENCY;
-        Color color = _dependencyTitleDefaultColor;
 
         if (_protagonistModel != null && _protagonistModel.BadDependency)
         {
             key = TITLE_KEY_BAD_DEPENDENCY;
-            color = UIColorPalette.DarkRed;
         }
         else if (_protagonistModel != null && _protagonistModel.IsDependencyExtreme())
         {
             key = TITLE_KEY_OVER_DEPENDENCY;
-            color = UIColorPalette.Pink;
         }
 
         textDependencyTitle.text = Localize(key);
-        textDependencyTitle.color = color;
+        textDependencyTitle.color = GetDependencyColor(_dependencyTitleDefaultColor);
     }
 
     // 標準程式端動態查表（見 CLAUDE.md「UI 多語系」）
@@ -514,9 +510,9 @@ public class LobbyUI_V2 : MonoBehaviour
 
     // ==================================================
     // 警示變色：
-    // - Stress 數字：IsStressExtreme() 成立時變 Red，解除時還原。
-    // - Dependency 數字：IsDependencyExtreme() 成立時變 Pink，解除時還原。
-    // 顏色取自 UIColorPalette（靜態色票）；未觸發時還原成原始顏色。
+    // - Stress 標題與數字：OverStress（Red）> BadHealthy（DarkRed）。
+    // - Dependency 標題與數字：BadDependency（DarkRed）> OverDependency（Red）。
+    // 未觸發時使用標題原始顏色；未綁定標題時，數字使用自身原始顏色。
     // ==================================================
 
     // 只擷取一次原始顏色，避免在已變色狀態下把警示色誤存成「預設色」。
@@ -533,17 +529,29 @@ public class LobbyUI_V2 : MonoBehaviour
     private void ApplyStressColor()
     {
         if (textStress == null) return;
-        textStress.color = _protagonistModel != null && _protagonistModel.IsStressExtreme()
-            ? UIColorPalette.Red
-            : _stressDefaultColor;
+        textStress.color = GetStressColor(textStressTitle != null ? _stressTitleDefaultColor : _stressDefaultColor);
     }
 
     private void ApplyDependencyColor()
     {
         if (textDependency == null) return;
-        textDependency.color = _protagonistModel != null && _protagonistModel.IsDependencyExtreme()
-            ? UIColorPalette.Pink
-            : _dependencyDefaultColor;
+        textDependency.color = GetDependencyColor(textDependencyTitle != null ? _dependencyTitleDefaultColor : _dependencyDefaultColor);
+    }
+
+    private Color GetStressColor(Color defaultColor)
+    {
+        if (_protagonistModel == null) return defaultColor;
+        if (_protagonistModel.IsStressExtreme()) return UIColorPalette.Red;
+        if (_protagonistModel.BadHealthy) return UIColorPalette.DarkRed;
+        return defaultColor;
+    }
+
+    private Color GetDependencyColor(Color defaultColor)
+    {
+        if (_protagonistModel == null) return defaultColor;
+        if (_protagonistModel.BadDependency) return UIColorPalette.DarkRed;
+        if (_protagonistModel.IsDependencyExtreme()) return UIColorPalette.Red;
+        return defaultColor;
     }
 
     private void HideAllPreviewTexts()
