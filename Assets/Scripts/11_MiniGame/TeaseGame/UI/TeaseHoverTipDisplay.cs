@@ -27,9 +27,15 @@ public class TeaseHoverTipDisplay : MonoBehaviour
     {
         if (Instance != null && Instance != this)
         {
-            Debug.LogWarning($"[TeaseHoverTipDisplay] 場上已有一個實例，銷毀重複的 {name}。", this);
-            Destroy(this);
-            return;
+            if (Instance.gameObject.scene == gameObject.scene)
+            {
+                Debug.LogWarning($"[TeaseHoverTipDisplay] 同一場景已有一個實例，銷毀重複的 {name}。", this);
+                Destroy(this);
+                return;
+            }
+
+            // Additive 轉場期間新舊場景會短暫並存；先隱藏舊提示，再接管單例。
+            Instance.Hide();
         }
 
         Instance = this;
@@ -44,7 +50,8 @@ public class TeaseHoverTipDisplay : MonoBehaviour
     /// <summary>用 Text Table key 顯示提示。</summary>
     public void Show(string key)
     {
-        if (label == null || string.IsNullOrEmpty(key)) return;
+        // 已交接的舊顯示器不再接受顯示要求；隱藏中的物件仍可由此重新啟用。
+        if (Instance != this || label == null || string.IsNullOrEmpty(key)) return;
 
         label.text = Localize(key);
         SetVisible(true);

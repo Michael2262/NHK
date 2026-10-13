@@ -19,25 +19,37 @@ public class TeaseHoverTip : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
     [Tooltip("指定顯示器；留空則用 TeaseHoverTipDisplay.Instance。")]
     [SerializeField] private TeaseHoverTipDisplay display;
 
+    // 記住這次 hover 使用的顯示器，離開／卸載時不可改抓新場景的單例。
+    private TeaseHoverTipDisplay _hoverDisplay;
+
     private TeaseHoverTipDisplay Display
         => display != null ? display : TeaseHoverTipDisplay.Instance;
 
     public void OnPointerEnter(PointerEventData eventData)
     {
+        HideHoverTip();
         var d = Display;
-        if (d != null) d.Show(textKey);
+        // 自動尋找時只使用本場景的顯示器，避免轉場期間舊觸碰區操作新場景。
+        if (d == null || (display == null && d.gameObject.scene != gameObject.scene)) return;
+        _hoverDisplay = d;
+        d.Show(textKey);
     }
 
     public void OnPointerExit(PointerEventData eventData)
     {
-        var d = Display;
-        if (d != null) d.Hide();
+        HideHoverTip();
     }
 
     private void OnDisable()
     {
-        // 物件在 hover 中被停用時，收掉提示避免卡住
-        var d = Display;
+        // 只收掉這次 hover 使用的顯示器；未 hover 的物件停用不影響提示。
+        HideHoverTip();
+    }
+
+    private void HideHoverTip()
+    {
+        var d = _hoverDisplay;
+        _hoverDisplay = null;
         if (d != null) d.Hide();
     }
 }

@@ -25,11 +25,16 @@ namespace MyGame.Actions
         [Tooltip("進入下個場景時使用的入口 ID；下個場景的 Initializer 會依此執行不同邏輯。")]
         public FsmString entryID;
 
+        [Header("無淡入淡出轉場")]
+        [Tooltip("勾選後不操作轉場遮幕，直接載入場景並完成初始化，適合自行使用 BG 遮蔽畫面。預設不勾選。")]
+        public FsmBool withoutFade = false;
+
         public override void Reset()
         {
             targetScene = "Stage2";
             updateScenario = true;
             entryID = "DefaultEntry";
+            withoutFade = false;
         }
 
         public override void OnEnter()
@@ -57,7 +62,10 @@ namespace MyGame.Actions
             Debug.Log($"[SceneChangeAction] 已登記入口 ID: {entryID.Value}，準備前往場景: {sceneName}");
 
             // 4. 透過專案的正規轉場管線切換場景
-            SceneController.ChangeScene(sceneName);
+            if (withoutFade != null && withoutFade.Value)
+                SceneController.ChangeSceneImmediate(sceneName);
+            else
+                SceneController.ChangeScene(sceneName);
             Finish();
         }
     }
