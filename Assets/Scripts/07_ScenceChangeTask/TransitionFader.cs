@@ -32,6 +32,10 @@ public class TransitionFader : MonoBehaviour
     // 當前使用的顏色 (保持 Alpha 分離管理)
     private Color _currentBaseColor;
 
+    // 動畫由常駐 Fader 執行，避免呼叫端的 Sequence 結束後留下未完成的遮幕。
+    private bool _isFading;
+    public bool IsFullyCovered => _fadeImage != null && _fadeImage.color.a >= 1f;
+
     // ============================================================
     // 自動導引與單例初始化
     // ============================================================
@@ -97,8 +101,7 @@ public class TransitionFader : MonoBehaviour
     /// </summary>
     public IEnumerator FadeToColor()
     {
-        UpdateFadeColorFromCurrentPhase();
-        yield return Fade(0f, 1f, fadeDuration);
+        yield return FadeToColor(-1, fadeDuration);
     }
 
     /// <summary>
@@ -107,17 +110,18 @@ public class TransitionFader : MonoBehaviour
     /// <param name="phaseIndex">Phase 索引 (0=白天, 1=黃昏, 2=晚上, 3=深夜)，傳入 -1 則使用當前 Phase</param>
     public IEnumerator FadeToColor(int phaseIndex)
     {
-        if (phaseIndex < 0)
-        {
-            // -1 或負數：使用當前 Phase
-            UpdateFadeColorFromCurrentPhase();
-        }
-        else
-        {
-            // 指定 Phase
-            UpdateFadeColorFromPhase(phaseIndex);
-        }
-        yield return Fade(0f, 1f, fadeDuration);
+        yield return FadeToColor(phaseIndex, fadeDuration);
+    }
+
+    /// <summary>
+    /// 場景轉場接手遮幕：等待既有動畫完成；已壓幕時保留顏色，不重播壓幕。
+    /// 未遮蔽時仍依指定時段壓幕，之後由 SceneController 在場景就緒後揭幕。
+    /// </summary>
+    public IEnumerator EnsureCoveredForSceneChange(int phaseIndex)
+    {
+        while (_isFading) yield return null;
+        if (IsFullyCovered) yield break;
+        yield return FadeToColor(phaseIndex);
     }
 
     /// <summary>
@@ -125,7 +129,7 @@ public class TransitionFader : MonoBehaviour
     /// </summary>
     public IEnumerator FadeToClear()
     {
-        yield return Fade(1f, 0f, fadeDuration);
+        yield return FadeToClear(fadeDuration);
     }
 
     /// <summary>
@@ -135,12 +139,13 @@ public class TransitionFader : MonoBehaviour
     /// <param name="duration">淡出持續時間 (秒)</param>
     public IEnumerator FadeToColor(int phaseIndex, float duration)
     {
-        if (phaseIndex < 0)
-            UpdateFadeColorFromCurrentPhase();
-        else
-            UpdateFadeColorFromPhase(phaseIndex);
-
-        yield return Fade(0f, 1f, duration);
+        yield return Fade(1f, duration, () =>
+        {
+            if (phaseIndex < 0)
+                UpdateFadeColorFromCurrentPhase();
+            else
+                UpdateFadeColorFromPhase(phaseIndex);
+        });
     }
 
     /// <summary>
@@ -148,8 +153,7 @@ public class TransitionFader : MonoBehaviour
     /// </summary>
     public IEnumerator FadeToColor(Color color, float duration)
     {
-        SetBaseColor(color);
-        yield return Fade(0f, 1f, duration);
+        yield return Fade(1f, duration, () => SetBaseColor(color));
     }
 
     /// <summary>
@@ -157,7 +161,7 @@ public class TransitionFader : MonoBehaviour
     /// </summary>
     public IEnumerator FadeToClear(float duration)
     {
-        yield return Fade(1f, 0f, duration);
+        yield return Fade(0f, duration);
     }
 
     // ============================================================
@@ -230,19 +234,37 @@ public class TransitionFader : MonoBehaviour
     }
 
     /// <summary>
-    /// 執行淡入/淡出動畫
+    /// 依序執行淡入/淡出；輪到本次動畫才設定顏色，避免干擾正在播放的遮幕。
     /// </summary>
-    private IEnumerator Fade(float fromAlpha, float toAlpha, float duration)
+    private IEnumerator Fade(float toAlpha, float duration, Action prepareColor = null)
     {
-        float timer = 0f;
-        while (timer < duration)
+        while (_isFading) yield return null;
+        prepareColor?.Invoke();
+        _isFading = true;
+        yield return StartCoroutine(RunFade(toAlpha, duration));
+    }
+
+    private IEnumerator RunFade(float toAlpha, float duration)
+    {
+        try
         {
-            timer += Time.unscaledDeltaTime;
-            float progress = Mathf.Clamp01(timer / duration);
-            SetAlpha(Mathf.Lerp(fromAlpha, toAlpha, progress));
-            yield return null;
+            float fromAlpha = _fadeImage.color.a;
+            if (fromAlpha == toAlpha) yield break;
+
+            float timer = 0f;
+            while (timer < duration)
+            {
+                timer += Time.unscaledDeltaTime;
+                float progress = Mathf.Clamp01(timer / duration);
+                SetAlpha(Mathf.Lerp(fromAlpha, toAlpha, progress));
+                yield return null;
+            }
+            SetAlpha(toAlpha);
         }
-        SetAlpha(toAlpha);
+        finally
+        {
+            _isFading = false;
+        }
     }
 
     /// <summary>

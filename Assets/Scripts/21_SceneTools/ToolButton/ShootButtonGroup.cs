@@ -111,9 +111,16 @@ public class ShootButtonGroup : MonoBehaviour
     {
         if (Instance != null && Instance != this)
         {
-            Debug.LogError("[ShootButtonGroup] 場景存在多個控制器，停用重複元件。", this);
-            enabled = false;
-            return;
+            if (Instance.gameObject.scene == gameObject.scene)
+            {
+                Debug.LogError("[ShootButtonGroup] 同一場景存在多個控制器，停用重複元件。", this);
+                enabled = false;
+                return;
+            }
+
+            // 舊控制器仍持有 Instance 時先取消待執行事件並解除訂閱，
+            // 再由新場景接管，避免 Additive 載入時被誤判為重複元件。
+            Instance.ReleaseForSceneHandoff();
         }
         Instance = this;
         if (canvasGroup == null) canvasGroup = GetComponent<CanvasGroup>();
@@ -131,6 +138,17 @@ public class ShootButtonGroup : MonoBehaviour
                 Debug.LogWarning($"[ShootButtonGroup] ID「{group.id}」重複，切換時使用第一筆。", this);
         }
         SetID(defaultID);
+    }
+
+    private void ReleaseForSceneHandoff()
+    {
+        _visible = false;
+        _visibility = 0f;
+        _fading = false;
+        _canClick = false;
+        StopFlashing();
+        enabled = false;
+        ApplyPresentation();
     }
 
     private void OnEnable()

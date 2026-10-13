@@ -63,9 +63,16 @@ public class PlayerButtonGroup : MonoBehaviour
     {
         if (Instance != null && Instance != this)
         {
-            Debug.LogError("[PlayerButtonGroup] 場景存在多個控制器，停用重複元件。", this);
-            enabled = false;
-            return;
+            if (Instance.gameObject.scene == gameObject.scene)
+            {
+                Debug.LogError("[PlayerButtonGroup] 同一場景存在多個控制器，停用重複元件。", this);
+                enabled = false;
+                return;
+            }
+
+            // Additive 轉場會先載入新場景，再卸載舊場景。
+            // 舊控制器仍持有 Instance 時先停用，讓 OnDisable 完成解除訂閱。
+            Instance.ReleaseForSceneHandoff();
         }
         Instance = this;
         if (canvasGroup == null) canvasGroup = GetComponent<CanvasGroup>();
@@ -87,6 +94,14 @@ public class PlayerButtonGroup : MonoBehaviour
             if (!ids.Add(group.id))
                 Debug.LogWarning($"[PlayerButtonGroup] ID「{group.id}」重複，切換時使用第一筆。", this);
         }
+    }
+
+    private void ReleaseForSceneHandoff()
+    {
+        _visible = false;
+        ApplyVisibilityImmediately();
+        SetButtonsInteractable(false);
+        enabled = false;
     }
 
     private void OnEnable()

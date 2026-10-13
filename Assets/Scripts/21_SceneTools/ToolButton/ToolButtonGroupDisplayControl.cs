@@ -163,15 +163,29 @@ public class ToolButtonGroupDisplayControl : MonoBehaviour
     {
         if (Instance != null && Instance != this)
         {
-            Debug.LogError("[ToolButtonGroupDisplayControl] 場景存在多個控制器，停用重複元件。", this);
-            enabled = false;
-            return;
+            if (Instance.gameObject.scene == gameObject.scene)
+            {
+                Debug.LogError("[ToolButtonGroupDisplayControl] 同一場景存在多個控制器，停用重複元件。", this);
+                enabled = false;
+                return;
+            }
+
+            // Additive 轉場會先載入新場景，再卸載舊場景。
+            // 舊控制器仍持有 Instance 時先停用，讓 OnDisable 完成解除訂閱。
+            Instance.ReleaseForSceneHandoff();
         }
         Instance = this;
         // 固定進場隱藏，不受 CanvasGroup 原始 Alpha 或舊版顯示設定影響。
         _visible = false;
         Initialize();
         ApplyVisibilityImmediately();
+    }
+
+    private void ReleaseForSceneHandoff()
+    {
+        _visible = false;
+        ApplyVisibilityImmediately();
+        enabled = false;
     }
 
     private void OnDestroy()

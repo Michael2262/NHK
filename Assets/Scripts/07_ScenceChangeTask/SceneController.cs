@@ -231,8 +231,8 @@ public class SceneController : MonoBehaviour
 
         yield return EnsureGlobalUISceneLoaded();
 
-        // 1. 淡出
-        if (TransitionFader.Instance != null) yield return TransitionFader.Instance.FadeToColor(fadePhaseIndex);
+        // 1. 接手既有遮幕；手動 FadeOut 已完成時不重播，進行中則等它完成。
+        if (TransitionFader.Instance != null) yield return TransitionFader.Instance.EnsureCoveredForSceneChange(fadePhaseIndex);
 
         // 2. 載入與卸載場景
         yield return SceneManager.LoadSceneAsync(newSceneName, LoadSceneMode.Additive);

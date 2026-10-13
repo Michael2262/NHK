@@ -72,7 +72,7 @@ public class ProtagonistStatusModel
     /// <summary>BadDependency 開啟時，每次進入新 Phase 增加的壓力。</summary>
     public const int BAD_DEPENDENCY_PHASE_STRESS_GAIN = 5;
 
-    /// <summary>Dependency 小於等於此值時，BadDependency 會自動解除且無法開啟。</summary>
+    /// <summary>Dependency 調整後小於等於此值時，BadDependency 會自動解除；不限制手動開啟。</summary>
     public const int BAD_DEPENDENCY_AUTO_DISABLE_THRESHOLD = 50;
 
     // ───── 分級門檻（各數值可獨立調整，預設一致） ─────
@@ -245,8 +245,8 @@ public class ProtagonistStatusModel
         RoomMessLevel = ClampRoomMessLevel(data.RoomMessLevel);
         BodyDirtyLevel = ClampBodyDirtyLevel(data.BodyDirtyLevel); // 舊存檔缺欄位時反序列化為 0（= 身體最乾淨）
         BadHealthy = data.BadHealthy; // 舊存檔沒有此欄位時，Newtonsoft 預設為 false
-        // 舊存檔沒有此欄位時，Newtonsoft 預設為 false；不符合依賴度門檻時直接校正為關閉。
-        BadDependency = data.BadDependency && Dependency > BAD_DEPENDENCY_AUTO_DISABLE_THRESHOLD;
+        // 舊存檔沒有此欄位時，Newtonsoft 預設為 false；直接還原手動設定的狀態。
+        BadDependency = data.BadDependency;
 
         NotifyAllCoreValues();
     }
@@ -649,12 +649,11 @@ public class ProtagonistStatusModel
     /// <summary>解除「不良依賴」。Dependency 小於等於門檻時也會自動呼叫。</summary>
     public void DisableBadDependency() => SetBadDependency(false);
 
-    /// <summary>直接設定「不良依賴」。Dependency 小於等於門檻時無法開啟。</summary>
+    /// <summary>直接設定「不良依賴」，不受依賴度門檻限制。</summary>
     public void SetBadDependency(bool value)
     {
-        bool nextValue = value && Dependency > BAD_DEPENDENCY_AUTO_DISABLE_THRESHOLD;
-        if (BadDependency == nextValue) return;
-        BadDependency = nextValue;
+        if (BadDependency == value) return;
+        BadDependency = value;
         OnBadDependencyChanged?.Invoke(BadDependency);
     }
 
