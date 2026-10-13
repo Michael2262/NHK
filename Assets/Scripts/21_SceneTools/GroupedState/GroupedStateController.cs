@@ -11,6 +11,15 @@ using UnityEngine.Events;
 public sealed class GroupedStateController : MonoBehaviour
 {
     [Serializable]
+    public sealed class ConditionalEnterEvent
+    {
+        public ProgressFlagDefinition Flag;
+        [Tooltip("勾選後，沒有此 Flag 才執行。未設定 Flag 時一律略過。")]
+        public bool Invert;
+        public UnityEvent OnEnter = new UnityEvent();
+    }
+
+    [Serializable]
     public sealed class StateDefinition
     {
         [Tooltip("同組內唯一，區分大小寫，不可空白或包含 /。")]
@@ -19,6 +28,7 @@ public sealed class GroupedStateController : MonoBehaviour
         public ProgressFlagDefinition StateFlag;
         public UnityEvent OnEnter = new UnityEvent();
         public UnityEvent OnExit = new UnityEvent();
+        public List<ConditionalEnterEvent> ConditionalOnEnter = new List<ConditionalEnterEvent>();
     }
 
     [Serializable]
@@ -102,7 +112,7 @@ public sealed class GroupedStateController : MonoBehaviour
         if (initializationAttempted) return model != null;
         initializationAttempted = true;
         var candidate = new GroupedStateModel(message => Debug.LogWarning(
-            "[GroupedStateController] " + message, this));
+            "[GroupedStateController] " + message, this), ReadProgressFlag);
 
         // 整份設定驗證成功後才啟用，避免重複名稱導向錯誤事件。
         try
@@ -122,9 +132,22 @@ public sealed class GroupedStateController : MonoBehaviour
                     UnityEvent exit = state.OnExit;
                     // 與事件一起建立快照，確保退出時移除進入時使用的同一個 Flag。
                     string flagId = state.StateFlag != null ? state.StateFlag.FlagID : null;
+                    var conditionalEntries = new List<GroupedStateModel.ConditionalEntry>();
+                    if (state.ConditionalOnEnter != null)
+                        foreach (ConditionalEnterEvent entry in state.ConditionalOnEnter)
+                        {
+                            if (entry == null) continue;
+                            UnityEvent callback = entry.OnEnter;
+                            conditionalEntries.Add(new GroupedStateModel.ConditionalEntry
+                            {
+                                FlagId = entry.Flag != null ? entry.Flag.FlagID : null,
+                                Invert = entry.Invert,
+                                Enter = () => InvokeSafely(callback)
+                            });
+                        }
                     candidate.AddState(group.GroupName, state.StateName,
                         () => { UpdateStateFlag(flagId, true); InvokeSafely(enter); },
-                        () => { UpdateStateFlag(flagId, false); InvokeSafely(exit); });
+                        () => { UpdateStateFlag(flagId, false); InvokeSafely(exit); }, conditionalEntries.ToArray());
                 }
             }
             model = candidate;
@@ -155,6 +178,18 @@ public sealed class GroupedStateController : MonoBehaviour
         groupId = path.Substring(0, separator);
         stateId = path.Substring(separator + 1);
         return true;
+    }
+
+    private bool? ReadProgressFlag(string flagId)
+    {
+        var service = GameStatusService.Instance;
+        var flags = service != null ? service.ProgressFlags : null;
+        if (flags == null)
+        {
+            Debug.LogWarning("[GroupedStateController] 進度旗標服務尚未初始化，略過條件進入事件：" + flagId, this);
+            return null;
+        }
+        return flags.Contains(flagId);
     }
 
     private void UpdateStateFlag(string flagId, bool active)
@@ -193,10 +228,18 @@ public sealed class GroupedStateController : MonoBehaviour
     /// <summary>純 C# 場景狀態 Model；不依賴 Unity 生命週期或存檔服務。</summary>
     private sealed class GroupedStateModel
     {
+        public sealed class ConditionalEntry
+        {
+            public string FlagId;
+            public bool Invert;
+            public Action Enter;
+        }
+
         private sealed class State
         {
             public Action Enter;
             public Action Exit;
+            public ConditionalEntry[] ConditionalEntries;
         }
 
         private sealed class Group
@@ -209,10 +252,12 @@ public sealed class GroupedStateController : MonoBehaviour
         private readonly Dictionary<string, Group> entries = new Dictionary<string, Group>(StringComparer.Ordinal);
         private readonly Queue<Action> pending = new Queue<Action>();
         private readonly Action<string> warn;
+        private readonly Func<string, bool?> readFlag;
         private bool processing;
         private const int MaxRequestsPerBatch = 128;
 
-        public GroupedStateModel(Action<string> warning) { warn = warning; }
+        public GroupedStateModel(Action<string> warning, Func<string, bool?> flagReader)
+        { warn = warning; readFlag = flagReader; }
 
         public void AddGroup(string id)
         {
@@ -220,12 +265,12 @@ public sealed class GroupedStateController : MonoBehaviour
             entries.Add(id, new Group());
         }
 
-        public void AddState(string groupId, string stateId, Action enter, Action exit)
+        public void AddState(string groupId, string stateId, Action enter, Action exit, ConditionalEntry[] conditionalEntries)
         {
             Group group = entries[groupId];
             if (group.States.ContainsKey(stateId))
                 throw new ArgumentException("同組內狀態名重複：" + groupId + "/" + stateId);
-            group.States.Add(stateId, new State { Enter = enter, Exit = exit });
+            group.States.Add(stateId, new State { Enter = enter, Exit = exit, ConditionalEntries = conditionalEntries });
         }
 
         public bool ContainsState(string groupId, string stateId)
@@ -275,7 +320,7 @@ public sealed class GroupedStateController : MonoBehaviour
             Enqueue(() => Transition(group, string.Empty));
         }
 
-        private static void Transition(Group group, string next)
+        private void Transition(Group group, string next)
         {
             if (group.Current == next) return;
             // OnExit 查詢時仍是舊狀態；OnEnter 查詢時已是新狀態。
@@ -285,7 +330,18 @@ public sealed class GroupedStateController : MonoBehaviour
                 group.LastExited = group.Current;
             }
             group.Current = next;
-            if (next.Length > 0) group.States[next].Enter();
+            if (next.Length > 0)
+            {
+                State state = group.States[next];
+                state.Enter();
+                // 一般進入事件後，逐組以當下 Flag 判斷；服務缺失不能視為反向成立。
+                foreach (ConditionalEntry entry in state.ConditionalEntries)
+                {
+                    if (string.IsNullOrWhiteSpace(entry.FlagId)) continue;
+                    bool? present = readFlag(entry.FlagId);
+                    if (present.HasValue && present.Value != entry.Invert) entry.Enter();
+                }
+            }
         }
 
         private void Enqueue(Action request)

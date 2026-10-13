@@ -274,7 +274,7 @@ public sealed class GroupedStateControllerWindow : EditorWindow
         SerializedProperty states = group.FindPropertyRelative("States");
         string current = "", exited = "";
         bool ready = Application.isPlaying && controller.TryGetStateSnapshot(groupName, out current, out exited);
-        const float labelWidth = 174, gap = 7, tileWidth = 146, tileHeight = 86;
+        const float labelWidth = 174, gap = 7, tileWidth = 146, tileHeight = 102;
         int columns = Mathf.Max(1, Mathf.FloorToInt((position.width - labelWidth - 45) / (tileWidth + gap)));
         int rows = Mathf.Max(1, Mathf.CeilToInt((states.arraySize + 1f) / columns));
         Rect row = GUILayoutUtility.GetRect(0, rows * (tileHeight + gap) + 16, GUILayout.ExpandWidth(true));
@@ -308,7 +308,8 @@ public sealed class GroupedStateControllerWindow : EditorWindow
             var flag = state.FindPropertyRelative("StateFlag").objectReferenceValue;
             string flagLabel = flag != null ? "Flag：" + flag.name : "Flag：未設定";
             int index = s;
-            DrawTile(tile, stateName, badge + "\n" + counts + "\n" + flagLabel, selectedGroup == g && selectedState == s && !showChecks,
+            string conditionalLabel = "條件進入 " + state.FindPropertyRelative("ConditionalOnEnter").arraySize + " 組";
+            DrawTile(tile, stateName, badge + "\n" + counts + "\n" + conditionalLabel + "\n" + flagLabel, selectedGroup == g && selectedState == s && !showChecks,
                 active ? Active : last ? Exited : new Color(0.5f, 0.5f, 0.5f, 0.18f),
                 () => Select(g, index), () => ShowTestMenu(groupName, stateName, states, ready));
         }
@@ -388,6 +389,9 @@ public sealed class GroupedStateControllerWindow : EditorWindow
         if (Locked) EditorGUILayout.LabelField("執行中設定唯讀；在上方狀態方塊按右鍵測試。", EditorStyles.miniLabel);
         DrawEventPair(state.FindPropertyRelative("OnEnter"), state.FindPropertyRelative("OnExit"),
             "OnEnter · 進入事件", "OnExit · 解除事件", groupName + "/" + state.FindPropertyRelative("StateName").stringValue);
+        string source = groupName + "/" + state.FindPropertyRelative("StateName").stringValue;
+        GroupedStateControllerEditor.DrawConditionalEntries(state.FindPropertyRelative("ConditionalOnEnter"), Locked,
+            (property, title) => DrawEvent(property, title, source, true), Commit);
     }
 
     private void DrawManagement(SerializedProperty array, int index, bool isGroup)
@@ -425,9 +429,10 @@ public sealed class GroupedStateControllerWindow : EditorWindow
         }
     }
 
-    private void DrawEvent(SerializedProperty property, string title, string source)
+    private void DrawEvent(SerializedProperty property, string title, string source, bool fullWidth = false)
     {
-        using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox, GUILayout.Width(Mathf.Max(300, (position.width - 45) / 2))))
+        using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox,
+            fullWidth ? GUILayout.ExpandWidth(true) : GUILayout.Width(Mathf.Max(300, (position.width - 45) / 2))))
         {
             using (new EditorGUILayout.HorizontalScope())
             {
@@ -555,6 +560,7 @@ public sealed class GroupedStateControllerWindow : EditorWindow
         state.FindPropertyRelative("StateFlag").objectReferenceValue = null;
         state.FindPropertyRelative("OnEnter.m_PersistentCalls.m_Calls").ClearArray();
         state.FindPropertyRelative("OnExit.m_PersistentCalls.m_Calls").ClearArray();
+        state.FindPropertyRelative("ConditionalOnEnter").ClearArray();
         Select(group, index);
         Commit();
     }

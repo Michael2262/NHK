@@ -104,6 +104,7 @@ public sealed class GroupedStateControllerEditor : Editor
                     state.FindPropertyRelative("StateFlag").objectReferenceValue = null;
                     ClearEvent(state.FindPropertyRelative("OnEnter"));
                     ClearEvent(state.FindPropertyRelative("OnExit"));
+                    state.FindPropertyRelative("ConditionalOnEnter").ClearArray();
                     state.isExpanded = true;
                     CommitAndExit();
                 }
@@ -138,9 +139,59 @@ public sealed class GroupedStateControllerEditor : Editor
             DrawArrayButtons(states, index, "狀態");
             string label = groupId + " / " + name.stringValue;
             DrawEvent(state.FindPropertyRelative("OnEnter"), "OnEnter（進入）", label + " / OnEnter");
+            DrawConditionalEntries(state.FindPropertyRelative("ConditionalOnEnter"), Locked,
+                (property, title) => DrawEvent(property, title, label + " / " + title), CommitAndExit);
             DrawEvent(state.FindPropertyRelative("OnExit"), "OnExit（解除）", label + " / OnExit");
         }
         EditorGUILayout.EndVertical();
+    }
+
+    /// <summary>Inspector 與分組視窗共用條件設定，事件清單由各自的繪製器處理。</summary>
+    public static void DrawConditionalEntries(SerializedProperty entries, bool locked,
+        Action<SerializedProperty, string> drawEvent, Action commit)
+    {
+        EditorGUILayout.Space();
+        EditorGUILayout.LabelField("條件進入事件", EditorStyles.boldLabel);
+        EditorGUILayout.HelpBox("先執行一般 OnEnter，再依序判斷各組當下的 Flag；符合的組別全部執行。只在進入狀態時判斷。", MessageType.None);
+        for (int i = 0; i < entries.arraySize; i++)
+        {
+            SerializedProperty entry = entries.GetArrayElementAtIndex(i);
+            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            {
+                using (new EditorGUI.DisabledScope(locked))
+                {
+                    using (new EditorGUILayout.HorizontalScope())
+                    {
+                        EditorGUILayout.LabelField("條件組 " + (i + 1), EditorStyles.boldLabel);
+                        using (new EditorGUI.DisabledScope(i == 0))
+                            if (GUILayout.Button("上移", GUILayout.Width(45)))
+                            { entries.MoveArrayElement(i, i - 1); commit(); }
+                        using (new EditorGUI.DisabledScope(i == entries.arraySize - 1))
+                            if (GUILayout.Button("下移", GUILayout.Width(45)))
+                            { entries.MoveArrayElement(i, i + 1); commit(); }
+                        if (GUILayout.Button("刪除", GUILayout.Width(45)))
+                        { entries.DeleteArrayElementAtIndex(i); commit(); }
+                    }
+                    SerializedProperty flag = entry.FindPropertyRelative("Flag");
+                    EditorGUILayout.PropertyField(flag, new GUIContent("條件 Flag"));
+                    EditorGUILayout.PropertyField(entry.FindPropertyRelative("Invert"), new GUIContent("反向", "勾選：沒有此 Flag 才執行。未勾選：擁有此 Flag 才執行。"));
+                    var definition = flag.objectReferenceValue as ProgressFlagDefinition;
+                    if (definition == null || string.IsNullOrWhiteSpace(definition.FlagID))
+                        EditorGUILayout.HelpBox("請指定有效的 Progress Flag；此組目前不會執行。", MessageType.Warning);
+                }
+                drawEvent(entry.FindPropertyRelative("OnEnter"), "條件組 " + (i + 1) + " · 進入事件");
+            }
+        }
+        using (new EditorGUI.DisabledScope(locked))
+            if (GUILayout.Button("＋ 新增條件進入事件組"))
+            {
+                int index = entries.arraySize++;
+                SerializedProperty entry = entries.GetArrayElementAtIndex(index);
+                entry.FindPropertyRelative("Flag").objectReferenceValue = null;
+                entry.FindPropertyRelative("Invert").boolValue = false;
+                ClearEvent(entry.FindPropertyRelative("OnEnter"));
+                commit();
+            }
     }
 
     private void DrawArrayButtons(SerializedProperty array, int index, string label)

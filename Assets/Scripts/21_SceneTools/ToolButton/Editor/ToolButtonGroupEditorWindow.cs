@@ -493,9 +493,9 @@ public sealed class ToolButtonGroupEditorWindow : EditorWindow
             }
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
-                EditorGUILayout.LabelField("顯示與可點條件", EditorStyles.boldLabel);
-                Field(option, "visibilityFlag", "顯示 Flag");
-                Field(option, "invertVisibility", "反轉顯示條件");
+                DrawVisibilityConditions(option);
+                EditorGUILayout.Space();
+                EditorGUILayout.LabelField("可點條件", EditorStyles.boldLabel);
                 Field(option, "interactableFlag", "可點 Flag");
                 Field(option, "invertInteractable", "反轉可點條件");
             }
@@ -508,6 +508,55 @@ public sealed class ToolButtonGroupEditorWindow : EditorWindow
             }
         }
         DrawEvents(option, name + " / " + ButtonName(option, selectedButton));
+    }
+
+    private void DrawVisibilityConditions(SerializedProperty option)
+    {
+        EditorGUILayout.LabelField("顯示條件", EditorStyles.boldLabel);
+        Field(option, nameof(ToolButtonGroupDisplayControl.GroupOption.visibilityMatchMode), "判斷方式");
+        // 保留既有序列化欄位作為第一項，不需重寫場景或 Prefab。
+        var firstFlag = option.FindPropertyRelative("visibilityFlag");
+        var firstInvert = option.FindPropertyRelative("invertVisibility");
+        if (DrawVisibilityConditionRow(firstFlag, firstInvert, 1, "清除"))
+        {
+            firstFlag.objectReferenceValue = null;
+            firstInvert.boolValue = false;
+            Commit();
+        }
+        var conditions = option.FindPropertyRelative(nameof(ToolButtonGroupDisplayControl.GroupOption.additionalVisibilityConditions));
+        for (int i = 0; i < conditions.arraySize; i++)
+        {
+            var condition = conditions.GetArrayElementAtIndex(i);
+            if (DrawVisibilityConditionRow(
+                condition.FindPropertyRelative(nameof(ToolButtonGroupDisplayControl.VisibilityCondition.flag)),
+                condition.FindPropertyRelative(nameof(ToolButtonGroupDisplayControl.VisibilityCondition.invert)),
+                i + 2, "刪除"))
+            {
+                conditions.DeleteArrayElementAtIndex(i);
+                Commit();
+            }
+        }
+        if (GUILayout.Button("＋ 新增顯示條件"))
+        {
+            int index = conditions.arraySize++;
+            var condition = conditions.GetArrayElementAtIndex(index);
+            condition.FindPropertyRelative(nameof(ToolButtonGroupDisplayControl.VisibilityCondition.flag)).objectReferenceValue = null;
+            condition.FindPropertyRelative(nameof(ToolButtonGroupDisplayControl.VisibilityCondition.invert)).boolValue = false;
+            Commit();
+        }
+        EditorGUILayout.HelpBox("反轉：Flag 不成立時才符合。未指定 Flag 的項目略過；所有項目都未指定時永遠顯示。第一項保留原有設定，可清除。", MessageType.None);
+    }
+
+    private static bool DrawVisibilityConditionRow(SerializedProperty flag, SerializedProperty invert,
+        int number, string removeLabel)
+    {
+        using (new EditorGUILayout.HorizontalScope())
+        {
+            GUILayout.Label("條件 " + number, GUILayout.Width(48));
+            EditorGUILayout.PropertyField(flag, GUIContent.none);
+            invert.boolValue = EditorGUILayout.ToggleLeft("反轉", invert.boolValue, GUILayout.Width(55));
+            return GUILayout.Button(removeLabel, GUILayout.Width(45));
+        }
     }
 
     private static void Field(SerializedProperty parent, string name, string label) =>
@@ -814,6 +863,9 @@ public sealed class ToolButtonGroupEditorWindow : EditorWindow
         foreach (string field in new[] { "visibilityFlag", "interactableFlag", "ngFlag" })
             option.FindPropertyRelative(field).objectReferenceValue = null;
         option.FindPropertyRelative("invertVisibility").boolValue = false;
+        option.FindPropertyRelative(nameof(ToolButtonGroupDisplayControl.GroupOption.visibilityMatchMode)).intValue =
+            (int)ToolButtonGroupDisplayControl.VisibilityMatchMode.And;
+        option.FindPropertyRelative(nameof(ToolButtonGroupDisplayControl.GroupOption.additionalVisibilityConditions)).ClearArray();
         option.FindPropertyRelative("invertInteractable").boolValue = false;
         option.FindPropertyRelative("invertNgFlag").boolValue = true;
         option.FindPropertyRelative(nameof(ToolButtonGroupDisplayControl.GroupOption.useNgClickEvent)).boolValue = false;

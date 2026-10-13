@@ -23,6 +23,19 @@ public class ToolButtonGroupDisplayControl : MonoBehaviour
         public Sprite sprite;
     }
 
+    public enum VisibilityMatchMode
+    {
+        [InspectorName("AND（全部成立）")] And = 0,
+        [InspectorName("OR（任一成立）")] Or = 1
+    }
+
+    [Serializable]
+    public class VisibilityCondition
+    {
+        public ProgressFlagDefinition flag;
+        public bool invert;
+    }
+
     [Serializable]
     public class GroupOption
     {
@@ -33,9 +46,12 @@ public class ToolButtonGroupDisplayControl : MonoBehaviour
         [ToolButtonIconName]
         [Tooltip("選擇 Ng 時強制視為 NG：顯示 NG 圖示與紅字；啟用 NG 點擊事件時走 NG 事件。")]
         public string iconName = "Heart";
-        [Header("是否出現（留空永遠成立）")]
         public ProgressFlagDefinition visibilityFlag;
         public bool invertVisibility;
+        [Tooltip("第一項與其他已指定 Flag 的顯示條件，共同使用此 AND／OR 規則。")]
+        public VisibilityMatchMode visibilityMatchMode = VisibilityMatchMode.And;
+        [Tooltip("保留原本顯示 Flag 作為第一項；此清單存放其他條件。未指定 Flag 的項目略過。")]
+        public List<VisibilityCondition> additionalVisibilityConditions = new List<VisibilityCondition>();
         [Header("是否可點（留空永遠成立，不可點仍占槽位）")]
         public ProgressFlagDefinition interactableFlag;
         public bool invertInteractable;
@@ -367,7 +383,7 @@ public class ToolButtonGroupDisplayControl : MonoBehaviour
             while (options != null && next < options.Count)
             {
                 var candidate = options[next++];
-                if (candidate == null || !Evaluate(candidate.visibilityFlag, candidate.invertVisibility)) continue;
+                if (candidate == null || !EvaluateVisibility(candidate)) continue;
                 option = candidate;
                 break;
             }
@@ -391,6 +407,30 @@ public class ToolButtonGroupDisplayControl : MonoBehaviour
         if (string.Equals(option.iconName, "Ng", StringComparison.Ordinal)) return true;
         return option.ngFlag != null
             && Evaluate(option.ngFlag, option.invertNgFlag);
+    }
+
+    private bool EvaluateVisibility(GroupOption option)
+    {
+        bool matchAny = option.visibilityMatchMode == VisibilityMatchMode.Or;
+        bool hasCondition = false;
+        if (option.visibilityFlag != null)
+        {
+            hasCondition = true;
+            bool matches = Evaluate(option.visibilityFlag, option.invertVisibility);
+            if (matches == matchAny) return matchAny;
+        }
+        if (option.additionalVisibilityConditions != null)
+        {
+            foreach (var condition in option.additionalVisibilityConditions)
+            {
+                if (condition == null || condition.flag == null) continue;
+                hasCondition = true;
+                bool matches = Evaluate(condition.flag, condition.invert);
+                if (matches == matchAny) return matchAny;
+            }
+        }
+        // 沒有有效條件時永遠顯示；AND 到此代表全部成立，OR 代表全部不成立。
+        return !hasCondition || !matchAny;
     }
 
     private bool Evaluate(ProgressFlagDefinition flag, bool invert)
@@ -426,7 +466,7 @@ public class ToolButtonGroupDisplayControl : MonoBehaviour
             return;
         }
         if (option == null) return;
-        if (!Evaluate(option.visibilityFlag, option.invertVisibility)
+        if (!EvaluateVisibility(option)
             || !Evaluate(option.interactableFlag, option.invertInteractable))
         {
             Refresh();
