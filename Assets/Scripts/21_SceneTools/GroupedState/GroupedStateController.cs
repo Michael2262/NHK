@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Events;
 
 /// <summary>
 /// 場景用分組互斥狀態工具。初始皆不成立，不接存檔、不自動執行進入事件。
@@ -16,7 +15,7 @@ public sealed class GroupedStateController : MonoBehaviour
         public ProgressFlagDefinition Flag;
         [Tooltip("勾選後，沒有此 Flag 才執行。未設定 Flag 時一律略過。")]
         public bool Invert;
-        public UnityEvent OnEnter = new UnityEvent();
+        public FlagConditionalEvent OnEnter = new FlagConditionalEvent();
     }
 
     [Serializable]
@@ -26,8 +25,8 @@ public sealed class GroupedStateController : MonoBehaviour
         public string StateName;
         [Tooltip("選填：進入時開啟場景 Flag，退出時移除，皆在對應事件之前執行。可同時成立的狀態請使用不同 Flag。")]
         public ProgressFlagDefinition StateFlag;
-        public UnityEvent OnEnter = new UnityEvent();
-        public UnityEvent OnExit = new UnityEvent();
+        public FlagConditionalEvent OnEnter = new FlagConditionalEvent();
+        public FlagConditionalEvent OnExit = new FlagConditionalEvent();
         public List<ConditionalEnterEvent> ConditionalOnEnter = new List<ConditionalEnterEvent>();
     }
 
@@ -43,8 +42,8 @@ public sealed class GroupedStateController : MonoBehaviour
     [SerializeField] private List<StateGroup> groups = new List<StateGroup>();
 
     [Header("CheckState 的判斷結果")]
-    [SerializeField] private UnityEvent onCheckTrue = new UnityEvent();
-    [SerializeField] private UnityEvent onCheckFalse = new UnityEvent();
+    [SerializeField] private FlagConditionalEvent onCheckTrue = new FlagConditionalEvent();
+    [SerializeField] private FlagConditionalEvent onCheckFalse = new FlagConditionalEvent();
 
     private GroupedStateModel model;
     private bool initializationAttempted;
@@ -128,8 +127,8 @@ public sealed class GroupedStateController : MonoBehaviour
                 {
                     if (state == null) throw new ArgumentException("狀態項目不可為 null。");
                     ValidateName(state.StateName, "狀態名");
-                    UnityEvent enter = state.OnEnter;
-                    UnityEvent exit = state.OnExit;
+                    FlagConditionalEvent enter = state.OnEnter;
+                    FlagConditionalEvent exit = state.OnExit;
                     // 與事件一起建立快照，確保退出時移除進入時使用的同一個 Flag。
                     string flagId = state.StateFlag != null ? state.StateFlag.FlagID : null;
                     var conditionalEntries = new List<GroupedStateModel.ConditionalEntry>();
@@ -137,7 +136,7 @@ public sealed class GroupedStateController : MonoBehaviour
                         foreach (ConditionalEnterEvent entry in state.ConditionalOnEnter)
                         {
                             if (entry == null) continue;
-                            UnityEvent callback = entry.OnEnter;
+                            FlagConditionalEvent callback = entry.OnEnter;
                             conditionalEntries.Add(new GroupedStateModel.ConditionalEntry
                             {
                                 FlagId = entry.Flag != null ? entry.Flag.FlagID : null,
@@ -186,7 +185,7 @@ public sealed class GroupedStateController : MonoBehaviour
         var flags = service != null ? service.ProgressFlags : null;
         if (flags == null)
         {
-            Debug.LogWarning("[GroupedStateController] 進度旗標服務尚未初始化，略過條件進入事件：" + flagId, this);
+            Debug.LogWarning("[GroupedStateController] 進度旗標服務尚未初始化，略過條件事件：" + flagId, this);
             return null;
         }
         return flags.Contains(flagId);
@@ -215,9 +214,9 @@ public sealed class GroupedStateController : MonoBehaviour
         }
     }
 
-    private void InvokeSafely(UnityEvent callback)
+    private void InvokeSafely(FlagConditionalEvent callback)
     {
-        try { callback?.Invoke(); }
+        try { callback?.InvokeWithConditions(ReadProgressFlag); }
         catch (Exception exception)
         {
             // 已執行的場景操作無法回滾；記錄錯誤並讓狀態切換完成。

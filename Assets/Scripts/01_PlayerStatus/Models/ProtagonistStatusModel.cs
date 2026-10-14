@@ -121,7 +121,7 @@ public class ProtagonistStatusModel
 
     /// <summary>射精感：0～100 的獨立累積值，每日歸零。</summary>
     public int Semen { get; private set; } = INITIAL_SEMEN;
-    public int SemenMax => 100;
+    public int SemenMax => 0;
 
     /// <summary>射精耗盡狀態：ShootTimes <= 0 即為 true。</summary>
     public bool IsOverShoot => ShootTimes <= 0;

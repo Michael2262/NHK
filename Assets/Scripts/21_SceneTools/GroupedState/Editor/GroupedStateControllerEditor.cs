@@ -13,6 +13,24 @@ public sealed class GroupedStateControllerEditor : Editor
     private static string clipboardLabel;
     private static bool clipboardFromPlayMode;
     private bool showChecks;
+    private readonly Dictionary<string, FilteredUnityEventDrawer> eventDrawers = new Dictionary<string, FilteredUnityEventDrawer>();
+
+    private void OnEnable()
+    {
+        Undo.undoRedoPerformed += ClearDrawers;
+    }
+
+    private void OnDisable()
+    {
+        Undo.undoRedoPerformed -= ClearDrawers;
+        eventDrawers.Clear();
+    }
+
+    private void ClearDrawers()
+    {
+        eventDrawers.Clear();
+        Repaint();
+    }
 
     private sealed class EventValue
     {
@@ -240,8 +258,16 @@ public sealed class GroupedStateControllerEditor : Editor
             }
         }
         EditorGUILayout.EndHorizontal();
+        if (!eventDrawers.TryGetValue(property.propertyPath, out var drawer))
+        {
+            drawer = new FilteredUnityEventDrawer(this, () => target, () => true, () => !Locked,
+                item => eventDrawers.ContainsValue(item), CommitAndExit);
+            eventDrawers.Add(property.propertyPath, drawer);
+        }
+        var content = new GUIContent(title);
+        Rect rect = EditorGUILayout.GetControlRect(false, drawer.GetPropertyHeight(property, content));
         using (new EditorGUI.DisabledScope(Locked))
-            EditorGUILayout.PropertyField(property, new GUIContent(title), true);
+            drawer.OnGUI(rect, property, content);
     }
 
     private void HandleTestMenu(Rect rect, string groupId, SerializedProperty states, bool ready, string current)
@@ -296,7 +322,7 @@ public sealed class GroupedStateControllerEditor : Editor
 
     private static void ClearEvent(SerializedProperty property)
     {
-        property.FindPropertyRelative("m_PersistentCalls.m_Calls").ClearArray();
+        FlagConditionalEventEditor.ClearEvent(property);
     }
 
     // 逐項快照序列化欄位；物件參照直接保留，不經 JSON，也不持有來源的 SerializedProperty。
@@ -356,6 +382,7 @@ public sealed class GroupedStateControllerEditor : Editor
     {
         // SerializedObject 負責 Undo 與 Prefab override；結束本次 GUI，避免陣列改動後使用失效的 Property。
         serializedObject.ApplyModifiedProperties();
+        eventDrawers.Clear();
         Repaint();
         GUIUtility.ExitGUI();
     }

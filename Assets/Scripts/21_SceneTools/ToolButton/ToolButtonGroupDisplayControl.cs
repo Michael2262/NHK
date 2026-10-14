@@ -62,12 +62,12 @@ public class ToolButtonGroupDisplayControl : MonoBehaviour
         public bool invertNgFlag = true;
         [Header("點擊事件")]
         [Tooltip("未啟用 NG 點擊事件，或 NG 條件（含反轉）不成立時執行。")]
-        public UnityEvent onClick = new UnityEvent();
+        public FlagConditionalEvent onClick = new FlagConditionalEvent();
         [Header("NG 點擊事件")]
         [Tooltip("預設關閉。開啟後，NG 時才改走 NG 點擊事件；關閉時一律走一般事件，不影響 NG 圖示與紅字。")]
         public bool useNgClickEvent = false;
         [Tooltip("啟用 NG 點擊事件且 NG 條件（含反轉）成立時只執行此事件；留空不會回退至一般事件。仍須符合可點條件。")]
-        public UnityEvent onNgClick = new UnityEvent();
+        public FlagConditionalEvent onNgClick = new FlagConditionalEvent();
     }
 
     [Serializable]
@@ -487,10 +487,21 @@ public class ToolButtonGroupDisplayControl : MonoBehaviour
             return;
         }
         // 以點擊當下的 Icon 與 Flag 決定分支，一次點擊只執行其中一個事件。
-        if (option.useNgClickEvent && IsNg(option)) option.onNgClick?.Invoke();
-        else option.onClick?.Invoke();
+        if (option.useNgClickEvent && IsNg(option)) option.onNgClick?.InvokeWithConditions(ReadEventFlag);
+        else option.onClick?.InvokeWithConditions(ReadEventFlag);
         // 事件可切組、改 Flag、關閉面板或銷毀控制器；刷新時使用最新群組。
         if (this != null && isActiveAndEnabled) Refresh();
+    }
+
+    private bool? ReadEventFlag(string flagId)
+    {
+        var service = GameStatusService.Instance;
+        if (service == null || service.ProgressFlags == null)
+        {
+            Debug.LogWarning("[ToolButtonGroupDisplayControl] 進度旗標服務尚未初始化，略過條件事件：" + flagId, this);
+            return null;
+        }
+        return service.ProgressFlags.Contains(flagId);
     }
 
     private bool CanReceiveInput => isActiveAndEnabled && Instance == this && _visible && !_fading

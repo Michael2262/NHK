@@ -9,29 +9,150 @@ using UnityEngine.Events;
 /// <summary>自製視窗共用的事件選單；預設隱藏 Unity 內建功能，保留原生事件格式與排序。</summary>
 internal sealed class FilteredUnityEventDrawer : UnityEventDrawer
 {
-    private readonly EditorWindow owner;
+    private readonly UnityEngine.Object owner;
     private readonly Func<UnityEngine.Object> getTarget;
     private readonly Func<bool> showUnityFunctions;
     private readonly Func<bool> canEdit;
     private readonly Func<FilteredUnityEventDrawer, bool> isCurrent;
+    private readonly Action commitStructureChange;
 
-    public FilteredUnityEventDrawer(EditorWindow owner, Func<UnityEngine.Object> getTarget,
-        Func<bool> showUnityFunctions, Func<bool> canEdit, Func<FilteredUnityEventDrawer, bool> isCurrent)
+    public FilteredUnityEventDrawer(UnityEngine.Object owner, Func<UnityEngine.Object> getTarget,
+        Func<bool> showUnityFunctions, Func<bool> canEdit, Func<FilteredUnityEventDrawer, bool> isCurrent,
+        Action commitStructureChange = null)
     {
         this.owner = owner;
         this.getTarget = getTarget;
         this.showUnityFunctions = showUnityFunctions;
         this.canEdit = canEdit;
         this.isCurrent = isCurrent;
+        this.commitStructureChange = commitStructureChange;
     }
     private ReorderableList eventList;
     private bool hasSelection;
+    private bool structureChanged;
     public int SelectedIndex => hasSelection && eventList != null ? eventList.index : -1;
     protected override void SetupReorderableList(ReorderableList list)
     {
         base.SetupReorderableList(list);
         eventList = list;
         hasSelection = false;
+        // 完成條件同步的呼叫端須提供結構提交回呼，才啟用條件 UI。
+        // Shoot 等尚未接入的編輯器即使共用選項型別，也不會出現尚未支援的條件設定。
+        if (commitStructureChange == null || FlagConditionalEventEditor.GetConditions(list.serializedProperty) == null) return;
+        list.multiSelect = false;
+        float originalHeight = list.elementHeight;
+        list.elementHeightCallback = index => originalHeight + ConditionHeight(index);
+        var add = list.onAddCallback;
+        list.onAddCallback = current =>
+        {
+            if (!canEdit()) return;
+            FlagConditionalEventEditor.EnsureConditions(current.serializedProperty);
+            add(current);
+            FlagConditionalEventEditor.EnsureConditions(current.serializedProperty);
+            structureChanged = true;
+        };
+        var remove = list.onRemoveCallback;
+        list.onRemoveCallback = current =>
+        {
+            if (!canEdit()) return;
+            var conditions = FlagConditionalEventEditor.EnsureConditions(current.serializedProperty);
+            int index = current.index;
+            int count = current.serializedProperty.arraySize;
+            remove(current);
+            if (current.serializedProperty.arraySize == count - 1 && index >= 0 && index < conditions.arraySize)
+                conditions.DeleteArrayElementAtIndex(index);
+            structureChanged = true;
+        };
+        list.onReorderCallbackWithDetails = (current, oldIndex, newIndex) =>
+        {
+            var conditions = FlagConditionalEventEditor.EnsureConditions(current.serializedProperty);
+            conditions.MoveArrayElement(oldIndex, newIndex);
+            structureChanged = true;
+        };
+    }
+
+    public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
+    {
+        base.OnGUI(position, property, label);
+        if (!structureChanged) return;
+        // 先讓 ReorderableList 結束拖曳並釋放滑鼠，再重建繪製器與高度快取。
+        structureChanged = false;
+        CommitStructureChange();
+    }
+
+    private void RepaintOwner()
+    {
+        if (owner is EditorWindow window) window.Repaint();
+        else if (owner is Editor editor) editor.Repaint();
+    }
+
+    private void CommitStructureChange()
+    {
+        eventList.serializedProperty.serializedObject.ApplyModifiedProperties();
+        RepaintOwner();
+        commitStructureChange?.Invoke();
+        GUIUtility.ExitGUI();
+    }
+
+    private float ConditionHeight(int index)
+    {
+        var conditions = FlagConditionalEventEditor.GetConditions(eventList.serializedProperty);
+        if (conditions == null || index < 0 || index >= conditions.arraySize) return 0;
+        var condition = conditions.GetArrayElementAtIndex(index);
+        if (!condition.FindPropertyRelative("Enabled").boolValue) return 0;
+        bool missing = condition.FindPropertyRelative("Flag").objectReferenceValue == null;
+        return (EditorGUIUtility.singleLineHeight + 2) * (missing ? 2 : 1);
+    }
+
+    private Rect DrawCondition(Rect rect, int index)
+    {
+        if (commitStructureChange == null) return rect;
+        var conditions = FlagConditionalEventEditor.GetConditions(eventList.serializedProperty);
+        if (conditions == null) return rect;
+        var condition = index < conditions.arraySize ? conditions.GetArrayElementAtIndex(index) : null;
+        bool enabled = condition != null && condition.FindPropertyRelative("Enabled").boolValue;
+        float height = EditorGUIUtility.singleLineHeight;
+        // 在拖曳把手旁保留獨立勾選欄；不占用原有的拖曳區域。
+        Rect toggleRect = new Rect(rect.x, rect.y + 2, 18, height);
+        using (new EditorGUI.DisabledScope(!canEdit()))
+        {
+            EditorGUI.BeginChangeCheck();
+            bool next = EditorGUI.Toggle(toggleRect, new GUIContent("", "啟用此筆事件的 Flag 條件；未勾選時無條件執行。各筆條件在本清單開始執行時判斷。"), enabled);
+            if (EditorGUI.EndChangeCheck())
+            {
+                condition = FlagConditionalEventEditor.EnsureConditions(eventList.serializedProperty).GetArrayElementAtIndex(index);
+                condition.FindPropertyRelative("Enabled").boolValue = next;
+                CommitStructureChange();
+            }
+            rect.xMin += 22;
+            if (!enabled) return rect;
+
+            var flag = condition.FindPropertyRelative("Flag");
+            var invert = condition.FindPropertyRelative("Invert");
+            float extraHeight = ConditionHeight(index);
+            bool wasMissing = flag.objectReferenceValue == null;
+            Rect flagRect = new Rect(rect.x, rect.y + 2, Mathf.Max(60, rect.width - 64), height);
+            EditorGUI.BeginProperty(flagRect, GUIContent.none, flag);
+            EditorGUI.BeginChangeCheck();
+            var nextFlag = EditorGUI.ObjectField(flagRect, flag.objectReferenceValue, typeof(ProgressFlagDefinition), false);
+            if (EditorGUI.EndChangeCheck())
+            {
+                flag.objectReferenceValue = nextFlag;
+                EditorGUI.EndProperty();
+                if (wasMissing != (nextFlag == null)) CommitStructureChange();
+            }
+            else EditorGUI.EndProperty();
+            Rect invertRect = new Rect(flagRect.xMax + 4, flagRect.y, 60, height);
+            EditorGUI.BeginProperty(invertRect, GUIContent.none, invert);
+            invert.boolValue = EditorGUI.ToggleLeft(invertRect,
+                new GUIContent("反向", "勾選後，沒有此 Flag 才執行；旗標服務未就緒時仍略過。"), invert.boolValue);
+            EditorGUI.EndProperty();
+            if (wasMissing)
+                EditorGUI.LabelField(new Rect(rect.x, flagRect.yMax + 2, rect.width, height),
+                    "尚未指定 Flag：此筆事件不執行", EditorStyles.miniLabel);
+            rect.yMin += extraHeight;
+        }
+        return rect;
     }
     protected override void OnSelectEvent(ReorderableList list)
     {
@@ -46,6 +167,7 @@ internal sealed class FilteredUnityEventDrawer : UnityEventDrawer
 
     protected override void DrawEvent(Rect rect, int index, bool isActive, bool isFocused)
     {
+        rect = DrawCondition(rect, index);
         if (showUnityFunctions()) { base.DrawEvent(rect, index, isActive, isFocused); return; }
         var call = eventList.serializedProperty.GetArrayElementAtIndex(index);
         var target = call.FindPropertyRelative("m_Target");
@@ -135,7 +257,7 @@ internal sealed class FilteredUnityEventDrawer : UnityEventDrawer
                 }
                 fresh.ApplyModifiedProperties();
             }
-            owner.Repaint();
+            RepaintOwner();
         };
         var menu = new GenericMenu();
         menu.AddItem(new GUIContent("不指定功能"), string.IsNullOrEmpty(originalMethod), () => select(null, null, PersistentListenerMode.Void));
@@ -250,4 +372,74 @@ internal sealed class FilteredUnityEventDrawer : UnityEventDrawer
         return result;
     }
 
+}
+
+/// <summary>共用事件列的條件配對操作；所有寫入皆透過 SerializedProperty 支援 Undo。</summary>
+internal static class FlagConditionalEventEditor
+{
+    private const string CallsSuffix = ".m_PersistentCalls.m_Calls";
+
+    internal sealed class ConditionSnapshot
+    {
+        public bool Enabled;
+        public ProgressFlagDefinition Flag;
+        public bool Invert;
+    }
+
+    public static SerializedProperty GetConditions(SerializedProperty calls)
+    {
+        if (!calls.propertyPath.EndsWith(CallsSuffix, StringComparison.Ordinal)) return null;
+        string eventPath = calls.propertyPath.Substring(0, calls.propertyPath.Length - CallsSuffix.Length);
+        return calls.serializedObject.FindProperty(eventPath + ".callConditions");
+    }
+
+    public static SerializedProperty EnsureConditions(SerializedProperty calls)
+    {
+        var conditions = GetConditions(calls);
+        if (conditions == null) return null;
+        int oldCount = conditions.arraySize;
+        conditions.arraySize = calls.arraySize;
+        for (int i = oldCount; i < conditions.arraySize; i++)
+            Write(conditions.GetArrayElementAtIndex(i), new ConditionSnapshot());
+        return conditions;
+    }
+
+    public static ConditionSnapshot CaptureCondition(SerializedProperty calls, int index)
+    {
+        var conditions = GetConditions(calls);
+        if (conditions == null || index < 0 || index >= conditions.arraySize) return new ConditionSnapshot();
+        var condition = conditions.GetArrayElementAtIndex(index);
+        return new ConditionSnapshot
+        {
+            Enabled = condition.FindPropertyRelative("Enabled").boolValue,
+            Flag = condition.FindPropertyRelative("Flag").objectReferenceValue as ProgressFlagDefinition,
+            Invert = condition.FindPropertyRelative("Invert").boolValue
+        };
+    }
+
+    public static void PasteCondition(SerializedProperty calls, int index, ConditionSnapshot snapshot)
+    {
+        var conditions = EnsureConditions(calls);
+        if (conditions != null) Write(conditions.GetArrayElementAtIndex(index), snapshot ?? new ConditionSnapshot());
+    }
+
+    private static void Write(SerializedProperty condition, ConditionSnapshot snapshot)
+    {
+        condition.FindPropertyRelative("Enabled").boolValue = snapshot.Enabled;
+        condition.FindPropertyRelative("Flag").objectReferenceValue = snapshot.Flag;
+        condition.FindPropertyRelative("Invert").boolValue = snapshot.Invert;
+    }
+
+    public static void DeleteCall(SerializedProperty calls, int index)
+    {
+        var conditions = EnsureConditions(calls);
+        conditions?.DeleteArrayElementAtIndex(index);
+        calls.DeleteArrayElementAtIndex(index);
+    }
+
+    public static void ClearEvent(SerializedProperty property)
+    {
+        property.FindPropertyRelative("m_PersistentCalls.m_Calls").ClearArray();
+        property.FindPropertyRelative("callConditions")?.ClearArray();
+    }
 }

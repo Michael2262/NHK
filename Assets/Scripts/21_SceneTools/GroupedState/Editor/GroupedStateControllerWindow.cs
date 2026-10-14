@@ -24,6 +24,7 @@ public sealed class GroupedStateControllerWindow : EditorWindow
     private static List<EventValue> selectedEventClipboard;
     private static string selectedEventClipboardLabel;
     private static bool selectedEventClipboardFromPlay;
+    private static FlagConditionalEventEditor.ConditionSnapshot selectedConditionClipboard;
     private readonly Dictionary<string, FilteredUnityEventDrawer> eventDrawers = new Dictionary<string, FilteredUnityEventDrawer>();
     private static readonly Color Active = new Color(0.18f, 0.65f, 0.34f, 0.55f);
     private static readonly Color Exited = new Color(0.9f, 0.5f, 0.12f, 0.5f);
@@ -445,7 +446,8 @@ public sealed class GroupedStateControllerWindow : EditorWindow
             }
             if (!eventDrawers.TryGetValue(property.propertyPath, out FilteredUnityEventDrawer drawer))
             {
-                drawer = new FilteredUnityEventDrawer(this, () => controller, () => showUnityFunctions, () => !Locked && !changingPlayMode, item => eventDrawers.ContainsValue(item));
+                drawer = new FilteredUnityEventDrawer(this, () => controller, () => showUnityFunctions,
+                    () => !Locked && !changingPlayMode, item => eventDrawers.ContainsValue(item), Commit);
                 eventDrawers.Add(property.propertyPath, drawer);
             }
             var label = new GUIContent(title);
@@ -468,13 +470,14 @@ public sealed class GroupedStateControllerWindow : EditorWindow
             if (GUI.Button(new Rect(row.x, row.y, width, row.height), "複製所選事件"))
             {
                 selectedEventClipboard = Capture(calls.GetArrayElementAtIndex(index));
+                selectedConditionClipboard = FlagConditionalEventEditor.CaptureCondition(calls, index);
                 selectedEventClipboardLabel = source + " · 第 " + (index + 1) + " 項";
                 selectedEventClipboardFromPlay = Locked;
             }
             using (new EditorGUI.DisabledScope(Locked))
                 if (GUI.Button(new Rect(row.x + width + 4, row.y, width, row.height), "刪除所選事件"))
                 {
-                    calls.DeleteArrayElementAtIndex(index);
+                    FlagConditionalEventEditor.DeleteCall(calls, index);
                     Commit();
                 }
         }
@@ -500,6 +503,7 @@ public sealed class GroupedStateControllerWindow : EditorWindow
         }
         int index = calls.arraySize++;
         ApplyValues(calls.GetArrayElementAtIndex(index), selectedEventClipboard);
+        FlagConditionalEventEditor.PasteCondition(calls, index, selectedConditionClipboard);
         Commit();
     }
 
@@ -558,8 +562,8 @@ public sealed class GroupedStateControllerWindow : EditorWindow
         SerializedProperty state = states.GetArrayElementAtIndex(index);
         state.FindPropertyRelative("StateName").stringValue = UniqueName(states, "StateName", "新狀態", index);
         state.FindPropertyRelative("StateFlag").objectReferenceValue = null;
-        state.FindPropertyRelative("OnEnter.m_PersistentCalls.m_Calls").ClearArray();
-        state.FindPropertyRelative("OnExit.m_PersistentCalls.m_Calls").ClearArray();
+        FlagConditionalEventEditor.ClearEvent(state.FindPropertyRelative("OnEnter"));
+        FlagConditionalEventEditor.ClearEvent(state.FindPropertyRelative("OnExit"));
         state.FindPropertyRelative("ConditionalOnEnter").ClearArray();
         Select(group, index);
         Commit();

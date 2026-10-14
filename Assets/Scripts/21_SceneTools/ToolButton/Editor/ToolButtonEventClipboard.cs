@@ -18,6 +18,7 @@ internal static class ToolButtonEventClipboard
     private static bool fromPlayMode;
     private static List<Value> singleEvent;
     private static bool singleFromPlayMode;
+    private static FlagConditionalEventEditor.ConditionSnapshot singleCondition;
     public static string SingleLabel { get; private set; }
     public static bool CanPasteSingle => singleEvent != null && !singleFromPlayMode
         && !EditorApplication.isPlayingOrWillChangePlaymode;
@@ -48,21 +49,27 @@ internal static class ToolButtonEventClipboard
         return true;
     }
 
-    public static void CopySingle(string label, SerializedProperty property)
+    public static void CopySingle(string label, SerializedProperty calls, int index)
     {
-        singleEvent = Capture(property);
+        singleEvent = Capture(calls.GetArrayElementAtIndex(index));
+        singleCondition = FlagConditionalEventEditor.CaptureCondition(calls, index);
         SingleLabel = label;
         singleFromPlayMode = EditorApplication.isPlayingOrWillChangePlaymode;
     }
 
-    public static bool PasteSingle(ToolButtonGroupDisplayControl target, SerializedProperty destination,
-        out string error)
+    public static bool PasteSingle(ToolButtonGroupDisplayControl target, SerializedProperty calls,
+        int index, out string error)
     {
         error = string.Empty;
-        if (target == null || destination == null || !CanPasteSingle)
+        if (target == null || calls == null || index < 0 || index >= calls.arraySize || !CanPasteSingle)
         { error = "尚未複製單項事件、未選取貼上目標，或目前不允許貼上。"; return false; }
         if (!ValidateReferences(target, singleEvent, out error)) return false;
-        Apply(destination, singleEvent);
+        // 條件參照也要先檢查；驗證失敗時不覆蓋事件或條件。
+        if (singleCondition != null && !ValidateReferences(target, new List<Value>
+            { new Value { Type = SerializedPropertyType.ObjectReference, Data = singleCondition.Flag } }, out error))
+            return false;
+        Apply(calls.GetArrayElementAtIndex(index), singleEvent);
+        FlagConditionalEventEditor.PasteCondition(calls, index, singleCondition);
         return true;
     }
 

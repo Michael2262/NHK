@@ -630,7 +630,7 @@ public sealed class ToolButtonGroupEditorWindow : EditorWindow
             if (!eventDrawers.TryGetValue(property.propertyPath, out var drawer))
             {
                 drawer = new FilteredUnityEventDrawer(this, () => controller, () => showUnityFunctions,
-                    () => !Locked && !changingPlayMode, item => eventDrawers.ContainsValue(item));
+                    () => !Locked && !changingPlayMode, item => eventDrawers.ContainsValue(item), Commit);
                 eventDrawers.Add(property.propertyPath, drawer);
             }
             var calls = property.FindPropertyRelative("m_PersistentCalls.m_Calls");
@@ -642,14 +642,14 @@ public sealed class ToolButtonGroupEditorWindow : EditorWindow
                 using (new EditorGUI.DisabledScope(Locked || changingPlayMode || !hasSelected))
                     if (GUILayout.Button("刪除所選", GUILayout.Width(75)))
                     {
-                        calls.DeleteArrayElementAtIndex(selected);
+                        FlagConditionalEventEditor.DeleteCall(calls, selected);
                         Commit();
                     }
                 using (new EditorGUI.DisabledScope(!hasSelected))
                     if (GUILayout.Button("複製所選", GUILayout.Width(75)))
                     {
                         ToolButtonEventClipboard.CopySingle(controller.name + " / " + source + " / " + title
-                            + " / 第 " + (selected + 1) + " 項", calls.GetArrayElementAtIndex(selected));
+                            + " / 第 " + (selected + 1) + " 項", calls, selected);
                         // 複製不清除選取，方便接著選擇貼上目標。
                         Repaint();
                     }
@@ -662,7 +662,7 @@ public sealed class ToolButtonGroupEditorWindow : EditorWindow
                         int destinationIndex = hasSelected ? selected : calls.arraySize;
                         if (!hasSelected) calls.arraySize++;
                         if (!ToolButtonEventClipboard.PasteSingle(controller,
-                            calls.GetArrayElementAtIndex(destinationIndex), out string error))
+                            calls, destinationIndex, out string error))
                         {
                             // 參照檢查失敗時撤銷新增，避免留下複製自上一列的事件。
                             if (!hasSelected) calls.DeleteArrayElementAtIndex(destinationIndex);
@@ -869,8 +869,8 @@ public sealed class ToolButtonGroupEditorWindow : EditorWindow
         option.FindPropertyRelative("invertInteractable").boolValue = false;
         option.FindPropertyRelative("invertNgFlag").boolValue = true;
         option.FindPropertyRelative(nameof(ToolButtonGroupDisplayControl.GroupOption.useNgClickEvent)).boolValue = false;
-        option.FindPropertyRelative("onClick.m_PersistentCalls.m_Calls").ClearArray();
-        option.FindPropertyRelative("onNgClick.m_PersistentCalls.m_Calls").ClearArray();
+        FlagConditionalEventEditor.ClearEvent(option.FindPropertyRelative("onClick"));
+        FlagConditionalEventEditor.ClearEvent(option.FindPropertyRelative("onNgClick"));
         collapsed.Remove(groupIndex);
         search = string.Empty;
         Select(groupIndex, index);
