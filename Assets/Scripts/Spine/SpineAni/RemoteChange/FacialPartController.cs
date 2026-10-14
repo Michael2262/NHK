@@ -133,10 +133,11 @@ public class FacialPartController : MonoBehaviour
         return false;
     }
 
-    /// <summary>依 ID 推進所有部位一次；目標尚未 Start 或依賴失效時不推進。</summary>
+    /// <summary>依 ID 推進所有部位一次；暫停、尚未 Start 或依賴失效時不推進。</summary>
     public static bool NotifyRemote(string id)
     {
         if (!TryGetById(id, out var controller)) return false;
+        if (!controller.IsRemoteEnabled) return false;
         if (!controller.initialized || controller.spineController == null || controller.expressionDatabase == null)
         {
             Debug.LogWarning($"[FacialPartController] ID '{NormalizeId(id)}' 尚未就緒，略過計數。", controller);
@@ -159,7 +160,7 @@ public class FacialPartController : MonoBehaviour
         return true;
     }
 
-    /// <summary>通知所有已註冊 ID；重複 ID 與未就緒目標略過。回傳成功通知數。</summary>
+    /// <summary>通知所有已註冊 ID；暫停、重複 ID 與未就緒目標略過。回傳成功通知數。</summary>
     public static int NotifyRemoteAll()
     {
         // 播放回呼可能停用元件，先複製 ID，避免註冊表於遍歷中被修改。
@@ -167,6 +168,44 @@ public class FacialPartController : MonoBehaviour
         int count = 0;
         foreach (string id in ids)
             if (NotifyRemote(id)) count++;
+        return count;
+    }
+
+    /// <summary>依 ID 暫停接收 Remote，保留倒數與播放進度。</summary>
+    public static bool StopRemoteById(string id)
+    {
+        if (!TryGetById(id, out var controller)) return false;
+        controller.StopRemote();
+        return true;
+    }
+
+    /// <summary>依 ID 恢復接收 Remote，不補發暫停期間的通知。</summary>
+    public static bool ResumeRemoteById(string id)
+    {
+        if (!TryGetById(id, out var controller)) return false;
+        controller.ResumeRemote();
+        return true;
+    }
+
+    /// <summary>暫停當下所有已註冊的元件，包含 ID 重複者。回傳處理數量。</summary>
+    public static int StopRemoteAll() => SetRemoteEnabledForAll(false);
+
+    /// <summary>恢復當下所有已註冊的元件，包含 ID 重複者。回傳處理數量。</summary>
+    public static int ResumeRemoteAll() => SetRemoteEnabledForAll(true);
+
+    private static int SetRemoteEnabledForAll(bool value)
+    {
+        int count = 0;
+        foreach (var controllers in registry.Values)
+        {
+            foreach (var controller in controllers)
+            {
+                if (controller == null || !controller.isActiveAndEnabled) continue;
+                if (value) controller.ResumeRemote();
+                else controller.StopRemote();
+                count++;
+            }
+        }
         return count;
     }
 
@@ -186,6 +225,16 @@ public class FacialPartController : MonoBehaviour
     public List<PartSettings> parts = new List<PartSettings>();
 
     public HeroineEmotionType FacialMode => facialMode;
+
+    // 僅控制 Remote 接收，不停用元件或取消 ID 註冊；不寫入遊戲存檔。
+    private bool remoteEnabled = true;
+    public bool IsRemoteEnabled => remoteEnabled;
+
+    /// <summary>暫停接收 Remote，不清軌、不重置計數，仍可修改 FacialMode。</summary>
+    public void StopRemote() => remoteEnabled = false;
+
+    /// <summary>恢復接收 Remote；從原本倒數繼續，不補發或立即播放。</summary>
+    public void ResumeRemote() => remoteEnabled = true;
 
     // 執行狀態不序列化，不共用於其他 Controller；停用後重新啟用時保留。
     private readonly Dictionary<PartSettings, PartPlaybackState> partStates =
@@ -247,13 +296,15 @@ public class FacialPartController : MonoBehaviour
     /// </summary>
     public void OnRemoteEvent()
     {
-        if (!initialized || !isActiveAndEnabled || spineController == null ||
+        if (!remoteEnabled || !initialized || !isActiveAndEnabled || spineController == null ||
             expressionDatabase == null || parts == null) return;
 
         // 同一輪所有部位使用同一份表情模式，即使播放回呼中另有程式切換表情模式。
         HeroineEmotionType selectedFacialMode = facialMode;
         foreach (var part in parts)
         {
+            // 若播放回呼要求暫停，尚未處理的部位也立即停止倒數。
+            if (!remoteEnabled || !isActiveAndEnabled) break;
             if (part == null) continue;
             PartPlaybackState state = GetPartState(part);
             if (!state.CountRemote(part)) continue;
