@@ -13,6 +13,8 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
     /// 4. Phase:          ProgressFlag(Phase, FlagID)  -> 階段標記，進入下一個時間大階段即消失
     /// 5. Day/Daily:      ProgressFlag(Day, FlagID)    -> 每日標記，隔天凌晨 (DayPassed) 即消失
     /// 6. Remove/Clear:   ProgressFlag(Remove, FlagID) -> 手動移除該 Flag
+    /// 7. NextDayAdd:     ProgressFlag(NextDayAdd, FlagID) -> 隔日起永久生效
+    /// 8. NextDayOnly:    ProgressFlag(NextDayOnly, FlagID) -> 僅隔日生效
     /// 數值類
     /// 1. 數值設定：ProgressFlag(SetInt, VarID, 10) -> 直接將變數設為 10
     /// 2. 數值增減：ProgressFlag(AddInt, VarID, 5)  -> 將變數加 5 (減法請用 -5)
@@ -86,7 +88,16 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
             {
                 model.AddDailyFlag(flagID);
             }
-            // 6. 移除 (Remove)
+            // 隔日預約：今天不生效。
+            else if (IsAction(action, "NextDayAdd"))
+            {
+                model.AddNextDayAddFlag(flagID);
+            }
+            else if (IsAction(action, "NextDayOnly"))
+            {
+                model.AddNextDayOnlyFlag(flagID);
+            }
+            // 6. 移除 (Remove)，同時取消隔日預約。
             else if (IsAction(action, "Remove", "Clear", "Unset"))
             {
                 model.RemoveFlag(flagID);
@@ -94,7 +105,7 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
             else
             {
                 // 如果跑到這裡，代表 action 既不是數值指令，也不是生命週期指令
-                Debug.LogWarning($"[ProgressFlag] 未知的動作類型: {action}。可用選項: SetInt, AddInt, Add, Scene, Slot, Phase, Day, Remove。");
+                Debug.LogWarning($"[ProgressFlag] 未知的動作類型: {action}。可用選項: SetInt, AddInt, Add, Scene, Slot, Phase, Day, NextDayAdd, NextDayOnly, Remove。");
             }
 
             Stop();

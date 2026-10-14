@@ -9,14 +9,16 @@ public enum FlagLifetime
     Scene,         // 場景：切換場景即消失 (目前的 Temporary 邏輯)
     UntilNextSlot, // 時段：只要時間推進 (任何 Slot 消耗) 就消失
     UntilNextPhase,// 階段：進入下一個 Phase (如白天進入黃昏) 就消失
-    UntilNextDay   // 每日：跨日 (DayPassed) 就消失
+    UntilNextDay,  // 每日：跨日 (DayPassed) 就消失
+    NextDayAdd,    // 隔日起永久：下次跨日後開始生效，直到手動移除
+    NextDayOnly    // 僅隔日：下次跨日後生效，再次跨日即消失
 
 }
 
 public class ProgressFlagModel
 {
     // ───── 儲存容器 ─────
-    // 以生命週期為 key 的旗標桶。新增一種生命週期時，只要在此字典加一行即可。
+    // 已生效的旗標桶；隔日預約獨立保存，不參與 Contains 判斷。
     private readonly Dictionary<FlagLifetime, HashSet<string>> _buckets =
         new Dictionary<FlagLifetime, HashSet<string>>
     {
@@ -27,6 +29,8 @@ public class ProgressFlagModel
         { FlagLifetime.UntilNextDay,   new HashSet<string>() },
     };
     private readonly Dictionary<string, int> _variables = new Dictionary<string, int>();
+    private readonly HashSet<string> _nextDayAddFlags = new HashSet<string>();
+    private readonly HashSet<string> _nextDayOnlyFlags = new HashSet<string>();
 
     // ───── 事件 ─────
     public event Action<string, bool> OnFlagChanged;
@@ -57,14 +61,29 @@ public class ProgressFlagModel
     {
         if (string.IsNullOrEmpty(flag)) return;
 
+        // 預約時不廣播生效事件；同一天重複預約會自動去重。
+        if (lifetime == FlagLifetime.NextDayAdd)
+        {
+            _nextDayAddFlags.Add(flag);
+            return;
+        }
+        if (lifetime == FlagLifetime.NextDayOnly)
+        {
+            _nextDayOnlyFlags.Add(flag);
+            return;
+        }
+
         if (_buckets.TryGetValue(lifetime, out var bucket) && bucket.Add(flag))
             OnFlagChanged?.Invoke(flag, true);
     }
 
-    /// <summary> 移除標記 (包含布林與數值) </summary>
+    /// <summary> 移除標記 (包含布林、數值與尚未生效的隔日預約) </summary>
     public void RemoveFlag(string flag)
     {
         if (string.IsNullOrEmpty(flag)) return;
+
+        _nextDayAddFlags.Remove(flag);
+        _nextDayOnlyFlags.Remove(flag);
 
         // 從所有桶子中移除布林標記。
         // 注意：刻意「不」短路，因為同一個 flag 有可能被以不同生命週期加進多個桶子，
@@ -103,6 +122,8 @@ public class ProgressFlagModel
     public void AddSlotFlag(string flag) => AddFlag(flag, FlagLifetime.UntilNextSlot);
     public void AddPhaseFlag(string flag) => AddFlag(flag, FlagLifetime.UntilNextPhase);
     public void AddDailyFlag(string flag) => AddFlag(flag, FlagLifetime.UntilNextDay);
+    public void AddNextDayAddFlag(string flag) => AddFlag(flag, FlagLifetime.NextDayAdd);
+    public void AddNextDayOnlyFlag(string flag) => AddFlag(flag, FlagLifetime.NextDayOnly);
 
     // ───── 清理與存檔 ─────
 
@@ -137,6 +158,32 @@ public class ProgressFlagModel
     public void ClearPhaseFlags() => ClearLifetime(FlagLifetime.UntilNextPhase);
     public void ClearDayFlags() => ClearLifetime(FlagLifetime.UntilNextDay);
 
+    /// <summary>真正跨日時，清除昨日旗標並啟用隔日預約；單純清桶不會啟用預約。</summary>
+    public void HandleDayPassed()
+    {
+        var dayFlags = _buckets[FlagLifetime.UntilNextDay];
+        var affectedFlags = new HashSet<string>(dayFlags);
+        affectedFlags.UnionWith(_nextDayAddFlags);
+        affectedFlags.UnionWith(_nextDayOnlyFlags);
+        var previouslyActive = new HashSet<string>();
+        foreach (var flag in affectedFlags)
+            if (Contains(flag)) previouslyActive.Add(flag);
+
+        // 先完成整批狀態更新，再通知。回呼中新增的預約會留到下一次跨日。
+        dayFlags.Clear();
+        _buckets[FlagLifetime.Persistent].UnionWith(_nextDayAddFlags);
+        dayFlags.UnionWith(_nextDayOnlyFlags);
+        _nextDayAddFlags.Clear();
+        _nextDayOnlyFlags.Clear();
+
+        foreach (var flag in affectedFlags)
+        {
+            bool isActive = Contains(flag);
+            if (previouslyActive.Contains(flag) != isActive)
+                OnFlagChanged?.Invoke(flag, isActive);
+        }
+    }
+
     public void OnSceneChanged() => ClearSceneFlags();
 
     /// <summary>
@@ -156,6 +203,8 @@ public class ProgressFlagModel
         foreach (var bucket in _buckets.Values)
             bucket.Clear();
         _variables.Clear();
+        _nextDayAddFlags.Clear();
+        _nextDayOnlyFlags.Clear();
 
         // 3. 廣播消失事件
         foreach (var flag in allFlags)
@@ -182,7 +231,9 @@ public class ProgressFlagModel
             ActiveFlags = new HashSet<string>(_buckets[FlagLifetime.Persistent]),
             SlotFlags = new HashSet<string>(_buckets[FlagLifetime.UntilNextSlot]),    // 保存時段標記
             PhaseFlags = new HashSet<string>(_buckets[FlagLifetime.UntilNextPhase]),  // 保存階段標記
-            DayFlags = new HashSet<string>(_buckets[FlagLifetime.UntilNextDay])       // 保存每日標記
+            DayFlags = new HashSet<string>(_buckets[FlagLifetime.UntilNextDay]),      // 保存每日標記
+            NextDayAddFlags = new HashSet<string>(_nextDayAddFlags),
+            NextDayOnlyFlags = new HashSet<string>(_nextDayOnlyFlags)
         };
 
         foreach (var kv in _variables)
@@ -193,7 +244,12 @@ public class ProgressFlagModel
 
     public void LoadFromSaveData(ProgressFlagSaveData data)
     {
-        NewGame();
+        // 讀檔清空也必須靜默，避免 NewGame 的消失事件提早觸發劇情或 UI。
+        foreach (var bucket in _buckets.Values)
+            bucket.Clear();
+        _variables.Clear();
+        _nextDayAddFlags.Clear();
+        _nextDayOnlyFlags.Clear();
         if (data == null) return;
 
         // 注意:載檔時刻意「不」逐項廣播 OnFlagChanged / OnVariableChanged。
@@ -207,6 +263,9 @@ public class ProgressFlagModel
         if (data.SlotFlags != null) _buckets[FlagLifetime.UntilNextSlot].UnionWith(data.SlotFlags);
         if (data.PhaseFlags != null) _buckets[FlagLifetime.UntilNextPhase].UnionWith(data.PhaseFlags);
         if (data.DayFlags != null) _buckets[FlagLifetime.UntilNextDay].UnionWith(data.DayFlags);
+        // 舊存檔缺少這兩個欄位時，視為沒有隔日預約。
+        if (data.NextDayAddFlags != null) _nextDayAddFlags.UnionWith(data.NextDayAddFlags);
+        if (data.NextDayOnlyFlags != null) _nextDayOnlyFlags.UnionWith(data.NextDayOnlyFlags);
 
         // 還原數值變數
         if (data.ActiveVariables != null)

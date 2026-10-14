@@ -505,8 +505,8 @@ public class GameStatusService : MonoBehaviour
 
         Debug.Log($"GameStatusService: Starting NextDay Reset for Day {Time.DayIndex}.");
 
-        // 1. 清除所有每日標記 (UntilNextDay)
-        ProgressFlags.ClearDayFlags();
+        // 1. 清除昨日標記，並啟用隔日預約。
+        ProgressFlags.HandleDayPassed();
 
         // 2. 主角數值重置 (原本的邏輯)
         Protagonist.NextDay();

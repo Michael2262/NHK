@@ -65,7 +65,21 @@ public class ProgressFlagBridge : MonoBehaviour
         Debug.Log($"[Bridge] Flag Added (Daily): {flagDef.FlagID}");
     }
 
-    /// <summary> 移除標記 </summary>
+    /// <summary>隔日起永久生效。</summary>
+    public void AddNextDayAddFlag(ProgressFlagDefinition flagDef)
+    {
+        if (Model == null || flagDef == null) return;
+        Model.AddNextDayAddFlag(flagDef.FlagID);
+    }
+
+    /// <summary>僅隔日生效。</summary>
+    public void AddNextDayOnlyFlag(ProgressFlagDefinition flagDef)
+    {
+        if (Model == null || flagDef == null) return;
+        Model.AddNextDayOnlyFlag(flagDef.FlagID);
+    }
+
+    /// <summary> 移除標記與隔日預約 </summary>
     public void RemoveFlag(ProgressFlagDefinition flagDef)
     {
         if (Model == null || flagDef == null) return;
@@ -111,6 +125,18 @@ public class ProgressFlagBridge : MonoBehaviour
     {
         if (Model == null || string.IsNullOrEmpty(flagID)) return;
         Model.RemoveFlag(flagID);
+    }
+
+    public void AddNextDayAddFlagByID(string flagID)
+    {
+        if (Model == null || string.IsNullOrEmpty(flagID)) return;
+        Model.AddNextDayAddFlag(flagID);
+    }
+
+    public void AddNextDayOnlyFlagByID(string flagID)
+    {
+        if (Model == null || string.IsNullOrEmpty(flagID)) return;
+        Model.AddNextDayOnlyFlag(flagID);
     }
 
     // ==========================================================

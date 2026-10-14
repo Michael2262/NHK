@@ -415,8 +415,8 @@ public class LobbyUI_V2 : MonoBehaviour
 
     /// <summary>
     /// 壓力標題三規則（優先度高→低）：
-    /// 1. IsStressExtreme() == true → "OverStress"（Red）
-    /// 2. BadHealthy == true      → "BadHealthy"（DarkRed）
+    /// 1. IsStressExtreme() == true → "OverStress"（DarkRed）
+    /// 2. BadHealthy == true      → "BadHealthy"（Red）
     /// 3. 平常                    → "Stress"（原始顏色）
     /// 每次都重新查表，語言重進場景後會跟著刷新。
     /// </summary>
@@ -442,8 +442,8 @@ public class LobbyUI_V2 : MonoBehaviour
 
     /// <summary>
     /// 依賴度標題三規則（優先度高→低）：
-    /// 1. BadDependency == true    → "BadDependency"（DarkRed）
-    /// 2. IsDependencyExtreme() == true → "OverDependency"（Red）
+    /// 1. BadDependency == true    → "BadDependency"（Red）
+    /// 2. IsDependencyExtreme() == true → "OverDependency"（DarkRed）
     /// 3. 平常                     → "Dependency"（原始顏色）
     /// 每次都重新查表，語言重進場景後會跟著刷新。
     /// </summary>
@@ -510,8 +510,8 @@ public class LobbyUI_V2 : MonoBehaviour
 
     // ==================================================
     // 警示變色：
-    // - Stress 標題與數字：OverStress（Red）> BadHealthy（DarkRed）。
-    // - Dependency 標題與數字：BadDependency（DarkRed）> OverDependency（Red）。
+    // - Stress 標題與數字：OverStress（DarkRed）> BadHealthy（Red）。
+    // - Dependency 標題與數字：BadDependency（Red）> OverDependency（DarkRed）。
     // 未觸發時使用標題原始顏色；未綁定標題時，數字使用自身原始顏色。
     // ==================================================
 
@@ -541,16 +541,16 @@ public class LobbyUI_V2 : MonoBehaviour
     private Color GetStressColor(Color defaultColor)
     {
         if (_protagonistModel == null) return defaultColor;
-        if (_protagonistModel.IsStressExtreme()) return UIColorPalette.Red;
-        if (_protagonistModel.BadHealthy) return UIColorPalette.DarkRed;
+        if (_protagonistModel.IsStressExtreme()) return UIColorPalette.DarkRed;
+        if (_protagonistModel.BadHealthy) return UIColorPalette.Red;
         return defaultColor;
     }
 
     private Color GetDependencyColor(Color defaultColor)
     {
         if (_protagonistModel == null) return defaultColor;
-        if (_protagonistModel.BadDependency) return UIColorPalette.DarkRed;
-        if (_protagonistModel.IsDependencyExtreme()) return UIColorPalette.Red;
+        if (_protagonistModel.BadDependency) return UIColorPalette.Red;
+        if (_protagonistModel.IsDependencyExtreme()) return UIColorPalette.DarkRed;
         return defaultColor;
     }
 

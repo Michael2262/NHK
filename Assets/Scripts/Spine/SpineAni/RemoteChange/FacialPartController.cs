@@ -1,274 +1,329 @@
 ﻿using UnityEngine;
-using HutongGames.PlayMaker; // 引用 PlayMaker
-using MySpineSystem; // 為了 AnimationTrack enum
-using Spine; // 為了 TrackEntry
+using MySpineSystem;
 using System.Collections.Generic;
 
-/// <summary>
-/// 播放模式：決定每個部位如何從動畫清單中選取動畫。
-/// </summary>
+/// <summary>決定每個部位如何從動畫清單中選取動畫。</summary>
 public enum PlaybackMode
 {
-    /// <summary>完全隨機 (原始行為)</summary>
+    /// <summary>完全隨機。</summary>
     Random,
-    /// <summary>依序播放：從第一個到最後一個，再循環回第一個</summary>
+    /// <summary>依序播放，到底後循環。</summary>
     Sequential,
-    /// <summary>半隨機：從第一個開始，每次跳 1~2 個，到底後循環回來</summary>
+    /// <summary>從第一個開始，每次跳 1～2 個，到底後循環。</summary>
     SemiRandom
 }
 
 /// <summary>
-/// 【表情部位控制器】
-/// 負責監聽 FSM 的 "REMOTE" 事件，並在計數器歸零時，
-/// 根據 FSM 的當前情緒，從 ExpressionDatabase 查詢對應的動畫名稱，
-/// 最後命令 SpineAnimationController 播放動畫。
-/// 
-/// * 掛載位置：SpineAnimationController 的子物件上 (例如 Eyes_Logic)。
-/// * FSM 需求：FSM 必須有一個 "REMOTE" 事件，並在收到此事件時，
-///   使用 "Send Message" (Broadcast to Children) 呼叫本腳本的 "OnRemoteEvent" 函式。
+/// 共用一份表情模式與資料庫，管理多個部位的 Spine 表情。
+/// 每次 OnRemoteEvent 呼叫讓各部位獨立倒數；歸零時才抽選並播放。
+/// 可掛在 SpineAnimationController 所在物件或其子物件上。
 /// </summary>
 public class FacialPartController : MonoBehaviour
 {
-    [Header("1. 依賴組件 (Dependencies)")]
-    [UnityEngine.Tooltip("拖入掛載 FSM 的那個 GameObject (例如 G1_女主角1PlayMakerFSM)")]
-    public GameObject fsmOwnerObject; // 改成指定 GameObject
+    [System.Serializable]
+    public class PartSettings
+    {
+        [Tooltip("用來查詢資料庫的部位。")]
+        public FacialPartType partType;
 
-    [UnityEngine.Tooltip("我們要監聽的 FSM 的內部名稱 (Fsm Name)")]
-    public string targetFsmName = "HeroineEmotionFSM"; // 指定 FSM 名稱
+        [Tooltip("此部位播放動畫的 Spine Track；不同部位建議使用不同 Track，避免互相覆蓋。")]
+        public AnimationTrack targetTrack = AnimationTrack.Eye;
 
-    [UnityEngine.Tooltip("指定要查詢哪一個表情資料庫 (ScriptableObject)")]
+        [Tooltip("預設在動畫播放完成時清軌。")]
+        public SpineAnimationController.ClearMode clearMode = SpineAnimationController.ClearMode.ClearOnComplete;
+
+        [Tooltip("ClearAfterDelay 的延遲秒數；-1 使用 SpineAnimationController 的預設值。")]
+        public float clearDelaySeconds = -1f;
+
+        [Min(1), Tooltip("至少收到幾次 OnRemoteEvent 才觸發。")]
+        public int minRemoteCount = 1;
+
+        [Min(1), Tooltip("最多收到幾次 OnRemoteEvent 才觸發，包含此數值。")]
+        public int maxRemoteCount = 5;
+
+        [Tooltip("Random：完全隨機；Sequential：依序循環；SemiRandom：從第一個開始，每次跳 1～2 格。")]
+        public PlaybackMode playbackMode = PlaybackMode.Random;
+    }
+
+    [Header("識別設定")]
+    [SerializeField, Tooltip("啟用時自動註冊的唯一 ID，區分大小寫並忽略前後空白。執行中改 ID 請呼叫 SetControllerId；Inspector 修改後需重新啟用。")]
+    private string controllerId;
+
+    public string ControllerId => NormalizeId(controllerId);
+
+    // 僅索引啟用中的場景元件；表情模式與播放狀態仍由各元件自己持有。
+    private static readonly Dictionary<string, HashSet<FacialPartController>> registry =
+        new Dictionary<string, HashSet<FacialPartController>>(System.StringComparer.Ordinal);
+    private string registeredId;
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetRegistry() => registry.Clear();
+
+    private static string NormalizeId(string id) => (id ?? string.Empty).Trim();
+
+    private void OnEnable()
+    {
+        RegisterId();
+    }
+
+    private void OnDisable() => UnregisterId();
+    private void OnDestroy() => UnregisterId();
+
+    /// <summary>變更 ID，啟用中的元件會同步更新註冊。</summary>
+    public void SetControllerId(string id)
+    {
+        UnregisterId();
+        controllerId = NormalizeId(id);
+        if (isActiveAndEnabled) RegisterId();
+    }
+
+    private void RegisterId()
+    {
+        string id = ControllerId;
+        if (id.Length == 0)
+        {
+            Debug.LogWarning("[FacialPartController] ID 為空，無法透過 ID 呼叫；仍可直接呼叫元件方法。", this);
+            return;
+        }
+
+        if (!registry.TryGetValue(id, out var controllers))
+        {
+            controllers = new HashSet<FacialPartController>();
+            registry.Add(id, controllers);
+        }
+        controllers.RemoveWhere(item => item == null || !item.isActiveAndEnabled);
+        controllers.Add(this);
+        registeredId = id;
+        if (controllers.Count > 1)
+            Debug.LogWarning($"[FacialPartController] ID '{id}' 重複，該 ID 的呼叫暫停，直到僅剩一個啟用元件。", this);
+    }
+
+    private void UnregisterId()
+    {
+        if (registeredId == null) return;
+        if (registry.TryGetValue(registeredId, out var controllers))
+        {
+            controllers.Remove(this);
+            if (controllers.Count == 0) registry.Remove(registeredId);
+        }
+        registeredId = null;
+    }
+
+    /// <summary>取得唯一且啟用中的目標。找不到或 ID 重複時警告並回傳 false。</summary>
+    public static bool TryGetById(string id, out FacialPartController controller)
+    {
+        controller = null;
+        id = NormalizeId(id);
+        if (id.Length > 0 && registry.TryGetValue(id, out var controllers))
+        {
+            controllers.RemoveWhere(item => item == null || !item.isActiveAndEnabled);
+            if (controllers.Count == 1)
+            {
+                foreach (var item in controllers) controller = item;
+                return true;
+            }
+            if (controllers.Count > 1)
+            {
+                Debug.LogWarning($"[FacialPartController] ID '{id}' 有多個啟用元件，略過呼叫。");
+                return false;
+            }
+            registry.Remove(id);
+        }
+        Debug.LogWarning($"[FacialPartController] 找不到 ID '{id}' 的啟用元件。");
+        return false;
+    }
+
+    /// <summary>依 ID 推進所有部位一次；目標尚未 Start 或依賴失效時不推進。</summary>
+    public static bool NotifyRemote(string id)
+    {
+        if (!TryGetById(id, out var controller)) return false;
+        if (!controller.initialized || controller.spineController == null || controller.expressionDatabase == null)
+        {
+            Debug.LogWarning($"[FacialPartController] ID '{NormalizeId(id)}' 尚未就緒，略過計數。", controller);
+            return false;
+        }
+        controller.OnRemoteEvent();
+        return true;
+    }
+
+    /// <summary>依 ID 更新共用表情模式，不會立即播放或重置倒數。</summary>
+    public static bool SetFacialModeById(string id, HeroineEmotionType selectedFacialMode)
+    {
+        if (!TryGetById(id, out var controller)) return false;
+        if (!System.Enum.IsDefined(typeof(HeroineEmotionType), selectedFacialMode))
+        {
+            Debug.LogWarning($"[FacialPartController] 無效的表情模式值：{selectedFacialMode}，維持原本表情模式。", controller);
+            return false;
+        }
+        controller.SetFacialMode(selectedFacialMode);
+        return true;
+    }
+
+    /// <summary>通知所有已註冊 ID；重複 ID 與未就緒目標略過。回傳成功通知數。</summary>
+    public static int NotifyRemoteAll()
+    {
+        // 播放回呼可能停用元件，先複製 ID，避免註冊表於遍歷中被修改。
+        var ids = new List<string>(registry.Keys);
+        int count = 0;
+        foreach (string id in ids)
+            if (NotifyRemote(id)) count++;
+        return count;
+    }
+
+    [Header("共用設定")]
+    [Tooltip("所有部位共用的表情資料庫。")]
     public ExpressionDatabase expressionDatabase;
 
-    [Header("2. 部位身份 (Part Identity)")]
-    [UnityEngine.Tooltip("此腳本代表哪一個五官部位？這會影響它去資料庫的哪個清單查詢")]
-    public FacialPartType partType; // Enum (Eyes, Mouth, ...)
+    [SerializeField, Tooltip("所有部位共用的表情模式。變更後於各部位下次計數歸零時使用，不寫入遊戲存檔。")]
+    [UnityEngine.Serialization.FormerlySerializedAs("currentEmotion")]
+    private HeroineEmotionType facialMode = HeroineEmotionType.Idle;
 
-    [Header("3. Spine 控制 (Spine Control)")]
-    [UnityEngine.Tooltip("此部位要在 Spine 的哪一個 Track 上播放")]
-    public AnimationTrack targetTrack; // Enum (Track_1, Track_2, ...)
+    [SerializeField, Tooltip("留空時從本物件或父層取得 SpineAnimationController。")]
+    private SpineAnimationController spineController;
 
-    [UnityEngine.Tooltip("播放動畫時使用的清軌策略 (建議 KeepTrack)")]
-    public SpineAnimationController.ClearMode clearMode = SpineAnimationController.ClearMode.KeepTrack;
+    [Header("部位清單")]
+    [Tooltip("各項目獨立保存 Track、播放模式、隨機計數與播放進度。舊版各元件的部位設定需在 Editor 手動整合至此。")]
+    public List<PartSettings> parts = new List<PartSettings>();
 
-    [UnityEngine.Tooltip("如果使用 ClearAfterDelay，要延遲幾秒 (使用-1會抓 SpineAnimationController 上的預設值)")]
-    public float clearDelaySeconds = -1f;
+    public HeroineEmotionType FacialMode => facialMode;
 
-    [Header("4. 隨機計數邏輯 (Random Counter)")]
-    [UnityEngine.Tooltip("最少要聽到幾次 REMOTE 才會觸發")]
-    public int minRemoteCount = 1;
+    // 執行狀態不序列化，不共用於其他 Controller；停用後重新啟用時保留。
+    private readonly Dictionary<PartSettings, PartPlaybackState> partStates =
+        new Dictionary<PartSettings, PartPlaybackState>();
+    private bool initialized;
 
-    [UnityEngine.Tooltip("最多要聽到幾次 REMOTE 才會觸發")]
-    public int maxRemoteCount = 5;
-
-    [Header("5. 播放模式 (Playback Mode)")]
-    [UnityEngine.Tooltip("選擇此部位的動畫播放模式：\n" +
-        "Random = 完全隨機\n" +
-        "Sequential = 從第一個依序播到最後一個再循環\n" +
-        "SemiRandom = 從第一個開始，每次跳1~2個，到底後循環")]
-    public PlaybackMode playbackMode = PlaybackMode.Random;
-
-    // --- 私有變數 ---
-    private PlayMakerFSM myOwnerFSM; // 儲存我們在 Start() 找到的 FSM 參考
-    private SpineAnimationController spineController; // 儲存父層的 Spine 動畫控制器
-    private int currentRemoteCounter; // 當前的隨機計數器
-
-    // 播放索引追蹤 (用於 Sequential 和 SemiRandom 模式)
-    // Key = 情緒類型, Value = 該情緒目前播到第幾個
-    private Dictionary<HeroineEmotionType, int> playbackIndexMap = new Dictionary<HeroineEmotionType, int>();
-
-    // 要在 FSM 中查詢的 Enum 變數的「字串名稱」
-    private const string EMOTION_VARIABLE_NAME = "MyCurrentEmotion"; //
-
-    void Start()
+    /// <summary>只更新共用表情模式，保留各部位目前倒數與各表情模式播放進度。</summary>
+    public void SetFacialMode(HeroineEmotionType selectedFacialMode)
     {
-        // --- 1. 檢查並獲取 FSM ---
-        if (fsmOwnerObject == null)
+        if (!System.Enum.IsDefined(typeof(HeroineEmotionType), selectedFacialMode))
         {
-            Debug.LogError($"[FacialPartController] 在 {gameObject.name} 上的 'Fsm Owner Object' 欄位尚未指定！");
-            this.enabled = false;
+            Debug.LogWarning($"[FacialPartController] 無效的表情模式值：{selectedFacialMode}，維持原本表情模式。", this);
             return;
         }
+        facialMode = selectedFacialMode;
+    }
 
-        // 遍歷 fsmOwnerObject 上的所有 FSM，找出名稱相符的那一個
-        PlayMakerFSM[] allFsms = fsmOwnerObject.GetComponents<PlayMakerFSM>();
-        myOwnerFSM = null;
-        foreach (PlayMakerFSM fsm in allFsms)
-        {
-            if (fsm.FsmName == targetFsmName)
-            {
-                myOwnerFSM = fsm; // 找到了！
-                break;
-            }
-        }
+    // 供 UnityEvent 或 PlayMaker 的 Call Method / Send Message 直接呼叫。
+    public void SetFacialModeIdle() => SetFacialMode(HeroineEmotionType.Idle);
+    public void SetFacialModeSad() => SetFacialMode(HeroineEmotionType.Sad);
+    public void SetFacialModeAngry() => SetFacialMode(HeroineEmotionType.Angry);
+    public void SetFacialModeShy() => SetFacialMode(HeroineEmotionType.Shy);
+    public void SetFacialModeSexy() => SetFacialMode(HeroineEmotionType.Sexy);
+    public void SetFacialModeOrgasm() => SetFacialMode(HeroineEmotionType.Orgasm);
 
-        // 檢查是否成功找到
-        if (myOwnerFSM == null)
-        {
-            Debug.LogError($"[FacialPartController] {partType} 在 '{fsmOwnerObject.name}' 上找不到 FSM Name 為 '{targetFsmName}' 的 FSM！");
-            this.enabled = false;
-            return;
-        }
-
-        // --- 2. 檢查資料庫 ---
+    private void Start()
+    {
         if (expressionDatabase == null)
         {
-            Debug.LogError($"[FacialPartController] 在 {gameObject.name} 上的 'Expression Database' 欄位尚未指定！");
-            this.enabled = false;
+            Debug.LogError("[FacialPartController] 尚未指定共用的 Expression Database。", this);
+            enabled = false;
             return;
         }
 
-        // --- 3. 獲取 Spine 控制器 ---
-        spineController = GetComponentInParent<SpineAnimationController>();
+        if (spineController == null)
+            spineController = GetComponentInParent<SpineAnimationController>();
         if (spineController == null)
         {
-            Debug.LogError($"[FacialPartController] 在 {gameObject.name} 上找不到父層的 SpineAnimationController！");
-            this.enabled = false;
+            Debug.LogError("[FacialPartController] 找不到 SpineAnimationController。", this);
+            enabled = false;
             return;
         }
 
-        // --- 4. 檢查 FSM 變數是否存在 (只在 Start 時檢查一次) ---
-        FsmEnum fsmEnumVar = myOwnerFSM.FsmVariables.GetFsmEnum(EMOTION_VARIABLE_NAME);
-        if (fsmEnumVar == null)
-        {
-            Debug.LogError($"[FacialPartController] {partType} 在 FSM '{myOwnerFSM.FsmName}' 上找不到名稱為 '{EMOTION_VARIABLE_NAME}' 的 [Enum] 變數！");
-        }
-        else if (fsmEnumVar.EnumType != typeof(HeroineEmotionType))
-        {
-            Debug.LogError($"[FacialPartController] {partType} 變數類型不匹配！ FSM '{myOwnerFSM.FsmName}' 中的 '{EMOTION_VARIABLE_NAME}' 類型是 [{fsmEnumVar.EnumType.FullName}]，但 C# 腳本需要的是 [HeroineEmotionType]。");
-        }
+        if (parts == null || parts.Count == 0)
+            Debug.LogWarning("[FacialPartController] 部位清單為空，請在 Inspector 新增部位；舊版設定需手動整合。", this);
 
-        // --- 5. 初始化計數器 ---
-        ResetCounter();
+        partStates.Clear();
+        if (parts != null)
+        {
+            foreach (var part in parts)
+                if (part != null) GetPartState(part);
+        }
+        initialized = true;
     }
 
     /// <summary>
-    /// 【公開】由 FSM 的 "Send Message" Action 呼叫。
-    /// 每當 FSM 收到 "REMOTE" 事件時，此函式就會被觸發。
+    /// 由 FSM、UnityEvent 或其他腳本呼叫一次，各部位各自倒數一次。
+    /// 不讀取 FSM 變數；未到觸發次數的部位不播放。
     /// </summary>
     public void OnRemoteEvent()
     {
-        //Debug.Log(gameObject.name + " 收到事件了！");
-        // 計數器倒數
-        currentRemoteCounter--;
+        if (!initialized || !isActiveAndEnabled || spineController == null ||
+            expressionDatabase == null || parts == null) return;
 
-        // 檢查計數器是否歸零
-        if (currentRemoteCounter <= 0)
+        // 同一輪所有部位使用同一份表情模式，即使播放回呼中另有程式切換表情模式。
+        HeroineEmotionType selectedFacialMode = facialMode;
+        foreach (var part in parts)
         {
-            // 歸零，執行核心邏輯
-            TriggerExpressionChange();
-            // 重置計數器，等待下一次觸發
-            ResetCounter();
+            if (part == null) continue;
+            PartPlaybackState state = GetPartState(part);
+            if (!state.CountRemote(part)) continue;
+
+            // 資料庫或清單未設定時，只跳過該部位，其他部位繼續處理。
+            var emotionSets = expressionDatabase.allEmotionSets;
+            var emotionSet = emotionSets == null
+                ? null
+                : emotionSets.Find(set => set != null && set.emotion == selectedFacialMode);
+            var animations = emotionSet == null ? null : emotionSet.GetListForPart(part.partType);
+            string animation = state.SelectAnimation(animations, selectedFacialMode, part.playbackMode);
+            if (string.IsNullOrEmpty(animation)) continue;
+
+            spineController.PlayAnimation(part.targetTrack, animation, part.clearMode, part.clearDelaySeconds);
         }
     }
 
-    /// <summary>
-    /// 【核心】觸發表情變更。
-    /// 讀取 FSM 狀態 -> 查詢資料庫 -> 播放動畫。
-    /// </summary>
-    private void TriggerExpressionChange()
+    private PartPlaybackState GetPartState(PartSettings part)
     {
-        // --- 1. 讀取 FSM 變數 ---
-        FsmEnum fsmEnumVar = myOwnerFSM.FsmVariables.GetFsmEnum(EMOTION_VARIABLE_NAME);
-        HeroineEmotionType currentEmotion;
-
-        // 安全檢查：確認變數存在且類型正確
-        if (fsmEnumVar != null && fsmEnumVar.Value is HeroineEmotionType)
+        if (!partStates.TryGetValue(part, out var state))
         {
-            currentEmotion = (HeroineEmotionType)fsmEnumVar.Value;
+            state = new PartPlaybackState(part);
+            partStates.Add(part, state);
         }
-        else
-        {
-            currentEmotion = HeroineEmotionType.Idle;
-        }
+        return state;
+    }
 
-        // --- 2. 查詢資料庫，根據播放模式選取動畫 ---
-        string animToPlay = GetAnimationByPlaybackMode(currentEmotion);
+    /// <summary>單一部位的純 C# 執行狀態，集中處理計數與抽選，不持有場景元件。</summary>
+    private sealed class PartPlaybackState
+    {
+        private int remainingCount;
+        private readonly Dictionary<HeroineEmotionType, int> playbackIndices =
+            new Dictionary<HeroineEmotionType, int>();
 
-        if (string.IsNullOrEmpty(animToPlay))
+        public PartPlaybackState(PartSettings settings)
         {
-            // 查無動畫，悄悄地 return。
-            return;
+            ResetCounter(settings);
         }
 
-        // --- 3. 播放動畫 ---
-        spineController.PlayAnimation(
-            targetTrack,
-            animToPlay,
-            clearMode,
-            clearDelaySeconds
-        );
-    }
-
-    /// <summary>
-    /// 根據當前的 PlaybackMode，從資料庫的動畫清單中選取一個動畫。
-    /// </summary>
-    private string GetAnimationByPlaybackMode(HeroineEmotionType emotion)
-    {
-        // 先從資料庫取得該情緒 + 該部位的動畫清單
-        List<string> animList = expressionDatabase.GetAnimationList(emotion, this.partType);
-
-        if (animList == null || animList.Count == 0)
-            return null;
-
-        switch (playbackMode)
+        public bool CountRemote(PartSettings settings)
         {
-            case PlaybackMode.Random:
-                // 完全隨機 (與原始行為一致)
-                return animList[UnityEngine.Random.Range(0, animList.Count)];
+            remainingCount--;
+            if (remainingCount > 0) return false;
 
-            case PlaybackMode.Sequential:
-                {
-                    // 取得目前索引 (預設 0)
-                    int currentIndex = GetPlaybackIndex(emotion);
-                    // 取出動畫
-                    string anim = animList[currentIndex % animList.Count];
-                    // 索引 +1，存回
-                    SetPlaybackIndex(emotion, (currentIndex + 1) % animList.Count);
-                    return anim;
-                }
+            // 即使該表情模式沒有動畫，也重新抽取下一輪次數。
+            ResetCounter(settings);
+            return true;
+        }
 
-            case PlaybackMode.SemiRandom:
-                {
-                    // 取得目前索引 (預設 0)
-                    int currentIndex = GetPlaybackIndex(emotion);
-                    // 取出動畫
-                    string anim = animList[currentIndex % animList.Count];
-                    // 隨機跳 1 或 2 步
-                    int step = UnityEngine.Random.Range(1, 3); // 1 或 2
-                    SetPlaybackIndex(emotion, (currentIndex + step) % animList.Count);
-                    return anim;
-                }
+        public string SelectAnimation(List<string> animations, HeroineEmotionType selectedFacialMode, PlaybackMode mode)
+        {
+            if (animations == null || animations.Count == 0) return null;
 
-            default:
-                return animList[UnityEngine.Random.Range(0, animList.Count)];
+            if (mode != PlaybackMode.Sequential && mode != PlaybackMode.SemiRandom)
+                return animations[Random.Range(0, animations.Count)];
+
+            playbackIndices.TryGetValue(selectedFacialMode, out int index);
+            index %= animations.Count;
+            string selected = animations[index];
+            int step = mode == PlaybackMode.Sequential ? 1 : Random.Range(1, 3);
+            playbackIndices[selectedFacialMode] = (index + step) % animations.Count;
+            return selected;
+        }
+
+        private void ResetCounter(PartSettings settings)
+        {
+            // 防止非法範圍與 max + 1 溢位；正常範圍仍包含上下限。
+            int min = Mathf.Clamp(settings.minRemoteCount, 1, int.MaxValue - 1);
+            int max = Mathf.Clamp(settings.maxRemoteCount, min, int.MaxValue - 1);
+            remainingCount = Random.Range(min, max + 1);
         }
     }
-
-    /// <summary>
-    /// 取得某個情緒的目前播放索引。
-    /// </summary>
-    private int GetPlaybackIndex(HeroineEmotionType emotion)
-    {
-        if (playbackIndexMap.TryGetValue(emotion, out int index))
-            return index;
-        return 0;
-    }
-
-    /// <summary>
-    /// 設定某個情緒的播放索引。
-    /// </summary>
-    private void SetPlaybackIndex(HeroineEmotionType emotion, int index)
-    {
-        playbackIndexMap[emotion] = index;
-    }
-
-    /// <summary>
-    /// 重置隨機計數器
-    /// </summary>
-    private void ResetCounter()
-    {
-        currentRemoteCounter = Random.Range(minRemoteCount, maxRemoteCount + 1);
-    }
-
-    void OnDestroy() { }
 }

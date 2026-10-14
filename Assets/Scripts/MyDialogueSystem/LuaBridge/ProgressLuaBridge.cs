@@ -83,7 +83,7 @@ public class ProgressLuaBridge : MonoBehaviour
     /// <summary>
     /// 新增 Flag 並指定生命週期。
     /// Lua 用法: SetFlagWithLifetime("QuestStarted", "Scene")
-    /// 可用的 lifetime: "Persistent", "Scene", "UntilNextSlot", "UntilNextPhase", "UntilNextDay"
+    /// 可用的 lifetime: "Persistent", "Scene", "UntilNextSlot", "UntilNextPhase", "UntilNextDay", "NextDayAdd", "NextDayOnly"
     /// </summary>
     public void SetFlagWithLifetime(string flagName, string lifetime)
     {
@@ -99,6 +99,8 @@ public class ProgressLuaBridge : MonoBehaviour
             "UntilNextSlot" => FlagLifetime.UntilNextSlot,
             "UntilNextPhase" => FlagLifetime.UntilNextPhase,
             "UntilNextDay" => FlagLifetime.UntilNextDay,
+            "NextDayAdd" => FlagLifetime.NextDayAdd,
+            "NextDayOnly" => FlagLifetime.NextDayOnly,
             _ => FlagLifetime.Persistent
         };
 

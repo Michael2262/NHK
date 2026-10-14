@@ -8,6 +8,8 @@ public class ProgressFlagSaveData
     public HashSet<string> SlotFlags = new HashSet<string>();  // UntilNextSlot
     public HashSet<string> PhaseFlags = new HashSet<string>(); // UntilNextPhase
     public HashSet<string> DayFlags = new HashSet<string>();   // UntilNextDay
+    public HashSet<string> NextDayAddFlags = new HashSet<string>();  // 等待隔日起永久生效
+    public HashSet<string> NextDayOnlyFlags = new HashSet<string>(); // 等待僅隔日生效
 
     public List<VariableEntry> ActiveVariables = new List<VariableEntry>(); // 數值變數
 

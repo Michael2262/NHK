@@ -8,6 +8,9 @@
 //       - 皮膚子物件：啟用 ID 對應的皮膚子物件、關閉其餘（版型差異大時用）
 //       - 背景圖：從對照表查 ID 對應 Sprite 換到指定 Image（輕量，只換底圖時用）
 //       ID 空白或查不到 → 還原成預設皮膚 / 原始背景圖。
+//   (4) NG 提示：Text 欄位 "NGFlag" 填 ProgressFlag 名稱；成立時圖片改用 "Ng"，回應文字改為紅色。
+//       "Option Image" 直接填 "Ng" 時，也會套用相同的 NG 提示。
+//   NarrationFlag 與 NGFlag 都支援 MyFlag、!MyFlag、not(MyFlag)；後兩者在旗標不成立時符合條件。
 // 以上都在按鈕被指派 response 時即時套用；Design-Time 按鈕會重複使用，
 // 因此在 Reset()（每次選單前由 StandardUIMenuPanel 呼叫）還原，避免樣式殘留。
 //
@@ -19,6 +22,7 @@
 //   4. 需要圖片的選項節點：新增 Text 欄位 "Option Image"，填圖片 ID
 //      需要敘述的選項節點：新增 Text 欄位 "Narration"，直接填敘述文字（與字幕面板敘述框共用）
 //      需要換樣式的選項節點：新增 Text 欄位 "Button Style"，填樣式 ID
+//      需要 NG 提示的選項節點：新增 Text 欄位 "NGFlag"，填成立時要顯示 NG 的 ProgressFlag 名稱
 
 using System.Collections.Generic;
 using UnityEngine;
@@ -35,8 +39,13 @@ namespace PixelCrushers.DialogueSystem
         [Tooltip("圖片 ID → Sprite 的對照表")]
         [SerializeField] private OptionImageDatabase imageDatabase;
 
-        [Tooltip("Dialogue Entry 自訂欄位名稱，Text 類型，填圖片 ID。空白 = 不顯示圖片。")]
+        [Tooltip("Dialogue Entry 自訂欄位名稱，Text 類型，填圖片 ID。空白 = 不顯示圖片。填 Ng 時，回應文字也會改為 UIColorPalette.Red。")]
         [SerializeField] private string imageFieldName = "Option Image";
+
+        [Header("NG Flag Settings")]
+        [Tooltip("Dialogue Entry 自訂欄位名稱，Text 類型，填 ProgressFlag 名稱。\n" +
+                 "支援 MyFlag、!MyFlag、not(MyFlag)。條件成立時，選項圖片改用 ID Ng，回應文字改為 UIColorPalette.Red；留空則不啟用旗標條件。")]
+        [SerializeField] private string ngFlagFieldName = "NGFlag";
 
         [Header("Option Narration Settings")]
         [Tooltip("顯示選項額外敘述的文字元件（按鈕底下的子物件，平時隱藏）")]
@@ -46,7 +55,7 @@ namespace PixelCrushers.DialogueSystem
         [SerializeField] private string narrationFieldName = "Narration";
 
         [Tooltip("Dialogue Entry 自訂欄位名稱，Text 類型。該欄位值填 ProgressFlag 名稱：\n" +
-                 "留空 = 敘述照常顯示；有填 = 只有該 Flag 為 true 時才顯示敘述。")]
+                 "支援 MyFlag、!MyFlag、not(MyFlag)。留空 = 敘述照常顯示；有填 = 條件成立時才顯示敘述。")]
         [SerializeField] private string narrationFlagFieldName = "NarrationFlag";
 
         [Header("Button Style Settings")]
@@ -82,16 +91,64 @@ namespace PixelCrushers.DialogueSystem
         private bool m_capturedOriginalBackground;
         private Sprite m_originalBackgroundSprite;
 
+        private bool m_isNg;
+        private bool m_capturedColorBeforeNg;
+        private Color m_colorBeforeNg;
+
         public override Response response
         {
             get { return base.response; }
             set
             {
+                RestoreColorBeforeNg();
                 base.response = value;
+                m_isNg = ShouldShowNg(value);
+                if (m_isNg && !UITextField.IsNull(label))
+                {
+                    m_colorBeforeNg = label.color;
+                    m_capturedColorBeforeNg = true;
+                    label.color = UIColorPalette.Red;
+                }
                 UpdateIcon(value);
                 UpdateNarration(value);
                 UpdateStyle(value);
             }
+        }
+
+        /// <summary>NG 顏色優先，避免後續 SetFormattedText / SetUnformattedText 蓋掉紅色。</summary>
+        protected override void SetColor(Color currentColor)
+        {
+            if (UITextField.IsNull(label)) return;
+            if (m_isNg)
+            {
+                label.color = UIColorPalette.Red;
+            }
+            else
+            {
+                base.SetColor(currentColor);
+            }
+        }
+
+        /// <summary>圖片 ID 為 Ng 或 NGFlag 成立，任一條件符合就套用 NG 提示。</summary>
+        private bool ShouldShowNg(Response response)
+        {
+            if (response == null || response.destinationEntry == null) return false;
+            string imageId = Field.LookupValue(response.destinationEntry.fields, imageFieldName);
+            if (string.Equals(imageId, "Ng", System.StringComparison.Ordinal)) return true;
+
+            string flag = Field.LookupValue(response.destinationEntry.fields, ngFlagFieldName);
+            return EvaluateFlagCondition(flag, false);
+        }
+
+        private void RestoreColorBeforeNg()
+        {
+            // setLabelColor 關閉時，基底類別不會還原顏色，因此自行保留 NG 套用前的值。
+            if (m_capturedColorBeforeNg && !UITextField.IsNull(label))
+            {
+                label.color = m_colorBeforeNg;
+            }
+            m_capturedColorBeforeNg = false;
+            m_isNg = false;
         }
 
         public override void Awake()
@@ -128,7 +185,7 @@ namespace PixelCrushers.DialogueSystem
             Sprite sprite = null;
             if (response != null && response.destinationEntry != null)
             {
-                string id = Field.LookupValue(response.destinationEntry.fields, imageFieldName);
+                string id = m_isNg ? "Ng" : Field.LookupValue(response.destinationEntry.fields, imageFieldName);
                 if (!string.IsNullOrWhiteSpace(id))
                 {
                     if (imageDatabase == null)
@@ -191,14 +248,43 @@ namespace PixelCrushers.DialogueSystem
         /// 依 NarrationFlag 欄位決定是否允許顯示敘述：
         ///   - 欄位空白 → 允許（照常顯示）
         ///   - 欄位有填 Flag 名稱 → 只有該 Flag 在 ProgressFlags 中為 true 時才允許
+        ///   - !MyFlag 或 not(MyFlag) → 該 Flag 不成立時才允許
         /// </summary>
         private bool IsNarrationAllowedByFlag(DialogueEntry entry)
         {
             if (entry == null) return false;
             string flag = Field.LookupValue(entry.fields, narrationFlagFieldName);
-            if (string.IsNullOrWhiteSpace(flag)) return true;
+            return EvaluateFlagCondition(flag, true);
+        }
+
+        /// <summary>解析單一旗標的正向／反向顯示條件；空白沿用呼叫端預設值。</summary>
+        private bool EvaluateFlagCondition(string condition, bool emptyResult)
+        {
+            if (string.IsNullOrWhiteSpace(condition)) return emptyResult;
+
+            string flag = condition.Trim();
+            bool inverted = false;
+            if (flag.StartsWith("!", System.StringComparison.Ordinal))
+            {
+                inverted = true;
+                flag = flag.Substring(1).Trim();
+            }
+            else if (flag.StartsWith("not(", System.StringComparison.Ordinal)
+                     && flag.EndsWith(")", System.StringComparison.Ordinal))
+            {
+                inverted = true;
+                flag = flag.Substring(4, flag.Length - 5).Trim();
+            }
+
+            // 不接受空的反向條件、未配對括號或巢狀運算，避免誤把無效條件判為成立。
+            if (string.IsNullOrWhiteSpace(flag) || flag.IndexOf('!') >= 0
+                || flag.IndexOf('(') >= 0 || flag.IndexOf(')') >= 0) return false;
+
             var flags = (GameStatusService.Instance != null) ? GameStatusService.Instance.ProgressFlags : null;
-            return flags != null && flags.Contains(flag);
+            // 服務尚未就緒不代表旗標不存在，反向條件也不應成立。
+            if (flags == null) return false;
+            bool active = flags.Contains(flag);
+            return inverted ? !active : active;
         }
 
         private void HideIcon()

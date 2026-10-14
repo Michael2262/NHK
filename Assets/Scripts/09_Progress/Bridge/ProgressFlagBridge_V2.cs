@@ -40,7 +40,19 @@ public class ProgressFlagBridge_V2 : MonoBehaviour
         AddFlag(flagDef, FlagLifetime.UntilNextDay);
     }
 
-    /// <summary>移除所有生命週期中的指定標記，以及同 ID 的數值。</summary>
+    /// <summary>隔日起永久生效。</summary>
+    public void AddNextDayAddFlag(ProgressFlagDefinition flagDef)
+    {
+        AddFlag(flagDef, FlagLifetime.NextDayAdd);
+    }
+
+    /// <summary>僅隔日生效。</summary>
+    public void AddNextDayOnlyFlag(ProgressFlagDefinition flagDef)
+    {
+        AddFlag(flagDef, FlagLifetime.NextDayOnly);
+    }
+
+    /// <summary>移除所有生命週期中的指定標記、隔日預約，以及同 ID 的數值。</summary>
     public void RemoveFlag(ProgressFlagDefinition flagDef)
     {
         if (!TryGetModel(flagDef, out var model)) return;
@@ -92,7 +104,7 @@ public class ProgressFlagBridge_V2Editor : Editor
     {
         DrawDefaultInspector();
         EditorGUILayout.HelpBox(
-            "呼叫 AddPersistentFlag、AddSceneFlag、AddSlotFlag、AddPhaseFlag、AddDailyFlag 或 RemoveFlag，並在呼叫參數中拖入 Flag 資產。\n" +
+            "呼叫 AddPersistentFlag、AddSceneFlag、AddSlotFlag、AddPhaseFlag、AddDailyFlag、AddNextDayAddFlag、AddNextDayOnlyFlag 或 RemoveFlag，並在呼叫參數中拖入 Flag 資產。\n" +
             "此元件不需要預先設定 Flag 或事件。",
             MessageType.Info);
 
