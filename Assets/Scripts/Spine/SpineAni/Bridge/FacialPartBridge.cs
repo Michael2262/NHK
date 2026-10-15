@@ -43,6 +43,25 @@ public class FacialPartBridge : MonoBehaviour
         FacialPartController.NotifyRemote(controllerId);
     }
 
+    /// <summary>
+    /// 機率先限制於 0～1，再捨去小數點第三位起的數字、不四捨五入；例如 0.567 以 0.56 計算。
+    /// 每次獨立抽選，命中才通知目前目標；0 不觸發，1 必定通知。
+    /// 不影響定時模式；通知後仍遵守 Controller 的 Remote 接收開關。
+    /// </summary>
+    public void NotifyRemoteWithChance(float probability)
+    {
+        if (float.IsNaN(probability))
+        {
+            Debug.LogWarning("[FacialPartBridge] Remote 機率不可為 NaN，已略過通知。", this);
+            return;
+        }
+        probability = Mathf.Clamp01(probability);
+        // 先轉十進位再截斷，避免 0.53 等兩位小數因 float 誤差被少算一個百分點。
+        int percent = (int)((decimal)probability * 100m);
+        if (percent <= 0) return;
+        if (percent >= 100 || Random.Range(0, 100) < percent) NotifyRemote();
+    }
+
     /// <summary>每次獨立抽選，有二分之一機率通知目前目標；未命中不推進計數，不影響定時模式。</summary>
     public void NotifyRemoteHalfChance()
     {

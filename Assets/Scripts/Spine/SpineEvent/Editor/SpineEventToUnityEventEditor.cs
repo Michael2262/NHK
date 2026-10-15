@@ -16,14 +16,15 @@ public class SpineEventToUnityEventEditor : Editor
         EditorGUILayout.PropertyField(databaseProperty, new GUIContent("共用事件 ID 資料庫"));
         var database = databaseProperty.objectReferenceValue as SpineEventDatabase;
         EditorGUILayout.HelpBox(database == null
-            ? "未指定資料庫：沿用手填 ID。指定共用資料庫後可用下拉選單，既有 ID 與 UnityEvent 不會被清除。"
-            : "從資料庫選擇事件 ID，再綁定本場景的反應。資料庫未收錄的舊 ID 仍保留並照常觸發；改名不會自動同步。", MessageType.Info);
+            ? "未指定資料庫：沿用手填 ID 與無參數事件。需要傳遞參數時，請在共用資料庫設定事件類型。"
+            : "從資料庫選擇事件 ID，只顯示並觸發該類型的反應。未收錄的 ID 使用無參數事件；改名不會自動同步。", MessageType.Info);
         if (database != null)
             foreach (var error in database.GetValidationErrors())
                 EditorGUILayout.HelpBox(error, MessageType.Warning);
         if (Application.isPlaying)
             EditorGUILayout.HelpBox("事件映射在 Awake 建立。請停止播放後修改設定，再重新進入 Play Mode 驗證。", MessageType.Info);
 
+        EditorGUILayout.HelpBox("參數類型由 Database 統一設定。接收 Spine 參數請選擇 Dynamic 方法。切換類型會保留其他類型的綁定，但不執行。", MessageType.Info);
         EditorGUILayout.PropertyField(serializedObject.FindProperty("eventMappings"), new GUIContent("事件映射"), true);
         EditorGUILayout.PropertyField(serializedObject.FindProperty("enableEventLog"), new GUIContent("顯示事件 Log", "開啟時顯示 Spine 事件觸發訊息，可在 Play Mode 即時切換。"));
         serializedObject.ApplyModifiedProperties();
@@ -45,17 +46,38 @@ public class SpineEventToUnityEventEditor : Editor
 [CustomPropertyDrawer(typeof(SpineUnityEventMapping))]
 public class SpineUnityEventMappingDrawer : PropertyDrawer
 {
+    private static readonly string[] EventPropertyNames =
+    {
+        "onEventTriggered", "onFloatEventTriggered", "onStringEventTriggered", "onIntEventTriggered"
+    };
+
+    private static readonly GUIContent[] EventLabels =
+    {
+        new GUIContent("事件觸發時（無參數）"),
+        new GUIContent("事件觸發時（Float）", "傳入本次 Spine Event 的 Float。"),
+        new GUIContent("事件觸發時（String）", "傳入本次 Spine Event 的 String。"),
+        new GUIContent("事件觸發時（Int）", "傳入本次 Spine Event 的 Int。")
+    };
+
     public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
     {
+        int index = GetEventIndex(property);
         return EditorGUIUtility.singleLineHeight * 3 + 12
-            + EditorGUI.GetPropertyHeight(property.FindPropertyRelative("onEventTriggered"), true);
+            + EditorGUI.GetPropertyHeight(property.FindPropertyRelative(EventPropertyNames[index]), true);
+    }
+
+    private static int GetEventIndex(SerializedProperty property)
+    {
+        var database = property.serializedObject.FindProperty("eventDatabase")?.objectReferenceValue as SpineEventDatabase;
+        var id = property.FindPropertyRelative("spineEventName").stringValue;
+        var type = database != null ? database.GetParameterType(id) : SpineEventDatabase.ParameterType.None;
+        return (int)type;
     }
 
     public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
     {
         EditorGUI.BeginProperty(position, label, property);
         var id = property.FindPropertyRelative("spineEventName");
-        var reaction = property.FindPropertyRelative("onEventTriggered");
         var database = property.serializedObject.FindProperty("eventDatabase")?.objectReferenceValue as SpineEventDatabase;
         float line = EditorGUIUtility.singleLineHeight;
         var row = new Rect(position.x, position.y, position.width, line);
@@ -65,7 +87,7 @@ public class SpineUnityEventMappingDrawer : PropertyDrawer
         if (database == null)
         {
             EditorGUI.PropertyField(row, id, new GUIContent("Spine 事件 ID"));
-            help = "手填模式：事件名稱區分大小寫。";
+            help = "手填模式：事件名稱區分大小寫，使用無參數事件。";
         }
         else
         {
@@ -85,13 +107,15 @@ public class SpineUnityEventMappingDrawer : PropertyDrawer
             int next = EditorGUI.Popup(row, new GUIContent("Spine 事件 ID"), selected, labels.ToArray());
             if (EditorGUI.EndChangeCheck()) id.stringValue = ids[next];
             var current = database.Find(id.stringValue);
-            help = current == null ? "警告：ID 未收錄於資料庫；請選擇有效 ID，或暫時保留舊設定。" : current.description;
+            help = current == null ? "警告：ID 未收錄於資料庫，使用無參數事件。" : current.description;
         }
         row.y += line + 4;
         EditorGUI.LabelField(row, new GUIContent(help, help), EditorStyles.miniLabel);
         row.y += line + 4;
+        int index = GetEventIndex(property);
+        var reaction = property.FindPropertyRelative(EventPropertyNames[index]);
         row.height = EditorGUI.GetPropertyHeight(reaction, true);
-        EditorGUI.PropertyField(row, reaction, new GUIContent("事件觸發時"), true);
+        EditorGUI.PropertyField(row, reaction, EventLabels[index], true);
         EditorGUI.EndProperty();
     }
 }
