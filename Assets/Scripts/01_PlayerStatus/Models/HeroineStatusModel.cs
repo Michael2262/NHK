@@ -167,7 +167,7 @@ public class HeroineStatusModel
         Excitement = 0;
         Orgasm = 0;
         Frustration = 0;
-        Trust = 0;
+        Trust = 20;
         Affinity = 0;
         HCount = 0;
 

@@ -37,7 +37,7 @@ public class ProtagonistStatusModel
     public const int INITIAL_SEMEN = 0;
 
     // ───── ShootTimes ─────
-    public const int SHOOT_TIMES_MAX = 3;
+    public const int SHOOT_TIMES_MAX = 2;
     public const int SHOOT_TIMES_MIN = -5;
     public const int INITIAL_SHOOT_TIMES = SHOOT_TIMES_MAX;
 

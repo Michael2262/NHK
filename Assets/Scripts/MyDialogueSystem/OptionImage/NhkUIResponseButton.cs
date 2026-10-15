@@ -8,9 +8,9 @@
 //       - 皮膚子物件：啟用 ID 對應的皮膚子物件、關閉其餘（版型差異大時用）
 //       - 背景圖：從對照表查 ID 對應 Sprite 換到指定 Image（輕量，只換底圖時用）
 //       ID 空白或查不到 → 還原成預設皮膚 / 原始背景圖。
-//   (4) NG 提示：Text 欄位 "NGFlag" 填 ProgressFlag 名稱；成立時圖片改用 "Ng"，回應文字改為紅色。
+//   (4) NG 提示：Text 欄位 "NG Conditions" 填 Dialogue System 的 Lua 條件式；成立時圖片改用 "Ng"，回應文字改為紅色。
 //       "Option Image" 直接填 "Ng" 時，也會套用相同的 NG 提示。
-//   NarrationFlag 與 NGFlag 都支援 MyFlag、!MyFlag、not(MyFlag)；後兩者在旗標不成立時符合條件。
+//   NarrationFlag 支援 MyFlag、!MyFlag、not(MyFlag)；後兩者在旗標不成立時符合條件。
 // 以上都在按鈕被指派 response 時即時套用；Design-Time 按鈕會重複使用，
 // 因此在 Reset()（每次選單前由 StandardUIMenuPanel 呼叫）還原，避免樣式殘留。
 //
@@ -22,7 +22,7 @@
 //   4. 需要圖片的選項節點：新增 Text 欄位 "Option Image"，填圖片 ID
 //      需要敘述的選項節點：新增 Text 欄位 "Narration"，直接填敘述文字（與字幕面板敘述框共用）
 //      需要換樣式的選項節點：新增 Text 欄位 "Button Style"，填樣式 ID
-//      需要 NG 提示的選項節點：新增 Text 欄位 "NGFlag"，填成立時要顯示 NG 的 ProgressFlag 名稱
+//      需要 NG 提示的選項節點：新增 Text 欄位 "NG Conditions"，例如 not Flag("MyFlag")
 
 using System.Collections.Generic;
 using UnityEngine;
@@ -42,10 +42,11 @@ namespace PixelCrushers.DialogueSystem
         [Tooltip("Dialogue Entry 自訂欄位名稱，Text 類型，填圖片 ID。空白 = 不顯示圖片。填 Ng 時，回應文字也會改為 UIColorPalette.Red。")]
         [SerializeField] private string imageFieldName = "Option Image";
 
-        [Header("NG Flag Settings")]
-        [Tooltip("Dialogue Entry 自訂欄位名稱，Text 類型，填 ProgressFlag 名稱。\n" +
-                 "支援 MyFlag、!MyFlag、not(MyFlag)。條件成立時，選項圖片改用 ID Ng，回應文字改為 UIColorPalette.Red；留空則不啟用旗標條件。")]
-        [SerializeField] private string ngFlagFieldName = "NGFlag";
+        [Header("NG Conditions Settings")]
+        [Tooltip("Dialogue Entry 自訂欄位名稱，Text 類型，填與 Conditions 相同的 Lua 條件式，不需加 return。\n" +
+                 "例如 not Flag(\"MyFlag\")，可使用 and、or 與數值比較。\n" +
+                 "條件成立時，選項圖片改用 ID Ng，回應文字改為 UIColorPalette.Red；留空則不觸發。")]
+        [SerializeField] private string ngConditionsFieldName = "NG Conditions";
 
         [Header("Option Narration Settings")]
         [Tooltip("顯示選項額外敘述的文字元件（按鈕底下的子物件，平時隱藏）")]
@@ -129,15 +130,28 @@ namespace PixelCrushers.DialogueSystem
             }
         }
 
-        /// <summary>圖片 ID 為 Ng 或 NGFlag 成立，任一條件符合就套用 NG 提示。</summary>
+        /// <summary>圖片 ID 為 Ng 或 NG Conditions 成立，任一條件符合就套用 NG 提示。</summary>
         private bool ShouldShowNg(Response response)
         {
             if (response == null || response.destinationEntry == null) return false;
             string imageId = Field.LookupValue(response.destinationEntry.fields, imageFieldName);
             if (string.Equals(imageId, "Ng", System.StringComparison.Ordinal)) return true;
 
-            string flag = Field.LookupValue(response.destinationEntry.fields, ngFlagFieldName);
-            return EvaluateFlagCondition(flag, false);
+            string conditions = Field.LookupValue(response.destinationEntry.fields, ngConditionsFieldName);
+            // Lua.IsTrue 將空白視為成立；NG 提示必須明確填入條件才啟用。
+            if (string.IsNullOrWhiteSpace(conditions)) return false;
+            try
+            {
+                return Lua.IsTrue(conditions, DialogueDebug.logInfo, true);
+            }
+            catch (System.Exception exception)
+            {
+                if (DialogueDebug.logWarnings)
+                {
+                    Debug.LogWarning($"NhkUIResponseButton：NG Conditions 判斷失敗（節點 {response.destinationEntry.id}）：{conditions}\n{exception.Message}", this);
+                }
+                return false;
+            }
         }
 
         private void RestoreColorBeforeNg()

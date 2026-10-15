@@ -1635,6 +1635,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 126315867}
+  - component: {fileID: 126315868}
   m_Layer: 0
   m_Name: Hub_Spec_Button
   m_TagString: Untagged
@@ -1663,6 +1664,18 @@ RectTransform:
   m_AnchoredPosition: {x: -500.8, y: -33.520004}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!225 &126315868
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 126315866}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &161639383 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 5028076934472659530, guid: ebb0911a63b51c4428ebcf8e42a79d78, type: 3}
@@ -7040,6 +7053,10 @@ PrefabInstance:
       value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 6353174468877080760, guid: 66f3ae415ae504b4784f85330ad3a09f, type: 3}
+      propertyPath: flagMusicPriorities.Array.size
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 6353174468877080760, guid: 66f3ae415ae504b4784f85330ad3a09f, type: 3}
       propertyPath: 'weekendPhaseMusicKeys.Array.data[1]'
       value: LazySundayMorning
       objectReference: {fileID: 0}
@@ -7051,6 +7068,10 @@ PrefabInstance:
       propertyPath: 'weekendPhaseMusicKeys.Array.data[3]'
       value: LazySundayMorning
       objectReference: {fileID: 0}
+    - target: {fileID: 6353174468877080760, guid: 66f3ae415ae504b4784f85330ad3a09f, type: 3}
+      propertyPath: flagMusicPriorities.Array.data[1].flag
+      value: 
+      objectReference: {fileID: 11400000, guid: 1604591be9df8ad45847187d417885fe, type: 2}
     - target: {fileID: 6353174468877080760, guid: 66f3ae415ae504b4784f85330ad3a09f, type: 3}
       propertyPath: phaseFlagMusic.Array.data[0].rules.Array.size
       value: 0
@@ -20166,7 +20187,7 @@ MonoBehaviour:
           name: DependencyTooHigh
           isSystemEvent: 0
           isGlobal: 0
-        toState: openBlock
+        toState: closeBlock
         linkStyle: 0
         linkConstraint: 0
         linkTarget: 0
@@ -30389,7 +30410,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DialogueVisibilityHandler
   canvasGroups:
-  - {fileID: 0}
+  - {fileID: 126315868}
   - {fileID: 728273901}
   charactersToHide:
   - {fileID: 1271345735}
