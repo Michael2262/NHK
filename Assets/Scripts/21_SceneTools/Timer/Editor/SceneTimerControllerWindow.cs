@@ -172,6 +172,9 @@ public sealed class SceneTimerControllerWindow : EditorWindow
                 item.FindPropertyRelative("OnCompleted.m_PersistentCalls.m_Calls").ClearArray();
                 page = 0; search = ""; Commit();
             }
+        using (new EditorGUI.DisabledScope(Locked || selected < 0 || selected >= behaviors.arraySize))
+            if (GUILayout.Button(new GUIContent("＋ 從選中行為複製", "複製目前選中行為的完整設定與事件，並自動產生唯一 ID。"), EditorStyles.miniButton))
+                DuplicateBehavior(behaviors);
         using (var scroll = new EditorGUILayout.ScrollViewScope(listScroll))
         {
             listScroll = scroll.scrollPosition;
@@ -228,20 +231,18 @@ public sealed class SceneTimerControllerWindow : EditorWindow
         var item = behaviors.GetArrayElementAtIndex(selected);
         using (new EditorGUI.DisabledScope(Locked))
         {
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                GUILayout.FlexibleSpace();
+                if (GUILayout.Button("複製行為", EditorStyles.miniButton, GUILayout.Width(80))) DuplicateBehavior(behaviors);
+                if (GUILayout.Button("刪除行為", EditorStyles.miniButton, GUILayout.Width(80)))
+                { behaviors.DeleteArrayElementAtIndex(selected); selected = -1; Commit(); }
+            }
             EditorGUILayout.PropertyField(item.FindPropertyRelative("ID"), new GUIContent("行為 ID"));
             EditorGUILayout.PropertyField(item.FindPropertyRelative("StartMode"), new GUIContent("啟動模式"));
             using (new EditorGUI.DisabledScope(item.FindPropertyRelative("StartMode").intValue == (int)TimerStartMode.Parallel))
                 EditorGUILayout.PropertyField(item.FindPropertyRelative("Timer"), new GUIContent("所屬 Timer"));
             EditorGUILayout.PropertyField(item.FindPropertyRelative("Duration"), new GUIContent("倒數秒數"));
-            using (new EditorGUILayout.HorizontalScope())
-            {
-                if (GUILayout.Button("複製行為"))
-                {
-                    string id = UniqueID(behaviors, item.FindPropertyRelative("ID").stringValue + "_副本");
-                    if (item.DuplicateCommand()) { selected++; behaviors.GetArrayElementAtIndex(selected).FindPropertyRelative("ID").stringValue = id; Commit(); }
-                }
-                if (GUILayout.Button("刪除行為")) { behaviors.DeleteArrayElementAtIndex(selected); selected = -1; Commit(); }
-            }
         }
         string name = item.FindPropertyRelative("ID").stringValue;
         int matches = 0;
@@ -258,6 +259,22 @@ public sealed class SceneTimerControllerWindow : EditorWindow
         EditorGUILayout.HelpBox("Interrupt：取代目前工作；Skip：忙碌時忽略；Queue：排隊；Priority：插至隊首；Parallel：獨立倒數，不佔用或恢復所屬 Timer。\n一般模式的 StartTimer 會恢復所屬 Timer；所有模式的相同 ID 都不重複啟動或排隊。", MessageType.None);
         DrawEvent(item.FindPropertyRelative("OnCompleted"), "倒數完成事件");
         if (Application.isPlaying) DrawSelectedTest(behaviors);
+    }
+
+    private void DuplicateBehavior(SerializedProperty behaviors)
+    {
+        if (Locked || selected < 0 || selected >= behaviors.arraySize) return;
+        var source = behaviors.GetArrayElementAtIndex(selected);
+        string id = UniqueID(behaviors, source.FindPropertyRelative("ID").stringValue + "_副本");
+        // 使用序列化複製保留完整事件參數及物件參照，副本插在來源後方。
+        if (!source.DuplicateCommand())
+        { ShowNotification(new GUIContent("無法複製此行為。")); return; }
+        selected++;
+        behaviors.GetArrayElementAtIndex(selected).FindPropertyRelative("ID").stringValue = id;
+        page = 0;
+        search = "";
+        detailScroll = Vector2.zero;
+        Commit();
     }
 
     private void DrawSelectedTest(SerializedProperty behaviors)
@@ -345,33 +362,31 @@ public sealed class SceneTimerControllerWindow : EditorWindow
         using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
         {
             EditorGUILayout.LabelField(title, EditorStyles.boldLabel);
-            using (new EditorGUILayout.HorizontalScope())
-            {
-                if (GUILayout.Button("複製全部事件")) { allClipboard = Capture(property, controller.name + " / " + title); Commit(); }
-                using (new EditorGUI.DisabledScope(!CanPaste(allClipboard)))
-                    if (GUILayout.Button("貼上全部（覆蓋）")) Paste(property, allClipboard, false);
-            }
             if (!drawers.TryGetValue(property.propertyPath, out var drawer))
             {
                 drawer = new FilteredUnityEventDrawer(this, () => controller, () => showUnityFunctions,
                     () => !Locked && !transitioning, item => drawers.ContainsValue(item));
                 drawers.Add(property.propertyPath, drawer);
             }
-            var label = new GUIContent(title);
-            Rect rect = EditorGUILayout.GetControlRect(false, drawer.GetPropertyHeight(property, label));
-            using (new EditorGUI.DisabledScope(Locked)) drawer.OnGUI(rect, property, label);
             var calls = property.FindPropertyRelative("m_PersistentCalls.m_Calls");
             int index = drawer.SelectedIndex;
             bool valid = index >= 0 && index < calls.arraySize;
             using (new EditorGUILayout.HorizontalScope())
             {
-                using (new EditorGUI.DisabledScope(!valid))
-                    if (GUILayout.Button("複製所選事件")) { singleClipboard = Capture(calls.GetArrayElementAtIndex(index), title + " / 第 " + (index + 1) + " 項"); Commit(); }
-                using (new EditorGUI.DisabledScope(!CanPaste(singleClipboard)))
-                    if (GUILayout.Button("貼上單項（新增）")) Paste(calls, singleClipboard, true);
                 using (new EditorGUI.DisabledScope(Locked || !valid))
-                    if (GUILayout.Button("刪除所選事件")) { calls.DeleteArrayElementAtIndex(index); Commit(); }
+                    if (GUILayout.Button("刪除所選", GUILayout.Width(75))) { calls.DeleteArrayElementAtIndex(index); Commit(); }
+                using (new EditorGUI.DisabledScope(!valid))
+                    if (GUILayout.Button("複製所選", GUILayout.Width(75))) { singleClipboard = Capture(calls.GetArrayElementAtIndex(index), title + " / 第 " + (index + 1) + " 項"); Commit(); }
+                using (new EditorGUI.DisabledScope(!CanPaste(singleClipboard)))
+                    if (GUILayout.Button(new GUIContent("貼上所選", "將單項剪貼簿事件新增至清單末尾。"), GUILayout.Width(75))) Paste(calls, singleClipboard, true);
+                GUILayout.FlexibleSpace();
+                if (GUILayout.Button("複製全部", GUILayout.Width(75))) { allClipboard = Capture(property, controller.name + " / " + title); Commit(); }
+                using (new EditorGUI.DisabledScope(!CanPaste(allClipboard)))
+                    if (GUILayout.Button("貼上覆蓋", GUILayout.Width(75))) Paste(property, allClipboard, false);
             }
+            var label = new GUIContent(title);
+            Rect rect = EditorGUILayout.GetControlRect(false, drawer.GetPropertyHeight(property, label));
+            using (new EditorGUI.DisabledScope(Locked)) drawer.OnGUI(rect, property, label);
             if (allClipboard != null) EditorGUILayout.LabelField("全部事件剪貼簿：" + allClipboard.Label, EditorStyles.wordWrappedMiniLabel);
             if (singleClipboard != null) EditorGUILayout.LabelField("單項剪貼簿：" + singleClipboard.Label, EditorStyles.wordWrappedMiniLabel);
         }
