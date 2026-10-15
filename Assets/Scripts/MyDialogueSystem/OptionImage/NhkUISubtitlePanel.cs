@@ -17,7 +17,9 @@
 //   4. 需要敘述的對話節點：新增 Text 欄位 "Narration"，直接填敘述文字
 
 using System.Collections.Generic;
+using System.Globalization;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace PixelCrushers.DialogueSystem
 {
@@ -42,14 +44,145 @@ namespace PixelCrushers.DialogueSystem
 
         public override void SetContent(Subtitle subtitle)
         {
-            base.SetContent(subtitle);
+            PrepareSlowTypewriter(subtitle);
+            settingSubtitleContent = true;
+            try
+            {
+                base.SetContent(subtitle);
+            }
+            finally
+            {
+                settingSubtitleContent = false;
+            }
             UpdateNarration(subtitle);
         }
 
         public override void Close()
         {
+            RestoreTypewriterSpeed();
             HideNarration();
             base.Close();
+        }
+
+        // ===================== 單句慢速打字（Sequence: SlowTypewriter()）=====================
+
+        private AbstractTypewriterEffect slowTypewriter;
+        private Subtitle slowSubtitle;
+        private float originalTypewriterSpeed;
+        private bool slowTypingStarted;
+        private bool slowTypingFinished;
+        private bool settingSubtitleContent;
+        private UnityEvent slowTypingBeginEvent;
+        private UnityEvent slowTypingEndEvent;
+
+        protected override void OnDisable()
+        {
+            RestoreTypewriterSpeed();
+            base.OnDisable();
+        }
+
+        private void PrepareSlowTypewriter(Subtitle subtitle)
+        {
+            RestoreTypewriterSpeed();
+            if (subtitle == null || subtitle.formattedText == null ||
+                string.IsNullOrEmpty(subtitle.formattedText.text) ||
+                string.IsNullOrEmpty(subtitle.sequence) || !subtitle.sequence.Contains("SlowTypewriter")) return;
+
+            // 原生流程先 ShowSubtitle 再 PlaySequence，必須在 base.SetContent 前套用速度。
+            // 使用原生解析器，避免把註解或其他指令的字串參數誤認成指令。
+            float speed = 15f;
+            bool found = false;
+            foreach (var command in new SequenceParser().Parse(subtitle.sequence))
+            {
+                if (command.command != "SlowTypewriter") continue;
+                if (command.startTime > 0 || !string.IsNullOrEmpty(command.messageToWaitFor))
+                {
+                    Debug.LogWarning("[SlowTypewriter] 此指令只支援整句慢速，請移除 @時間 或 @Message 排程。", this);
+                    continue;
+                }
+
+                string value = SequencerTools.GetParameter(command.parameters, 0);
+                speed = 15f;
+                if (!string.IsNullOrWhiteSpace(value) &&
+                    (!float.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out speed) ||
+                     float.IsNaN(speed) || float.IsInfinity(speed) || speed <= 0))
+                {
+                    Debug.LogWarning("[SlowTypewriter] 速度必須是大於 0 的數字，本句改用每秒 15 字。", this);
+                    speed = 15f;
+                }
+                found = true;
+            }
+            if (!found) return;
+
+            var typewriter = GetTypewriter();
+            if (typewriter == null || !typewriter.enabled)
+            {
+                Debug.LogWarning("[SlowTypewriter] Subtitle Text 需要掛上並啟用原生打字機元件。", this);
+                return;
+            }
+
+            // 事件定義在兩種原生實作，不在 AbstractTypewriterEffect 上。
+            if (typewriter is UnityUITypewriterEffect unityTypewriter)
+            {
+                slowTypingBeginEvent = unityTypewriter.onBegin;
+                slowTypingEndEvent = unityTypewriter.onEnd;
+            }
+#if TMP_PRESENT
+            else if (typewriter is TextMeshProTypewriterEffect tmpTypewriter)
+            {
+                slowTypingBeginEvent = tmpTypewriter.onBegin;
+                slowTypingEndEvent = tmpTypewriter.onEnd;
+            }
+#endif
+            else
+            {
+                Debug.LogWarning("[SlowTypewriter] 目前只支援原生 Unity UI／TextMesh Pro 打字機。", this);
+                return;
+            }
+
+            slowTypewriter = typewriter;
+            slowSubtitle = subtitle;
+            originalTypewriterSpeed = typewriter.GetSpeed();
+            slowTypingStarted = false;
+            slowTypingFinished = false;
+            slowTypingBeginEvent.AddListener(OnSlowTypingBegin);
+            slowTypingEndEvent.AddListener(OnSlowTypingEnd);
+            typewriter.SetSpeed(speed);
+        }
+
+        private void OnSlowTypingBegin()
+        {
+            slowTypingStarted = true;
+        }
+
+        private void OnSlowTypingEnd()
+        {
+            // base.SetContent 會先停止上一句；不能把上一句的 onEnd 當成本句完成。
+            // 若啟用了 Wait One Frame，玩家也可能在 onBegin 之前快轉完成。
+            if (slowTypingStarted || !settingSubtitleContent) slowTypingFinished = true;
+        }
+
+        /// <summary>包含等待面板開啟／取得焦點的期間，避免 Sequence 提早結束。</summary>
+        public bool IsWaitingForSlowTypewriter(Subtitle subtitle)
+        {
+            return ReferenceEquals(slowSubtitle, subtitle) && slowTypewriter != null &&
+                   slowTypewriter.enabled && isActiveAndEnabled && !slowTypingFinished;
+        }
+
+        private void RestoreTypewriterSpeed()
+        {
+            if (slowTypewriter != null)
+            {
+                slowTypewriter.SetSpeed(originalTypewriterSpeed);
+            }
+            slowTypingBeginEvent?.RemoveListener(OnSlowTypingBegin);
+            slowTypingEndEvent?.RemoveListener(OnSlowTypingEnd);
+            slowTypingBeginEvent = null;
+            slowTypingEndEvent = null;
+            slowTypewriter = null;
+            slowSubtitle = null;
+            slowTypingStarted = false;
+            slowTypingFinished = false;
         }
 
         public override void Open()

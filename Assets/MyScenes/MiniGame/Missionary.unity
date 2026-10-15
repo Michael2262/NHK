@@ -6603,7 +6603,7 @@ MonoBehaviour:
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
           m_IntArgument: 0
           m_FloatArgument: 0
-          m_StringArgument: Missionary/Slang/Start
+          m_StringArgument: Missionary/Slang/Please
           m_BoolArgument: 0
         m_CallState: 2
 --- !u!114 &464223735
@@ -8249,7 +8249,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ProgressFlagSetter
   targetFlags:
   - {fileID: 11400000, guid: 60abff4fc9b08094c836c156fd2a1a28, type: 2}
-  - {fileID: 11400000, guid: 29877871e588d2f44aee307d1dab9e1d, type: 2}
+  - {fileID: 11400000, guid: 24083e6491a087249ad36747615c0afe, type: 2}
   defaultAsTemporary: 1
 --- !u!1 &627199455
 GameObject:
@@ -43397,6 +43397,112 @@ MonoBehaviour:
           Flag: {fileID: 0}
           Invert: 0
       ConditionalOnEnter: []
+  - GroupName: "\u5973\u751F\u88D9\u5B50"
+    States:
+    - StateName: Normal
+      StateFlag: {fileID: 11400000, guid: 40deda9e0e148c0479dd3d59f92f5623, type: 2}
+      OnEnter:
+        m_PersistentCalls:
+          m_Calls:
+          - m_Target: {fileID: 1114200273}
+            m_TargetAssemblyTypeName: SpineAniPlayBridge, Assembly-CSharp
+            m_MethodName: Track02_BodyAttach
+            m_Mode: 5
+            m_Arguments:
+              m_ObjectArgument: {fileID: 0}
+              m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+              m_IntArgument: 0
+              m_FloatArgument: 0
+              m_StringArgument: Skirt_Normal
+              m_BoolArgument: 0
+            m_CallState: 2
+        callConditions:
+        - Enabled: 0
+          Flag: {fileID: 0}
+          Invert: 0
+      OnExit:
+        m_PersistentCalls:
+          m_Calls: []
+        callConditions: []
+      ConditionalOnEnter: []
+    - StateName: Lift
+      StateFlag: {fileID: 11400000, guid: 3925595a49454b146a27d6107b0c0337, type: 2}
+      OnEnter:
+        m_PersistentCalls:
+          m_Calls:
+          - m_Target: {fileID: 1114200273}
+            m_TargetAssemblyTypeName: SpineAniPlayBridge, Assembly-CSharp
+            m_MethodName: Track02_BodyAttach
+            m_Mode: 5
+            m_Arguments:
+              m_ObjectArgument: {fileID: 0}
+              m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+              m_IntArgument: 0
+              m_FloatArgument: 0
+              m_StringArgument: Skirt_Lift
+              m_BoolArgument: 0
+            m_CallState: 2
+        callConditions:
+        - Enabled: 0
+          Flag: {fileID: 0}
+          Invert: 0
+      OnExit:
+        m_PersistentCalls:
+          m_Calls: []
+        callConditions: []
+      ConditionalOnEnter: []
+    - StateName: Open
+      StateFlag: {fileID: 11400000, guid: e6f9e3dd188d2ea4ab84d5bf15eb2dd6, type: 2}
+      OnEnter:
+        m_PersistentCalls:
+          m_Calls:
+          - m_Target: {fileID: 1114200273}
+            m_TargetAssemblyTypeName: SpineAniPlayBridge, Assembly-CSharp
+            m_MethodName: Track02_BodyAttach
+            m_Mode: 5
+            m_Arguments:
+              m_ObjectArgument: {fileID: 0}
+              m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+              m_IntArgument: 0
+              m_FloatArgument: 0
+              m_StringArgument: Skirt_Open
+              m_BoolArgument: 0
+            m_CallState: 2
+        callConditions:
+        - Enabled: 0
+          Flag: {fileID: 0}
+          Invert: 0
+      OnExit:
+        m_PersistentCalls:
+          m_Calls: []
+        callConditions: []
+      ConditionalOnEnter: []
+    - StateName: Off
+      StateFlag: {fileID: 11400000, guid: 2a6c0a39bc7d7ed42b04d8792f389c2c, type: 2}
+      OnEnter:
+        m_PersistentCalls:
+          m_Calls:
+          - m_Target: {fileID: 1114200273}
+            m_TargetAssemblyTypeName: SpineAniPlayBridge, Assembly-CSharp
+            m_MethodName: Track02_BodyAttach
+            m_Mode: 5
+            m_Arguments:
+              m_ObjectArgument: {fileID: 0}
+              m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+              m_IntArgument: 0
+              m_FloatArgument: 0
+              m_StringArgument: Skirt_Off
+              m_BoolArgument: 0
+            m_CallState: 2
+        callConditions:
+        - Enabled: 0
+          Flag: {fileID: 0}
+          Invert: 0
+      OnExit:
+        m_PersistentCalls:
+          m_Calls: []
+        callConditions: []
+      ConditionalOnEnter: []
   onCheckTrue:
     m_PersistentCalls:
       m_Calls: []
@@ -52098,7 +52204,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1659417886966762270, guid: 1b05c314449679144bcc6b14358301b5, type: 3}
       propertyPath: groups.Array.data[1].options.Array.data[3].onClick.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_StringArgument
-      value: Sumata3
+      value: Sumata2
       objectReference: {fileID: 0}
     - target: {fileID: 1659417886966762270, guid: 1b05c314449679144bcc6b14358301b5, type: 3}
       propertyPath: groups.Array.data[1].options.Array.data[4].onClick.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_StringArgument
