@@ -68,6 +68,9 @@ namespace PixelCrushers.DialogueSystem
                     subtitle.sequence = "None()";
                 return;
             }
+            // 不顯示玩家字幕時，選項文字只供選單使用，不應再補一段閱讀等待。
+            // 保留原 Sequence，讓原生流程處理 Default Player Sequence 與明確的演出指令。
+            if (!ShouldAddDialogueWait(subtitle)) return;
             injectedSubtitle = subtitle;
             string sequence = (subtitle.sequence ?? string.Empty).TrimEnd();
             // 原生會特別辨識整句 None()/Continue()；一般模式不要加命令而破壞其隱藏字幕語意。
@@ -86,12 +89,21 @@ namespace PixelCrushers.DialogueSystem
 
         public bool TryBeginWait(Subtitle subtitle)
         {
-            return HasDialogueText(subtitle) && session.TryBeginWait(subtitle);
+            return ShouldAddDialogueWait(subtitle) && session.TryBeginWait(subtitle);
         }
 
         public bool TryBeginDefaultWait(Subtitle subtitle)
         {
-            return !IsActive && HasDialogueText(subtitle) && defaultWaitSession.TryBeginWait(subtitle);
+            return !IsActive && ShouldAddDialogueWait(subtitle) && defaultWaitSession.TryBeginWait(subtitle);
+        }
+
+        private static bool ShouldAddDialogueWait(Subtitle subtitle)
+        {
+            if (!HasDialogueText(subtitle)) return false;
+            var settings = DialogueManager.conversationView?.displaySettings;
+            // 同時供逐句注入與 Set*(true) 當句直接啟動等待的路徑使用。
+            return subtitle.speakerInfo.characterType != CharacterType.PC ||
+                (settings != null && settings.GetShowPCSubtitlesDuringLine());
         }
 
         private static bool HasDialogueText(Subtitle subtitle)
