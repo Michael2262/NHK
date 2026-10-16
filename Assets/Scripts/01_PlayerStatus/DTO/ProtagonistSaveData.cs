@@ -29,7 +29,7 @@ public class ProtagonistSaveData
     // ───── 身體髒污度（0～25；舊存檔缺欄位時反序列化為 0） ─────
     public int BodyDirtyLevel;
 
-    // ───── 狀態不好（換日自動解除；舊存檔缺欄位時反序列化預設 false） ─────
+    // ───── 狀態不好（壓力調整後小於等於 40 時自動解除；舊存檔缺欄位時反序列化預設 false） ─────
     public bool BadHealthy;
 
     // ───── 不良依賴（手動開關；舊存檔缺欄位時反序列化預設 false） ─────

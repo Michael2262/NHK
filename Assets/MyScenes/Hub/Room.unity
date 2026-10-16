@@ -17557,7 +17557,7 @@ PrefabInstance:
     - target: {fileID: 7536782301243468325, guid: 9305167245852a146b134061fba75f31, type: 3}
       propertyPath: conditionalButtons.Array.data[1].requiredFlag
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 11400000, guid: 77176fa921507494db665752b8058c26, type: 2}
     - target: {fileID: 8724541396291409099, guid: 9305167245852a146b134061fba75f31, type: 3}
       propertyPath: m_Name
       value: Sister_Cook
@@ -28139,12 +28139,16 @@ MonoBehaviour:
     ToActivate:
     - {fileID: 715114604}
     ToDeactivate: []
-  - StateName: Stress100
+  - StateName: Stress100(NoBadHealthy)
     Priority: 1
     Logic: 0
     Conditions:
     - Definition: {fileID: 11400000, guid: e33e13f9cd9f37948a7ed70a3640e811, type: 2}
       RequiredState: 1
+      Comparison: 0
+      TargetValue: 0
+    - Definition: {fileID: 11400000, guid: 7674306e65e27764c91a45aae1b52fcc, type: 2}
+      RequiredState: 0
       Comparison: 0
       TargetValue: 0
     ToActivate:

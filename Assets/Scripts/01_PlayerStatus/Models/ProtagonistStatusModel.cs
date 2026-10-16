@@ -73,7 +73,10 @@ public class ProtagonistStatusModel
     public const int BAD_DEPENDENCY_PHASE_STRESS_GAIN = 5;
 
     /// <summary>Dependency 調整後小於等於此值時，BadDependency 會自動解除；不限制手動開啟。</summary>
-    public const int BAD_DEPENDENCY_AUTO_DISABLE_THRESHOLD = 50;
+    public const int BAD_DEPENDENCY_AUTO_DISABLE_THRESHOLD = 40;
+
+    /// <summary>Stress 調整後小於等於此值時，BadHealthy 會自動解除；不限制手動開啟。</summary>
+    public const int BAD_HEALTHY_AUTO_DISABLE_THRESHOLD = 40;
 
     // ───── 分級門檻（各數值可獨立調整，預設一致） ─────
     // Stress
@@ -161,10 +164,10 @@ public class ProtagonistStatusModel
         }
     }
 
-    /// <summary>狀態不好：true 時「增加壓力會再多 +1、減少壓力會少 -1」。換日時自動解除。</summary>
+    /// <summary>狀態不好：true 時「增加壓力會再多 +1、減少壓力會少 -1」；Stress 調整後小於等於 40 時自動解除。</summary>
     public bool BadHealthy { get; private set; } = false;
 
-    /// <summary>不良依賴：true 時每次 Phase 變化增加壓力；Dependency 小於等於 50 時自動解除。</summary>
+    /// <summary>不良依賴：true 時每次 Phase 變化增加壓力；Dependency 調整後小於等於 40 時自動解除。</summary>
     public bool BadDependency { get; private set; } = false;
 
     // ───── 事件通知 ─────
@@ -271,7 +274,6 @@ public class ProtagonistStatusModel
     {
         ResetShootTimes();
         ApplySemenDailyReset();
-        DisableBadHealthy(); // 「狀態不好」換日自動解除
     }
 
     public void OnDayEnd()
@@ -326,6 +328,8 @@ public class ProtagonistStatusModel
         int prevValue = Stress;
         StatusGrade prevGrade = GetStressGrade();
         Stress = ClampStress(Stress + delta);
+
+        DisableBadHealthyIfStressLow();
 
         if (Stress == prevValue) return;
 
@@ -630,7 +634,7 @@ public class ProtagonistStatusModel
     /// <summary>開啟「狀態不好」。開啟期間：增加壓力再 +1、減少壓力少 -1。</summary>
     public void EnableBadHealthy() => SetBadHealthy(true);
 
-    /// <summary>解除「狀態不好」。換日 (OnDayStart) 也會自動呼叫。</summary>
+    /// <summary>解除「狀態不好」。Stress 調整後小於等於門檻時也會自動呼叫。</summary>
     public void DisableBadHealthy() => SetBadHealthy(false);
 
     /// <summary>直接設定「狀態不好」。狀態有變化時觸發 OnBadHealthyChanged。</summary>
@@ -639,6 +643,12 @@ public class ProtagonistStatusModel
         if (BadHealthy == value) return;
         BadHealthy = value;
         OnBadHealthyChanged?.Invoke(BadHealthy);
+    }
+
+    private void DisableBadHealthyIfStressLow()
+    {
+        if (Stress <= BAD_HEALTHY_AUTO_DISABLE_THRESHOLD)
+            DisableBadHealthy();
     }
 
     // ───── BadDependency（不良依賴） ─────

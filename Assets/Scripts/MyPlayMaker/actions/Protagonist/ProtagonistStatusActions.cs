@@ -617,7 +617,7 @@ public class CheckBadHealthy : FsmStateAction
 }
 
 [ActionCategory("Protagonist Status")]
-[Tooltip("設定主角「狀態不好 BadHealthy」。開啟期間：增加壓力再 +1、減少壓力少 -1。換日自動解除。")]
+[Tooltip("設定主角「狀態不好 BadHealthy」。開啟期間：增加壓力再 +1、減少壓力少 -1。壓力調整後小於等於 40 時自動解除。")]
 public class SetBadHealthy : FsmStateAction
 {
     [Tooltip("true = 開啟狀態不好，false = 解除")]

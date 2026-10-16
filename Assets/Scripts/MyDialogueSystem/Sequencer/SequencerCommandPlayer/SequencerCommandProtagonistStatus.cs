@@ -547,7 +547,7 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
     /// <summary>
     /// 用法: BadHealthy(on) / BadHealthy(off)
     /// 也接受 true/false、add/remove。
-    /// 開啟期間：增加壓力再 +1、減少壓力少 -1。換日自動解除。
+    /// 開啟期間：增加壓力再 +1、減少壓力少 -1。壓力調整後小於等於 40 時自動解除。
     /// </summary>
     public class SequencerCommandBadHealthy : SequencerCommand
     {
