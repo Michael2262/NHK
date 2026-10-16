@@ -3888,16 +3888,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 95b5ab6bbd6fa504399f282fe7c46c39, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FacialPartController
-  fsmOwnerObject: {fileID: 0}
-  targetFsmName: HeroineEmotionFSM
+  controllerId: 
   expressionDatabase: {fileID: 11400000, guid: cb1c9c18b3d1d3d48951f2c0cfed89b2, type: 2}
-  partType: 1
-  targetTrack: 11
-  clearMode: 0
-  clearDelaySeconds: -1
-  minRemoteCount: 2
-  maxRemoteCount: 18
-  playbackMode: 0
+  facialMode: 0
+  spineController: {fileID: 0}
+  parts: []
 --- !u!1 &318272672
 GameObject:
   m_ObjectHideFlags: 0
@@ -12640,16 +12635,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 95b5ab6bbd6fa504399f282fe7c46c39, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FacialPartController
-  fsmOwnerObject: {fileID: 0}
-  targetFsmName: HeroineEmotionFSM
+  controllerId: 
   expressionDatabase: {fileID: 11400000, guid: cb1c9c18b3d1d3d48951f2c0cfed89b2, type: 2}
-  partType: 2
-  targetTrack: 12
-  clearMode: 0
-  clearDelaySeconds: -1
-  minRemoteCount: 2
-  maxRemoteCount: 12
-  playbackMode: 0
+  facialMode: 0
+  spineController: {fileID: 0}
+  parts: []
 --- !u!1 &966427360
 GameObject:
   m_ObjectHideFlags: 0
@@ -17980,16 +17970,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 95b5ab6bbd6fa504399f282fe7c46c39, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FacialPartController
-  fsmOwnerObject: {fileID: 0}
-  targetFsmName: HeroineEmotionFSM
+  controllerId: 
   expressionDatabase: {fileID: 11400000, guid: cb1c9c18b3d1d3d48951f2c0cfed89b2, type: 2}
-  partType: 0
-  targetTrack: 10
-  clearMode: 0
-  clearDelaySeconds: -1
-  minRemoteCount: 2
-  maxRemoteCount: 10
-  playbackMode: 0
+  facialMode: 0
+  spineController: {fileID: 0}
+  parts: []
 --- !u!1001 &1373807134
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -23335,6 +23320,51 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1596616656}
   m_CullTransparentMesh: 1
+--- !u!1 &1605697117
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1605697118}
+  - component: {fileID: 1605697119}
+  m_Layer: 0
+  m_Name: ToolButtonGroupBridge
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1605697118
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1605697117}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2120150144}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1605697119
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1605697117}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3766fb23fd9e48c439e86e58c77a297b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ToolButtonGroupBridge
+  groupName: 
 --- !u!1 &1608844894
 GameObject:
   m_ObjectHideFlags: 0
@@ -23454,16 +23484,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 95b5ab6bbd6fa504399f282fe7c46c39, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FacialPartController
-  fsmOwnerObject: {fileID: 0}
-  targetFsmName: HeroineEmotionFSM
+  controllerId: 
   expressionDatabase: {fileID: 11400000, guid: cb1c9c18b3d1d3d48951f2c0cfed89b2, type: 2}
-  partType: 3
-  targetTrack: 9
-  clearMode: 0
-  clearDelaySeconds: -1
-  minRemoteCount: 2
-  maxRemoteCount: 18
-  playbackMode: 0
+  facialMode: 0
+  spineController: {fileID: 0}
+  parts: []
 --- !u!1 &1618747002
 GameObject:
   m_ObjectHideFlags: 0
@@ -28467,6 +28492,7 @@ Transform:
   - {fileID: 1700730744}
   - {fileID: 1643575855}
   - {fileID: 418189724}
+  - {fileID: 1907356402}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1889055836
@@ -28727,6 +28753,80 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1894420077}
   m_CullTransparentMesh: 1
+--- !u!1 &1907356401
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1907356402}
+  - component: {fileID: 1907356403}
+  m_Layer: 0
+  m_Name: DialogueEventHandler
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1907356402
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1907356401}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1887624132}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1907356403
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1907356401}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 68aaaac55dadecd438e6a5c148b74f5c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DialogueEventHandler
+  onDialogueStarted:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 1605697119}
+        m_TargetAssemblyTypeName: ToolButtonGroupBridge, Assembly-CSharp
+        m_MethodName: Hide
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+  onDialogueEnded:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 1605697119}
+        m_TargetAssemblyTypeName: ToolButtonGroupBridge, Assembly-CSharp
+        m_MethodName: Show
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!1 &1915912870
 GameObject:
   m_ObjectHideFlags: 0
@@ -34782,6 +34882,7 @@ MonoBehaviour:
               m_StringArgument: 
               m_BoolArgument: 0
             m_CallState: 2
+        callConditions: []
       OnExit:
         m_PersistentCalls:
           m_Calls:
@@ -34797,6 +34898,7 @@ MonoBehaviour:
               m_StringArgument: 
               m_BoolArgument: 0
             m_CallState: 2
+        callConditions: []
       ConditionalOnEnter: []
     - StateName: 02
       StateFlag: {fileID: 0}
@@ -34815,16 +34917,20 @@ MonoBehaviour:
               m_StringArgument: 
               m_BoolArgument: 0
             m_CallState: 2
+        callConditions: []
       OnExit:
         m_PersistentCalls:
           m_Calls: []
+        callConditions: []
       ConditionalOnEnter: []
   onCheckTrue:
     m_PersistentCalls:
       m_Calls: []
+    callConditions: []
   onCheckFalse:
     m_PersistentCalls:
       m_Calls: []
+    callConditions: []
 --- !u!1001 &2072603458
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -37581,6 +37687,7 @@ Transform:
   - {fileID: 328142291}
   - {fileID: 1204007417}
   - {fileID: 1321998078}
+  - {fileID: 1605697118}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2120657462
