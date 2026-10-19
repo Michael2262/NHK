@@ -3,16 +3,16 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// 監聽女主角 (Libido / Trust / HCount) 與主角 (Stress / LifePower / Sociality / Dependency)
-/// 的數值變化，依照所有 Rule Asset 對 ProgressFlagModel 做對應的開關 / 附值操作。
+/// 監聽女主角與主角的數值變化，依照設定表內的規則
+/// 對 ProgressFlagModel 做對應的開關 / 附值操作。
 ///
 /// 使用方式：在 GameStatusService 中傳入一個 List&lt;ProgressUnlockConfig&gt;，
 ///          Manager 會把所有 Config 內的 Rule 攤平並依條件來源建立索引。
 ///
 /// 設計原則：
-/// - Config 只是分組容器，不提供權威資訊
+/// - Config 直接保存各列條件與動作
 /// - Rule 上的 heroineID 與 conditions 才是真正的權威
-/// - 一個 Rule 可以同時出現在多個 Config (雖然少見)，Manager 會自動去重避免重複評估
+/// - 同一份 Config 重複掛載時，Manager 只讀取一次
 /// - 一個 Rule 可以同時含女主角與主角條件，任一來源變化都會觸發重評
 /// </summary>
 public class ProgressUnlockManager
@@ -22,12 +22,12 @@ public class ProgressUnlockManager
     private readonly ProtagonistStatusModel _protagonist;
 
     // 以 heroineID 為 key，value 是含該女主角條件的所有 Rule (去重後)
-    private readonly Dictionary<string, List<ProgressUnlockRuleAsset>> _rulesByHeroine
-        = new Dictionary<string, List<ProgressUnlockRuleAsset>>();
+    private readonly Dictionary<string, List<ProgressUnlockRule>> _rulesByHeroine
+        = new Dictionary<string, List<ProgressUnlockRule>>();
 
     // 含主角條件的所有 Rule (去重後)
-    private readonly List<ProgressUnlockRuleAsset> _protagonistRules
-        = new List<ProgressUnlockRuleAsset>();
+    private readonly List<ProgressUnlockRule> _protagonistRules
+        = new List<ProgressUnlockRule>();
 
     // 數值映射 (Sync)：女主角數值映射依 heroineID 分組，主角數值映射另存一份
     private readonly Dictionary<string, List<StatMirror>> _mirrorsByHeroine
@@ -39,11 +39,11 @@ public class ProgressUnlockManager
     private readonly List<BoolFlagMirror> _protagonistFlagMirrors
         = new List<BoolFlagMirror>();
 
-    // 紀錄每條 Rule「目前是否已套用」(用 Rule 本身為 key；Rule 是 ScriptableObject，引用即唯一)
-    private readonly Dictionary<ProgressUnlockRuleAsset, bool> _ruleApplied
-        = new Dictionary<ProgressUnlockRuleAsset, bool>();
+    // 紀錄每條 Rule「目前是否已套用」(以表內資料實例為 key，不依賴列名稱或排序)
+    private readonly Dictionary<ProgressUnlockRule, bool> _ruleApplied
+        = new Dictionary<ProgressUnlockRule, bool>();
 
-    // 每位女主角共用一個 handler，掛在 Libido / Trust / HCount 三個事件上 (方便解除訂閱)
+    // 每位女主角共用一個 handler，掛在 Libido / Trust / HCount / Affinity (方便解除訂閱)
     private readonly Dictionary<string, Action<int>> _heroineHandlers
         = new Dictionary<string, Action<int>>();
 
@@ -73,26 +73,20 @@ public class ProgressUnlockManager
         }
 
         // 攤平所有 Rule，依條件來源建立索引
-        // 使用 HashSet 避免同一個 Rule 被放進多個 Config 時重複評估
-        var seen = new HashSet<ProgressUnlockRuleAsset>();
+        // 使用 HashSet 避免同一份 Config 重複掛載時重複執行
+        var seenConfigs = new HashSet<ProgressUnlockConfig>();
 
         foreach (var cfg in configs)
         {
-            if (cfg == null) continue;
+            if (cfg == null || !seenConfigs.Add(cfg)) continue;
 
             CollectMirrors(cfg);
             CollectFlagMirrors(cfg);
 
-            if (cfg.rules == null) continue;
-
-            foreach (var rule in cfg.rules)
+            if (cfg.entries == null) continue;
+            foreach (var rule in cfg.entries)
             {
                 if (rule == null) continue;
-                if (!seen.Add(rule))
-                {
-                    // 已經看過這個 Rule，跳過 (另一個 Config 也引用了它)
-                    continue;
-                }
 
                 if (rule.conditions == null || rule.conditions.Count == 0)
                 {
@@ -116,7 +110,7 @@ public class ProgressUnlockManager
 
                     if (!_rulesByHeroine.TryGetValue(rule.heroineID, out var list))
                     {
-                        list = new List<ProgressUnlockRuleAsset>();
+                        list = new List<ProgressUnlockRule>();
                         _rulesByHeroine[rule.heroineID] = list;
                     }
                     list.Add(rule);
@@ -225,6 +219,7 @@ public class ProgressUnlockManager
             model.OnLibidoChanged += handler;
             model.OnTrustChanged += handler;
             model.OnHCountChanged += handler;
+            model.OnAffinityChanged += handler;
 
             _heroineHandlers[id] = handler;
         }
@@ -267,6 +262,7 @@ public class ProgressUnlockManager
             kv.Value.OnLibidoChanged -= handler;
             kv.Value.OnTrustChanged -= handler;
             kv.Value.OnHCountChanged -= handler;
+            kv.Value.OnAffinityChanged -= handler;
         }
         _heroineHandlers.Clear();
 
@@ -299,7 +295,7 @@ public class ProgressUnlockManager
     /// </summary>
     public void RefreshAllRules()
     {
-        var keys = new List<ProgressUnlockRuleAsset>(_ruleApplied.Keys);
+        var keys = new List<ProgressUnlockRule>(_ruleApplied.Keys);
         foreach (var k in keys) _ruleApplied[k] = false;
 
         _suppressAlerts = true;
@@ -396,7 +392,7 @@ public class ProgressUnlockManager
             _progress.RemoveFlag(mirror.target.FlagID);
     }
 
-    private void EvaluateRule(ProgressUnlockRuleAsset rule)
+    private void EvaluateRule(ProgressUnlockRule rule)
     {
         if (rule == null) return;
 
@@ -439,7 +435,7 @@ public class ProgressUnlockManager
     /// 規則達成時顯示公告 (選填；unlockAlertKey 留空則不顯示)。
     /// 只在「達成」時呼叫；撤銷 (revert) 不發公告。RefreshAllRules 期間也不發。
     /// </summary>
-    private void ShowUnlockAlert(ProgressUnlockRuleAsset rule)
+    private void ShowUnlockAlert(ProgressUnlockRule rule)
     {
         if (_suppressAlerts) return;
         if (string.IsNullOrEmpty(rule.unlockAlertKey)) return;
@@ -459,7 +455,7 @@ public class ProgressUnlockManager
     /// <summary>
     /// 套用 (meet=true) 或撤銷 (meet=false) 規則
     /// </summary>
-    private void ApplyAction(ProgressUnlockRuleAsset rule, bool meet)
+    private void ApplyAction(ProgressUnlockRule rule, bool meet)
     {
         string flagID = rule.target.FlagID;
 

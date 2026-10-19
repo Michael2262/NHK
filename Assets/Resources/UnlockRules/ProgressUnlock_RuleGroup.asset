@@ -12,15 +12,103 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a62e2adc77e8cf340a6ef671f7cf1dd8, type: 3}
   m_Name: ProgressUnlock_RuleGroup
   m_EditorClassIdentifier: Assembly-CSharp::ProgressUnlockConfig
-  rules:
-  - {fileID: 11400000, guid: 7154b172590571f47bb346f6c47b1db0, type: 2}
-  - {fileID: 11400000, guid: b5642f00c9bf1704d9f513619fc9e0e8, type: 2}
-  - {fileID: 11400000, guid: 3413ee78f21a64248b3bde580d41c5f4, type: 2}
-  - {fileID: 11400000, guid: 36addd03ac922194fb320b87ddc118e6, type: 2}
-  - {fileID: 11400000, guid: 8386c61d632cbbd4eaef3f0cc779c589, type: 2}
-  - {fileID: 11400000, guid: d6505586b2498c04ba1246aa05509593, type: 2}
-  - {fileID: 11400000, guid: 14de2b96773ded649aba0dc00db033fd, type: 2}
-  - {fileID: 11400000, guid: 18d3ce010a0871d45a4050de8139313f, type: 2}
+  entries:
+  - name: Rule_MyStress100
+    ruleName: 
+    heroineID: 
+    conditions:
+    - stat: 3
+      op: 0
+      threshold: 100
+    action: 0
+    target: {fileID: 11400000, guid: e33e13f9cd9f37948a7ed70a3640e811, type: 2}
+    valueToSet: 1
+    revertWhenConditionFails: 1
+    unlockAlertKey: 
+  - name: Rule_Dependency50
+    ruleName: "\u6027\u885D\u52D5>50"
+    heroineID: 
+    conditions:
+    - stat: 6
+      op: 0
+      threshold: 50
+    action: 0
+    target: {fileID: 11400000, guid: 80f987ff9e6a36147851fe7e1d34f823, type: 2}
+    valueToSet: 1
+    revertWhenConditionFails: 1
+    unlockAlertKey: 
+  - name: Rule_Dependency70
+    ruleName: "\u6027\u885D\u52D5>50"
+    heroineID: 
+    conditions:
+    - stat: 6
+      op: 0
+      threshold: 70
+    action: 0
+    target: {fileID: 11400000, guid: 97b369eba62aafa479f9e1b35acab4e2, type: 2}
+    valueToSet: 1
+    revertWhenConditionFails: 1
+    unlockAlertKey: 
+  - name: Rule_Dependency100
+    ruleName: 
+    heroineID: 
+    conditions:
+    - stat: 6
+      op: 0
+      threshold: 100
+    action: 0
+    target: {fileID: 11400000, guid: 7127227cbaf39a64aad8d6874260a26a, type: 2}
+    valueToSet: 1
+    revertWhenConditionFails: 1
+    unlockAlertKey: 
+  - name: Rule_Dependency150
+    ruleName: 
+    heroineID: 
+    conditions:
+    - stat: 6
+      op: 0
+      threshold: 150
+    action: 0
+    target: {fileID: 11400000, guid: 68cc1cf2e952cd8488a4418167e72f2f, type: 2}
+    valueToSet: 1
+    revertWhenConditionFails: 1
+    unlockAlertKey: 
+  - name: Rule_RoomMess0
+    ruleName: 
+    heroineID: 
+    conditions:
+    - stat: 7
+      op: 2
+      threshold: 0
+    action: 0
+    target: {fileID: 11400000, guid: 27b23a35f7328214f9760e9c8164ad0f, type: 2}
+    valueToSet: 1
+    revertWhenConditionFails: 1
+    unlockAlertKey: 
+  - name: Rule_StayLate
+    ruleName: "\u4FE1\u4EFB>30"
+    heroineID: sister
+    conditions:
+    - stat: 1
+      op: 0
+      threshold: 30
+    action: 0
+    target: {fileID: 11400000, guid: 1e5d1a3ba2e47ab4993e6a09823bff82, type: 2}
+    valueToSet: 1
+    revertWhenConditionFails: 1
+    unlockAlertKey: 
+  - name: Rule_Trust41
+    ruleName: 
+    heroineID: sister
+    conditions:
+    - stat: 1
+      op: 0
+      threshold: 41
+    action: 0
+    target: {fileID: 11400000, guid: c217120850a5e614493a9b1a17abc7cf, type: 2}
+    valueToSet: 1
+    revertWhenConditionFails: 1
+    unlockAlertKey: 
   mirrors:
   - stat: 7
     heroineID: 

@@ -2,17 +2,8 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// 解鎖規則分組容器。
-/// 單純是一個 Rule Asset 的「分組收納盒」，方便在 GameStatusService 的 Inspector
-/// 以角色為單位整批拖放，而不是把數十條 Rule 散落在同一個 List 裡。
-///
-/// 設計原則：
-/// - Config 本身「無狀態、無權威」，不決定任何解鎖邏輯
-/// - 規則的 heroineID、條件、動作，全部由 Rule Asset 自己定義
-/// - 建議每個 Config 對應一位角色的規則 (命名如 ProgressUnlock_Sister.asset)，
-///   但技術上不強制——Config 內混放多位角色的 Rule 也能運作
-///
-/// 建議在 Project 視窗 Create → Game → Progress → Progress Unlock Config 建立。
+/// 解鎖設定表。每列規則直接存在此 Config，不需建立獨立 Rule 資產。
+/// 規則、數值映射與布林映射可集中在同一份設定表，由 GameStatusService 交給 Manager。
 /// </summary>
 [CreateAssetMenu(
     menuName = "Game/Progress/Progress Unlock Config",
@@ -20,12 +11,8 @@ using UnityEngine;
 )]
 public class ProgressUnlockConfig : ScriptableObject
 {
-    [Tooltip(
-        "此分組內的所有解鎖規則。\n" +
-        "每條 Rule Asset 自帶 heroineID 與完整條件，Config 只負責收納。\n" +
-        "OnlyCondition 類型的規則會被 Manager 跳過 (它們只用來當 UI 條件)。"
-    )]
-    public List<ProgressUnlockRuleAsset> rules = new List<ProgressUnlockRuleAsset>();
+    [Tooltip("設定表內的規則。每列可以有多個條件，全部成立才執行指定動作。")]
+    public List<ProgressUnlockRule> entries = new List<ProgressUnlockRule>();
 
     [Header("數值映射 (Sync / 鏡像)")]
     [Tooltip(
@@ -42,4 +29,60 @@ public class ProgressUnlockConfig : ScriptableObject
         "此映射為單向：修改 Progress Flag 不會反向修改主角狀態。"
     )]
     public List<BoolFlagMirror> flagMirrors = new List<BoolFlagMirror>();
+
+}
+
+/// <summary>設定表中的一列；純資料與條件查詢，不是 Unity 資產。</summary>
+[System.Serializable]
+public class ProgressUnlockRule
+{
+    public string name = "新規則";
+    public string ruleName;
+    public string heroineID;
+    public List<UnlockStatCondition> conditions = new List<UnlockStatCondition>();
+    public ProgressActionType action = ProgressActionType.SetFlagOn;
+    public ProgressBaseDefinition target;
+    public int valueToSet = 1;
+    public bool revertWhenConditionFails;
+    public string unlockAlertKey;
+
+    public bool HasHeroineCondition => conditions != null && conditions.Exists(c => c != null && c.IsHeroineStat);
+    public bool HasProtagonistCondition => conditions != null && conditions.Exists(c => c != null && !c.IsHeroineStat);
+
+    public bool IsConditionMet(HeroineStatusModel heroine, ProtagonistStatusModel protagonist)
+    {
+        if (conditions == null) return false;
+        bool hasCondition = false;
+        foreach (var condition in conditions)
+        {
+            if (condition == null) continue;
+            hasCondition = true;
+            if (!condition.IsMet(heroine, protagonist)) return false;
+        }
+        return hasCondition;
+    }
+
+    public string GetConditionsSummary()
+    {
+        var parts = new List<string>();
+        if (conditions != null)
+            foreach (var condition in conditions)
+                if (condition != null) parts.Add(condition.ToSummary());
+        return parts.Count == 0 ? "(無條件)" : string.Join(" & ", parts);
+    }
+
+    /// <summary>複製條件內容，避免表內編輯連帶改到其他列。</summary>
+    public ProgressUnlockRule Copy()
+    {
+        var copy = (ProgressUnlockRule)MemberwiseClone();
+        copy.conditions = new List<UnlockStatCondition>();
+        if (conditions != null)
+            foreach (var condition in conditions)
+                if (condition != null)
+                    copy.conditions.Add(new UnlockStatCondition
+                    {
+                        stat = condition.stat, op = condition.op, threshold = condition.threshold
+                    });
+        return copy;
+    }
 }
