@@ -5,7 +5,10 @@
 /// </summary>
 public enum ScheduleDayType
 {
-    EveryDay,    // 每天 (預設)
-    WeekdayOnly, // 僅平日
-    WeekendOnly  // 僅假日
+    [UnityEngine.InspectorName("每天")]
+    EveryDay = 0,
+    [UnityEngine.InspectorName("僅平日")]
+    WeekdayOnly = 1,
+    [UnityEngine.InspectorName("僅週末")]
+    WeekendOnly = 2
 }

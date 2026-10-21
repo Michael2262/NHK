@@ -27,8 +27,8 @@ public class TimePhaseVisual
     public string visualName;
 
     public int phaseIndex;
-    [Tooltip("此視覺在哪種日期生效。EveryDay=平日假日皆套用；WeekdayOnly/WeekendOnly=僅平日/僅假日。\n" +
-             "同一 phase 可同時放 EveryDay 與假日專屬版，系統會優先挑專屬版，沒有才 fallback 到 EveryDay。")]
+    [Tooltip("此視覺在哪種日期生效：每天、僅平日或僅週末。\n" +
+             "同一 phase 的所有符合規則會同時啟用；每天的視覺可與當天專屬視覺一起顯示。")]
     public ScheduleDayType dayType = ScheduleDayType.EveryDay;
     public GameObject objectToActivate;
     public List<CanvasGroup> canvasGroupsToActivate;
@@ -239,17 +239,17 @@ public class HubController : MonoBehaviour
 
     private void UpdateEnvironmentVisuals(int currentPhaseIndex)
     {
-        // 依今天是平日/假日挑選對應視覺：先找專屬版，沒有才 fallback 到 EveryDay。
+        // 每天的共用視覺與當天專屬視覺一起啟用，同條件的多筆規則也全部套用。
         ScheduleDayType specific = _service.Time.IsWeekend
             ? ScheduleDayType.WeekendOnly
             : ScheduleDayType.WeekdayOnly;
 
-        TimePhaseVisual activeRule =
-            timeVisualRules.Find(r => r.phaseIndex == currentPhaseIndex && r.dayType == specific)
-            ?? timeVisualRules.Find(r => r.phaseIndex == currentPhaseIndex && r.dayType == ScheduleDayType.EveryDay);
-
-        if (activeRule != null)
+        foreach (var activeRule in timeVisualRules)
         {
+            if (activeRule.phaseIndex != currentPhaseIndex
+                || (activeRule.dayType != ScheduleDayType.EveryDay && activeRule.dayType != specific))
+                continue;
+
             if (activeRule.objectToActivate != null)
                 activeRule.objectToActivate.SetActive(true);
 

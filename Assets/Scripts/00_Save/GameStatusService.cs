@@ -56,6 +56,9 @@ public class GameStatusService : MonoBehaviour
     // Model 實例 (數據層) - 可供外部查詢
     // ==========================================================
     public ProtagonistStatusModel Protagonist { get; private set; }
+    // 數值實驗使用獨立實例，不取代正式角色，也不參與存讀檔。
+    public NHK.StateTest.ProtagonistStatusModel TestProtagonist { get; private set; }
+    public NHK.StateTest.HeroineStatusModel TestHeroine { get; private set; }
     public ProtagonistInventoryModel Inventory { get; private set; }
     public ProtagonistSkillModel Skills { get; private set; }
     public TimeSystemModel Time { get; private set; }
@@ -148,6 +151,8 @@ public class GameStatusService : MonoBehaviour
         // --- 1. 實例化 Model (數據層) ---
         // ProtagonistStatusModel: 無參數建構函式
         Protagonist = new ProtagonistStatusModel();
+        TestProtagonist = new NHK.StateTest.ProtagonistStatusModel();
+        TestHeroine = new NHK.StateTest.HeroineStatusModel();
 
         Inventory = new ProtagonistInventoryModel();
         ProgressFlags = new ProgressFlagModel();
@@ -341,6 +346,9 @@ public class GameStatusService : MonoBehaviour
 
         // 重置所有 Model 的數值
         Protagonist.NewGame();
+        // 保留實例與訂閱；等 NotifyGameStatusLoaded 統一刷新。
+        TestProtagonist.NewGame(notify: false);
+        TestHeroine.NewGame(notify: false);
         Skills.NewGame();
         Inventory.NewGame();
         ShopStatus.NewGame();
@@ -510,6 +518,7 @@ public class GameStatusService : MonoBehaviour
 
         // 2. 主角數值重置 (原本的邏輯)
         Protagonist.NextDay();
+        TestProtagonist.NextDay();
 
         // 3. 商店限制重置
         ShopStatus.ResetDailyLimits(itemDatabase);
