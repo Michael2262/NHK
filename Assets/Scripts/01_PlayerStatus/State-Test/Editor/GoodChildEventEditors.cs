@@ -146,10 +146,29 @@ public sealed class GoodChildTaskRewarderEditor : GoodChildEventListEditor
 {
     protected override string ListName => "rewards";
     protected override string ItemName => "獎勵";
+    protected override void DrawSettings()
+    {
+        EditorGUILayout.PropertyField(serializedObject.FindProperty("rewardButton"), new GUIContent("領獎按鈕"));
+        EditorGUILayout.PropertyField(serializedObject.FindProperty("repeatStickerInterval"), new GUIContent("最後獎勵重複間隔"));
+    }
     protected override void DrawItem(SerializedProperty item)
-        => DrawEvent(item.FindPropertyRelative("onReward"), "獎勵事件");
+    {
+        EditorGUILayout.PropertyField(item.FindPropertyRelative("stickerThreshold"), new GUIContent("累計貼紙門檻"));
+        DrawEvent(item.FindPropertyRelative("onReward"), "獎勵事件");
+    }
     protected override void InitializeItem(SerializedProperty item)
-        => ClearEvent(item.FindPropertyRelative("onReward"));
+    {
+        var list = serializedObject.FindProperty("rewards");
+        int previous = list.arraySize > 1
+            ? list.GetArrayElementAtIndex(list.arraySize - 2).FindPropertyRelative("stickerThreshold").intValue : 0;
+        item.FindPropertyRelative("stickerThreshold").intValue = previous < int.MaxValue ? previous + 1 : int.MaxValue;
+        ClearEvent(item.FindPropertyRelative("onReward"));
+    }
     protected override void DrawHelp()
-        => EditorGUILayout.HelpBox("呼叫 Reward() 依序領取一筆；全部領完後，每次繼續領最後一筆。進度不存檔，停用再啟用不重置。", MessageType.Info);
+    {
+        EditorGUILayout.HelpBox("按鈕會自動連接 Reward()，不必另外綁定。依主角 StickerCount 判斷門檻，領獎不扣貼紙。最後一筆領完後，門檻依重複間隔增加。進度不存檔，停用再啟用不重置。", MessageType.Info);
+        var error = ((GoodChildTaskRewarder)target).GetConfigurationError();
+        if (error != null) EditorGUILayout.HelpBox(error, MessageType.Warning);
+        EditorGUILayout.HelpBox($"貼紙上限為 {NHK.StateTest.ProtagonistStatusModel.StickerCountMax}；重複門檻超過上限後無法再領取。", MessageType.Info);
+    }
 }

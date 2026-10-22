@@ -12,6 +12,10 @@ public class InteractableCharacterEditor : Editor
     private SerializedProperty characterSpriteProp;   // ★ 新增
     private SerializedProperty interactionUIPanelProp;
     private SerializedProperty conditionalButtonsProp;
+    private SerializedProperty onClickProp;
+    private FilteredUnityEventDrawer clickEventDrawer;
+    private bool showUnityFunctions;
+    private bool EventEditingLocked => EditorApplication.isPlayingOrWillChangePlaymode;
 
     // 2. 在 OnEnable 時連結屬性
     private void OnEnable()
@@ -19,6 +23,20 @@ public class InteractableCharacterEditor : Editor
         characterSpriteProp = serializedObject.FindProperty("characterSprite");       // ★ 新增
         interactionUIPanelProp = serializedObject.FindProperty("interactionUIPanel");
         conditionalButtonsProp = serializedObject.FindProperty("conditionalButtons");
+        onClickProp = serializedObject.FindProperty("onClick");
+        Undo.undoRedoPerformed += ClearEventDrawer;
+    }
+
+    private void OnDisable()
+    {
+        Undo.undoRedoPerformed -= ClearEventDrawer;
+        clickEventDrawer = null;
+    }
+
+    private void ClearEventDrawer()
+    {
+        clickEventDrawer = null;
+        Repaint();
     }
 
     // 3. 繪製 Inspector
@@ -63,6 +81,25 @@ public class InteractableCharacterEditor : Editor
         else
         {
             EditorGUILayout.HelpBox("找不到 'conditionalButtons' 欄位。", MessageType.Error);
+        }
+
+        // 沿用 Tool Button Group 的簡易事件選單，預設隱藏 Unity 內建函式。
+        EditorGUILayout.Space(10);
+        EditorGUILayout.LabelField("點擊事件", EditorStyles.boldLabel);
+        showUnityFunctions = EditorGUILayout.Toggle("顯示 Unity 內建函式", showUnityFunctions);
+        if (onClickProp != null)
+        {
+            if (clickEventDrawer == null)
+                clickEventDrawer = new FilteredUnityEventDrawer(this, () => target,
+                    () => showUnityFunctions, () => !EventEditingLocked,
+                    drawer => clickEventDrawer == drawer);
+
+            using (new EditorGUI.DisabledScope(EventEditingLocked))
+            {
+                var label = new GUIContent("角色點擊後", onClickProp.tooltip);
+                Rect rect = EditorGUILayout.GetControlRect(false, clickEventDrawer.GetPropertyHeight(onClickProp, label));
+                clickEventDrawer.OnGUI(rect, onClickProp, label);
+            }
         }
 
         // 套用更改

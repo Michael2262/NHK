@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.EventSystems; // 這是偵測「是否點在 UI 上」所必需的
 using System.Collections.Generic; // 為了使用 List
 using UnityEngine.InputSystem; // ★ 1. 導入新的輸入系統
@@ -44,6 +45,10 @@ public class InteractableCharacter : ConditionalTouchReactionBase
     [Tooltip("設定此面板中的所有按鈕及其顯示條件")]
     public List<ConditionalButton> conditionalButtons;
 
+    [Header("點擊事件")]
+    [Tooltip("每次有效點擊角色，在互動面板開關處理完成後觸發。")]
+    public UnityEvent onClick = new UnityEvent();
+
     // --- 內部狀態 ---
     private Collider2D _myCollider;
     private Camera _mainCamera;
@@ -80,23 +85,25 @@ public class InteractableCharacter : ConditionalTouchReactionBase
 
     /// <summary>
     /// 當「點擊」手勢 (Click) 成功匹配時，由基底類別呼叫。
-    /// (★ 邏輯不變)
+    /// 切換互動面板後，觸發額外的點擊事件。
     /// </summary>
     public override void OnTouched()
     {
-        if (interactionUIPanel == null) return;
-
-        bool shouldOpen = !interactionUIPanel.activeSelf;
-
-        if (shouldOpen)
+        if (interactionUIPanel != null)
         {
-            UpdateButtonConditions();
-            interactionUIPanel.SetActive(true);
+            bool shouldOpen = !interactionUIPanel.activeSelf;
+            if (shouldOpen)
+            {
+                UpdateButtonConditions();
+                interactionUIPanel.SetActive(true);
+            }
+            else
+            {
+                interactionUIPanel.SetActive(false);
+            }
         }
-        else
-        {
-            interactionUIPanel.SetActive(false);
-        }
+
+        onClick?.Invoke();
     }
 
     /// <summary>

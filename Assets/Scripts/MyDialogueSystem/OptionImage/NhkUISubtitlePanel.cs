@@ -42,6 +42,62 @@ namespace PixelCrushers.DialogueSystem
                  "填 !FlagName = 反向，只有該 Flag 不為 true 時才顯示敘述。")]
         [SerializeField] private string narrationFlagFieldName = "NarrationFlag";
 
+        [Header("角色名字框")]
+        [Tooltip("啟用後，只有清單內的角色會顯示名字文字與背景框；關閉時沿用原生行為。")]
+        [SerializeField] private bool controlNameVisibility = false;
+
+        [Tooltip("包含 Portrait Name 與背景框的共同父物件。請勿指定整個字幕面板或其祖先。")]
+        [SerializeField] private GameObject nameContainer;
+
+        [Tooltip("填入 Dialogue Database 的角色 Name（不是 Display Name），不分大小寫。清單外角色隱藏名字框。")]
+        [SerializeField] private List<string> actorsWithVisibleNames = new List<string>();
+
+        // 保留最後一位說話者的設定，供 SubtitlePanel(hide/show) 還原使用。
+        private bool currentNameVisible;
+
+        private void SetNameActor(string actorName)
+        {
+            currentNameVisible = false;
+            if (string.IsNullOrEmpty(actorName) || actorsWithVisibleNames == null) return;
+            foreach (var actor in actorsWithVisibleNames)
+            {
+                if (!string.IsNullOrWhiteSpace(actor) &&
+                    string.Equals(actor.Trim(), actorName, System.StringComparison.OrdinalIgnoreCase))
+                {
+                    currentNameVisible = true;
+                    break;
+                }
+            }
+        }
+
+        private void ApplyNameVisibility(bool uiVisible = true)
+        {
+            if (!controlNameVisibility || nameContainer == null) return;
+            // 避免誤拖整個面板，導致字幕元件或對話內容一起被停用。
+            if (transform.IsChildOf(nameContainer.transform) ||
+                (panel != null && panel.transform.IsChildOf(nameContainer.transform)) ||
+                (!UITextField.IsNull(subtitleText) && subtitleText.gameObject.transform.IsChildOf(nameContainer.transform)))
+                return;
+
+            bool show = uiVisible && currentNameVisible;
+            nameContainer.SetActive(show);
+            if (!UITextField.IsNull(portraitName)) portraitName.SetActive(show);
+        }
+
+        protected override void SetUIElementsActive(bool value)
+        {
+            base.SetUIElementsActive(value);
+            ApplyNameVisibility(value);
+        }
+
+        public override void OpenOnStartConversation(Sprite portraitSprite, string portraitName, DialogueActor dialogueActor)
+        {
+            // 尚無實際字幕且找不到角色時，先隱藏名字框，避免沿用上一段對話的名字。
+            SetNameActor(dialogueActor != null ? dialogueActor.actor : null);
+            base.OpenOnStartConversation(portraitSprite, portraitName, dialogueActor);
+            ApplyNameVisibility();
+        }
+
         public override void SetContent(Subtitle subtitle)
         {
             PrepareSlowTypewriter(subtitle);
@@ -55,6 +111,8 @@ namespace PixelCrushers.DialogueSystem
                 settingSubtitleContent = false;
             }
             UpdateNarration(subtitle);
+            SetNameActor(subtitle != null && subtitle.speakerInfo != null ? subtitle.speakerInfo.nameInDatabase : null);
+            ApplyNameVisibility();
         }
 
         public override void Close()
@@ -193,6 +251,7 @@ namespace PixelCrushers.DialogueSystem
             s_commandHiddenPanels.Clear();
 
             base.Open();
+            ApplyNameVisibility();
 
             // 面板可能在 inactive 期間才被上鎖，當時 PushContinueButtonLock 未必找得到它。
             // 每次 Open 都再檢查一次，避免舊的 Continue Button 跟著父面板重新出現。

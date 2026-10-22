@@ -19,6 +19,8 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
     /// 7. Expression (表情預設): TachieControl(Expression, Sister, Angry)
     /// 8. Move: TachieControl(Move, Sister, 500, 0.5)
     ///    也可用具名預設: TachieControl(Move, Sister, Adv) -> 位置與時間查 MovePresets（可加第4參數覆寫時間）
+    ///    MoveShow: TachieControl(MoveShow, Sister, Adv, 0.5) -> 瞬間移動後淡入，也可直接指定 X 座標
+    ///    Move 時間固定為 0；第4參數為 Show 時間，留空用 Inspector 預設淡入時間
     /// 9. Left/Right/Center: TachieControl(Left, Sister, 0.5)
     /// 10. Clear: TachieControl(Clear, 0.5) -> 邊淡出邊移回原位（過程看得到）
     /// 10.5 HideAndClear: 先原地淡出，看不見之後才歸零（過程看不到）
@@ -138,12 +140,13 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
                 TachieController.Instance.Shock(actorID, duration, strength, vibrato);
             }
 
-            else if (IsAction(action, "Move"))
+            else if (IsAction(action, "Move", "MoveShow"))
             {
                 // 兩種寫法：
                 //   TachieControl(Move, Sister, 250, 0.5)  -> 直接指定 x 與時間
                 //   TachieControl(Move, Sister, Adv)       -> 用具名預設（見 MovePresets），第4參數可覆寫時間
                 string p2 = GetParameter(2);
+                bool moveShow = IsAction(action, "MoveShow");
                 float xValue;
                 float duration;
                 if (float.TryParse(p2, System.Globalization.NumberStyles.Float,
@@ -152,19 +155,22 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
                     // 數字寫法
                     duration = GetParameterAsFloat(3, -1f);
                 }
-                else if (MovePresets.TryGetValue(p2, out var preset))
+                else if (!string.IsNullOrEmpty(p2) && MovePresets.TryGetValue(p2, out var preset))
                 {
                     // 具名預設；第4參數若有給就覆寫預設時間
                     xValue = preset.x;
-                    duration = GetParameterAsFloat(3, preset.duration);
+                    // MoveShow 的時間控制淡入，不沿用位置預設的移動時間。
+                    duration = GetParameterAsFloat(3, moveShow ? -1f : preset.duration);
                 }
                 else
                 {
-                    Debug.LogWarning($"[TachieControl] Move 的位置參數無法解析（不是數字也不是已知預設）: {p2}");
+                    Debug.LogWarning($"[TachieControl] {action} 的位置參數無法解析（不是數字也不是已知預設）: {p2}");
                     Stop();
                     return;
                 }
-                TachieController.Instance.MoveToX(actorID, xValue, duration);
+                TachieController.Instance.MoveToX(actorID, xValue, moveShow ? 0f : duration);
+                if (moveShow)
+                    TachieController.Instance.SetVisibility(actorID, true, duration);
             }
             else if (IsAction(action, "Left")) TachieController.Instance.MoveToLeft(actorID, GetParameterAsFloat(2, -1f));
             else if (IsAction(action, "Right")) TachieController.Instance.MoveToRight(actorID, GetParameterAsFloat(2, -1f));
