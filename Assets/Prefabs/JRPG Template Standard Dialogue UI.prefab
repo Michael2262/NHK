@@ -2434,7 +2434,7 @@ MonoBehaviour:
     m_textMeshProUGUI: {fileID: 0}
   narrationFieldName: Option Narration
   narrationFlagFieldName: NarrationFlag
-  styleFieldName: Button Style
+  skinFieldName: Button Skin
   styleSkins: []
   defaultSkin: {fileID: 0}
   styleBackgroundImage: {fileID: 0}
@@ -2515,11 +2515,11 @@ MonoBehaviour:
     allowOpenSubtitlePanelsOnStartConversation: 0
     allowDialogueActorCustomPanels: 1
     menuPanels:
-    - {fileID: 3665860373295668725}
+    - {fileID: 7323588304830646379}
     - {fileID: 2326018891913925342}
     - {fileID: 7550529157645539242}
     - {fileID: 4145931628586301964}
-    defaultMenuPanel: {fileID: 4145931628586301964}
+    defaultMenuPanel: {fileID: 7323588304830646379}
     useFirstResponseForMenuPortrait: 0
     waitForClose: 1
   QTEIndicatorElements:
@@ -4221,6 +4221,7 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 5178603087615135432}
+  - {fileID: 2984240025528217066}
   m_Father: {fileID: 8372589051720779175}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -10097,7 +10098,7 @@ GameObject:
   - component: {fileID: 2384606106441920205}
   - component: {fileID: 8847047987632979108}
   - component: {fileID: 8803993762471615712}
-  - component: {fileID: 3665860373295668725}
+  - component: {fileID: 7323588304830646379}
   m_Layer: 5
   m_Name: Middle Response Menu Panel
   m_TagString: Untagged
@@ -10195,7 +10196,7 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &3665860373295668725
+--- !u!114 &7323588304830646379
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -10204,9 +10205,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 8706911440831243138}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0a44b96aa95563e4dbd81da44328a697, type: 3}
+  m_Script: {fileID: 11500000, guid: 15819c42810c0834eb2023265292944a, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: 
+  m_EditorClassIdentifier: Assembly-CSharp::PixelCrushers.DialogueSystem.NhkUIMenuPanel
   firstSelected: {fileID: 0}
   focusCheckFrequency: 0.2
   refreshSelectablesFrequency: 0.5
@@ -10266,6 +10267,12 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_hasFocus: 0
+  buttonStyleFieldName: Button Style
+  buttonPrefabStyles:
+  - id: Normal
+    prefab: {fileID: 6939110309262110787}
+  - id: Cancel
+    prefab: {fileID: 1078773053259223905}
 --- !u!1 &8714181445824700270
 GameObject:
   m_ObjectHideFlags: 0
@@ -11037,6 +11044,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Normal Response Button
       objectReference: {fileID: 0}
+    - target: {fileID: 3170575883626274689, guid: 792d8ac4dbeb3a4438b878356c55b469, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 5316788574923859426, guid: 792d8ac4dbeb3a4438b878356c55b469, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -11051,7 +11062,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5316788574923859426, guid: 792d8ac4dbeb3a4438b878356c55b469, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5316788574923859426, guid: 792d8ac4dbeb3a4438b878356c55b469, type: 3}
       propertyPath: m_AnchorMin.x
@@ -11059,7 +11070,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5316788574923859426, guid: 792d8ac4dbeb3a4438b878356c55b469, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5316788574923859426, guid: 792d8ac4dbeb3a4438b878356c55b469, type: 3}
       propertyPath: m_SizeDelta.x
@@ -11099,11 +11110,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5316788574923859426, guid: 792d8ac4dbeb3a4438b878356c55b469, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 0
+      value: 524.8334
       objectReference: {fileID: 0}
     - target: {fileID: 5316788574923859426, guid: 792d8ac4dbeb3a4438b878356c55b469, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0
+      value: -268.71954
       objectReference: {fileID: 0}
     - target: {fileID: 5316788574923859426, guid: 792d8ac4dbeb3a4438b878356c55b469, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -12596,6 +12607,123 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7b13f6481a1e13d4c8f114257aba7953, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PixelCrushers.DialogueSystem.OptionImageResponseButton
+--- !u!1001 &7858230410802793405
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 946840693162096157}
+    m_Modifications:
+    - target: {fileID: 2426611634996370484, guid: dd9f701cfde832c4497c7f3c88f4e831, type: 3}
+      propertyPath: m_Name
+      value: Cancel Response Button
+      objectReference: {fileID: 0}
+    - target: {fileID: 2426611634996370484, guid: dd9f701cfde832c4497c7f3c88f4e831, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4928112895428798039, guid: dd9f701cfde832c4497c7f3c88f4e831, type: 3}
+      propertyPath: m_Pivot.x
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4928112895428798039, guid: dd9f701cfde832c4497c7f3c88f4e831, type: 3}
+      propertyPath: m_Pivot.y
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4928112895428798039, guid: dd9f701cfde832c4497c7f3c88f4e831, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4928112895428798039, guid: dd9f701cfde832c4497c7f3c88f4e831, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4928112895428798039, guid: dd9f701cfde832c4497c7f3c88f4e831, type: 3}
+      propertyPath: m_AnchorMin.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4928112895428798039, guid: dd9f701cfde832c4497c7f3c88f4e831, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4928112895428798039, guid: dd9f701cfde832c4497c7f3c88f4e831, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 240
+      objectReference: {fileID: 0}
+    - target: {fileID: 4928112895428798039, guid: dd9f701cfde832c4497c7f3c88f4e831, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 55
+      objectReference: {fileID: 0}
+    - target: {fileID: 4928112895428798039, guid: dd9f701cfde832c4497c7f3c88f4e831, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4928112895428798039, guid: dd9f701cfde832c4497c7f3c88f4e831, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4928112895428798039, guid: dd9f701cfde832c4497c7f3c88f4e831, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4928112895428798039, guid: dd9f701cfde832c4497c7f3c88f4e831, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4928112895428798039, guid: dd9f701cfde832c4497c7f3c88f4e831, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4928112895428798039, guid: dd9f701cfde832c4497c7f3c88f4e831, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4928112895428798039, guid: dd9f701cfde832c4497c7f3c88f4e831, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4928112895428798039, guid: dd9f701cfde832c4497c7f3c88f4e831, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 524.8334
+      objectReference: {fileID: 0}
+    - target: {fileID: 4928112895428798039, guid: dd9f701cfde832c4497c7f3c88f4e831, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -331.27954
+      objectReference: {fileID: 0}
+    - target: {fileID: 4928112895428798039, guid: dd9f701cfde832c4497c7f3c88f4e831, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4928112895428798039, guid: dd9f701cfde832c4497c7f3c88f4e831, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4928112895428798039, guid: dd9f701cfde832c4497c7f3c88f4e831, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: dd9f701cfde832c4497c7f3c88f4e831, type: 3}
+--- !u!114 &1078773053259223905 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7203112384843815132, guid: dd9f701cfde832c4497c7f3c88f4e831, type: 3}
+  m_PrefabInstance: {fileID: 7858230410802793405}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b13f6481a1e13d4c8f114257aba7953, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PixelCrushers.DialogueSystem.OptionImageResponseButton
+--- !u!224 &2984240025528217066 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 4928112895428798039, guid: dd9f701cfde832c4497c7f3c88f4e831, type: 3}
+  m_PrefabInstance: {fileID: 7858230410802793405}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &8083843127551013987
 PrefabInstance:
   m_ObjectHideFlags: 0

@@ -4,7 +4,7 @@
 //       從 OptionImageDatabase 查對應 Sprite；空白 / 查不到 → 隱藏。
 //   (2) 一段額外敘述：自訂 Text 欄位（預設 "Narration"，與字幕面板敘述框共用）直接填字
 //       （如同對話文字，可用 "Narration ja" 等語言變體多語系）；空白 → 隱藏。
-//   (3) 按鈕樣式：自訂 Text 欄位（預設 "Button Style"）填樣式 ID，同一個 ID 會套用兩種機制：
+//   (3) 按鈕樣式：自訂 Text 欄位（預設 "Button Skin"）填樣式 ID，同一個 ID 會套用兩種機制：
 //       - 皮膚子物件：啟用 ID 對應的皮膚子物件、關閉其餘（版型差異大時用）
 //       - 背景圖：從對照表查 ID 對應 Sprite 換到指定 Image（輕量，只換底圖時用）
 //       ID 空白或查不到 → 還原成預設皮膚 / 原始背景圖。
@@ -21,7 +21,7 @@
 //   3. Inspector 拖入 Icon Image、OptionImageDatabase、Narration Text
 //   4. 需要圖片的選項節點：新增 Text 欄位 "Option Image"，填圖片 ID
 //      需要敘述的選項節點：新增 Text 欄位 "Narration"，直接填敘述文字（與字幕面板敘述框共用）
-//      需要換樣式的選項節點：新增 Text 欄位 "Button Style"，填樣式 ID
+//      需要換樣式的選項節點：新增 Text 欄位 "Button Skin"，填樣式 ID
 //      需要 NG 提示的選項節點：新增 Text 欄位 "NG Conditions"，例如 not Flag("MyFlag")
 
 using System.Collections.Generic;
@@ -59,10 +59,11 @@ namespace PixelCrushers.DialogueSystem
                  "支援 MyFlag、!MyFlag、not(MyFlag)。留空 = 敘述照常顯示；有填 = 條件成立時才顯示敘述。")]
         [SerializeField] private string narrationFlagFieldName = "NarrationFlag";
 
-        [Header("Button Style Settings")]
+        [Header("Button Skin Settings")]
         [Tooltip("Dialogue Entry 自訂欄位名稱，Text 類型，填樣式 ID。空白 = 使用預設樣式。\n" +
                  "同一個 ID 會同時套用「皮膚子物件」與「背景圖」兩種機制（各自查得到才套）。")]
-        [SerializeField] private string styleFieldName = "Button Style";
+        // 使用新的序列化欄位名稱，讓舊 Prefab 儲存的 Button Style 不再與整顆模板選擇共用。
+        [SerializeField] private string skinFieldName = "Button Skin";
 
         [Tooltip("皮膚子物件清單：ID 對應要啟用的子物件。套用時只啟用對應的那一個，清單內其餘全部關閉。")]
         [SerializeField] private List<ButtonSkin> styleSkins = new List<ButtonSkin>();
@@ -81,7 +82,7 @@ namespace PixelCrushers.DialogueSystem
         [System.Serializable]
         public class ButtonSkin
         {
-            [Tooltip("樣式 ID，對話節點的 Button Style 欄位填這個字串")]
+            [Tooltip("樣式 ID，對話節點的 Button Skin 欄位填這個字串")]
             public string id;
 
             [Tooltip("該 ID 對應要啟用的皮膚子物件")]
@@ -316,7 +317,7 @@ namespace PixelCrushers.DialogueSystem
         }
 
         /// <summary>
-        /// 依 response 目的節點的 Button Style 欄位套用樣式（皮膚子物件 + 背景圖）。
+        /// 依 response 目的節點的 Button Skin 欄位套用樣式（皮膚子物件 + 背景圖）。
         /// 兩種機制共用同一個 ID，各自查得到才套；查不到就用預設。
         /// </summary>
         private void UpdateStyle(Response response)
@@ -324,7 +325,7 @@ namespace PixelCrushers.DialogueSystem
             string id = null;
             if (response != null && response.destinationEntry != null)
             {
-                id = Field.LookupValue(response.destinationEntry.fields, styleFieldName);
+                id = Field.LookupValue(response.destinationEntry.fields, skinFieldName);
             }
             ApplySkin(id);
             ApplyBackground(id);
