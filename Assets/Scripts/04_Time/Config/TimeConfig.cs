@@ -4,6 +4,46 @@ using System.Collections.Generic;
 [CreateAssetMenu(menuName = "Game/Time/Time Config")]
 public class TimeConfig : ScriptableObject
 {
+    [Header("一小段時間")]
+    [InspectorName("一小段時間的 Mini 數量")]
+    [Tooltip("AdvanceShortTime() 每次推進的 Mini 數量。修改此處即可統一調整所有引用。")]
+    [Min(1)] public int ShortTimeMinis = 6;
+
+    [Header("中段時間")]
+    [InspectorName("中段時間的 Mini 數量")]
+    [Tooltip("AdvanceMediumTime() 與 PlayAdvanceMediumTime() 共用的 Mini 數量。")]
+    [Min(1)] public int MediumTimeMinis = 12;
+
+    [Header("長段時間")]
+    [InspectorName("長段時間的 Mini 數量")]
+    [Tooltip("AdvanceLongTime() 與 PlayAdvanceLongTime() 共用的 Mini 數量。")]
+    [Min(1)] public int LongTimeMinis = 24;
+
+    [Header("時間流逝演出")]
+    [InspectorName("每個 Mini 停留秒數")]
+    [Tooltip("Play 類命令使用的實際秒數，不受 Time.timeScale 影響；0 表示每畫面推進一個 Mini。")]
+    [Min(0)] public float MiniPlaybackSeconds = 0.15f;
+
+    [System.Serializable]
+    public class PhaseMiniConfig
+    {
+        public List<int> MinisPerSlot = new List<int>();
+    }
+
+    // 與既有 Phase／Slot 按索引對應，保留原本序列化欄位以相容舊資產。
+    [HideInInspector] public List<PhaseMiniConfig> MiniSettings = new List<PhaseMiniConfig>();
+
+    /// <summary>未設定的 Slot 預設為 1 Mini；無效數量至少視為 1。</summary>
+    public int GetMinisInSlot(int phaseIndex, int slotInPhase)
+    {
+        if (MiniSettings == null || phaseIndex < 0 || phaseIndex >= MiniSettings.Count)
+            return 1;
+        var slots = MiniSettings[phaseIndex]?.MinisPerSlot;
+        int index = slotInPhase - 1;
+        return slots != null && index >= 0 && index < slots.Count
+            ? Mathf.Max(1, slots[index]) : 1;
+    }
+
     [Header("時間階段定義")]
     [Tooltip("四個主要時間階段的名稱，順序即為時間演進的順序 (0-3)")]
     public List<string> PhaseNames = new List<string> { "白天", "黃昏", "晚上", "深夜" };

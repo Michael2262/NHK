@@ -5,6 +5,280 @@ using Tooltip = HutongGames.PlayMaker.TooltipAttribute;
 
 namespace MyGame.Actions
 {
+    /// <summary>共用等待與回呼處理，離開 State 後忽略舊回呼；全域播放會持續到結束或明確取消。</summary>
+    public abstract class TimePlaybackActionBase : FsmStateAction
+    {
+        [Tooltip("整段播放完成後送出。")]
+        public FsmEvent finishedEvent;
+        [Tooltip("播放被拒絕或取消時送出。")]
+        public FsmEvent failedEvent;
+        private int generation;
+        private bool done;
+        private bool succeeded;
+
+        public override void Reset()
+        {
+            finishedEvent = null;
+            failedEvent = null;
+        }
+
+        protected void Play(int minis, bool shortTime = false, bool withinDay = false,
+            Func<TimePlaybackModel, Action<bool>, bool> preset = null)
+        {
+            int version = ++generation;
+            done = false;
+            succeeded = false;
+            Action<bool> callback = result =>
+            {
+                if (generation != version) return;
+                succeeded = result;
+                done = true;
+            };
+            var playback = GameStatusService.Instance?.TimePlayback;
+            bool accepted = playback != null && (preset != null
+                ? preset(playback, callback)
+                : shortTime
+                ? playback.PlayAdvanceShortTime(callback)
+                : playback.PlayAdvanceMinis(minis, callback, withinDay));
+            if (!accepted) done = true;
+            CompleteIfReady();
+        }
+
+        public override void OnUpdate() => CompleteIfReady();
+        public override void OnExit() => generation++;
+
+        private void CompleteIfReady()
+        {
+            if (!done) return;
+            done = false;
+            Fsm.Event(succeeded ? finishedEvent : failedEvent);
+            Finish();
+        }
+    }
+
+    [ActionCategory("Time")]
+    [Tooltip("逐格播放指定 Mini，等待播放完成。每格秒數由 TimeConfig 決定，跨日後停在隔天起點。")]
+    public class PlayAdvanceMinis : TimePlaybackActionBase
+    {
+        [RequiredField] public FsmInt minis;
+        public override void Reset() { base.Reset(); minis = 1; }
+        public override void OnEnter() => Play(minis == null || minis.IsNone ? -1 : minis.Value);
+    }
+
+    [ActionCategory("Time")]
+    [Tooltip("逐格播放指定 Mini，等待播放完成；當日時間不足時拒絕整次播放。")]
+    public class PlayAdvanceMinisWithinDay : TimePlaybackActionBase
+    {
+        [RequiredField] public FsmInt minis;
+        public override void Reset() { base.Reset(); minis = 1; }
+        public override void OnEnter() => Play(minis == null || minis.IsNone ? -1 : minis.Value, withinDay: true);
+    }
+
+    [ActionCategory("Time")]
+    [Tooltip("逐格播放一小段時間並等待完成；Mini 數量與每格秒數都由 TimeConfig 決定。")]
+    public class PlayAdvanceShortTime : TimePlaybackActionBase
+    {
+        public override void OnEnter() => Play(0, shortTime: true);
+    }
+
+    [ActionCategory("Time")]
+    [Tooltip("逐格播放一段中等時間並等待完成；Mini 數量與每格秒數都由 TimeConfig 決定。")]
+    public class PlayAdvanceMediumTime : TimePlaybackActionBase
+    {
+        public override void OnEnter() => Play(0, preset: (playback, done) => playback.PlayAdvanceMediumTime(done));
+    }
+
+    [ActionCategory("Time")]
+    [Tooltip("逐格播放一大段時間並等待完成；Mini 數量與每格秒數都由 TimeConfig 決定。")]
+    public class PlayAdvanceLongTime : TimePlaybackActionBase
+    {
+        public override void OnEnter() => Play(0, preset: (playback, done) => playback.PlayAdvanceLongTime(done));
+    }
+
+    [ActionCategory("Time")]
+    [Tooltip("直接推進指定 Mini。跨日後停在隔天起點，捨棄剩餘數量，不播放轉場。")]
+    public class AdvanceMinis : FsmStateAction
+    {
+        [RequiredField]
+        [Tooltip("推進數量，必須為非負整數；0 表示不推進。")]
+        public FsmInt minis;
+        public FsmEvent finishedEvent;
+        public FsmEvent failedEvent;
+
+        public override void Reset()
+        {
+            minis = 1;
+            finishedEvent = null;
+            failedEvent = null;
+        }
+
+        public override void OnEnter()
+        {
+            var model = GameStatusService.Instance?.Time;
+            if (model == null || minis == null || minis.IsNone || minis.Value < 0)
+            {
+                Debug.LogWarning("[AdvanceMinis] 時間系統未就緒或 Mini 數量無效。");
+                Fsm.Event(failedEvent);
+                Finish();
+                return;
+            }
+            model.AdvanceMinis(minis.Value);
+            Fsm.Event(finishedEvent);
+            Finish();
+        }
+    }
+
+    [ActionCategory("Time")]
+    [Tooltip("直接推進指定 Mini，但不允許跨日。當日不足時不推進，送出 failedEvent。")]
+    public class AdvanceMinisWithinDay : FsmStateAction
+    {
+        [RequiredField]
+        public FsmInt minis;
+        public FsmEvent finishedEvent;
+        public FsmEvent failedEvent;
+
+        public override void Reset()
+        {
+            minis = 1;
+            finishedEvent = null;
+            failedEvent = null;
+        }
+
+        public override void OnEnter()
+        {
+            var model = GameStatusService.Instance?.Time;
+            bool succeeded = model != null && minis != null && !minis.IsNone && model.TryAdvanceMinis(minis.Value);
+            if (!succeeded)
+                Debug.LogWarning("[AdvanceMinisWithinDay] 時間系統未就緒、數量無效或今日剩餘時間不足。");
+            Fsm.Event(succeeded ? finishedEvent : failedEvent);
+            Finish();
+        }
+    }
+
+    [ActionCategory("Time")]
+    [Tooltip("推進一小段時間。Mini 數量統一由 TimeConfig 設定（預設 6）；跨日後停在隔天起點，不播放轉場。")]
+    public class AdvanceShortTime : FsmStateAction
+    {
+        public FsmEvent finishedEvent;
+        public FsmEvent failedEvent;
+
+        public override void Reset()
+        {
+            finishedEvent = null;
+            failedEvent = null;
+        }
+
+        public override void OnEnter()
+        {
+            var model = GameStatusService.Instance?.Time;
+            if (model == null)
+            {
+                Debug.LogWarning("[AdvanceShortTime] 時間系統尚未初始化。");
+                Fsm.Event(failedEvent);
+                Finish();
+                return;
+            }
+            model.AdvanceShortTime();
+            Fsm.Event(finishedEvent);
+            Finish();
+        }
+    }
+
+    [ActionCategory("Time")]
+    [Tooltip("推進中段時間。Mini 數量統一由 TimeConfig 設定（預設 12）；跨日後停在隔天起點，不播放轉場。")]
+    public class AdvanceMediumTime : FsmStateAction
+    {
+        public FsmEvent finishedEvent;
+        public FsmEvent failedEvent;
+
+        public override void Reset()
+        {
+            finishedEvent = null;
+            failedEvent = null;
+        }
+
+        public override void OnEnter()
+        {
+            var model = GameStatusService.Instance?.Time;
+            if (model == null)
+            {
+                Debug.LogWarning("[AdvanceMediumTime] 時間系統尚未初始化。");
+                Fsm.Event(failedEvent);
+                Finish();
+                return;
+            }
+            model.AdvanceMediumTime();
+            Fsm.Event(finishedEvent);
+            Finish();
+        }
+    }
+
+    [ActionCategory("Time")]
+    [Tooltip("推進長段時間。Mini 數量統一由 TimeConfig 設定（預設 24）；跨日後停在隔天起點，不播放轉場。")]
+    public class AdvanceLongTime : FsmStateAction
+    {
+        public FsmEvent finishedEvent;
+        public FsmEvent failedEvent;
+
+        public override void Reset()
+        {
+            finishedEvent = null;
+            failedEvent = null;
+        }
+
+        public override void OnEnter()
+        {
+            var model = GameStatusService.Instance?.Time;
+            if (model == null)
+            {
+                Debug.LogWarning("[AdvanceLongTime] 時間系統尚未初始化。");
+                Fsm.Event(failedEvent);
+                Finish();
+                return;
+            }
+            model.AdvanceLongTime();
+            Fsm.Event(finishedEvent);
+            Finish();
+        }
+    }
+
+    [ActionCategory("Time")]
+    [Tooltip("取得目前 Slot 的 Mini 進度、總量與今日剩餘量。進度從 0 開始；不推進時間。")]
+    public class GetMiniProgress : FsmStateAction
+    {
+        [UIHint(UIHint.Variable)] public FsmInt currentMini;
+        [UIHint(UIHint.Variable)] public FsmInt minisInSlot;
+        [UIHint(UIHint.Variable)] public FsmInt remainingMinisInDay;
+        public FsmEvent finishedEvent;
+        public FsmEvent failedEvent;
+
+        public override void Reset()
+        {
+            currentMini = new FsmInt { UseVariable = true };
+            minisInSlot = new FsmInt { UseVariable = true };
+            remainingMinisInDay = new FsmInt { UseVariable = true };
+            finishedEvent = null;
+            failedEvent = null;
+        }
+
+        public override void OnEnter()
+        {
+            var model = GameStatusService.Instance?.Time;
+            if (model == null)
+            {
+                Debug.LogWarning("[GetMiniProgress] 時間系統尚未初始化。");
+                Fsm.Event(failedEvent);
+                Finish();
+                return;
+            }
+            if (currentMini != null && !currentMini.IsNone) currentMini.Value = model.CurrentMiniInSlot;
+            if (minisInSlot != null && !minisInSlot.IsNone) minisInSlot.Value = model.MinisInCurrentSlot;
+            if (remainingMinisInDay != null && !remainingMinisInDay.IsNone) remainingMinisInDay.Value = model.GetRemainingMinisInDay();
+            Fsm.Event(finishedEvent);
+            Finish();
+        }
+    }
+
     // ╔════════════════════════════════════════════════════════════════════╗
     // ║  AdvanceSlot — 推進 N 格時段                                       ║
     // ║  對應 Sequencer 指令：AdvanceSlot(格數, 是否轉場)                   ║

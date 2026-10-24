@@ -106,6 +106,7 @@ public class GameStatusService : MonoBehaviour
     // Manager/Service 實例 (邏輯層) - 可供外部呼叫行為
     // ==========================================================
     public TimeSystemManager TimeManager { get; private set; }
+    public TimePlaybackModel TimePlayback { get; private set; }
     public SkillSystemManager SkillManager { get; private set; }
     public ShopService ShopService { get; private set; } // ShopService 的實例
     public ItemUseService ItemUseService { get; private set; }
@@ -175,6 +176,8 @@ public class GameStatusService : MonoBehaviour
 
         // TimeSystemModel: 注入 TimeConfig
         Time = new TimeSystemModel(timeConfig);
+        TimePlayback = new TimePlaybackModel(Time, timeConfig);
+        OnGameStatusLoaded += TimePlayback.Cancel;
 
         // 場景動作佇列：跨轉場暫存「時間推進 / 強制移動 / Flag 變更」，
         // 由下個場景 SceneReadyCoordinator 的 Task_ExecuteSceneActionQueue 消費
@@ -554,8 +557,16 @@ public class GameStatusService : MonoBehaviour
         SceneActionQueue.HandleSceneChanged();
     }
 
+    private void Update()
+    {
+        TimePlayback?.Tick(UnityEngine.Time.unscaledDeltaTime);
+    }
+
+    private void OnDisable() => TimePlayback?.Cancel();
+
     private void OnDestroy()
     {
+        TimePlayback?.Cancel();
         SceneController.OnSceneChanged -= HandleSceneChanged;
 
         // 解除解鎖系統的事件訂閱

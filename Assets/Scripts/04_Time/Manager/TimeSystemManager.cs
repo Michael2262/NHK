@@ -24,6 +24,7 @@ public class TimeSystemManager
     }
 
     public event Action<int> OnTimeSlotAdvanced;
+    public event Action<int> OnMiniAdvanced;
     public TimeSystemManager(TimeSystemModel model, TimeConfig config)
     {
         _model = model;
@@ -33,9 +34,19 @@ public class TimeSystemManager
         _model.OnPhaseChanged += HandlePhaseChanged;
         _model.OnDayPassed += HandleDayPassed;
         _model.OnTimeSlotAdvanced += (delta) => OnTimeSlotAdvanced?.Invoke(delta);
+        _model.OnMiniAdvanced += (delta) => OnMiniAdvanced?.Invoke(delta);
     }
 
     // ───── 核心方法 ─────
+
+    public void AdvanceMinis(int minis) => _model.AdvanceMinis(minis);
+    public void AdvanceShortTime() => _model.AdvanceShortTime();
+    public void AdvanceMediumTime() => _model.AdvanceMediumTime();
+    public void AdvanceLongTime() => _model.AdvanceLongTime();
+    public void ConsumeOneMini() => _model.AdvanceMinis(1);
+    public bool TryAdvanceMinis(int minis) => _model.TryAdvanceMinis(minis);
+    public bool CanAdvanceMinisWithinDay(int minis) => _model.CanAdvanceMinisWithinDay(minis);
+    public int GetRemainingMinisInDay() => _model.GetRemainingMinisInDay();
 
     /// <summary>
     /// 對外接口：根據玩家動作，推進時間時段。
@@ -75,7 +86,7 @@ public class TimeSystemManager
     public string GetCurrentTimeDisplay()
     {
         string phaseName = _config.PhaseNames[_model.CurrentPhaseIndex];
-        return $"{_model.GameDate:M/d} ({phaseName} - Slot {_model.CurrentSlotInPhase})";
+        return $"{_model.GameDate:M/d} ({phaseName} - Slot {_model.CurrentSlotInPhase} - Mini {_model.CurrentMiniInSlot}/{_model.MinisInCurrentSlot})";
     }
 
     // ───── 事件處理器 ─────

@@ -9,5 +9,6 @@ public class TimeSaveData
     public string GameDate;
     public int CurrentPhaseIndex;
     public int CurrentSlotInPhase;
+    public int CurrentMiniInSlot; // 已推進的 Mini 數；舊存檔缺少欄位時為 0。
     // 週末狀態 (IsWeekend) 不需要存檔，因為它可以透過 DayIndex 計算得出。
 }

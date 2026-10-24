@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace NHK.StateTest
 {
-    /// <summary>顯示共用遊戲時間；只顯示天數與 phase_slot，不附加名稱。</summary>
+    /// <summary>分別顯示天數、phase_slot，以及目前 Mini 對應的鐘面時間。</summary>
     [AddComponentMenu("Game/State Test/Time UI")]
     public class TimeUI : MonoBehaviour
     {
@@ -12,6 +12,13 @@ namespace NHK.StateTest
 
         [Tooltip("階段_格數，例如 2_3。階段沿用 Model 索引，從 0 開始；格數從 1 開始。")]
         [SerializeField] private TMP_Text phaseSlotText;
+
+        [Header("Mini 顯示時間")]
+        [Tooltip("專門顯示目前 Mini 對應的時間，例如 08:05。")]
+        [SerializeField] private TMP_Text timeText;
+
+        [Tooltip("指定整合時間設定視窗使用的 TimeMapping 資產。")]
+        [SerializeField] private TimeMappingSO timeMapping;
 
         private GameStatusService service;
         private TimeSystemModel model;
@@ -34,6 +41,7 @@ namespace NHK.StateTest
             if (model != null)
             {
                 model.OnTimeSlotAdvanced -= HandleSlotAdvanced;
+                model.OnMiniAdvanced -= HandleSlotAdvanced;
                 model.OnPhaseChanged -= RefreshUI;
                 model.OnDayPassed -= RefreshUI;
             }
@@ -56,6 +64,7 @@ namespace NHK.StateTest
             if (model != null)
             {
                 model.OnTimeSlotAdvanced += HandleSlotAdvanced;
+                model.OnMiniAdvanced += HandleSlotAdvanced;
                 model.OnPhaseChanged += RefreshUI;
                 model.OnDayPassed += RefreshUI;
             }
@@ -74,6 +83,10 @@ namespace NHK.StateTest
                 phaseSlotText.text = model != null
                     ? $"{model.CurrentPhaseIndex}_{model.CurrentSlotInPhase}"
                     : "—";
+            if (timeText != null)
+                timeText.text = model != null && timeMapping != null
+                    ? timeMapping.GetTimeDisplay(model.CurrentPhaseIndex, model.CurrentSlotInPhase, model.CurrentMiniInSlot)
+                    : "--:--";
         }
     }
 }

@@ -4,6 +4,131 @@ using System;
 
 namespace PixelCrushers.DialogueSystem.SequencerCommands
 {
+    /// <summary>Play 類指令等整段演出完成才 Stop；秒數由 TimeConfig 設定。</summary>
+    public abstract class SequencerCommandTimePlaybackBase : SequencerCommand
+    {
+        protected void Play(int minis, bool shortTime = false, bool withinDay = false,
+            Func<TimePlaybackModel, Action<bool>, bool> preset = null)
+        {
+            var playback = GameStatusService.Instance?.TimePlayback;
+            Action<bool> done = completed => { if (this != null) Stop(); };
+            bool accepted = playback != null && (preset != null
+                ? preset(playback, done)
+                : shortTime
+                ? playback.PlayAdvanceShortTime(done)
+                : playback.PlayAdvanceMinis(minis, done, withinDay));
+            if (!accepted)
+            {
+                Debug.LogWarning("[時間流逝] 無法開始：系統未就緒、已有播放、參數無效或今日時間不足。");
+                Stop();
+            }
+        }
+    }
+
+    /// <summary>PlayAdvanceMinis([數量=1])，跨日後停在隔天起點。</summary>
+    public class SequencerCommandPlayAdvanceMinis : SequencerCommandTimePlaybackBase
+    {
+        public void Awake() => Play(GetParameterAsInt(0, 1));
+    }
+
+    /// <summary>PlayAdvanceMinisWithinDay([數量=1])，當日不足時不播放。</summary>
+    public class SequencerCommandPlayAdvanceMinisWithinDay : SequencerCommandTimePlaybackBase
+    {
+        public void Awake() => Play(GetParameterAsInt(0, 1), withinDay: true);
+    }
+
+    /// <summary>PlayAdvanceShortTime()，使用 Config 的短時間 Mini 數量。</summary>
+    public class SequencerCommandPlayAdvanceShortTime : SequencerCommandTimePlaybackBase
+    {
+        public void Awake() => Play(0, shortTime: true);
+    }
+
+    /// <summary>PlayAdvanceMediumTime()，使用 Config 的中段時間 Mini 數量。</summary>
+    public class SequencerCommandPlayAdvanceMediumTime : SequencerCommandTimePlaybackBase
+    {
+        public void Awake() => Play(0, preset: (playback, done) => playback.PlayAdvanceMediumTime(done));
+    }
+
+    /// <summary>PlayAdvanceLongTime()，使用 Config 的長段時間 Mini 數量。</summary>
+    public class SequencerCommandPlayAdvanceLongTime : SequencerCommandTimePlaybackBase
+    {
+        public void Awake() => Play(0, preset: (playback, done) => playback.PlayAdvanceLongTime(done));
+    }
+
+    /// <summary>AdvanceMinis([數量=1])：直接推進 Mini，跨日後停在隔天起點。</summary>
+    public class SequencerCommandAdvanceMinis : SequencerCommand
+    {
+        public void Awake()
+        {
+            int minis = GetParameterAsInt(0, 1);
+            var model = GameStatusService.Instance?.Time;
+            if (model == null)
+                Debug.LogError("[AdvanceMinis] 時間系統尚未初始化。");
+            else if (minis < 0)
+                Debug.LogWarning("[AdvanceMinis] Mini 數量不可為負數。");
+            else
+                model.AdvanceMinis(minis);
+            Stop();
+        }
+    }
+
+    /// <summary>AdvanceMinisWithinDay([數量=1])：當日不足時不推進，並記錄警告。</summary>
+    public class SequencerCommandAdvanceMinisWithinDay : SequencerCommand
+    {
+        public void Awake()
+        {
+            int minis = GetParameterAsInt(0, 1);
+            var model = GameStatusService.Instance?.Time;
+            if (model == null)
+                Debug.LogError("[AdvanceMinisWithinDay] 時間系統尚未初始化。");
+            else if (!model.TryAdvanceMinis(minis))
+                Debug.LogWarning($"[AdvanceMinisWithinDay] 無法推進 {minis} Mini：數量無效或今日剩餘時間不足。");
+            Stop();
+        }
+    }
+
+    /// <summary>AdvanceShortTime()：數量由 TimeConfig 統一設定，跨日後停在隔天起點。</summary>
+    public class SequencerCommandAdvanceShortTime : SequencerCommand
+    {
+        public void Awake()
+        {
+            var model = GameStatusService.Instance?.Time;
+            if (model == null)
+                Debug.LogError("[AdvanceShortTime] 時間系統尚未初始化。");
+            else
+                model.AdvanceShortTime();
+            Stop();
+        }
+    }
+
+    /// <summary>AdvanceMediumTime()：數量由 TimeConfig 統一設定，跨日後停在隔天起點。</summary>
+    public class SequencerCommandAdvanceMediumTime : SequencerCommand
+    {
+        public void Awake()
+        {
+            var model = GameStatusService.Instance?.Time;
+            if (model == null)
+                Debug.LogError("[AdvanceMediumTime] 時間系統尚未初始化。");
+            else
+                model.AdvanceMediumTime();
+            Stop();
+        }
+    }
+
+    /// <summary>AdvanceLongTime()：數量由 TimeConfig 統一設定，跨日後停在隔天起點。</summary>
+    public class SequencerCommandAdvanceLongTime : SequencerCommand
+    {
+        public void Awake()
+        {
+            var model = GameStatusService.Instance?.Time;
+            if (model == null)
+                Debug.LogError("[AdvanceLongTime] 時間系統尚未初始化。");
+            else
+                model.AdvanceLongTime();
+            Stop();
+        }
+    }
+
     // ╔════════════════════════════════════════════════════════════════════╗
     // ║  1. AdvanceSlot — 推進 N 格時段                                   ║
     // ╠════════════════════════════════════════════════════════════════════╣

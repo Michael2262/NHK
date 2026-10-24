@@ -180,6 +180,7 @@ public class LobbyUI_V2 : MonoBehaviour
             _timeModel.OnDayPassed += HandleDayPassed;
             _timeModel.OnPhaseChanged += HandlePhaseChange;
             _timeModel.OnTimeSlotAdvanced += HandleTimeSlotChanged;
+            _timeModel.OnMiniAdvanced += HandleTimeSlotChanged;
         }
 
         if (GameStatusService.Instance != null)
@@ -206,6 +207,7 @@ public class LobbyUI_V2 : MonoBehaviour
             _timeModel.OnDayPassed -= HandleDayPassed;
             _timeModel.OnPhaseChanged -= HandlePhaseChange;
             _timeModel.OnTimeSlotAdvanced -= HandleTimeSlotChanged;
+            _timeModel.OnMiniAdvanced -= HandleTimeSlotChanged;
         }
 
         if (GameStatusService.Instance != null)
@@ -608,12 +610,12 @@ public class LobbyUI_V2 : MonoBehaviour
             textDayOfWeek.text = GetDayOfWeekAbbreviation(_timeModel.GetDayOfWeekForDay(displayDay));
 
         if (textDebugDayPhaseSlot != null)
-            textDebugDayPhaseSlot.text = $"D: {_timeModel.DayIndex} / P: {_timeModel.CurrentPhaseIndex} / S: {_timeModel.CurrentSlotInPhase}";
+            textDebugDayPhaseSlot.text = $"D: {_timeModel.DayIndex} / P: {_timeModel.CurrentPhaseIndex} / S: {_timeModel.CurrentSlotInPhase} / M: {_timeModel.CurrentMiniInSlot}/{_timeModel.MinisInCurrentSlot}";
 
         if (textTimeOfDay != null)
         {
             if (timeMapping != null)
-                textTimeOfDay.text = timeMapping.GetTimeDisplay(_timeModel.CurrentPhaseIndex, _timeModel.CurrentSlotInPhase);
+                textTimeOfDay.text = timeMapping.GetTimeDisplay(_timeModel.CurrentPhaseIndex, _timeModel.CurrentSlotInPhase, _timeModel.CurrentMiniInSlot);
             else
                 textTimeOfDay.text = "Missing SO";
         }

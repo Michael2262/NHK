@@ -641,7 +641,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NHK.StateTest.TimeUI
   dayText: {fileID: 1074805311}
-  phaseSlotText: {fileID: 1236849020}
+  phaseSlotText: {fileID: 0}
+  timeText: {fileID: 1236849020}
+  timeMapping: {fileID: 11400000, guid: 8c257a46aeb9a1d46a6f9c6105718da1, type: 2}
 --- !u!1 &29510232
 GameObject:
   m_ObjectHideFlags: 0
@@ -2584,7 +2586,7 @@ MonoBehaviour:
         m_CallState: 2
       - m_Target: {fileID: 412626474}
         m_TargetAssemblyTypeName: TimeBridge, Assembly-CSharp
-        m_MethodName: AdvanceOneSlot
+        m_MethodName: AdvanceShortTime
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -5802,6 +5804,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ae6bdff2d9f2d3542bf42c5d00e5150f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TimeBridge
+  onMiniAdvanced:
+    m_PersistentCalls:
+      m_Calls: []
+  onMiniAdvanceRejected:
+    m_PersistentCalls:
+      m_Calls: []
+  onTimeFlowStarted:
+    m_PersistentCalls:
+      m_Calls: []
+  onTimeFlowEnded:
+    m_PersistentCalls:
+      m_Calls: []
+  onTimeFlowRejected:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &423181561
 GameObject:
   m_ObjectHideFlags: 0
@@ -9206,7 +9223,7 @@ MonoBehaviour:
         m_CallState: 2
       - m_Target: {fileID: 412626474}
         m_TargetAssemblyTypeName: TimeBridge, Assembly-CSharp
-        m_MethodName: AdvanceOneSlot
+        m_MethodName: PlayAdvanceShortTime
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -20831,7 +20848,7 @@ MonoBehaviour:
         m_CallState: 2
       - m_Target: {fileID: 412626474}
         m_TargetAssemblyTypeName: TimeBridge, Assembly-CSharp
-        m_MethodName: AdvanceOneSlot
+        m_MethodName: AdvanceShortTime
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -24952,18 +24969,6 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
-      - m_Target: {fileID: 412626474}
-        m_TargetAssemblyTypeName: TimeBridge, Assembly-CSharp
-        m_MethodName: AdvanceOneSlot
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
       - m_Target: {fileID: 1821313323}
         m_TargetAssemblyTypeName: NHK.StateTest.TestProtagonistBridge, Assembly-CSharp
         m_MethodName: AddStamina
@@ -24972,6 +24977,18 @@ MonoBehaviour:
           m_ObjectArgument: {fileID: 0}
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
           m_IntArgument: -15
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+      - m_Target: {fileID: 412626474}
+        m_TargetAssemblyTypeName: TimeBridge, Assembly-CSharp
+        m_MethodName: PlayAdvanceShortTime
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
           m_FloatArgument: 0
           m_StringArgument: 
           m_BoolArgument: 0
@@ -28561,7 +28578,7 @@ MonoBehaviour:
         m_CallState: 2
       - m_Target: {fileID: 412626474}
         m_TargetAssemblyTypeName: TimeBridge, Assembly-CSharp
-        m_MethodName: AdvanceOneSlot
+        m_MethodName: AdvanceShortTime
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -30635,6 +30652,10 @@ PrefabInstance:
     m_TransformParent: {fileID: 1745773340}
     m_Modifications:
     - target: {fileID: 4505692840550782280, guid: 3cb1ed072d2527242a19508add47e8fc, type: 3}
+      propertyPath: onTriggered.m_PersistentCalls.m_Calls.Array.data[2].m_Mode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4505692840550782280, guid: 3cb1ed072d2527242a19508add47e8fc, type: 3}
       propertyPath: onTriggered.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
       objectReference: {fileID: 1821313323}
@@ -30646,6 +30667,10 @@ PrefabInstance:
       propertyPath: onTriggered.m_PersistentCalls.m_Calls.Array.data[2].m_Target
       value: 
       objectReference: {fileID: 412626474}
+    - target: {fileID: 4505692840550782280, guid: 3cb1ed072d2527242a19508add47e8fc, type: 3}
+      propertyPath: onTriggered.m_PersistentCalls.m_Calls.Array.data[2].m_MethodName
+      value: PlayAdvanceShortTime
+      objectReference: {fileID: 0}
     - target: {fileID: 8361351800248783147, guid: 3cb1ed072d2527242a19508add47e8fc, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5

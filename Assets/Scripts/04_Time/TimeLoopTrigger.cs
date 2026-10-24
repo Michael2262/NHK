@@ -3,8 +3,8 @@ using UnityEngine.Events;
 
 /// <summary>
 /// 時間循環觸發器
-/// 每當遊戲時間到達指定的 Phase / Slot 時，觸發一次 UnityEvent。
-/// 每天都會觸發（只要時間經過該時刻）。
+/// 一般推進沿用 Slot 通知。Play 演出期間忽略所有中途通知，正常結束後只檢查最後位置。
+/// 不記錄或補觸發中途經過的條件；取消演出不做結束判斷。
 /// 
 /// 使用方式：掛在任何 GameObject 上，在 Inspector 設定目標 Phase/Slot 和事件即可。
 /// </summary>
@@ -31,26 +31,41 @@ public class TimeLoopTrigger : MonoBehaviour
     [Header("觸發事件")]
     [SerializeField] private UnityEvent onTimeReached;
 
-    private void OnEnable()
-    {
-        var time = GameStatusService.Instance?.Time;
-        if (time == null) return;
+    private TimeSystemModel subscribedTime;
+    private TimePlaybackModel subscribedPlayback;
 
-        time.OnTimeSlotAdvanced += OnSlotAdvanced;
+    private void OnEnable() => Bind();
+    private void Update() => Bind();
+
+    private void Bind()
+    {
+        var service = GameStatusService.Instance;
+        var time = service?.Time;
+        var playback = service?.TimePlayback;
+        if (time == subscribedTime && playback == subscribedPlayback) return;
+        Unbind();
+        subscribedTime = time;
+        subscribedPlayback = playback;
+        if (subscribedTime != null) subscribedTime.OnTimeSlotAdvanced += OnSlotAdvanced;
+        if (subscribedPlayback != null) subscribedPlayback.OnTimeFlowCompleted += CheckFinalPosition;
     }
 
-    private void OnDisable()
-    {
-        var time = GameStatusService.Instance?.Time;
-        if (time == null) return;
+    private void OnDisable() => Unbind();
 
-        time.OnTimeSlotAdvanced -= OnSlotAdvanced;
+    private void Unbind()
+    {
+        if (subscribedTime != null) subscribedTime.OnTimeSlotAdvanced -= OnSlotAdvanced;
+        if (subscribedPlayback != null) subscribedPlayback.OnTimeFlowCompleted -= CheckFinalPosition;
+        subscribedTime = null;
+        subscribedPlayback = null;
     }
 
-    private void OnSlotAdvanced(int slotsAdvanced)
+    private void OnSlotAdvanced(int slotsAdvanced) => CheckFinalPosition();
+
+    private void CheckFinalPosition()
     {
-        var time = GameStatusService.Instance?.Time;
-        if (time == null) return;
+        var time = subscribedTime;
+        if (time == null || (subscribedPlayback != null && subscribedPlayback.IsTimeFlowing)) return;
 
         if (time.CurrentPhaseIndex == targetPhaseIndex &&
             time.CurrentSlotInPhase == targetSlotInPhase)

@@ -21,6 +21,11 @@ public class TimeSystemModel
     // Time Slots
     public int CurrentPhaseIndex { get; private set; } // 0=Day, 1=Dusk, 2=Night, 3=LateNight
     public int CurrentSlotInPhase { get; private set; } = 1; // 目前時段是當前階段的第幾格 (從 1 開始)
+    public int CurrentMiniInSlot { get; private set; } // 已推進數量：0 ～ 該 Slot 的 Mini 數量 - 1。
+    public int MinisInCurrentSlot => _cfg.GetMinisInSlot(CurrentPhaseIndex, CurrentSlotInPhase);
+
+    /// <summary>每實際推進 1 Mini 通知一次；跨 Slot 時先完成 Slot／Phase／Day 通知。</summary>
+    public event Action<int> OnMiniAdvanced;
 
     // ═════════ 事件宣告 ═════════
     public event Action<int> OnTimeSlotAdvanced;       // 告知外界時段已前進 (delta)
@@ -58,6 +63,59 @@ public class TimeSystemModel
         if (slots < 0) return false;
         if (slots == 0) return true;
         return slots <= GetRemainingSlotsInDay();
+    }
+
+    /// <summary>今天尚可推進的 Mini，停在最後 Slot 的最後一個 Mini，不跨日。</summary>
+    public int GetRemainingMinisInDay()
+    {
+        long remaining = -CurrentMiniInSlot - 1L;
+        for (int phase = CurrentPhaseIndex; phase < _cfg.PhaseNames.Count; phase++)
+        {
+            int firstSlot = phase == CurrentPhaseIndex ? CurrentSlotInPhase : 1;
+            for (int slot = firstSlot; slot <= _cfg.GetTotalSlots(phase); slot++)
+                remaining += _cfg.GetMinisInSlot(phase, slot);
+        }
+        return (int)Math.Min(int.MaxValue, Math.Max(0L, remaining));
+    }
+
+    public bool CanAdvanceMinisWithinDay(int minis)
+        => minis >= 0 && minis <= GetRemainingMinisInDay();
+
+    /// <summary>依 Config 即時取得一小段時間的 Mini 數量；沿用 AdvanceMinis 的跨日規則。</summary>
+    public void AdvanceShortTime() => AdvanceMinis(Math.Max(1, _cfg.ShortTimeMinis));
+
+    /// <summary>依 Config 即時取得一段中等時間的 Mini 數量；沿用 AdvanceMinis 的跨日規則。</summary>
+    public void AdvanceMediumTime() => AdvanceMinis(Math.Max(1, _cfg.MediumTimeMinis));
+
+    /// <summary>依 Config 即時取得一大段時間的 Mini 數量；沿用 AdvanceMinis 的跨日規則。</summary>
+    public void AdvanceLongTime() => AdvanceMinis(Math.Max(1, _cfg.LongTimeMinis));
+
+    /// <summary>不足以在當天完成時不推進，回傳 false。</summary>
+    public bool TryAdvanceMinis(int minis)
+    {
+        if (!CanAdvanceMinisWithinDay(minis)) return false;
+        AdvanceMinis(minis);
+        return true;
+    }
+
+    /// <summary>
+    /// 推進 Mini；每個刻度皆通知，讓中途的事件檢查不漏掉。
+    /// 與既有 AdvanceTime 一致：允許跨日，但跨日後停在隔天起點，捨棄剩餘數量。
+    /// </summary>
+    public void AdvanceMinis(int minis)
+    {
+        if (minis <= 0) return;
+        int startingDay = DayIndex;
+        for (int i = 0; i < minis; i++)
+        {
+            if (CurrentMiniInSlot >= MinisInCurrentSlot - 1)
+                AdvanceTime(1);
+            else
+                CurrentMiniInSlot++;
+
+            OnMiniAdvanced?.Invoke(1);
+            if (DayIndex != startingDay) break;
+        }
     }
 
     // ==========================================================
@@ -153,6 +211,7 @@ public class TimeSystemModel
     /// </summary>
     private void ExecuteActualDaySkip()
     {
+        CurrentMiniInSlot = 0;
         CurrentPhaseIndex = 0;       // 回到第一階段 (例如：早上)
         CurrentSlotInPhase = 1;      // 回到第一格
 
@@ -189,6 +248,7 @@ public class TimeSystemModel
     public void AdvanceDays(int days)
     {
         if (days <= 0) return;
+        CurrentMiniInSlot = 0;
 
         // 先回到當天的第一階段第一格，再逐日 +1，讓最終停在目標日的開頭。
         CurrentPhaseIndex = 0;
@@ -252,7 +312,10 @@ public class TimeSystemModel
     /// </summary>
     public void AdvanceTime(int slots)
     {
-        if (slots == 0) return;
+        if (slots <= 0) return;
+        // 舊的 Slot 指令仍以 Slot 為單位，落點一律回到目標 Slot 的起點。
+        CurrentMiniInSlot = 0;
+        int requestedSlots = slots;
 
         int totalSlotsInCurrentPhase = _cfg.GetTotalSlots(CurrentPhaseIndex);
 
@@ -293,11 +356,12 @@ public class TimeSystemModel
                 CurrentSlotInPhase = 1;
                 slots -= 1;
                 AdvanceDay();
+                OnPhaseChanged?.Invoke();
                 break;
             }
         }
 
-        OnTimeSlotAdvanced?.Invoke(slots);
+        OnTimeSlotAdvanced?.Invoke(requestedSlots - slots);
     }
 
     // ==========================================================
@@ -370,6 +434,7 @@ public class TimeSystemModel
 
         CurrentPhaseIndex = _cfg.StartPhaseIndex;
         CurrentSlotInPhase = _cfg.StartSlotInPhase;
+        CurrentMiniInSlot = 0;
 
         UpdateWeekendStatus();
 
@@ -388,7 +453,8 @@ public class TimeSystemModel
             DayIndex = this.DayIndex,
             GameDate = this.GameDate.ToString("o"),
             CurrentPhaseIndex = this.CurrentPhaseIndex,
-            CurrentSlotInPhase = this.CurrentSlotInPhase
+            CurrentSlotInPhase = this.CurrentSlotInPhase,
+            CurrentMiniInSlot = this.CurrentMiniInSlot
         };
     }
 
@@ -401,6 +467,8 @@ public class TimeSystemModel
         GameDate = DateTime.Parse(data.GameDate);
         CurrentPhaseIndex = data.CurrentPhaseIndex;
         CurrentSlotInPhase = data.CurrentSlotInPhase;
+        // Config 若調小 Mini 數量，將舊進度限制在新範圍內；讀檔不廣播時間事件。
+        CurrentMiniInSlot = Math.Max(0, Math.Min(data.CurrentMiniInSlot, MinisInCurrentSlot - 1));
 
         // 讀檔後務必依還原的 DayIndex 重新計算週末狀態，
         // 否則 IsWeekend 會停留在讀檔前的舊值，導致周末/平日觸發判斷錯誤。

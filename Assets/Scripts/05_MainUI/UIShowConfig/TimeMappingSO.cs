@@ -5,6 +5,13 @@ using System.Collections.Generic;
 public class TimeMappingSO : ScriptableObject
 {
     [System.Serializable]
+    public class SlotTimeInfo
+    {
+        [Tooltip("索引 0 代表剛進入 Slot。請填 24 小時制 HH:mm，例如 08:05。")]
+        public List<string> miniTimes = new List<string>();
+    }
+
+    [System.Serializable]
     public class PhaseTimeInfo
     {
         [Tooltip("僅供識別用，例如：早上")]
@@ -14,9 +21,8 @@ public class TimeMappingSO : ScriptableObject
         [Tooltip("Text Table 中的 Field Name，例如：Phase/Morning")]
         public string localizationKey;
 
-        [Header("時段設定")]
-        [Tooltip("該階段內每個 Slot 的顯示字串")]
-        public List<string> slotTimes = new List<string>();
+        [Header("各 Slot 的 Mini 顯示時間")]
+        public List<SlotTimeInfo> slots = new List<SlotTimeInfo>();
     }
 
     [Header("時段與 Slot 對應表")]
@@ -28,19 +34,41 @@ public class TimeMappingSO : ScriptableObject
     public int dayRolloverSlot = 1;
 
     /// <summary>
-    /// 取得對應的時間字串
+    /// 取得 Mini 對應的時間字串；未設定或格式錯誤時顯示 --:--。
     /// </summary>
-    public string GetTimeDisplay(int phaseIndex, int slotInPhase)
+    public string GetTimeDisplay(int phaseIndex, int slotInPhase, int miniInSlot)
     {
-        if (phaseIndex < 0 || phaseIndex >= phases.Count) return "--:--";
+        return TryGetClockTime(phaseIndex, slotInPhase, miniInSlot, out int hour, out int minute)
+            ? $"{hour:D2}:{minute:D2}" : "--:--";
+    }
 
-        // 注意：slotInPhase 如果是從 1 開始計算，這裡要 -1
-        int listIndex = slotInPhase - 1;
+    /// <summary>供 UI 取得時、分數字。查詢不會補建或更動設定。</summary>
+    public bool TryGetClockTime(int phaseIndex, int slotInPhase, int miniInSlot, out int hour, out int minute)
+    {
+        hour = minute = 0;
+        if (phases == null || phaseIndex < 0 || phaseIndex >= phases.Count) return false;
+        var slots = phases[phaseIndex]?.slots;
+        int slotIndex = slotInPhase - 1;
+        if (slots == null || slotIndex < 0 || slotIndex >= slots.Count) return false;
+        var times = slots[slotIndex]?.miniTimes;
+        if (times == null || miniInSlot < 0 || miniInSlot >= times.Count) return false;
+        return TryParseClockTime(times[miniInSlot], out hour, out minute);
+    }
 
-        if (listIndex < 0 || listIndex >= phases[phaseIndex].slotTimes.Count)
-            return "??:??";
-
-        return phases[phaseIndex].slotTimes[listIndex];
+    public static bool TryParseClockTime(string text, out int hour, out int minute)
+    {
+        hour = minute = 0;
+        if (string.IsNullOrWhiteSpace(text)) return false;
+        text = text.Trim();
+        if (text.Length != 5 || text[2] != ':' ||
+            text[0] < '0' || text[0] > '9' || text[1] < '0' || text[1] > '9' ||
+            text[3] < '0' || text[3] > '9' || text[4] < '0' || text[4] > '9') return false;
+        int h = (text[0] - '0') * 10 + text[1] - '0';
+        int m = (text[3] - '0') * 10 + text[4] - '0';
+        if (h > 23 || m > 59) return false;
+        hour = h;
+        minute = m;
+        return true;
     }
 
     /// <summary>
