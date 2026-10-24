@@ -64,9 +64,9 @@ namespace NHK.StateTest
         private bool CanReward()
         {
             var service = GameStatusService.Instance;
-            return service != null && service.TestProtagonist != null
+            return service != null && service.Protagonist != null
                 && GetConfigurationError() == null
-                && service.TestProtagonist.StickerCount >= sequence.GetThreshold(rewards);
+                && service.Protagonist.StickerCount >= sequence.GetThreshold(rewards);
         }
 
         /// <summary>提供 Inspector 與執行期相同的設定檢查，不修改既有事件或門檻。</summary>
@@ -80,8 +80,8 @@ namespace NHK.StateTest
                 var entry = rewards[i];
                 if (entry == null || entry.onReward == null) return $"獎勵 {i + 1} 的資料為空。";
                 if (entry.stickerThreshold <= previous) return $"獎勵 {i + 1} 的貼紙門檻必須大於 {previous}，請依序遞增。";
-                if (entry.stickerThreshold > ProtagonistStatusModel.StickerCountMax)
-                    return $"獎勵 {i + 1} 的門檻超過貼紙上限 {ProtagonistStatusModel.StickerCountMax}。";
+                if (entry.stickerThreshold > global::ProtagonistStatusModel.StickerCountMax)
+                    return $"獎勵 {i + 1} 的門檻超過貼紙上限 {(global::ProtagonistStatusModel.StickerCountMax)}。";
                 previous = entry.stickerThreshold;
             }
             return null;

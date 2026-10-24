@@ -258,7 +258,7 @@ public class MinigameResultHandler : MonoBehaviour
             return;
         }
         var globalSusp = PlayMakerGlobals.Instance?.Variables?.FindFsmInt("global_Suspicion");
-        if (globalSusp != null) context.Protagonist.SetStress(globalSusp.Value);
+        // 舊 global_Stress 不再寫回主角，該四維數值已退役。
     }
 
     private HeroineEmotionCardType MapReportEmotionToCard(object rawEmotion)

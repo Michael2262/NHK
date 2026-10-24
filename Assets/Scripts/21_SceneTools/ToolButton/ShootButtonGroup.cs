@@ -168,8 +168,7 @@ public class ShootButtonGroup : MonoBehaviour
             if (binding.view != null) binding.view.Bind(() => HandleOptionClick(binding));
         if (_protagonist != null)
         {
-            _protagonist.OnSemenChanged += HandleValueChanged;
-            _protagonist.OnShootTimesChanged += HandleValueChanged;
+            _protagonist.OnChanged += HandleProtagonistChanged;
         }
         if (_service != null) _service.OnGameStatusLoaded += HandleGameStatusLoaded;
         _visibility = _visible ? 1f : 0f;
@@ -192,8 +191,7 @@ public class ShootButtonGroup : MonoBehaviour
         if (shootButton != null) shootButton.onClick.RemoveListener(HandleClick);
         if (_protagonist != null)
         {
-            _protagonist.OnSemenChanged -= HandleValueChanged;
-            _protagonist.OnShootTimesChanged -= HandleValueChanged;
+            _protagonist.OnChanged -= HandleProtagonistChanged;
         }
         if (_service != null) _service.OnGameStatusLoaded -= HandleGameStatusLoaded;
         _service = null;
@@ -246,6 +244,8 @@ public class ShootButtonGroup : MonoBehaviour
     public void Hide() => SetVisible(false);
     public void show() => Show();
     public void hide() => Hide();
+
+    private void HandleProtagonistChanged() => HandleValueChanged(0);
 
     private void HandleValueChanged(int value) => Refresh();
 
@@ -304,8 +304,8 @@ public class ShootButtonGroup : MonoBehaviour
         if (shootTimesText != null)
         {
             shootTimesText.text = protagonist != null
-                ? $"({protagonist.ShootTimes}/{ProtagonistStatusModel.SHOOT_TIMES_MAX})"
-                : $"(--/{ProtagonistStatusModel.SHOOT_TIMES_MAX})";
+                ? $"({protagonist.ShootTimes}/{protagonist.ShootTimesMax})"
+                : "(--/--)";
             // 使用整個 TMP 的顏色，括號、斜線與每日初始值也一起變紅。
             shootTimesText.color = protagonist != null && protagonist.ShootTimes < 0
                 ? new Color(1f, 0f, 0f, _normalTextColor.a) : _normalTextColor;

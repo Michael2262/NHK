@@ -2,8 +2,8 @@ using UnityEngine;
 
 // ==========================================================
 // 被動效果：永久數值提升（購買時自動套用）
-// NHK 版：對 Stress / LifePower / Sociality / Dependency / Money / SkillPoints 生效。
-// 注意：Stress 正值是變糟；Sociality 正值是變好，若要降低請填負數。
+// 現役：Money / SkillPoints；舊四維列舉編號保留但不再執行。
+// 帶正負號增加或扣除資源。
 // ==========================================================
 [System.Serializable]
 public class PermanentStatBoostEffect : ItemEffect
@@ -12,33 +12,22 @@ public class PermanentStatBoostEffect : ItemEffect
 
     public enum BoostStatType
     {
-        Stress,
-        LifePower,
-        Sociality,
-        Dependency,
+        [UnityEngine.InspectorName("已退役：Stress")] Stress,
+        [UnityEngine.InspectorName("已退役：LifePower")] LifePower,
+        [UnityEngine.InspectorName("已退役：Sociality")] Sociality,
+        [UnityEngine.InspectorName("已退役：Dependency")] Dependency,
         Money,
         SkillPoints
     }
 
-    public BoostStatType StatToBoost = BoostStatType.LifePower;
+    public BoostStatType StatToBoost = BoostStatType.Money;
     public int Amount = 10;
 
     public override void Apply(EffectContext ctx)
     {
         switch (StatToBoost)
         {
-            case BoostStatType.Stress:
-                ctx.Protagonist.AddStress(Amount);
-                break;
-            case BoostStatType.LifePower:
-                ctx.Protagonist.AddLifePower(Amount);
-                break;
-            case BoostStatType.Sociality:
-                ctx.Protagonist.AddSociality(Amount);
-                break;
-            case BoostStatType.Dependency:
-                ctx.Protagonist.AddDependency(Amount);
-                break;
+
             case BoostStatType.Money:
                 ctx.Protagonist.AddMoney(Amount);
                 break;
@@ -50,6 +39,7 @@ public class PermanentStatBoostEffect : ItemEffect
 
     public override ValueChangeRecord? ReportChange(EffectContext ctx)
     {
+        if (StatToBoost != BoostStatType.Money && StatToBoost != BoostStatType.SkillPoints) return null;
         return new ValueChangeRecord
         {
             isHeroineResource = false,

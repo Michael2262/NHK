@@ -9,7 +9,7 @@ using UnityEngine;
 // 職責：
 //   1. 依 ID 從 StatChangePackageDatabase 取出套組。
 //   2. 逐條把數值變化套到 GameStatusService.Instance 上的
-//      Protagonist（Stress/LifePower/Sociality/Dependency）
+//      Protagonist（RoomMessLevel；舊四維與身體髒污項會略過）
 //      與指定的 Heroine（Libido/Trust）。
 //   3. 收集每筆「實際發生的 delta」成 ValueChangeRecord 回傳，
 //      由呼叫端（SequencerCommandStatPackage 等）決定要不要報告。
@@ -89,7 +89,7 @@ public class StatChangeService
 
         foreach (var op in entry.ops)
         {
-            if (op == null) continue;
+            if (op == null || IsRetired(op.kind)) continue;
 
             if (op.IsHeroineStat)
             {
@@ -145,7 +145,7 @@ public class StatChangeService
 
         foreach (var op in entry.ops)
         {
-            if (op == null) continue;
+            if (op == null || IsRetired(op.kind)) continue;
 
             if (op.IsHeroineStat)
             {
@@ -193,24 +193,11 @@ public class StatChangeService
 
         switch (op.kind)
         {
-            case StatKind.Stress:
-                if (op.op == StatOp.Set) p.SetStress(op.amount); else p.AddStress(op.amount);
-                break;
-            case StatKind.LifePower:
-                if (op.op == StatOp.Set) p.SetLifePower(op.amount); else p.AddLifePower(op.amount);
-                break;
-            case StatKind.Sociality:
-                if (op.op == StatOp.Set) p.SetSociality(op.amount); else p.AddSociality(op.amount);
-                break;
-            case StatKind.Dependency:
-                if (op.op == StatOp.Set) p.SetDependency(op.amount); else p.AddDependency(op.amount);
-                break;
+
             case StatKind.RoomMessLevel:
                 if (op.op == StatOp.Set) p.SetRoomMessLevel(op.amount); else p.AddRoomMessLevel(op.amount);
                 break;
-            case StatKind.BodyDirtyLevel:
-                if (op.op == StatOp.Set) p.SetBodyDirtyLevel(op.amount); else p.AddBodyDirtyLevel(op.amount);
-                break;
+
             default:
                 Debug.LogWarning($"[StatChangeService] ApplyProtagonistOp 收到非主角數值：{op.kind}");
                 return 0;
@@ -246,12 +233,7 @@ public class StatChangeService
     {
         switch (kind)
         {
-            case StatKind.Stress: return p.Stress;
-            case StatKind.LifePower: return p.LifePower;
-            case StatKind.Sociality: return p.Sociality;
-            case StatKind.Dependency: return p.Dependency;
             case StatKind.RoomMessLevel: return p.RoomMessLevel;
-            case StatKind.BodyDirtyLevel: return p.BodyDirtyLevel;
             default: return 0;
         }
     }
@@ -295,4 +277,7 @@ public class StatChangeService
             heroineNameKey = heroineNameKey
         };
     }
+    private static bool IsRetired(StatKind kind)
+        => kind == StatKind.Stress || kind == StatKind.LifePower || kind == StatKind.Sociality
+        || kind == StatKind.Dependency || kind == StatKind.BodyDirtyLevel;
 }

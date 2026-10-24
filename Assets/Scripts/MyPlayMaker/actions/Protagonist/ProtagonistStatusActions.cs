@@ -224,8 +224,7 @@ public class AddStress : FsmStateAction
     public override void Reset() { amount = 0; storeStress = null; }
     public override void OnEnter()
     {
-        var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(AddStress));
-        if (p != null) { p.AddStress(amount.Value); ProtagonistPlayMakerUtil.StoreInt(storeStress, p.Stress); }
+        Debug.LogWarning("[AddStress] 此舊主角數值功能已退役，請在 Editor 移除或更換 Action。");
         Finish();
     }
 }
@@ -239,8 +238,7 @@ public class ReduceStress : FsmStateAction
     public override void Reset() { amount = 0; storeStress = null; }
     public override void OnEnter()
     {
-        var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(ReduceStress));
-        if (p != null) { p.ReduceStress(Mathf.Max(0, amount.Value)); ProtagonistPlayMakerUtil.StoreInt(storeStress, p.Stress); }
+        Debug.LogWarning("[ReduceStress] 此舊主角數值功能已退役，請在 Editor 移除或更換 Action。");
         Finish();
     }
 }
@@ -254,8 +252,7 @@ public class SetStress : FsmStateAction
     public override void Reset() { value = 0; storeStress = null; }
     public override void OnEnter()
     {
-        var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(SetStress));
-        if (p != null) { p.SetStress(value.Value); ProtagonistPlayMakerUtil.StoreInt(storeStress, p.Stress); }
+        Debug.LogWarning("[SetStress] 此舊主角數值功能已退役，請在 Editor 移除或更換 Action。");
         Finish();
     }
 }
@@ -269,8 +266,7 @@ public class AddLifePower : FsmStateAction
     public override void Reset() { amount = 0; storeLifePower = null; }
     public override void OnEnter()
     {
-        var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(AddLifePower));
-        if (p != null) { p.AddLifePower(amount.Value); ProtagonistPlayMakerUtil.StoreInt(storeLifePower, p.LifePower); }
+        Debug.LogWarning("[AddLifePower] 此舊主角數值功能已退役，請在 Editor 移除或更換 Action。");
         Finish();
     }
 }
@@ -284,8 +280,7 @@ public class ReduceLifePower : FsmStateAction
     public override void Reset() { amount = 0; storeLifePower = null; }
     public override void OnEnter()
     {
-        var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(ReduceLifePower));
-        if (p != null) { p.ReduceLifePower(Mathf.Max(0, amount.Value)); ProtagonistPlayMakerUtil.StoreInt(storeLifePower, p.LifePower); }
+        Debug.LogWarning("[ReduceLifePower] 此舊主角數值功能已退役，請在 Editor 移除或更換 Action。");
         Finish();
     }
 }
@@ -299,8 +294,7 @@ public class SetLifePower : FsmStateAction
     public override void Reset() { value = 0; storeLifePower = null; }
     public override void OnEnter()
     {
-        var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(SetLifePower));
-        if (p != null) { p.SetLifePower(value.Value); ProtagonistPlayMakerUtil.StoreInt(storeLifePower, p.LifePower); }
+        Debug.LogWarning("[SetLifePower] 此舊主角數值功能已退役，請在 Editor 移除或更換 Action。");
         Finish();
     }
 }
@@ -314,8 +308,7 @@ public class AddSociality : FsmStateAction
     public override void Reset() { amount = 0; storeSociality = null; }
     public override void OnEnter()
     {
-        var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(AddSociality));
-        if (p != null) { p.AddSociality(amount.Value); ProtagonistPlayMakerUtil.StoreInt(storeSociality, p.Sociality); }
+        Debug.LogWarning("[AddSociality] 此舊主角數值功能已退役，請在 Editor 移除或更換 Action。");
         Finish();
     }
 }
@@ -329,8 +322,7 @@ public class ReduceSociality : FsmStateAction
     public override void Reset() { amount = 0; storeSociality = null; }
     public override void OnEnter()
     {
-        var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(ReduceSociality));
-        if (p != null) { p.ReduceSociality(Mathf.Max(0, amount.Value)); ProtagonistPlayMakerUtil.StoreInt(storeSociality, p.Sociality); }
+        Debug.LogWarning("[ReduceSociality] 此舊主角數值功能已退役，請在 Editor 移除或更換 Action。");
         Finish();
     }
 }
@@ -344,8 +336,7 @@ public class SetSociality : FsmStateAction
     public override void Reset() { value = 0; storeSociality = null; }
     public override void OnEnter()
     {
-        var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(SetSociality));
-        if (p != null) { p.SetSociality(value.Value); ProtagonistPlayMakerUtil.StoreInt(storeSociality, p.Sociality); }
+        Debug.LogWarning("[SetSociality] 此舊主角數值功能已退役，請在 Editor 移除或更換 Action。");
         Finish();
     }
 }
@@ -359,8 +350,7 @@ public class AddDependency : FsmStateAction
     public override void Reset() { amount = 0; storeDependency = null; }
     public override void OnEnter()
     {
-        var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(AddDependency));
-        if (p != null) { p.AddDependency(amount.Value); ProtagonistPlayMakerUtil.StoreInt(storeDependency, p.Dependency); }
+        Debug.LogWarning("[AddDependency] 此舊主角數值功能已退役，請在 Editor 移除或更換 Action。");
         Finish();
     }
 }
@@ -374,8 +364,7 @@ public class ReduceDependency : FsmStateAction
     public override void Reset() { amount = 0; storeDependency = null; }
     public override void OnEnter()
     {
-        var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(ReduceDependency));
-        if (p != null) { p.ReduceDependency(Mathf.Max(0, amount.Value)); ProtagonistPlayMakerUtil.StoreInt(storeDependency, p.Dependency); }
+        Debug.LogWarning("[ReduceDependency] 此舊主角數值功能已退役，請在 Editor 移除或更換 Action。");
         Finish();
     }
 }
@@ -389,8 +378,7 @@ public class SetDependency : FsmStateAction
     public override void Reset() { value = 0; storeDependency = null; }
     public override void OnEnter()
     {
-        var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(SetDependency));
-        if (p != null) { p.SetDependency(value.Value); ProtagonistPlayMakerUtil.StoreInt(storeDependency, p.Dependency); }
+        Debug.LogWarning("[SetDependency] 此舊主角數值功能已退役，請在 Editor 移除或更換 Action。");
         Finish();
     }
 }
@@ -417,18 +405,7 @@ public class ApplyProtagonistStatusChange : FsmStateAction
 
     public override void OnEnter()
     {
-        var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(ApplyProtagonistStatusChange));
-        if (p != null)
-        {
-            var change = new ProtagonistStatusChange(
-                stressDelta.Value, lifePowerDelta.Value, socialityDelta.Value, dependencyDelta.Value);
-            p.ApplyStatusChange(change);
-
-            ProtagonistPlayMakerUtil.StoreInt(storeStress, p.Stress);
-            ProtagonistPlayMakerUtil.StoreInt(storeLifePower, p.LifePower);
-            ProtagonistPlayMakerUtil.StoreInt(storeSociality, p.Sociality);
-            ProtagonistPlayMakerUtil.StoreInt(storeDependency, p.Dependency);
-        }
+        Debug.LogWarning("[ApplyProtagonistStatusChange] 此舊主角數值功能已退役，請在 Editor 移除或更換 Action。");
         Finish();
     }
 }
@@ -504,21 +481,7 @@ public class GetProtagonistGrade : FsmStateAction
 
     public override void OnEnter()
     {
-        var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(GetProtagonistGrade));
-        if (p != null)
-        {
-            StatusGrade grade = target switch
-            {
-                GradeTarget.Stress => p.GetStressGrade(),
-                GradeTarget.LifePower => p.GetLifeGrade(),
-                GradeTarget.Sociality => p.GetSocialityGrade(),
-                GradeTarget.Dependency => p.GetDependencyGrade(),
-                _ => StatusGrade.Low
-            };
-
-            ProtagonistPlayMakerUtil.StoreString(storeGradeName, grade.ToString());
-            ProtagonistPlayMakerUtil.StoreInt(storeGradeIndex, (int)grade);
-        }
+        Debug.LogWarning("[GetProtagonistGrade] 此舊主角數值功能已退役，請在 Editor 移除或更換 Action。");
         Finish();
     }
 }
@@ -556,17 +519,7 @@ public class CheckProtagonistStatus : FsmStateAction
 
         bool result = check switch
         {
-            CheckType.IsStressHigh => p.IsStressHigh(),
-            CheckType.IsStressExtreme => p.IsStressExtreme(),
-            CheckType.IsLifeLow => p.IsLifeLow(),
-            CheckType.IsLifeHigh => p.IsLifeHigh(),
-            CheckType.IsSocialityLow => p.IsSocialityLow(),
-            CheckType.IsSocialityHigh => p.IsSocialityHigh(),
-            CheckType.IsDependencyHigh => p.IsDependencyHigh(),
-            CheckType.IsDependencyExtreme => p.IsDependencyExtreme(),
             CheckType.IsOverShoot => p.IsOverShoot,
-            CheckType.IsBadHealthy => p.BadHealthy,
-            CheckType.IsBadDependency => p.BadDependency,
             _ => false
         };
 
@@ -602,16 +555,9 @@ public class CheckBadHealthy : FsmStateAction
 
     public override void OnEnter()
     {
-        var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(CheckBadHealthy));
-        if (p == null)
-        {
-            Finish();
-            return;
-        }
-
-        bool result = p.BadHealthy;
-        ProtagonistPlayMakerUtil.StoreBool(storeResult, result);
-        Fsm.Event(result ? trueEvent : falseEvent);
+        Debug.LogWarning("[CheckBadHealthy] 此舊主角數值功能已退役，請在 Editor 移除或更換 Action。");
+        ProtagonistPlayMakerUtil.StoreBool(storeResult, false);
+        Fsm.Event(falseEvent);
         Finish();
     }
 }
@@ -627,12 +573,7 @@ public class SetBadHealthy : FsmStateAction
     public override void Reset() { value = true; storeBadHealthy = null; }
     public override void OnEnter()
     {
-        var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(SetBadHealthy));
-        if (p != null)
-        {
-            p.SetBadHealthy(value.Value);
-            ProtagonistPlayMakerUtil.StoreBool(storeBadHealthy, p.BadHealthy);
-        }
+        Debug.LogWarning("[SetBadHealthy] 此舊主角數值功能已退役，請在 Editor 移除或更換 Action。");
         Finish();
     }
 }
@@ -653,7 +594,7 @@ public class CheckShootTimesAction : FsmStateAction
         var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(CheckShootTimesAction));
         if (p != null)
         {
-            ProtagonistPlayMakerUtil.StoreInt(storeShootTimes, p.CheckShootTimes());
+            ProtagonistPlayMakerUtil.StoreInt(storeShootTimes, p.ShootTimes);
             ProtagonistPlayMakerUtil.StoreBool(storeIsOverShoot, p.IsOverShoot);
         }
         Finish();
@@ -661,7 +602,7 @@ public class CheckShootTimesAction : FsmStateAction
 }
 
 [ActionCategory("Protagonist Status")]
-[Tooltip("增加主角射精次數。無上限，可以一直加。")]
+[Tooltip("一般增減射精次數，限制於 0～目前上限。")]
 public class AddShootTimesAction : FsmStateAction
 {
     public FsmInt amount;
@@ -674,14 +615,14 @@ public class AddShootTimesAction : FsmStateAction
         if (p != null)
         {
             p.AddShootTimes(amount.Value);
-            ProtagonistPlayMakerUtil.StoreInt(storeShootTimes, p.CheckShootTimes());
+            ProtagonistPlayMakerUtil.StoreInt(storeShootTimes, p.ShootTimes);
         }
         Finish();
     }
 }
 
 [ActionCategory("Protagonist Status")]
-[Tooltip("嘗試消耗主角射精次數。到達下限時回傳失敗，可走 failedEvent 分支。")]
+[Tooltip("以正數指定消耗次數，允許透支；負數參數才回傳失敗。")]
 public class TryReduceShootTimesAction : FsmStateAction
 {
     public FsmInt amount;
@@ -697,9 +638,10 @@ public class TryReduceShootTimesAction : FsmStateAction
         var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(TryReduceShootTimesAction));
         if (p == null) { Finish(); return; }
 
-        bool success = p.TryReduceShootTimes(amount.Value);
+        bool success = amount.Value >= 0;
+        if (success) p.ForceAddShootTimes(-amount.Value);
         ProtagonistPlayMakerUtil.StoreBool(storeResult, success);
-        ProtagonistPlayMakerUtil.StoreInt(storeShootTimes, p.CheckShootTimes());
+        ProtagonistPlayMakerUtil.StoreInt(storeShootTimes, p.ShootTimes);
         Fsm.Event(success ? successEvent : failedEvent);
         Finish();
     }

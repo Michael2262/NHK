@@ -1,8 +1,8 @@
 using UnityEngine;
 
 // ==========================================================
-// NHK 主角效果：Stress / LifePower / Sociality / Dependency
-// 原檔名保留。舊 Stamina / Spirit / Action / ShootTimes 等效果已改為 NHK 狀態效果。
+// 舊四維效果僅保留序列化型別，呼叫時提示退役，不再改數值或產生變動報告。
+// 現役效果：Money / SkillPoints / Flag。
 // ==========================================================
 
 [System.Serializable]
@@ -11,16 +11,13 @@ public class AddStressEffect : ItemEffect
     public override EffectTarget Target => EffectTarget.Protagonist;
     public int Amount = 10;
 
-    public override void Apply(EffectContext ctx) => ctx.Protagonist.AddStress(Amount);
+    public override void Apply(EffectContext ctx) {
+        Debug.LogWarning("[AddStressEffect] 舊四維效果已退役，請重新設定道具效果。");
+    }
 
-    public override ValueChangeRecord? ReportChange(EffectContext ctx) => new ValueChangeRecord
-    {
-        isHeroineResource = false,
-        resourceTypeKey = "Stress",
-        finalAmount = Amount,
-        effectResult = ValueChangeResult.EffectResult.Normal,
-        heroineNameKey = ""
-    };
+    public override ValueChangeRecord? ReportChange(EffectContext ctx) {
+        return null;
+    }
 }
 
 [System.Serializable]
@@ -29,16 +26,13 @@ public class ReduceStressEffect : ItemEffect
     public override EffectTarget Target => EffectTarget.Protagonist;
     public int Amount = 10;
 
-    public override void Apply(EffectContext ctx) => ctx.Protagonist.ReduceStress(Amount);
+    public override void Apply(EffectContext ctx) {
+        Debug.LogWarning("[ReduceStressEffect] 舊四維效果已退役，請重新設定道具效果。");
+    }
 
-    public override ValueChangeRecord? ReportChange(EffectContext ctx) => new ValueChangeRecord
-    {
-        isHeroineResource = false,
-        resourceTypeKey = "Stress",
-        finalAmount = -Amount,
-        effectResult = ValueChangeResult.EffectResult.Normal,
-        heroineNameKey = ""
-    };
+    public override ValueChangeRecord? ReportChange(EffectContext ctx) {
+        return null;
+    }
 }
 
 [System.Serializable]
@@ -47,16 +41,13 @@ public class AddLifePowerEffect : ItemEffect
     public override EffectTarget Target => EffectTarget.Protagonist;
     public int Amount = 10;
 
-    public override void Apply(EffectContext ctx) => ctx.Protagonist.AddLifePower(Amount);
+    public override void Apply(EffectContext ctx) {
+        Debug.LogWarning("[AddLifePowerEffect] 舊四維效果已退役，請重新設定道具效果。");
+    }
 
-    public override ValueChangeRecord? ReportChange(EffectContext ctx) => new ValueChangeRecord
-    {
-        isHeroineResource = false,
-        resourceTypeKey = "LifePower",
-        finalAmount = Amount,
-        effectResult = ValueChangeResult.EffectResult.Normal,
-        heroineNameKey = ""
-    };
+    public override ValueChangeRecord? ReportChange(EffectContext ctx) {
+        return null;
+    }
 }
 
 [System.Serializable]
@@ -65,16 +56,13 @@ public class ReduceLifePowerEffect : ItemEffect
     public override EffectTarget Target => EffectTarget.Protagonist;
     public int Amount = 10;
 
-    public override void Apply(EffectContext ctx) => ctx.Protagonist.ReduceLifePower(Amount);
+    public override void Apply(EffectContext ctx) {
+        Debug.LogWarning("[ReduceLifePowerEffect] 舊四維效果已退役，請重新設定道具效果。");
+    }
 
-    public override ValueChangeRecord? ReportChange(EffectContext ctx) => new ValueChangeRecord
-    {
-        isHeroineResource = false,
-        resourceTypeKey = "LifePower",
-        finalAmount = -Amount,
-        effectResult = ValueChangeResult.EffectResult.Normal,
-        heroineNameKey = ""
-    };
+    public override ValueChangeRecord? ReportChange(EffectContext ctx) {
+        return null;
+    }
 }
 
 [System.Serializable]
@@ -83,16 +71,13 @@ public class AddSocialityEffect : ItemEffect
     public override EffectTarget Target => EffectTarget.Protagonist;
     public int Amount = 10;
 
-    public override void Apply(EffectContext ctx) => ctx.Protagonist.AddSociality(Amount);
+    public override void Apply(EffectContext ctx) {
+        Debug.LogWarning("[AddSocialityEffect] 舊四維效果已退役，請重新設定道具效果。");
+    }
 
-    public override ValueChangeRecord? ReportChange(EffectContext ctx) => new ValueChangeRecord
-    {
-        isHeroineResource = false,
-        resourceTypeKey = "Sociality",
-        finalAmount = Amount,
-        effectResult = ValueChangeResult.EffectResult.Normal,
-        heroineNameKey = ""
-    };
+    public override ValueChangeRecord? ReportChange(EffectContext ctx) {
+        return null;
+    }
 }
 
 [System.Serializable]
@@ -101,16 +86,13 @@ public class ReduceSocialityEffect : ItemEffect
     public override EffectTarget Target => EffectTarget.Protagonist;
     public int Amount = 10;
 
-    public override void Apply(EffectContext ctx) => ctx.Protagonist.ReduceSociality(Amount);
+    public override void Apply(EffectContext ctx) {
+        Debug.LogWarning("[ReduceSocialityEffect] 舊四維效果已退役，請重新設定道具效果。");
+    }
 
-    public override ValueChangeRecord? ReportChange(EffectContext ctx) => new ValueChangeRecord
-    {
-        isHeroineResource = false,
-        resourceTypeKey = "Sociality",
-        finalAmount = -Amount,
-        effectResult = ValueChangeResult.EffectResult.Normal,
-        heroineNameKey = ""
-    };
+    public override ValueChangeRecord? ReportChange(EffectContext ctx) {
+        return null;
+    }
 }
 
 [System.Serializable]
@@ -119,16 +101,13 @@ public class AddDependencyEffect : ItemEffect
     public override EffectTarget Target => EffectTarget.Protagonist;
     public int Amount = 10;
 
-    public override void Apply(EffectContext ctx) => ctx.Protagonist.AddDependency(Amount);
+    public override void Apply(EffectContext ctx) {
+        Debug.LogWarning("[AddDependencyEffect] 舊四維效果已退役，請重新設定道具效果。");
+    }
 
-    public override ValueChangeRecord? ReportChange(EffectContext ctx) => new ValueChangeRecord
-    {
-        isHeroineResource = false,
-        resourceTypeKey = "Dependency",
-        finalAmount = Amount,
-        effectResult = ValueChangeResult.EffectResult.Normal,
-        heroineNameKey = ""
-    };
+    public override ValueChangeRecord? ReportChange(EffectContext ctx) {
+        return null;
+    }
 }
 
 [System.Serializable]
@@ -137,16 +116,13 @@ public class ReduceDependencyEffect : ItemEffect
     public override EffectTarget Target => EffectTarget.Protagonist;
     public int Amount = 10;
 
-    public override void Apply(EffectContext ctx) => ctx.Protagonist.ReduceDependency(Amount);
+    public override void Apply(EffectContext ctx) {
+        Debug.LogWarning("[ReduceDependencyEffect] 舊四維效果已退役，請重新設定道具效果。");
+    }
 
-    public override ValueChangeRecord? ReportChange(EffectContext ctx) => new ValueChangeRecord
-    {
-        isHeroineResource = false,
-        resourceTypeKey = "Dependency",
-        finalAmount = -Amount,
-        effectResult = ValueChangeResult.EffectResult.Normal,
-        heroineNameKey = ""
-    };
+    public override ValueChangeRecord? ReportChange(EffectContext ctx) {
+        return null;
+    }
 }
 
 // ==========================================================

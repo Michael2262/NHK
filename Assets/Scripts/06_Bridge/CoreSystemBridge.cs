@@ -2,8 +2,7 @@ using UnityEngine;
 
 /// <summary>
 /// 提供給 Unity Events / Button / 動畫事件呼叫的公共接口。
-/// NHK 版：核心主角數值為 Stress / LifePower / Sociality / Dependency，並保留 Money / SkillPoints。
-/// 舊版 Stamina / Spirit / Action / Suspicion 等方法保留為相容 wrapper，避免 UnityEvent 參照瞬間斷掉。
+/// 主角現役數值由正式 Model 管理。
 /// </summary>
 public class CoreSystemBridge : MonoBehaviour
 {
@@ -26,37 +25,10 @@ public class CoreSystemBridge : MonoBehaviour
     // ==========================================================
     // NHK 主角數值
     // ==========================================================
-    public void AddStress(int amount) => Model?.AddStress(amount);
-    public void ReduceStress(int amount) => Model?.ReduceStress(amount);
-    public void SetStress(int value) => Model?.SetStress(value);
-
-    public void AddLifePower(int amount) => Model?.AddLifePower(amount);
-    public void ReduceLifePower(int amount) => Model?.ReduceLifePower(amount);
-    public void SetLifePower(int value) => Model?.SetLifePower(value);
-
-    public void AddSociality(int amount) => Model?.AddSociality(amount);
-    public void ReduceSociality(int amount) => Model?.ReduceSociality(amount);
-    public void SetSociality(int value) => Model?.SetSociality(value);
-
-    public void AddDependency(int amount) => Model?.AddDependency(amount);
-    public void ReduceDependency(int amount) => Model?.ReduceDependency(amount);
-    public void SetDependency(int value) => Model?.SetDependency(value);
 
     // ==========================================================
-    // 狀態不好（BadHealthy）
+    // 舊負面狀態已退役
     // ==========================================================
-    /// <summary>開啟「狀態不好」：加壓再 +1、減壓少 -1，壓力調整後小於等於 40 時自動解除。</summary>
-    public void EnableBadHealthy() => Model?.EnableBadHealthy();
-
-    /// <summary>關閉「狀態不好」。</summary>
-    public void DisableBadHealthy() => Model?.DisableBadHealthy();
-
-    /// <summary>切換「狀態不好」：點一次開、再點一次關。</summary>
-    public void ToggleBadHealthy()
-    {
-        if (Model == null) return;
-        Model.SetBadHealthy(!Model.BadHealthy);
-    }
 
     // ==========================================================
     // Money / SkillPoints
@@ -94,28 +66,12 @@ public class CoreSystemBridge : MonoBehaviour
     // ==========================================================
     public void AddStamina(int amount)
     {
-        // 舊「體力增加」在 NHK 中視為壓力下降。
-        Model?.AddStress(-amount);
-        Debug.LogWarning("[CoreSystemBridge] AddStamina 已淘汰，已轉換為 Stress 反向變化。");
+        Model?.AddStamina(amount);
     }
 
     public void ReduceStamina(int amount)
     {
-        // 舊「體力消耗」在 NHK 中視為壓力上升。
-        Model?.AddStress(amount);
-        Debug.LogWarning("[CoreSystemBridge] ReduceStamina 已淘汰，已轉換為 Stress 上升。");
-    }
-
-    public void AddSpirit(int amount)
-    {
-        Model?.AddLifePower(amount);
-        Debug.LogWarning("[CoreSystemBridge] AddSpirit 已淘汰，已轉換為 LifePower 變化。");
-    }
-
-    public void ReduceSpirit(int amount)
-    {
-        Model?.ReduceLifePower(amount);
-        Debug.LogWarning("[CoreSystemBridge] ReduceSpirit 已淘汰，已轉換為 LifePower 下降。");
+        if (amount > 0) Model?.ForceAddStamina(-amount);
     }
 
     public void AddActiont(int amount)
@@ -128,44 +84,10 @@ public class CoreSystemBridge : MonoBehaviour
         Debug.LogWarning("[CoreSystemBridge] TryReduceActionTest 已淘汰。NHK 不再使用 Action。");
     }
 
-    public void AddAttack(int amount)
-    {
-        Model?.AddLifePower(amount);
-        Debug.LogWarning("[CoreSystemBridge] AddAttack 已淘汰，暫轉為 LifePower 增加。");
+    public void AddStaminaMax(int amount) {
+        Model?.AddStaminaMax(amount);
     }
 
-    public void ReduceAttack(int amount)
-    {
-        Model?.ReduceLifePower(amount);
-        Debug.LogWarning("[CoreSystemBridge] ReduceAttack 已淘汰，暫轉為 LifePower 下降。");
-    }
-
-    public void AddDefense(int amount)
-    {
-        Model?.ReduceStress(amount);
-        Debug.LogWarning("[CoreSystemBridge] AddDefense 已淘汰，暫轉為 Stress 下降。");
-    }
-
-    public void ReduceDefense(int amount)
-    {
-        Model?.AddStress(amount);
-        Debug.LogWarning("[CoreSystemBridge] ReduceDefense 已淘汰，暫轉為 Stress 上升。");
-    }
-
-    public void AddSuspicion(int amount)
-    {
-        Model?.AddStress(amount);
-        Debug.LogWarning("[CoreSystemBridge] AddSuspicion 已淘汰，已轉換為 Stress 上升。");
-    }
-
-    public void ReducSuspicion(int amount)
-    {
-        Model?.ReduceStress(amount);
-        Debug.LogWarning("[CoreSystemBridge] ReducSuspicion 已淘汰，已轉換為 Stress 下降。");
-    }
-
-    public void AddStaminaMax(int amount) => Debug.LogWarning("[CoreSystemBridge] AddStaminaMax 已淘汰。NHK Stress 固定 0～100。");
-    public void AddSpiritMax(int amount) => Debug.LogWarning("[CoreSystemBridge] AddSpiritMax 已淘汰。NHK 不使用 SpiritMax。");
     public void AddActionMax(int amount) => Debug.LogWarning("[CoreSystemBridge] AddActionMax 已淘汰。NHK 不使用 ActionMax。");
 
     // ==========================================================

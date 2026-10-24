@@ -39,62 +39,6 @@ public class ValueTriggerBridgeAPI : MonoBehaviour
     // NHK Core Values
     // ==========================================
 
-    public void ExecuteAddStress(int amount)
-    {
-        var p = GameStatusService.Instance.Protagonist;
-        p.AddStress(amount);
-        Debug.Log($"[BridgeAPI] 執行增加壓力 {amount}");
-    }
-
-    public void ExecuteReduceStress(int amount)
-    {
-        var p = GameStatusService.Instance.Protagonist;
-        p.ReduceStress(amount);
-        Debug.Log($"[BridgeAPI] 執行降低壓力 {amount}");
-    }
-
-    public void ExecuteAddLifePower(int amount)
-    {
-        var p = GameStatusService.Instance.Protagonist;
-        p.AddLifePower(amount);
-        Debug.Log($"[BridgeAPI] 執行增加生活力 {amount}");
-    }
-
-    public void ExecuteReduceLifePower(int amount)
-    {
-        var p = GameStatusService.Instance.Protagonist;
-        p.ReduceLifePower(amount);
-        Debug.Log($"[BridgeAPI] 執行降低生活力 {amount}");
-    }
-
-    public void ExecuteAddSociality(int amount)
-    {
-        var p = GameStatusService.Instance.Protagonist;
-        p.AddSociality(amount);
-        Debug.Log($"[BridgeAPI] 執行增加社會性 {amount}");
-    }
-
-    public void ExecuteReduceSociality(int amount)
-    {
-        var p = GameStatusService.Instance.Protagonist;
-        p.ReduceSociality(amount);
-        Debug.Log($"[BridgeAPI] 執行降低社會性 {amount}");
-    }
-
-    public void ExecuteAddDependency(int amount)
-    {
-        var p = GameStatusService.Instance.Protagonist;
-        p.AddDependency(amount);
-        Debug.Log($"[BridgeAPI] 執行增加依賴度 {amount}");
-    }
-
-    public void ExecuteReduceDependency(int amount)
-    {
-        var p = GameStatusService.Instance.Protagonist;
-        p.ReduceDependency(amount);
-        Debug.Log($"[BridgeAPI] 執行降低依賴度 {amount}");
-    }
-
     public void ExecuteAddRoomMessLevel(int amount)
     {
         var p = GameStatusService.Instance.Protagonist;
@@ -107,20 +51,6 @@ public class ValueTriggerBridgeAPI : MonoBehaviour
         var p = GameStatusService.Instance.Protagonist;
         p.ReduceRoomMessLevel(amount);
         Debug.Log($"[BridgeAPI] 執行降低房間髒亂度 {amount}");
-    }
-
-    public void ExecuteAddBodyDirtyLevel(int amount)
-    {
-        var p = GameStatusService.Instance.Protagonist;
-        p.AddBodyDirtyLevel(amount);
-        Debug.Log($"[BridgeAPI] 執行增加身體髒污度 {amount}");
-    }
-
-    public void ExecuteReduceBodyDirtyLevel(int amount)
-    {
-        var p = GameStatusService.Instance.Protagonist;
-        p.ReduceBodyDirtyLevel(amount);
-        Debug.Log($"[BridgeAPI] 執行降低身體髒污度 {amount}");
     }
 
     // ==========================================
@@ -193,12 +123,15 @@ public class ValueTriggerBridgeAPI : MonoBehaviour
     [System.Obsolete("NHK no longer uses Action. This only advances time.")]
     public void ExecuteActionAndTime(int actionAmount, int timeSlots) => ExecuteAdvanceTime(timeSlots);
 
-    [System.Obsolete("NHK uses LifePower instead of Stamina.")]
-    public void ExecuteReduceStamina(int amount) => ExecuteReduceLifePower(amount);
+    public void ExecuteReduceStamina(int amount) {
+        if (amount > 0) GameStatusService.Instance?.Protagonist?.ForceAddStamina(-amount);
+    }
 
-    [System.Obsolete("NHK uses LifePower instead of Stamina.")]
-    public void ExecuteAddStamina(int amount) => ExecuteAddLifePower(amount);
+    public void ExecuteAddStamina(int amount) {
+        GameStatusService.Instance?.Protagonist?.AddStamina(amount);
+    }
 
-    [System.Obsolete("NHK no longer uses StaminaMax. This call is ignored.")]
-    public void ExecuteAddStaminaMax(int amount) => Debug.LogWarning("[BridgeAPI] ExecuteAddStaminaMax ignored in NHK.");
+    public void ExecuteAddStaminaMax(int amount) {
+        GameStatusService.Instance?.Protagonist?.AddStaminaMax(amount);
+    }
 }

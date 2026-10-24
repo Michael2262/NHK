@@ -1,0 +1,97 @@
+﻿主角正式 Model 移植檢查紀錄
+
+本次行為
+- 現役主角數值：體力、射精次數、邪念、持有及待領貼紙、金錢、技能點、射精感、房間髒亂。
+- 可調初始值、上限、每日恢復量集中於 Models/ProtagonistStatusModel.cs 頂部。
+- 體力 25/25；非負值每日 +35，負值換日設 10；射精次數 1/1，每日 +1，耗盡／負值換日設 1；恢復受上限限制。
+- 增加最大值不補當前值；ForceAdd 可負值／超上限，讀檔原樣保留。
+- 房間 0～25，每日 50% 機率 +1；Semen 每日歸零。
+- 四維、疲憊、負面狀態、身體髒污與房間／身體清潔百分比退役。
+- State-Test 主角 Bridge、UI、條件檢查與好寶寶獎勵已讀正式資料；女主角尚未移植。
+- 部分舊序列化型別與列舉編號只保留辨識用途。舊效果不執行、不報告數值變化；舊條件不成立。Model 不保留空殼數值方法。
+- 舊四維成功率加成與壓力懲罰已移除；保留各系統原本的基礎值、重複懲罰及成功率上下限。
+- 舊四維技能效果不再生效；技能點與學習流程仍保留，需在 Editor 重設舊技能效果。
+- 休息保留時間推進，無額外降壓或轉成體力恢復；跨日才走正式恢復。
+
+已完成驗證
+- 27 項獨立 C# Model 檢查通過：初始值、增加上限不補值、一般增減上下限、ForceAdd 正負溢位、負值／零值跨日、恢復封頂、上限為 0、Semen 歸零、房間隨機分支、金錢防溢位與扣款、貼紙容量與完整兌換通知、技能點扣款、靜默讀檔與透支值還原、缺欄位預設值。
+- 上述測試載入實際 Model／DTO，亂數使用可控制的替身；未啟動 Unity，不代表場景或 Play Mode 已驗證。
+- C# 語法檢查、退役 Model 直接引用掃描與 git diff --check 已執行。
+
+Unity Editor 驗證與重新設定
+1. 等待完整編譯，若有 Console 錯誤，提供完整訊息。
+2. 新遊戲確認體力 25/25、射精次數 1/1；增加最大值時當前值不補充。
+3. ForceAdd 扣至負值後跨日一次：體力 10、射精次數 1、Semen 0；確認無重複結算。
+4. 體力設 0 再跨日，依 +35 並受上限限制；上限為 0 時恢復仍為 0。
+5. 保存負體力及超上限射精次數，再讀檔：值不被裁切，UI／條件／獎勵按鈕刷新。另驗證舊存檔的新欄位預設值。
+6. 確認測試版按鈕與正式 UI 操作同一份資料；貼紙滿 999 時多餘待領貼紙保留。
+7. LobbyUI 新數值 Text 欄位可自行綁定；原房間 Text 參照沿用，改顯示原始髒亂點數，請修改標籤。移除場景舊四維、疲憊與身體清潔文字物件。
+8. 清理舊四維／負面狀態／身體髒污的 UnityEvent、FSM、Lua、條件、道具、技能與套組；不會自動轉成新數值。
+9. 扣射精次數綁 ForceAddShootTimes，參數填負數。舊 TryReduceShootTimesAction 保留 FSM 型別，改為允許透支的扣除，請檢查事件分支。
+10. 重查原本依賴四維加權的出門／行動／冒險成功率與請求驅動設定。
+
+沒有修改 .meta、場景、Prefab、資產資料或 Unity 產生目錄。
+
+舊 UnityEvent 綁定文字掃描（唯讀，未涵蓋全部 FSM／Lua／反射引用）：
+Assets\MyScenes\TestState\Scene1.unity:21866:        m_MethodName: AddPlayerDependency
+Assets\_Recovery\1 (2).unity:18067:        m_MethodName: AddSuspicion
+Assets\MyScenes\MapSpot\Park.unity:6304:        m_MethodName: AddStress
+Assets\MyScenes\MapSpot\MapSpot.unity:3389:        m_MethodName: AddStress
+Assets\MyScenes\MainScene.unity:7578:        m_MethodName: AddSpiritMax
+Assets\MyScenes\Hub\Room.unity:17059:        m_MethodName: AddPlayerDependency
+Assets\MyScenes\FrontDoor\GoOut.unity:5876:        m_MethodName: AddStress
+Assets\MyScenes\FrontDoor\FrontDoor.unity:1627:        m_MethodName: AddStress
+Assets\MyScenes\FrontDoor\Adventure.unity:6887:        m_MethodName: AddStress
+Assets\MyScenes\Global\GlobalStatusUI.unity:1021:        m_MethodName: ToggleBadHealthy
+Assets\MyScenes\Global\GlobalStatusUI.unity:6082:        m_MethodName: ExecuteAddStress
+Assets\MyScenes\Global\GlobalStatusUI.unity:8051:        m_MethodName: ExecuteAddSociality
+Assets\MyScenes\Global\GlobalStatusUI.unity:29733:        m_MethodName: ExecuteAddLifePower
+Assets\MyScenes\Scene2.unity:16771:        m_MethodName: AddSpiritMax
+Assets\MyScenes\MiniGame\MiniGameTestScene.unity:575:        m_MethodName: ToggleBadHealthy
+Assets\MyScenes\MiniGame\MiniGameTestScene.unity:1138:        m_MethodName: SetDependency
+Assets\MyScenes\MiniGame\MiniGameTestScene.unity:4641:        m_MethodName: ToggleBadHealthy
+Assets\MyScenes\MiniGame\Tease1.unity:27438:        m_MethodName: SetBadDependency
+
+變更的 C# 檔案（相對 D:/Dev/NHKProject）：
+Assets/Scripts/00_Save/GameStatusService.cs
+Assets/Scripts/01_PlayerStatus/BridgeAPI/ProtagonistBridgeAPI.cs
+Assets/Scripts/01_PlayerStatus/Config/StatChangePackageDatabase.cs
+Assets/Scripts/01_PlayerStatus/DTO/ProtagonistSaveData.cs
+Assets/Scripts/01_PlayerStatus/LuaBridge/ProtagonistLuaBridge.cs
+Assets/Scripts/01_PlayerStatus/Models/ProtagonistStatusModel.cs
+Assets/Scripts/01_PlayerStatus/StatChange/StatChangeService.cs
+Assets/Scripts/01_PlayerStatus/State-Test/ActionPrerequisiteChecker.cs
+Assets/Scripts/01_PlayerStatus/State-Test/Editor/GoodChildEventEditors.cs
+Assets/Scripts/01_PlayerStatus/State-Test/GoodChildTaskRewarder.cs
+Assets/Scripts/01_PlayerStatus/State-Test/ProtagonistStatusModel.cs
+Assets/Scripts/01_PlayerStatus/State-Test/TestProtagonistBridge.cs
+Assets/Scripts/01_PlayerStatus/State-Test/TestProtagonistStatusUI.cs
+Assets/Scripts/01_PlayerStatus/Trigger/ProtagonistStatusDepletionTrigger.cs
+Assets/Scripts/01_PlayerStatus/Unlock/ProgressUnlockCommon.cs
+Assets/Scripts/01_PlayerStatus/Unlock/ProgressUnlockManager.cs
+Assets/Scripts/02_ShopItemInventory/Conditions/UseCondition.cs
+Assets/Scripts/02_ShopItemInventory/Effects/PassiveEffects.cs
+Assets/Scripts/02_ShopItemInventory/Effects/ProtagonistEffects.cs
+Assets/Scripts/03_Skill/Manager/SkillSystemManager.cs
+Assets/Scripts/05_MainUI/UI/LobbyUI_V2.cs
+Assets/Scripts/06_Bridge/CoreSystemBridge.cs
+Assets/Scripts/06_Bridge/PlayMakerGameBridge.cs
+Assets/Scripts/06_Bridge/ValueTriggerBridgeAPI.cs
+Assets/Scripts/11_MiniGame/11-2TouchGame/Adapter/PlayMakerMinigameAdapter_Multi2.cs
+Assets/Scripts/11_MiniGame/11-2TouchGame/Result/MinigameResultHandler.cs
+Assets/Scripts/16_Request/RequestRoller.cs
+Assets/Scripts/19_MainLoop/19_1Action/ActionChance/ActionChanceProvider.cs
+Assets/Scripts/19_MainLoop/19_1Action/ActionChance/GoOutsideChanceProvider.cs
+Assets/Scripts/19_MainLoop/19_1Action/ActionChance/ProtagonistActionChanceProvider.cs
+Assets/Scripts/19_MainLoop/19_1Action/Blocker/RequirementBlocker.cs
+Assets/Scripts/19_MainLoop/19_1Action/Blocker/RequirementUnavailable.cs
+Assets/Scripts/19_MainLoop/19_1Action/Result/ValueChangeResult.cs
+Assets/Scripts/19_MainLoop/19_3Rest/RestButtonController.cs
+Assets/Scripts/20_NhkMiniGame/20_1Adventure/Config/AdventureCardData.cs
+Assets/Scripts/20_NhkMiniGame/20_1Adventure/Debug/AdventureDebugPanel.cs
+Assets/Scripts/20_NhkMiniGame/20_1Adventure/Effects/AdventureCoreEffects.cs
+Assets/Scripts/21_SceneTools/ToolButton/ShootButtonGroup.cs
+Assets/Scripts/MyDialogueSystem/Sequencer/SequencerCommandPlayer/SequencerCommandProtagonistStatus.cs
+Assets/Scripts/MyPlayMaker/actions/Protagonist/ProtagonistStatusActions.cs
+Assets/Scripts/MyPlayMaker/actions/Protagonist/ProtagonistStatusCheckActions.cs
+Assets/Scripts/Router/ProtagonistValueRouter.cs

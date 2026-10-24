@@ -41,6 +41,14 @@ public static class RequestRoller
             return result; // Pass = false
         }
 
+        if (archetype.Driver == DriverStat.Protagonist_LifePower
+            || archetype.Driver == DriverStat.Protagonist_Sociality
+            || archetype.Driver == DriverStat.Protagonist_Dependency)
+        {
+            Debug.LogWarning("[RequestRoller] 此請求使用已退役的主角數值，請重新設定驅動值。");
+            return result;
+        }
+
         int rawV = ResolveDriverValue(archetype.Driver, heroineID);
         int v = rawV + bonus;   // 臨時加減：只影響本次判定，不動數值本身。
         result.RawDriverValue = rawV;
@@ -78,11 +86,11 @@ public static class RequestRoller
             case DriverStat.Heroine_Libido:
                 return GetHeroine(svc, heroineID)?.Libido ?? 0;
             case DriverStat.Protagonist_LifePower:
-                return svc.Protagonist?.LifePower ?? 0;
+                return 0; // 已退役；Roll 不會進入此分支。
             case DriverStat.Protagonist_Sociality:
-                return svc.Protagonist?.Sociality ?? 0;
+                return 0; // 已退役；Roll 不會進入此分支。
             case DriverStat.Protagonist_Dependency:
-                return svc.Protagonist?.Dependency ?? 0;
+                return 0; // 已退役；Roll 不會進入此分支。
             default:
                 Debug.LogWarning($"[RequestRoller] 未處理的 DriverStat：{driver}，回 0。");
                 return 0;

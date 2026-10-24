@@ -169,6 +169,6 @@ public sealed class GoodChildTaskRewarderEditor : GoodChildEventListEditor
         EditorGUILayout.HelpBox("按鈕會自動連接 Reward()，不必另外綁定。依主角 StickerCount 判斷門檻，領獎不扣貼紙。最後一筆領完後，門檻依重複間隔增加。進度不存檔，停用再啟用不重置。", MessageType.Info);
         var error = ((GoodChildTaskRewarder)target).GetConfigurationError();
         if (error != null) EditorGUILayout.HelpBox(error, MessageType.Warning);
-        EditorGUILayout.HelpBox($"貼紙上限為 {NHK.StateTest.ProtagonistStatusModel.StickerCountMax}；重複門檻超過上限後無法再領取。", MessageType.Info);
+        EditorGUILayout.HelpBox($"貼紙上限為 {(global::ProtagonistStatusModel.StickerCountMax)}；重複門檻超過上限後無法再領取。", MessageType.Info);
     }
 }

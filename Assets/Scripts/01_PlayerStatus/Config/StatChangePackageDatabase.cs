@@ -24,16 +24,16 @@ using UnityEngine;
 public enum StatKind
 {
     // ── 主角 ──
-    Stress,
-    LifePower,
-    Sociality,
-    Dependency,
+    [UnityEngine.InspectorName("已退役：Stress")] Stress,
+    [UnityEngine.InspectorName("已退役：LifePower")] LifePower,
+    [UnityEngine.InspectorName("已退役：Sociality")] Sociality,
+    [UnityEngine.InspectorName("已退役：Dependency")] Dependency,
     RoomMessLevel,
     // ── 女主角 ──
     Libido,
     Trust,
     // ── 主角（追加，放最後以免打亂既有套組 .asset 的列舉索引） ──
-    BodyDirtyLevel,
+    [UnityEngine.InspectorName("已退役：BodyDirtyLevel")] BodyDirtyLevel,
     // ── 女主角（追加，放最後以免打亂既有套組 .asset 的列舉索引） ──
     Affinity
 }
@@ -56,7 +56,7 @@ public enum StatOp
 public class StatChangeOp
 {
     [Tooltip("要變更的數值種類。Libido / Trust / Affinity 屬女主角，需在調用時提供 heroineID。")]
-    public StatKind kind = StatKind.Stress;
+    public StatKind kind = StatKind.RoomMessLevel;
 
     [Tooltip("操作方式：Add 增減（帶正負號）/ Set 直接設定。")]
     public StatOp op = StatOp.Add;

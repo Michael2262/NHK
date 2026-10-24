@@ -50,8 +50,6 @@ public abstract class ActionChanceProvider : MonoBehaviour
 
     protected virtual void OnEnable()
     {
-        SubscribeToStatusChanges();
-
         // 訂閱「遊戲數據載入 / 重置完畢」事件。
         // 進場時 OnEnable 先跑（此時模型多半還是載入前的舊值），
         // 之後讀檔管線才套用存檔並觸發 OnGameStatusLoaded，
@@ -74,8 +72,6 @@ public abstract class ActionChanceProvider : MonoBehaviour
 
     protected virtual void OnDisable()
     {
-        UnsubscribeFromStatusChanges();
-
         if (GameStatusService.Instance != null)
             GameStatusService.Instance.OnGameStatusLoaded -= HandleGameStatusLoaded;
 
@@ -97,34 +93,6 @@ public abstract class ActionChanceProvider : MonoBehaviour
     /// Pixel Crushers 存檔資料套用完畢（Lua 變數已被覆寫為存檔快照）後再刷新一次。
     /// </summary>
     private void HandleSaveDataApplied()
-    {
-        if (chanceDisplay == null && !writeToDialogueVariable) return;
-        CalculateSuccessChance();
-    }
-
-    private void SubscribeToStatusChanges()
-    {
-        ProtagonistStatusModel protagonist = GameStatusService.Instance?.Protagonist;
-        if (protagonist == null) return;
-
-        protagonist.OnStressChanged += OnStatusValueChanged;
-        protagonist.OnLifePowerChanged += OnStatusValueChanged;
-        protagonist.OnSocialityChanged += OnStatusValueChanged;
-        protagonist.OnDependencyChanged += OnStatusValueChanged;
-    }
-
-    private void UnsubscribeFromStatusChanges()
-    {
-        ProtagonistStatusModel protagonist = GameStatusService.Instance?.Protagonist;
-        if (protagonist == null) return;
-
-        protagonist.OnStressChanged -= OnStatusValueChanged;
-        protagonist.OnLifePowerChanged -= OnStatusValueChanged;
-        protagonist.OnSocialityChanged -= OnStatusValueChanged;
-        protagonist.OnDependencyChanged -= OnStatusValueChanged;
-    }
-
-    private void OnStatusValueChanged(int delta)
     {
         if (chanceDisplay == null && !writeToDialogueVariable) return;
         CalculateSuccessChance();
@@ -207,8 +175,7 @@ public abstract class ActionChanceProvider : MonoBehaviour
     /// </summary>
     protected virtual string BuildDebugSummary(ProtagonistStatusModel p, float chance)
     {
-        return $"{GetType().Name}: chance={chance:P0}, Stress={p.Stress}, LifePower={p.LifePower}, " +
-               $"Sociality={p.Sociality}, Dependency={p.Dependency}";
+        return $"{GetType().Name}：成功率 {chance:P0}";
     }
 
     /// <summary>

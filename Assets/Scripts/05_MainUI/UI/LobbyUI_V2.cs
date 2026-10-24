@@ -1,596 +1,124 @@
 using System;
-using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using PixelCrushers;
 
-// 職責：Lobby 場景的 Presenter/View (NHK 版)
-// 主要顯示：星期、天數、Phase 名稱、金錢、主角核心數值。
-// NHK 主角核心數值：Stress / LifePower / Sociality / Dependency。
-// 注意：ProtagonistStatusModel.OnXXXChanged(int) 傳入的是「delta」，不是新值。
+/// <summary>主角現役數值與時間顯示。退役的四維與清潔百分比欄位請在 Editor 移除。</summary>
 public class LobbyUI_V2 : MonoBehaviour
 {
     public static LobbyUI_V2 Instance { get; private set; }
 
-    // ==================================================
-    // 主要顯示 - 左側面板 (Time)
-    // ==================================================
-    [Header("=== 主要顯示 - 左側面板 ===")]
+    [Header("時間")]
     [SerializeField] private TextMeshProUGUI textDayOfWeek;
     [SerializeField] private TextMeshProUGUI textDayNumber;
-    [SerializeField] private TextMeshProUGUI textPhaseName;
-
-    // ==================================================
-    // 主要顯示 - 右側面板 (Status)
-    // ==================================================
-    [Header("=== 主要顯示 - 右側面板 ===")]
-    [SerializeField] private TextMeshProUGUI textMoney;
-
-    [Header("=== 主角核心數值 ===")]
-    [Tooltip("壓力數值。若未指定，會 fallback 使用舊 textSuspicion 欄位。")]
-    [SerializeField] private TextMeshProUGUI textStress;
-    [Tooltip("壓力標題。若未指定，會 fallback 使用舊 textSuspicionTitle 欄位。")]
-    [SerializeField] private TextMeshProUGUI textStressTitle;
-    [SerializeField] private TextMeshProUGUI textStressPreview;
-
-    [SerializeField] private TextMeshProUGUI textLifePower;
-    [SerializeField] private TextMeshProUGUI textLifePowerPreview;
-
-    [SerializeField] private TextMeshProUGUI textSociality;
-    [SerializeField] private TextMeshProUGUI textSocialityPreview;
-
-    [Tooltip("房間整潔度顯示（百分比）。由髒亂度反向換算。")]
-    [SerializeField] private TextMeshProUGUI textRoomCleanLevel;
-    [Tooltip("房間整潔度變動飄字（顯示 +N% / -N%）。")]
-    [SerializeField] private TextMeshProUGUI textRoomCleanPreview;
-
-    [Tooltip("身體整潔度顯示（百分比）。由身體髒污度反向換算。")]
-    [SerializeField] private TextMeshProUGUI textBodyCleanLevel;
-    [Tooltip("身體整潔度變動飄字（顯示 +N% / -N%）。")]
-    [SerializeField] private TextMeshProUGUI textBodyCleanPreview;
-
-    [SerializeField] private TextMeshProUGUI textDependency;
-    [Tooltip("依賴度標題。優先度：BadDependency > Dependency Extreme > 一般 Dependency。")]
-    [SerializeField] private TextMeshProUGUI textDependencyTitle;
-    [SerializeField] private TextMeshProUGUI textDependencyPreview;
-
-    [Header("=== Preview 顯示設定 ===")]
-    [Tooltip("正/負變動是否顯示飄字；播放間隔與淡入淡出時間改由 StatusPreviewSequencer 控制。")]
-    [SerializeField] private bool showPositivePreview = true;
-    [SerializeField] private bool showNegativePreview = true;
-    [Tooltip("開啟後：主角『生活力』的變動不跳飄字，hover 預先預覽也不顯示（數字本體仍會更新）。")]
-    [SerializeField] private bool hideLifePowerPreview = false;
-    [Tooltip("開啟後：主角『社會性』的變動不跳飄字，hover 預先預覽也不顯示（數字本體仍會更新）。")]
-    [SerializeField] private bool hideSocialityPreview = false;
-    [Tooltip("開啟後：『房間整潔度』的變動不跳飄字，hover 預先預覽也不顯示（數字本體仍會更新）。")]
-    [SerializeField] private bool hideRoomCleanPreview = false;
-    [Tooltip("開啟後：『身體整潔度』的變動不跳飄字，hover 預先預覽也不顯示（數字本體仍會更新）。")]
-    [SerializeField] private bool hideBodyCleanPreview = false;
-    [Tooltip("總開關：關閉整個『hover 預先預覽』效果（滑鼠懸停時不顯示預估變化）。變動飄字不受影響。")]
-    [SerializeField] private bool disableHoverPreview = false;
-    // 數字本體與飄字皆透過 StatusPreviewSequencer 依序播放（每隔固定秒數逐一跳）。
-
-    // ==================================================
-    // 舊欄位相容：如果 Inspector 還接在舊 Suspicion 欄位，會拿來顯示 Stress。
-    // ==================================================
-    [Space(10)]
-    [Header("=== 舊欄位相容：Suspicion 位置改顯示 Stress ===")]
-    [SerializeField] private TextMeshProUGUI textSuspicion;
-    [SerializeField] private TextMeshProUGUI textSuspicionTitle;
-
-    [Header("舊 Suspicion 倒數面板（NHK 版預設不用）")]
-    [SerializeField] private GameObject suspicionDaysPanel;
-    [SerializeField] private TextMeshProUGUI textSuspicionDays;
-
-    // ==================================================
-    // Debug 用欄位 (可隱藏)
-    // ==================================================
-    [Space(10)]
-    [Header("=== Debug 用欄位 (可隱藏) ===")]
+    [UnityEngine.Serialization.FormerlySerializedAs("textPhaseName")]
+    [SerializeField] private TextMeshProUGUI textMiniName;
     [SerializeField] private TextMeshProUGUI textTimeOfDay;
     [SerializeField] private TextMeshProUGUI textDebugDayPhaseSlot;
-
-    // ==================================================
-    // Config
-    // ==================================================
-    [Space(10)]
-    [Header("=== Config ===")]
     [SerializeField] private TimeMappingSO timeMapping;
 
+    [Header("主角數值（只顯示值；欄位可留空）")]
+    [SerializeField] private TextMeshProUGUI textMoney;
+    [SerializeField] private TextMeshProUGUI textStamina;
+    [SerializeField] private TextMeshProUGUI textShootTimes;
+    [SerializeField] private TextMeshProUGUI textLust;
+    [SerializeField] private TextMeshProUGUI textStickerCount;
+    [SerializeField] private TextMeshProUGUI textPendingStickerCount;
+    [SerializeField] private TextMeshProUGUI textSkillPoints;
+    [SerializeField] private TextMeshProUGUI textSemen;
+    [UnityEngine.Serialization.FormerlySerializedAs("textRoomCleanLevel")]
+    [SerializeField] private TextMeshProUGUI textRoomMessLevel;
+
+    private GameStatusService _service;
     private ProtagonistStatusModel _protagonistModel;
     private TimeSystemModel _timeModel;
-    private int _lastPhaseIndex = -1;
-
-    // 整潔度飄字用：事件傳來的是「髒亂度 delta」，這裡改用「整潔度百分比」的前後差來顯示 +N% / -N%。
-    private int _cachedRoomClean;
-    private int _cachedBodyClean;
-
-    // 壓力標題的 Text Table Key（優先度由高到低：OverStress > BadHealthy > Stress）
-    private const string TITLE_KEY_BAD_HEALTHY = "BadHealthy";
-    private const string TITLE_KEY_OVER_STRESS = "OverStress";
-    private const string TITLE_KEY_STRESS = "Stress";
-
-    // 依賴度標題的 Text Table Key（優先度由高到低：BadDependency > OverDependency > Dependency）
-    private const string TITLE_KEY_BAD_DEPENDENCY = "BadDependency";
-    private const string TITLE_KEY_OVER_DEPENDENCY = "OverDependency";
-    private const string TITLE_KEY_DEPENDENCY = "Dependency";
-
-    // 警示變色用：記住未觸發警示時的原始顏色（只擷取一次），觸發時改用 UIColorPalette 的色票。
-    private bool _alertColorsCaptured;
-    private Color _stressDefaultColor = Color.white;
-    private Color _stressTitleDefaultColor = Color.white;
-    private Color _dependencyDefaultColor = Color.white;
-    private Color _dependencyTitleDefaultColor = Color.white;
 
     private void Awake()
     {
-        if (Instance == null)
-        {
-            Instance = this;
-        }
-        else
-        {
-            Debug.LogWarning("重複的 LobbyUI_V2，已銷毀。");
-            Destroy(gameObject);
-        }
+        if (Instance != null && Instance != this) { Destroy(gameObject); return; }
+        Instance = this;
     }
-
     private void OnEnable()
     {
-        TryBindModels();
-        SubscribeEvents();
-        InitializeAllUI();
+        UILocalizationManager.languageChanged += HandleLanguageChanged;
+        BindAndRefresh();
     }
-
+    private void Update()
+    {
+        var service = GameStatusService.Instance;
+        if (!ReferenceEquals(_service, service)
+            || !ReferenceEquals(_protagonistModel, service?.Protagonist)
+            || !ReferenceEquals(_timeModel, service?.Time)) BindAndRefresh();
+    }
     private void OnDisable()
     {
-        UnsubscribeEvents();
-        StatusPreviewSequencer.CancelAllIfExists();
+        UILocalizationManager.languageChanged -= HandleLanguageChanged;
+        Unbind();
     }
+    private void OnDestroy() { if (Instance == this) Instance = null; }
 
-    private void OnDestroy()
+    private void BindAndRefresh()
     {
-        if (Instance == this) Instance = null;
-    }
-
-    private void TryBindModels()
-    {
-        if (GameStatusService.Instance == null) return;
-        _protagonistModel = GameStatusService.Instance.Protagonist;
-        _timeModel = GameStatusService.Instance.Time;
-    }
-
-    private void SubscribeEvents()
-    {
+        Unbind();
+        _service = GameStatusService.Instance;
+        _protagonistModel = _service?.Protagonist;
+        _timeModel = _service?.Time;
+        if (_service != null) _service.OnGameStatusLoaded += BindAndRefresh;
         if (_protagonistModel != null)
         {
-            _protagonistModel.OnStressChanged += HandleStressChanged;
-            _protagonistModel.OnLifePowerChanged += HandleLifePowerChanged;
-            _protagonistModel.OnSocialityChanged += HandleSocialityChanged;
-            _protagonistModel.OnDependencyChanged += HandleDependencyChanged;
-            _protagonistModel.OnRoomMessLevelChanged += HandleRoomMessLevelChanged;
-            _protagonistModel.OnBodyDirtyLevelChanged += HandleBodyDirtyLevelChanged;
-            _protagonistModel.OnMoneyChanged += HandleMoneyChanged;
-            _protagonistModel.OnBadHealthyChanged += HandleBadHealthyChanged;
-            _protagonistModel.OnBadDependencyChanged += HandleBadDependencyChanged;
+            _protagonistModel.OnChanged += UpdateStatusUI;
         }
-
         if (_timeModel != null)
         {
-            _timeModel.OnDayPassed += HandleDayPassed;
-            _timeModel.OnPhaseChanged += HandlePhaseChange;
-            _timeModel.OnTimeSlotAdvanced += HandleTimeSlotChanged;
-            _timeModel.OnMiniAdvanced += HandleTimeSlotChanged;
+            _timeModel.OnDayPassed += RefreshTime;
+            _timeModel.OnPhaseChanged += RefreshTime;
+            _timeModel.OnTimeSlotAdvanced += HandleTimeChanged;
+            _timeModel.OnMiniAdvanced += HandleTimeChanged;
         }
-
-        if (GameStatusService.Instance != null)
-            GameStatusService.Instance.OnGameStatusLoaded += HandleGameStatusLoaded;
+        UpdateStatusUI();
+        RefreshTime();
     }
-
-    private void UnsubscribeEvents()
+    private void Unbind()
     {
+        if (!ReferenceEquals(_service, null)) _service.OnGameStatusLoaded -= BindAndRefresh;
         if (_protagonistModel != null)
         {
-            _protagonistModel.OnStressChanged -= HandleStressChanged;
-            _protagonistModel.OnLifePowerChanged -= HandleLifePowerChanged;
-            _protagonistModel.OnSocialityChanged -= HandleSocialityChanged;
-            _protagonistModel.OnDependencyChanged -= HandleDependencyChanged;
-            _protagonistModel.OnRoomMessLevelChanged -= HandleRoomMessLevelChanged;
-            _protagonistModel.OnBodyDirtyLevelChanged -= HandleBodyDirtyLevelChanged;
-            _protagonistModel.OnMoneyChanged -= HandleMoneyChanged;
-            _protagonistModel.OnBadHealthyChanged -= HandleBadHealthyChanged;
-            _protagonistModel.OnBadDependencyChanged -= HandleBadDependencyChanged;
+            _protagonistModel.OnChanged -= UpdateStatusUI;
         }
-
         if (_timeModel != null)
         {
-            _timeModel.OnDayPassed -= HandleDayPassed;
-            _timeModel.OnPhaseChanged -= HandlePhaseChange;
-            _timeModel.OnTimeSlotAdvanced -= HandleTimeSlotChanged;
-            _timeModel.OnMiniAdvanced -= HandleTimeSlotChanged;
+            _timeModel.OnDayPassed -= RefreshTime;
+            _timeModel.OnPhaseChanged -= RefreshTime;
+            _timeModel.OnTimeSlotAdvanced -= HandleTimeChanged;
+            _timeModel.OnMiniAdvanced -= HandleTimeChanged;
         }
-
-        if (GameStatusService.Instance != null)
-            GameStatusService.Instance.OnGameStatusLoaded -= HandleGameStatusLoaded;
+        _service = null;
+        _protagonistModel = null;
+        _timeModel = null;
     }
-
-    private void HandleGameStatusLoaded()
+    private void UpdateStatusUI()
     {
-        UnsubscribeEvents();
-        TryBindModels();
-        SubscribeEvents();
-        InitializeAllUI();
+        var p = _protagonistModel;
+        SetText(textMoney, p != null ? $"{p.Money}G" : "—");
+        SetText(textStamina, p != null ? $"{p.Stamina}/{p.StaminaMax}" : "—");
+        SetText(textShootTimes, p != null ? $"{p.ShootTimes}/{p.ShootTimesMax}" : "—");
+        SetText(textLust, p != null ? $"{p.Lust}%" : "—");
+        SetText(textStickerCount, p != null ? p.StickerCount.ToString() : "—");
+        SetText(textPendingStickerCount, p != null ? p.PendingStickerCount.ToString() : "—");
+        SetText(textSkillPoints, p != null ? p.SkillPoints.ToString() : "—");
+        SetText(textSemen, p != null ? p.Semen.ToString() : "—");
+        SetText(textRoomMessLevel, p != null ? p.RoomMessLevel.ToString() : "—");
     }
-
-    private void InitializeAllUI()
-    {
-        _lastPhaseIndex = -1;
-
-        // 總開關：把 Inspector 的設定套到 hover 預先預覽的 Presenter。
-        StatPackagePreviewPresenter.Enabled = !disableHoverPreview;
-
-        // 初始化整潔度快取（避免第一次事件觸發時 delta 計算錯誤）
-        if (_protagonistModel != null)
-        {
-            _cachedRoomClean = _protagonistModel.RoomCleanPercent;
-            _cachedBodyClean = _protagonistModel.BodyCleanPercent;
-        }
-
-        // 兼容舊欄位：若新 stress 欄位沒接，就使用舊 suspicion 欄位。
-        if (textStress == null) textStress = textSuspicion;
-        if (textStressTitle == null) textStressTitle = textSuspicionTitle;
-
-        // 先擷取原始顏色，再更新標題（UpdateXXXTitleUI 會套警示色，順序不能反）
-        CaptureAlertDefaultColors();
-        UpdateStressTitleUI();
-        UpdateDependencyTitleUI();
-
-        HideAllPreviewTexts();
-        if (suspicionDaysPanel != null) suspicionDaysPanel.SetActive(false);
-
-        UpdateMoneyUI();
-        UpdateCoreStatusUI();
-        UpdateTimeUI();
-        UpdatePhaseNameUI();
-    }
-
-    // ==================================================
-    // Protagonist event handlers
-    // ProtagonistStatusModel 的 OnXXXChanged 傳進來的是 delta。
-    // ==================================================
-
-    private void HandleStressChanged(int delta)
-    {
-        int v = _protagonistModel != null ? _protagonistModel.Stress : 0;
-        StatusPreviewSequencer.Instance.Enqueue(
-            StatusPreviewSequencer.OrderStress,
-            () => { SetText(textStress, v); UpdateStressTitleUI(); ApplyStressColor(); },
-            PreviewIfAllowed(textStressPreview, delta),
-            delta);
-    }
-
-    private void HandleLifePowerChanged(int delta)
-    {
-        int v = _protagonistModel != null ? _protagonistModel.LifePower : 0;
-        if (hideLifePowerPreview)
-        {
-            SetText(textLifePower, v); // 有勾：不進 Sequencer、不排隊也不等間隔，數字即時更新
-            return;
-        }
-        StatusPreviewSequencer.Instance.Enqueue(
-            StatusPreviewSequencer.OrderLifePower,
-            () => SetText(textLifePower, v),
-            PreviewIfAllowed(textLifePowerPreview, delta),
-            delta);
-    }
-
-    private void HandleSocialityChanged(int delta)
-    {
-        int v = _protagonistModel != null ? _protagonistModel.Sociality : 0;
-        if (hideSocialityPreview)
-        {
-            SetText(textSociality, v); // 有勾：不進 Sequencer、不排隊也不等間隔，數字即時更新
-            return;
-        }
-        StatusPreviewSequencer.Instance.Enqueue(
-            StatusPreviewSequencer.OrderSociality,
-            () => SetText(textSociality, v),
-            PreviewIfAllowed(textSocialityPreview, delta),
-            delta);
-    }
-
-    private void HandleDependencyChanged(int delta)
-    {
-        int v = _protagonistModel != null ? _protagonistModel.Dependency : 0;
-        StatusPreviewSequencer.Instance.Enqueue(
-            StatusPreviewSequencer.OrderDependency,
-            () => { SetText(textDependency, v); UpdateDependencyTitleUI(); ApplyDependencyColor(); },
-            PreviewIfAllowed(textDependencyPreview, delta),
-            delta);
-    }
-
-    // 事件傳來的是「髒亂度 delta」；顯示改用「整潔度百分比」的前後差，飄字為 +N% / -N%。
-    private void HandleRoomMessLevelChanged(int messDelta)
-    {
-        if (_protagonistModel == null) return;
-        int newClean = _protagonistModel.RoomCleanPercent;
-        int cleanDelta = newClean - _cachedRoomClean;
-        _cachedRoomClean = newClean;
-        if (hideRoomCleanPreview)
-        {
-            UpdateRoomCleanUI(); // 有勾：不進 Sequencer、不排隊也不等間隔，數字即時更新
-            return;
-        }
-        EnqueueCleanPreview(StatusPreviewSequencer.OrderRoomClean, textRoomCleanPreview, cleanDelta, UpdateRoomCleanUI);
-    }
-
-    private void HandleBodyDirtyLevelChanged(int dirtyDelta)
-    {
-        if (_protagonistModel == null) return;
-        int newClean = _protagonistModel.BodyCleanPercent;
-        int cleanDelta = newClean - _cachedBodyClean;
-        _cachedBodyClean = newClean;
-        if (hideBodyCleanPreview)
-        {
-            UpdateBodyCleanUI(); // 有勾：不進 Sequencer、不排隊也不等間隔，數字即時更新
-            return;
-        }
-        EnqueueCleanPreview(StatusPreviewSequencer.OrderBodyClean, textBodyCleanPreview, cleanDelta, UpdateBodyCleanUI);
-    }
-
-    // 整潔度飄字：格式為 +N% / -N%（單位是百分比，跟一般數值的飄字不同，所以走 EnqueueText 自訂文字）。
-    // 被正/負顯示設定擋掉時仍會更新數字本體，只是不冒飄字。
-    private void EnqueueCleanPreview(int order, TextMeshProUGUI preview, int cleanDelta, Action applyValue)
-    {
-        if (cleanDelta == 0)
-        {
-            applyValue?.Invoke();
-            return;
-        }
-        TextMeshProUGUI target = PreviewIfAllowed(preview, cleanDelta);
-        string text = target != null ? (cleanDelta > 0 ? $"+{cleanDelta}" : cleanDelta.ToString()) : null;
-        StatusPreviewSequencer.Instance.EnqueueText(order, target, text, applyValue);
-    }
-
-    private void HandleMoneyChanged(int delta)
-    {
-        UpdateMoneyUI();
-    }
-
-    private void HandleBadHealthyChanged(bool _)
-    {
-        UpdateStressTitleUI();
-    }
-
-    private void HandleBadDependencyChanged(bool _)
-    {
-        UpdateDependencyTitleUI();
-    }
-
-    private void HandleTimeSlotChanged(int _) => UpdateTimeUI();
-
-    private void HandlePhaseChange()
-    {
-        UpdateTimeUI();
-        UpdatePhaseNameUI();
-    }
-
-    private void HandleDayPassed()
-    {
-        UpdateTimeUI();
-        UpdatePhaseNameUI();
-    }
-
-    // ==================================================
-    // UI updates
-    // ==================================================
-
-    private void UpdateMoneyUI()
-    {
-        if (textMoney != null && _protagonistModel != null)
-            textMoney.text = $"{_protagonistModel.Money:N0}";
-    }
-
-    private void UpdateCoreStatusUI()
-    {
-        UpdateStressUI();
-        UpdateLifePowerUI();
-        UpdateSocialityUI();
-        UpdateDependencyUI();
-        UpdateRoomCleanUI();
-        UpdateBodyCleanUI();
-    }
-
-    // 整潔度＝由髒亂度反向換算的百分比（Model.RoomCleanPercent），顯示為「NN%」。
-    private void UpdateRoomCleanUI()
-    {
-        if (textRoomCleanLevel != null && _protagonistModel != null)
-            textRoomCleanLevel.text = _protagonistModel.RoomCleanPercent.ToString();
-    }
-
-    // 身體整潔度＝由身體髒污度反向換算的百分比（Model.BodyCleanPercent），顯示為「NN%」。
-    private void UpdateBodyCleanUI()
-    {
-        if (textBodyCleanLevel != null && _protagonistModel != null)
-            textBodyCleanLevel.text = _protagonistModel.BodyCleanPercent.ToString();
-    }
-
-    /// <summary>
-    /// 壓力標題三規則（優先度高→低）：
-    /// 1. IsStressExtreme() == true → "OverStress"（DarkRed）
-    /// 2. BadHealthy == true      → "BadHealthy"（Red）
-    /// 3. 平常                    → "Stress"（原始顏色）
-    /// 每次都重新查表，語言重進場景後會跟著刷新。
-    /// </summary>
-    private void UpdateStressTitleUI()
-    {
-        ApplyStressColor();
-        if (textStressTitle == null) return;
-
-        string key = TITLE_KEY_STRESS;
-
-        if (_protagonistModel != null && _protagonistModel.IsStressExtreme())
-        {
-            key = TITLE_KEY_OVER_STRESS;
-        }
-        else if (_protagonistModel != null && _protagonistModel.BadHealthy)
-        {
-            key = TITLE_KEY_BAD_HEALTHY;
-        }
-
-        textStressTitle.text = Localize(key);
-        textStressTitle.color = GetStressColor(_stressTitleDefaultColor);
-    }
-
-    /// <summary>
-    /// 依賴度標題三規則（優先度高→低）：
-    /// 1. BadDependency == true    → "BadDependency"（Red）
-    /// 2. IsDependencyExtreme() == true → "OverDependency"（DarkRed）
-    /// 3. 平常                     → "Dependency"（原始顏色）
-    /// 每次都重新查表，語言重進場景後會跟著刷新。
-    /// </summary>
-    private void UpdateDependencyTitleUI()
-    {
-        ApplyDependencyColor();
-        if (textDependencyTitle == null) return;
-
-        string key = TITLE_KEY_DEPENDENCY;
-
-        if (_protagonistModel != null && _protagonistModel.BadDependency)
-        {
-            key = TITLE_KEY_BAD_DEPENDENCY;
-        }
-        else if (_protagonistModel != null && _protagonistModel.IsDependencyExtreme())
-        {
-            key = TITLE_KEY_OVER_DEPENDENCY;
-        }
-
-        textDependencyTitle.text = Localize(key);
-        textDependencyTitle.color = GetDependencyColor(_dependencyTitleDefaultColor);
-    }
-
-    // 標準程式端動態查表（見 CLAUDE.md「UI 多語系」）
-    private string Localize(string key)
-    {
-        if (string.IsNullOrEmpty(key)) return "";
-        string text = PixelCrushers.DialogueSystem.DialogueManager.GetLocalizedText(key);
-        if (string.IsNullOrEmpty(text))
-        {
-            Debug.LogWarning($"[LobbyUI_V2] Text Table 找不到 Key: {key}");
-            return key;
-        }
-        return text;
-    }
-
-    private void UpdateStressUI()
-    {
-        if (_protagonistModel == null) return;
-        if (textStress != null)
-            textStress.text = _protagonistModel.Stress.ToString();
-        ApplyStressColor();
-    }
-
-    private void UpdateLifePowerUI()
-    {
-        if (textLifePower != null && _protagonistModel != null)
-            textLifePower.text = _protagonistModel.LifePower.ToString();
-    }
-
-    private void UpdateSocialityUI()
-    {
-        if (textSociality != null && _protagonistModel != null)
-            textSociality.text = _protagonistModel.Sociality.ToString();
-    }
-
-    private void UpdateDependencyUI()
-    {
-        if (_protagonistModel == null) return;
-        if (textDependency != null)
-            textDependency.text = _protagonistModel.Dependency.ToString();
-        ApplyDependencyColor();
-    }
-
-    // ==================================================
-    // 警示變色：
-    // - Stress 標題與數字：OverStress（DarkRed）> BadHealthy（Red）。
-    // - Dependency 標題與數字：BadDependency（Red）> OverDependency（DarkRed）。
-    // 未觸發時使用標題原始顏色；未綁定標題時，數字使用自身原始顏色。
-    // ==================================================
-
-    // 只擷取一次原始顏色，避免在已變色狀態下把警示色誤存成「預設色」。
-    private void CaptureAlertDefaultColors()
-    {
-        if (_alertColorsCaptured) return;
-        if (textStress != null) _stressDefaultColor = textStress.color;
-        if (textStressTitle != null) _stressTitleDefaultColor = textStressTitle.color;
-        if (textDependency != null) _dependencyDefaultColor = textDependency.color;
-        if (textDependencyTitle != null) _dependencyTitleDefaultColor = textDependencyTitle.color;
-        _alertColorsCaptured = true;
-    }
-
-    private void ApplyStressColor()
-    {
-        if (textStress == null) return;
-        textStress.color = GetStressColor(textStressTitle != null ? _stressTitleDefaultColor : _stressDefaultColor);
-    }
-
-    private void ApplyDependencyColor()
-    {
-        if (textDependency == null) return;
-        textDependency.color = GetDependencyColor(textDependencyTitle != null ? _dependencyTitleDefaultColor : _dependencyDefaultColor);
-    }
-
-    private Color GetStressColor(Color defaultColor)
-    {
-        if (_protagonistModel == null) return defaultColor;
-        if (_protagonistModel.IsStressExtreme()) return UIColorPalette.DarkRed;
-        if (_protagonistModel.BadHealthy) return UIColorPalette.Red;
-        return defaultColor;
-    }
-
-    private Color GetDependencyColor(Color defaultColor)
-    {
-        if (_protagonistModel == null) return defaultColor;
-        if (_protagonistModel.BadDependency) return UIColorPalette.Red;
-        if (_protagonistModel.IsDependencyExtreme()) return UIColorPalette.DarkRed;
-        return defaultColor;
-    }
-
-    private void HideAllPreviewTexts()
-    {
-        HidePreviewText(textStressPreview);
-        HidePreviewText(textLifePowerPreview);
-        HidePreviewText(textSocialityPreview);
-        HidePreviewText(textDependencyPreview);
-        HidePreviewText(textRoomCleanPreview);
-        HidePreviewText(textBodyCleanPreview);
-    }
-
-    private void HidePreviewText(TextMeshProUGUI target)
-    {
-        if (target == null) return;
-        target.text = "";
-        var c = target.color;
-        c.a = 0f;
-        target.color = c;
-    }
-
-    private static void SetText(TextMeshProUGUI target, int value)
-    {
-        if (target != null) target.text = value.ToString();
-    }
-
-    // 依正/負顯示設定決定是否要冒飄字；不允許時回傳 null（數字仍會跳）。
-    private TextMeshProUGUI PreviewIfAllowed(TextMeshProUGUI target, int delta)
-    {
-        if (delta > 0 && !showPositivePreview) return null;
-        if (delta < 0 && !showNegativePreview) return null;
-        return target;
-    }
-
-    // ==================================================
-    // Time UI
-    // ==================================================
+    private static void SetText(TextMeshProUGUI text, string value) { if (text != null) text.text = value; }
+    private void HandleTimeChanged(int _) => RefreshTime();
+    private void RefreshTime() => UpdateTimeUI();
+    private void HandleLanguageChanged(string language) => RefreshTime();
+    public bool IsStaminaAffordable(int cost) => _protagonistModel != null && _protagonistModel.Stamina >= Math.Max(0, cost);
+    // 舊介面原為壓力預覽，已停用；不可把舊壓力變化自動解讀為體力變化。
+    public void ShowStaminaPreview(int delta) { }
+    public void ShowStaminaDecreasePreview(int cost) { }
+    public void ShowStaminaIncreasePreview(int amount) { }
+    public void HideStaminaPreview() { }
 
     private void UpdateTimeUI()
     {
@@ -604,133 +132,32 @@ public class LobbyUI_V2 : MonoBehaviour
         }
 
         if (textDayNumber != null)
-            textDayNumber.text = $"DAY {displayDay}";
+            textDayNumber.text = $"{displayDay}Day";
 
         if (textDayOfWeek != null)
-            textDayOfWeek.text = GetDayOfWeekAbbreviation(_timeModel.GetDayOfWeekForDay(displayDay));
+            textDayOfWeek.text = GetLocalizedWeekday(_timeModel.GetDayOfWeekForDay(displayDay));
 
         if (textDebugDayPhaseSlot != null)
             textDebugDayPhaseSlot.text = $"D: {_timeModel.DayIndex} / P: {_timeModel.CurrentPhaseIndex} / S: {_timeModel.CurrentSlotInPhase} / M: {_timeModel.CurrentMiniInSlot}/{_timeModel.MinisInCurrentSlot}";
 
-        if (textTimeOfDay != null)
+        string miniTime = timeMapping != null
+            ? timeMapping.GetTimeDisplay(_timeModel.CurrentPhaseIndex, _timeModel.CurrentSlotInPhase, _timeModel.CurrentMiniInSlot)
+            : "--:--";
+        SetText(textMiniName, miniTime);
+        SetText(textTimeOfDay, miniTime);
+    }
+
+    private string GetLocalizedWeekday(DayOfWeek day)
+    {
+        string key = timeMapping != null ? timeMapping.GetWeekdayLocalizationKey(day) : "";
+        if (string.IsNullOrWhiteSpace(key)) return "";
+
+        string translated = PixelCrushers.DialogueSystem.DialogueManager.GetLocalizedText(key);
+        if (string.IsNullOrEmpty(translated) || translated == key)
         {
-            if (timeMapping != null)
-                textTimeOfDay.text = timeMapping.GetTimeDisplay(_timeModel.CurrentPhaseIndex, _timeModel.CurrentSlotInPhase, _timeModel.CurrentMiniInSlot);
-            else
-                textTimeOfDay.text = "Missing SO";
+            Debug.LogWarning($"[LobbyUI_V2] Text Table 找不到星期 Key：{key}", this);
+            return key;
         }
+        return translated;
     }
-
-    private void UpdatePhaseNameUI()
-    {
-        if (textPhaseName == null || timeMapping == null || _timeModel == null) return;
-
-        int currentPhase = _timeModel.CurrentPhaseIndex;
-        if (currentPhase == _lastPhaseIndex) return;
-        _lastPhaseIndex = currentPhase;
-
-        string localizationKey = timeMapping.GetPhaseLocalizationKey(currentPhase);
-        if (string.IsNullOrEmpty(localizationKey))
-        {
-            textPhaseName.text = "???";
-            return;
-        }
-
-        string localizedText = localizationKey;
-        if (UILocalizationManager.instance != null)
-        {
-            string translated = UILocalizationManager.instance.GetLocalizedText(localizationKey);
-            if (!string.IsNullOrEmpty(translated)) localizedText = translated;
-        }
-
-        textPhaseName.text = localizedText;
-    }
-
-    private string GetDayOfWeekAbbreviation(DayOfWeek day)
-    {
-        switch (day)
-        {
-            case DayOfWeek.Monday: return "MON";
-            case DayOfWeek.Tuesday: return "TUE";
-            case DayOfWeek.Wednesday: return "WED";
-            case DayOfWeek.Thursday: return "THU";
-            case DayOfWeek.Friday: return "FRI";
-            case DayOfWeek.Saturday: return "SAT";
-            case DayOfWeek.Sunday: return "SUN";
-            default: return "???";
-        }
-    }
-
-    // ==================================================
-    // Hover 預覽（靜態）：滑鼠懸停時常駐顯示 +X / -X，移開清掉。
-    // 不走 StatusPreviewSequencer（那是「數值真的變動」的飄字），
-    // 這裡直接把字塞進 preview 欄位並拉滿 alpha（不透明）。
-    // 由 StatPackagePreviewPresenter 呼叫，只處理主角四項。
-    // ==================================================
-
-    /// <summary>顯示主角數值的 hover 預覽（會先清掉上一輪）。</summary>
-    public void ShowStatPreview(IReadOnlyList<StatPreviewItem> items)
-    {
-        ClearStatPreview();
-        if (items == null) return;
-
-        foreach (var it in items)
-        {
-            switch (it.kind)
-            {
-                case StatKind.Stress: SetStaticPreview(textStressPreview, it.delta); break;
-                case StatKind.LifePower: if (!hideLifePowerPreview) SetStaticPreview(textLifePowerPreview, it.delta); break;
-                case StatKind.Sociality: if (!hideSocialityPreview) SetStaticPreview(textSocialityPreview, it.delta); break;
-                case StatKind.Dependency: SetStaticPreview(textDependencyPreview, it.delta); break;
-                // Room / Body：套組給的是「髒污 delta」，換算成「整潔度 %」再顯示（+N% / -N%）。
-                case StatKind.RoomMessLevel:
-                    if (!hideRoomCleanPreview)
-                        SetStaticPreview(textRoomCleanPreview,
-                            MessToCleanDelta(it.delta, ProtagonistStatusModel.ROOM_MESS_LEVEL_MAX, ProtagonistStatusModel.ROOM_MESS_LEVEL_MIN));
-                    break;
-                case StatKind.BodyDirtyLevel:
-                    if (!hideBodyCleanPreview)
-                        SetStaticPreview(textBodyCleanPreview,
-                            MessToCleanDelta(it.delta, ProtagonistStatusModel.BODY_DIRTY_LEVEL_MAX, ProtagonistStatusModel.BODY_DIRTY_LEVEL_MIN));
-                    break;
-                // Libido / Trust 屬女主角，由 HeroineUI 處理，這裡忽略。
-            }
-        }
-    }
-
-    /// <summary>清掉主角的 hover 預覽字。</summary>
-    public void ClearStatPreview()
-    {
-        HideAllPreviewTexts();
-    }
-
-    // 靜態顯示：直接設 +X / -X（可帶後綴如 "%"）並把 alpha 拉滿（不透明），不做動畫。
-    private static void SetStaticPreview(TextMeshProUGUI target, int delta, string suffix = "")
-    {
-        if (target == null) return;
-        target.text = (delta > 0 ? $"+{delta}" : delta.ToString()) + suffix;
-        var c = target.color;
-        c.a = 1f;
-        target.color = c;
-        target.gameObject.SetActive(true);
-    }
-
-    // 把「髒污 delta」換算成「整潔度百分比 delta」：髒污越多整潔越少，故取負號。
-    // 與飄字採同一線性換算（範圍 25 時每點 = 4%）。
-    private static int MessToCleanDelta(int messDelta, int max, int min)
-    {
-        int range = max - min;
-        if (range <= 0) return 0;
-        return -messDelta * (100 / range);
-    }
-
-    // ==================================================
-    // 舊 Stamina Preview 相容方法：NHK 版已停用。
-    // 保留是為了避免舊 StaminaPreviewHoverTrigger 或 UnityEvent 編譯 / 綁定中斷。
-    // ==================================================
-    public bool IsStaminaAffordable(int cost) => true;
-    public void ShowStaminaPreview(int delta) { }
-    public void ShowStaminaDecreasePreview(int cost) { }
-    public void ShowStaminaIncreasePreview(int amount) { }
-    public void HideStaminaPreview() { }
 }

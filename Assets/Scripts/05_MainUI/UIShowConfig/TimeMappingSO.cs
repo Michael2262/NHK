@@ -4,6 +4,31 @@ using System.Collections.Generic;
 [CreateAssetMenu(fileName = "TimeMapping", menuName = "Game/TimeMapping")]
 public class TimeMappingSO : ScriptableObject
 {
+    [Header("星期顯示（填入 Text Table 的 Field Name）")]
+    [InspectorName("星期一 Key")] public string mondayKey;
+    [InspectorName("星期二 Key")] public string tuesdayKey;
+    [InspectorName("星期三 Key")] public string wednesdayKey;
+    [InspectorName("星期四 Key")] public string thursdayKey;
+    [InspectorName("星期五 Key")] public string fridayKey;
+    [InspectorName("星期六 Key")] public string saturdayKey;
+    [InspectorName("星期日 Key")] public string sundayKey;
+
+    /// <summary>取得星期對應的 Text Table Key；未填寫時 UI 留空。</summary>
+    public string GetWeekdayLocalizationKey(System.DayOfWeek day)
+    {
+        switch (day)
+        {
+            case System.DayOfWeek.Monday: return mondayKey;
+            case System.DayOfWeek.Tuesday: return tuesdayKey;
+            case System.DayOfWeek.Wednesday: return wednesdayKey;
+            case System.DayOfWeek.Thursday: return thursdayKey;
+            case System.DayOfWeek.Friday: return fridayKey;
+            case System.DayOfWeek.Saturday: return saturdayKey;
+            case System.DayOfWeek.Sunday: return sundayKey;
+            default: return "";
+        }
+    }
+
     [System.Serializable]
     public class SlotTimeInfo
     {

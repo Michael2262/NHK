@@ -47,11 +47,8 @@ public class ProgressUnlockManager
     private readonly Dictionary<string, Action<int>> _heroineHandlers
         = new Dictionary<string, Action<int>>();
 
-    // 主角的 handler，掛在 Stress / LifePower / Sociality / Dependency 四個事件上
+    // 主角的 handler，目前監聽房間髒亂變化
     private Action<int> _protagonistHandler;
-
-    // 主角布林狀態的 handler，掛在 BadHealthy / BadDependency 事件上
-    private Action<bool> _protagonistBoolHandler;
 
     // RefreshAllRules (讀檔 / 新遊戲) 期間不發公告，避免載入時整批已達成規則同時彈 Alert
     private bool _suppressAlerts = false;
@@ -224,7 +221,7 @@ public class ProgressUnlockManager
             _heroineHandlers[id] = handler;
         }
 
-        // ── 主角：Stress / LifePower / Sociality / Dependency / RoomMessLevel ──
+        // ── 主角：房間髒亂 ──
         if ((_protagonistRules.Count > 0 || _protagonistMirrors.Count > 0) && _protagonist != null)
         {
             _protagonistHandler = (_) =>
@@ -233,21 +230,9 @@ public class ProgressUnlockManager
                 ApplyProtagonistMirrors();
             };
 
-            _protagonist.OnStressChanged += _protagonistHandler;
-            _protagonist.OnLifePowerChanged += _protagonistHandler;
-            _protagonist.OnSocialityChanged += _protagonistHandler;
-            _protagonist.OnDependencyChanged += _protagonistHandler;
             _protagonist.OnRoomMessLevelChanged += _protagonistHandler;
-            _protagonist.OnBodyDirtyLevelChanged += _protagonistHandler;
         }
 
-        // ── 主角布林狀態：BadHealthy / BadDependency ──
-        if (_protagonistFlagMirrors.Count > 0 && _protagonist != null)
-        {
-            _protagonistBoolHandler = (_) => ApplyProtagonistFlagMirrors();
-            _protagonist.OnBadHealthyChanged += _protagonistBoolHandler;
-            _protagonist.OnBadDependencyChanged += _protagonistBoolHandler;
-        }
     }
 
     /// <summary>
@@ -268,21 +253,10 @@ public class ProgressUnlockManager
 
         if (_protagonistHandler != null && _protagonist != null)
         {
-            _protagonist.OnStressChanged -= _protagonistHandler;
-            _protagonist.OnLifePowerChanged -= _protagonistHandler;
-            _protagonist.OnSocialityChanged -= _protagonistHandler;
-            _protagonist.OnDependencyChanged -= _protagonistHandler;
             _protagonist.OnRoomMessLevelChanged -= _protagonistHandler;
-            _protagonist.OnBodyDirtyLevelChanged -= _protagonistHandler;
         }
         _protagonistHandler = null;
 
-        if (_protagonistBoolHandler != null && _protagonist != null)
-        {
-            _protagonist.OnBadHealthyChanged -= _protagonistBoolHandler;
-            _protagonist.OnBadDependencyChanged -= _protagonistBoolHandler;
-        }
-        _protagonistBoolHandler = null;
     }
 
     // ==========================================================
@@ -381,6 +355,13 @@ public class ProgressUnlockManager
     private void ApplyFlagMirror(BoolFlagMirror mirror)
     {
         if (mirror == null || mirror.target == null) return;
+
+        // 舊負面狀態來源已移除，也解除它曾經同步到的旗標，避免舊存檔殘留。
+        if (mirror.state == ProtagonistBoolState.BadHealthy || mirror.state == ProtagonistBoolState.BadDependency)
+        {
+            _progress.RemoveFlag(mirror.target.FlagID);
+            return;
+        }
 
         if (!ProgressUnlockUtility.TryGetProtagonistBoolState(
                 mirror.state, _protagonist, out bool isActive))

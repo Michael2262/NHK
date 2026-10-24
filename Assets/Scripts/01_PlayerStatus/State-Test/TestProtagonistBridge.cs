@@ -2,18 +2,18 @@ using UnityEngine;
 
 namespace NHK.StateTest
 {
-    /// <summary>測試版數值轉接；掛上元件後可由 Button／UnityEvent 呼叫。</summary>
+    /// <summary>正式主角數值轉接（保留舊元件名稱與事件綁定）；掛上元件後可由 Button／UnityEvent 呼叫。</summary>
     [AddComponentMenu("Game/State Test/Test Protagonist Bridge")]
     public class TestProtagonistBridge : MonoBehaviour
     {
-        private ProtagonistStatusModel Model
+        private global::ProtagonistStatusModel Model
         {
             get
             {
                 var service = GameStatusService.Instance;
-                var model = service != null ? service.TestProtagonist : null;
+                var model = service != null ? service.Protagonist : null;
                 if (model == null)
-                    Debug.LogWarning("[TestProtagonistBridge] 測試 Model 尚未初始化，請確認場景中有 GameStatusService。", this);
+                    Debug.LogWarning("[TestProtagonistBridge] 正式主角 Model 尚未初始化，請確認場景中有 GameStatusService。", this);
                 return model;
             }
         }
@@ -22,8 +22,8 @@ namespace NHK.StateTest
         public int GetStamina() => Model?.Stamina ?? 0;
         public int GetShootTimesMax() => Model?.ShootTimesMax ?? 0;
         public int GetShootTimes() => Model?.ShootTimes ?? 0;
+        public bool GetIsOverShoot() => Model?.IsOverShoot ?? false;
         public int GetLust() => Model?.Lust ?? 0;
-        public bool GetIsExhausted() => Model?.IsExhausted ?? false;
         public int GetStickerCount() => Model?.StickerCount ?? 0;
         public int GetPendingStickerCount() => Model?.PendingStickerCount ?? 0;
         public int GetMoney() => Model?.Money ?? 0;
@@ -50,7 +50,6 @@ namespace NHK.StateTest
         // void 入口可綁定 Button／UnityEvent；是否有可領數量由 Model 判斷。
         public void RedeemPendingStickers() => Model?.RedeemPendingStickers();
 
-        public void SetIsExhausted(bool value) => Model?.SetIsExhausted(value);
     }
 }
 

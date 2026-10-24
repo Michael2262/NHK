@@ -85,13 +85,10 @@ public class AdventureCardData : ScriptableObject
         switch (Mode)
         {
             case AdventureRateMode.Social:
-                rate += p.Sociality * SocialCoef;
                 break;
             case AdventureRateMode.Life:
-                rate += p.LifePower * LifeCoef;
                 break;
             case AdventureRateMode.Both:
-                rate += p.Sociality * SocialCoef + p.LifePower * LifeCoef;
                 break;
         }
         return Mathf.Clamp(rate, 0f, 100f);

@@ -29,12 +29,12 @@ namespace NHK.StateTest
             var service = GameStatusService.Instance;
             if ((prerequisites & ButtonPrerequisites.Stamina) != 0)
             {
-                if (service == null || service.TestProtagonist == null)
+                if (service == null || service.Protagonist == null)
                 {
                     Debug.LogWarning("[ActionPrerequisiteChecker] 測試版主角尚未初始化，取消執行。", context);
                     return false;
                 }
-                if (service.TestProtagonist.Stamina < Math.Max(0, requiredStamina))
+                if (service.Protagonist.Stamina < Math.Max(0, requiredStamina))
                 {
                     ShowFailure("Ststem.Content_StaminaNotEnough", context);
                     return false;

@@ -16,13 +16,13 @@ public class AdvStressEffect : AdventureEffect
 
     public override void Apply(AdventureContext ctx)
     {
-        if (ctx.Protagonist == null) return;
-        if (Amount >= 0) ctx.Protagonist.AddStress(Amount);
-        else ctx.Protagonist.ReduceStress(-Amount);
+        Debug.LogWarning("[AdvStressEffect] 舊四維效果已退役，請重新設定冒險效果。");
     }
 
     public override AdventureChangeRecord? ReportChange(AdventureContext ctx)
-        => new AdventureChangeRecord("Stress", Amount);
+        {
+        return null;
+    }
 }
 
 /// <summary>社會性：正=增加，負=減少。</summary>
@@ -34,13 +34,13 @@ public class AdvSocialityEffect : AdventureEffect
 
     public override void Apply(AdventureContext ctx)
     {
-        if (ctx.Protagonist == null) return;
-        if (Amount >= 0) ctx.Protagonist.AddSociality(Amount);
-        else ctx.Protagonist.ReduceSociality(-Amount);
+        Debug.LogWarning("[AdvSocialityEffect] 舊四維效果已退役，請重新設定冒險效果。");
     }
 
     public override AdventureChangeRecord? ReportChange(AdventureContext ctx)
-        => new AdventureChangeRecord("Sociality", Amount);
+        {
+        return null;
+    }
 }
 
 /// <summary>生活力：正=增加，負=減少。</summary>
@@ -52,13 +52,13 @@ public class AdvLifePowerEffect : AdventureEffect
 
     public override void Apply(AdventureContext ctx)
     {
-        if (ctx.Protagonist == null) return;
-        if (Amount >= 0) ctx.Protagonist.AddLifePower(Amount);
-        else ctx.Protagonist.ReduceLifePower(-Amount);
+        Debug.LogWarning("[AdvLifePowerEffect] 舊四維效果已退役，請重新設定冒險效果。");
     }
 
     public override AdventureChangeRecord? ReportChange(AdventureContext ctx)
-        => new AdventureChangeRecord("LifePower", Amount);
+        {
+        return null;
+    }
 }
 
 /// <summary>金錢：正=獲得，負=失去。</summary>

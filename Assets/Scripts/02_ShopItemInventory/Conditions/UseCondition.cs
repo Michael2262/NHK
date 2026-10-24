@@ -7,7 +7,7 @@ using UnityEngine;
 /// <summary>
 /// 自用條件的抽象基底。
 /// 判斷主角「是否能使用」這個道具或選項。
-/// NHK 版：以 Stress / LifePower / Sociality / Dependency / Money / SkillPoints 為主。
+/// 現役：Money / SkillPoints / Flag。舊四維條件保留序列化型別，但固定不成立。
 /// </summary>
 [System.Serializable]
 public abstract class UseCondition
@@ -30,7 +30,8 @@ public class StressAtMostCondition : UseCondition
 
     public override bool IsMet(ProtagonistStatusModel protagonist)
     {
-        return protagonist != null && protagonist.Stress <= MaxStress;
+        // 舊數值條件已退役，不以固定數字冒充有效狀態。
+        return false;
     }
 }
 
@@ -42,7 +43,8 @@ public class LifePowerAtLeastCondition : UseCondition
 
     public override bool IsMet(ProtagonistStatusModel protagonist)
     {
-        return protagonist != null && protagonist.LifePower >= MinLifePower;
+        // 舊數值條件已退役，不以固定數字冒充有效狀態。
+        return false;
     }
 }
 
@@ -54,7 +56,8 @@ public class SocialityAtLeastCondition : UseCondition
 
     public override bool IsMet(ProtagonistStatusModel protagonist)
     {
-        return protagonist != null && protagonist.Sociality >= MinSociality;
+        // 舊數值條件已退役，不以固定數字冒充有效狀態。
+        return false;
     }
 }
 
@@ -66,7 +69,8 @@ public class DependencyAtLeastCondition : UseCondition
 
     public override bool IsMet(ProtagonistStatusModel protagonist)
     {
-        return protagonist != null && protagonist.Dependency >= MinDependency;
+        // 舊數值條件已退役，不以固定數字冒充有效狀態。
+        return false;
     }
 }
 

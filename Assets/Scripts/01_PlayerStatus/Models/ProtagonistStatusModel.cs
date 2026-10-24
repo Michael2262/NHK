@@ -1,456 +1,225 @@
 using System;
 
-
-
-/// <summary>
-/// 一次性套用主角數值變化用的資料結構。
-/// </summary>
-public struct ProtagonistStatusChange
-{
-    public int stressDelta;
-    public int lifePowerDelta;
-    public int socialityDelta;
-    public int dependencyDelta;
-
-    public ProtagonistStatusChange(int stressDelta, int lifePowerDelta, int socialityDelta, int dependencyDelta)
-    {
-        this.stressDelta = stressDelta;
-        this.lifePowerDelta = lifePowerDelta;
-        this.socialityDelta = socialityDelta;
-        this.dependencyDelta = dependencyDelta;
-    }
-}
-
-/// <summary>
-/// 職責：負責儲存與管理「主角自身」的核心數值。
-/// Day 由 TimeSystemModel.DayIndex 統一管理，本 Model 不再持有。
-/// </summary>
+/// <summary>正式主角數值；可調設定集中於頂部，存讀檔由 Service 統一管理。</summary>
 public class ProtagonistStatusModel
 {
-    // ───── 初始值 ─────
-    public const int INITIAL_STRESS = 40;
-    public const int INITIAL_LIFE_POWER = 0;
-    public const int INITIAL_SOCIALITY = 0;
-    public const int INITIAL_DEPENDENCY = 0;
-    public const int INITIAL_MONEY = 0;
-    public const int INITIAL_SKILL_POINTS = 0;
-    public const int INITIAL_SEMEN = 0;
+    // ==========================================================
+    // 數值設定區：同類數值放在一起，修改後重新開始遊戲套用。
+    // 初始值須位於上下限內；上限與每日恢復量請使用非負數。
+    // ForceAdd 仍忽略遊戲上下限；int 的儲存限制不是平衡參數。
+    // ==========================================================
 
-    // ───── ShootTimes ─────
-    public const int SHOOT_TIMES_MAX = 2;
-    public const int SHOOT_TIMES_MIN = -5;
-    public const int INITIAL_SHOOT_TIMES = SHOOT_TIMES_MAX;
+    // ───── 體力 ─────
+    public const int StaminaMin = 0;                 // 一般 Set／Add 的下限
+    public const int InitialStaminaMax = 25;          // 初始上限；開局體力補滿
+    public const int StaminaDailyRecovery = 35;       // 非負體力每日恢復量
+    public const int NegativeStaminaDailyReset = 10;  // 負體力換日直接設為此值，不再加恢復量
 
-    // ───── RoomMessLevel（房間髒亂度） ─────
-    public const int ROOM_MESS_LEVEL_MAX = 25;
-    public const int ROOM_MESS_LEVEL_MIN = 0;
-    public const int INITIAL_ROOM_MESS_LEVEL = ROOM_MESS_LEVEL_MAX;
-    public const float ROOM_MESS_DAILY_GAIN_CHANCE = 0.5f;
+    // ───── 射精次數 ─────
+    public const int ShootTimesMin = 0;              // 一般 Set／Add 的下限
+    public const int InitialShootTimesMax = 1;       // 初始上限；開局補滿
+    public const int ShootTimesDailyRecovery = 1;   // 尚未耗盡時每日恢復量
+    public const int ExhaustedShootTimesDailyReset = 1; // 當前值 <= 0 時直接恢復至此值，仍受上限限制
 
-    // ───── BodyDirtyLevel（身體髒污度） ─────
-    // 與 RoomMessLevel 平行：0～25，越高代表身體越髒。顯示時反向換算成「整潔度百分比」。
-    public const int BODY_DIRTY_LEVEL_MAX = 25;
-    public const int BODY_DIRTY_LEVEL_MIN = 0;
-    public const int INITIAL_BODY_DIRTY_LEVEL = BODY_DIRTY_LEVEL_MAX;
+    // ───── 邪念 ─────
+    public const int LustMin = 0;
+    public const int LustMax = 100;
+    public const int InitialLust = 0;
 
-    // ───── 數值範圍 ─────
-    // 通用範圍（LifePower / Sociality 使用）
-    public const int MIN_STATUS_VALUE = 0;
-    public const int MAX_STATUS_VALUE = 100;
+    // ───── 貼紙 ─────
+    public const int StickerCountMin = 0;
+    public const int StickerCountMax = 999;          // 待領貼紙兌換也使用此持有上限
+    public const int InitialStickerCount = 0;
 
-    // Stress 獨立範圍：可累積超過分級門檻（門檻維持 50/80/100，但實際數值上限放寬到 150）
-    public const int STRESS_MIN_VALUE = 0;
-    public const int STRESS_MAX_VALUE = 150;
+    // ───── 達標未領貼紙 ─────
+    public const int PendingStickerCountMin = 0;    // 維持 0，代表沒有待領貼紙
+    public const int PendingStickerCountMax = 999;
+    public const int InitialPendingStickerCount = 0;
 
-    // Dependency 獨立範圍：同上
-    public const int DEPENDENCY_MIN_VALUE = 0;
-    public const int DEPENDENCY_MAX_VALUE = 150;
+    // ───── 金錢 ─────
+    public const int InitialMoney = 1000;              // 開局金錢；有效範圍 0～999999
 
-    /// <summary>每日依賴度自動上升量（換日時套用，參照 HeroineStatusModel.LibidoDailyDecay 的模式）。</summary>
-    public const int DEPENDENCY_DAILY_GAIN = 6;
+    // ───── 技能點 ─────
+    public const int InitialSkillPoints = 0;
 
-    /// <summary>BadDependency 開啟時，每次進入新 Phase 增加的壓力。</summary>
-    public const int BAD_DEPENDENCY_PHASE_STRESS_GAIN = 5;
+    // ───── 射精感 ─────
+    public const int SemenMin = 0;
+    public const int SemenLimit = 100;
+    public const int InitialSemen = 0;
 
-    /// <summary>Dependency 調整後小於等於此值時，BadDependency 會自動解除；不限制手動開啟。</summary>
-    public const int BAD_DEPENDENCY_AUTO_DISABLE_THRESHOLD = 40;
+    // ───── 房間髒亂 ─────
+    public const int RoomMessLevelMin = 0;
+    public const int RoomMessLevelMax = 25;
+    public const int InitialRoomMessLevel = 25;
+    public const int RoomMessDailyGain = 1;
+    public const float RoomMessDailyGainChance = 0.5f;
 
-    /// <summary>Stress 調整後小於等於此值時，BadHealthy 會自動解除；不限制手動開啟。</summary>
-    public const int BAD_HEALTHY_AUTO_DISABLE_THRESHOLD = 40;
+    // ==========================================================
+    // 執行期間狀態：上面的設定決定初始值，下方方法負責變更。
+    // ==========================================================
+    public int StaminaMax { get; private set; } = InitialStaminaMax;
+    public int Stamina { get; private set; } = InitialStaminaMax;
+    public int ShootTimesMax { get; private set; } = InitialShootTimesMax;
+    public int ShootTimes { get; private set; } = InitialShootTimesMax;
+    public int Lust { get; private set; } = InitialLust;
+    public int StickerCount { get; private set; } = InitialStickerCount;
+    public int PendingStickerCount { get; private set; } = InitialPendingStickerCount;
+    public int Money { get; private set; } = ClampMoney(InitialMoney);
 
-    // ───── 分級門檻（各數值可獨立調整，預設一致） ─────
-    // Stress
-    public const int STRESS_MEDIUM_THRESHOLD = 50;
-    public const int STRESS_HIGH_THRESHOLD = 80;
-    public const int STRESS_EXTREME_THRESHOLD = 100;
-
-    // LifePower
-    public const int LIFE_MEDIUM_THRESHOLD = 50;
-    public const int LIFE_HIGH_THRESHOLD = 80;
-    public const int LIFE_EXTREME_THRESHOLD = 100;
-
-    // Sociality
-    public const int SOCIALITY_MEDIUM_THRESHOLD = 50;
-    public const int SOCIALITY_HIGH_THRESHOLD = 80;
-    public const int SOCIALITY_EXTREME_THRESHOLD = 100;
-
-    // Dependency
-    public const int DEPENDENCY_MEDIUM_THRESHOLD = 50;
-    public const int DEPENDENCY_HIGH_THRESHOLD = 80;
-    public const int DEPENDENCY_EXTREME_THRESHOLD = 100;
-
-    // ───── 核心狀態 ─────
-
-    /// <summary>壓力：0～150。越高越危險（分級門檻仍維持 50/80/100）。</summary>
-    public int Stress { get; private set; } = INITIAL_STRESS;
-
-    /// <summary>生活力：0～100。越高代表越能維持正常生活。</summary>
-    public int LifePower { get; private set; } = INITIAL_LIFE_POWER;
-
-    /// <summary>社會性：0～100。越高代表越能面對外界與正常社交。</summary>
-    public int Sociality { get; private set; } = INITIAL_SOCIALITY;
-
-    /// <summary>依賴度：0～150。主角對妹妹的心理與生活依賴（分級門檻仍維持 50/80/100）。每日自動上升 DEPENDENCY_DAILY_GAIN。</summary>
-    public int Dependency { get; private set; } = INITIAL_DEPENDENCY;
-
-    /// <summary>保留資源：金錢。</summary>
-    public int Money { get; private set; } = INITIAL_MONEY;
-
-    /// <summary>保留資源：技能點。</summary>
-    public int SkillPoints { get; private set; } = INITIAL_SKILL_POINTS;
-
-    /// <summary>射精次數。每日重製回 Max。可加超過 Max，但不可扣低於 Min。<= 0 時為耗盡狀態。</summary>
-    public int ShootTimes { get; private set; } = INITIAL_SHOOT_TIMES;
-
-    /// <summary>射精感：0～100 的獨立累積值，每日歸零。</summary>
-    public int Semen { get; private set; } = INITIAL_SEMEN;
-    public int SemenMax => 100;
-
-    /// <summary>射精耗盡狀態：ShootTimes <= 0 即為 true。</summary>
+    public int SkillPoints { get; private set; } = InitialSkillPoints;
+    public int Semen { get; private set; } = InitialSemen;
+    public int SemenMax => SemenLimit;
+    public int RoomMessLevel { get; private set; } = InitialRoomMessLevel;
     public bool IsOverShoot => ShootTimes <= 0;
 
-    /// <summary>房間髒亂度：0～25。每日結束自動 +1。越高代表房間越亂。</summary>
-    public int RoomMessLevel { get; private set; } = INITIAL_ROOM_MESS_LEVEL;
+    /// <summary>狀態完成更新後通知；訂閱者讀取目前屬性。</summary>
+    public event Action OnChanged;
 
-    /// <summary>
-    /// 房間整潔度百分比：0～100（純衍生、不佔狀態、不進存檔）。
-    /// 由髒亂度反向換算：髒亂 Min（0）= 整潔 100%，髒亂 Max（25）= 整潔 0%。
-    /// 範圍為 25 時剛好整除（每點髒亂 = 4%），無四捨五入誤差。
-    /// </summary>
-    public int RoomCleanPercent
-    {
-        get
-        {
-            int range = ROOM_MESS_LEVEL_MAX - ROOM_MESS_LEVEL_MIN;
-            if (range <= 0) return 100;
-            return (ROOM_MESS_LEVEL_MAX - RoomMessLevel) * 100 / range;
-        }
-    }
-
-    /// <summary>身體髒污度：0～25。越高代表身體越髒（顯示時反向換算成整潔度）。</summary>
-    public int BodyDirtyLevel { get; private set; } = INITIAL_BODY_DIRTY_LEVEL;
-
-    /// <summary>
-    /// 身體整潔度百分比：0～100（純衍生、不佔狀態、不進存檔）。
-    /// 由髒污度反向換算：髒污 Min（0）= 整潔 100%，髒污 Max（25）= 整潔 0%。
-    /// </summary>
-    public int BodyCleanPercent
-    {
-        get
-        {
-            int range = BODY_DIRTY_LEVEL_MAX - BODY_DIRTY_LEVEL_MIN;
-            if (range <= 0) return 100;
-            return (BODY_DIRTY_LEVEL_MAX - BodyDirtyLevel) * 100 / range;
-        }
-    }
-
-    /// <summary>狀態不好：true 時「增加壓力會再多 +1、減少壓力會少 -1」；Stress 調整後小於等於 40 時自動解除。</summary>
-    public bool BadHealthy { get; private set; } = false;
-
-    /// <summary>不良依賴：true 時每次 Phase 變化增加壓力；Dependency 調整後小於等於 40 時自動解除。</summary>
-    public bool BadDependency { get; private set; } = false;
-
-    // ───── 事件通知 ─────
-    public event Action<int> OnStressChanged;       // delta
-    public event Action<int> OnLifePowerChanged;    // delta
-    public event Action<int> OnSocialityChanged;    // delta
-    public event Action<int> OnDependencyChanged;   // delta
-    public event Action<int> OnMoneyChanged;        // delta
-    public event Action<int> OnSkillPointsChanged;  // delta
-    public event Action<int> OnShootTimesChanged;   // delta
-    /// <summary>射精感改變時傳回新值；新遊戲與讀檔後透過 OnGameStatusLoaded 統一刷新。</summary>
+    // 保留既有事件語意：金錢、技能點、射精次數、房間髒亂傳變化量；射精感傳最新值。
+    public event Action<int> OnMoneyChanged;
+    public event Action<int> OnSkillPointsChanged;
+    public event Action<int> OnShootTimesChanged;
+    public event Action<int> OnRoomMessLevelChanged;
     public event Action<int> OnSemenChanged;
-    public event Action<int> OnRoomMessLevelChanged; // delta
-    public event Action<int> OnBodyDirtyLevelChanged; // delta
-    public event Action<bool> OnBadHealthyChanged;   // 新狀態值
-    public event Action<bool> OnBadDependencyChanged; // 新狀態值
 
-    public event Action<StatusGrade, StatusGrade> OnStressGradeChanged;
-    public event Action<StatusGrade, StatusGrade> OnLifeGradeChanged;
-    public event Action<StatusGrade, StatusGrade> OnSocialityGradeChanged;
-    public event Action<StatusGrade, StatusGrade> OnDependencyGradeChanged;
+    public ProtagonistStatusModel() => NewGame(notify: false);
 
-    // ───── 初始化 / 存讀檔 ─────
-    public void NewGame()
+    // 先以 long 計算，避免 int 加法溢位導致正負反轉。
+    private static int Clamp(long value, int min, int max)
+        => (int)Math.Max(min, Math.Min(max, value));
+
+    private void NotifyIfChanged(int previous, int current, Action<int> deltaEvent = null)
     {
-        Stress = INITIAL_STRESS;
-        LifePower = INITIAL_LIFE_POWER;
-        Sociality = INITIAL_SOCIALITY;
-        Dependency = INITIAL_DEPENDENCY;
-        Money = INITIAL_MONEY;
-        SkillPoints = INITIAL_SKILL_POINTS;
-        ShootTimes = INITIAL_SHOOT_TIMES;
-        Semen = INITIAL_SEMEN;
-        RoomMessLevel = INITIAL_ROOM_MESS_LEVEL;
-        BodyDirtyLevel = INITIAL_BODY_DIRTY_LEVEL;
-        BadHealthy = false;
-        BadDependency = false;
-
-        NotifyAllCoreValues();
+        if (previous == current) return;
+        // ForceAdd 可橫跨整個 int 範圍；舊 delta 事件以 int 可表示範圍限制。
+        deltaEvent?.Invoke(Clamp((long)current - previous, int.MinValue, int.MaxValue));
+        OnChanged?.Invoke();
     }
 
-    public ProtagonistSaveData ToSaveData()
+    /// <summary>增加上限不補體力；降低上限時僅裁切超出部分，保留負值。</summary>
+    public void SetStaminaMax(int value)
     {
-        return new ProtagonistSaveData
-        {
-            Stress = Stress,
-            LifePower = LifePower,
-            Sociality = Sociality,
-            Dependency = Dependency,
-            Money = Money,
-            SkillPoints = SkillPoints,
-            ShootTimes = ShootTimes,
-            Semen = Semen,
-            RoomMessLevel = RoomMessLevel,
-            BodyDirtyLevel = BodyDirtyLevel,
-            BadHealthy = BadHealthy,
-            BadDependency = BadDependency
-        };
+        value = Math.Max(StaminaMin, value);
+        if (value == StaminaMax) return;
+        if (value < StaminaMax)
+            Stamina = Math.Min(Stamina, value);
+        StaminaMax = value;
+        OnChanged?.Invoke();
     }
 
-    public void LoadFromSaveData(ProtagonistSaveData data)
+    public void AddStaminaMax(int amount)
+        => SetStaminaMax(Clamp((long)StaminaMax + amount, StaminaMin, int.MaxValue));
+
+    public void SetStamina(int value)
     {
-        if (data == null)
-        {
-            NewGame();
-            return;
-        }
-
-        Stress = ClampStress(data.Stress);
-        LifePower = ClampStatus(data.LifePower);
-        Sociality = ClampStatus(data.Sociality);
-        Dependency = ClampDependency(data.Dependency);
-        Money = Math.Max(0, data.Money);
-        SkillPoints = Math.Max(0, data.SkillPoints);
-        ShootTimes = Math.Max(SHOOT_TIMES_MIN, Math.Min(data.ShootTimes, int.MaxValue));
-        // 直接還原，不廣播射精感事件；舊存檔缺少此欄位時預設為 0。
-        Semen = Math.Max(0, Math.Min(SemenMax, data.Semen));
-        RoomMessLevel = ClampRoomMessLevel(data.RoomMessLevel);
-        BodyDirtyLevel = ClampBodyDirtyLevel(data.BodyDirtyLevel); // 舊存檔缺欄位時反序列化為 0（= 身體最乾淨）
-        BadHealthy = data.BadHealthy; // 舊存檔沒有此欄位時，Newtonsoft 預設為 false
-        // 舊存檔沒有此欄位時，Newtonsoft 預設為 false；直接還原手動設定的狀態。
-        BadDependency = data.BadDependency;
-
-        NotifyAllCoreValues();
+        int previous = Stamina;
+        Stamina = Clamp(value, StaminaMin, StaminaMax);
+        NotifyIfChanged(previous, Stamina);
     }
 
-    private void NotifyAllCoreValues()
+    public void AddStamina(int amount)
+        => SetStamina(Clamp((long)Stamina + amount, StaminaMin, StaminaMax));
+
+    /// <summary>忽略遊戲上下限，僅受 int 可表示範圍限制。</summary>
+    public void ForceAddStamina(int amount)
     {
-        OnStressChanged?.Invoke(0);
-        OnLifePowerChanged?.Invoke(0);
-        OnSocialityChanged?.Invoke(0);
-        OnDependencyChanged?.Invoke(0);
-        OnMoneyChanged?.Invoke(0);
-        OnSkillPointsChanged?.Invoke(0);
-        OnShootTimesChanged?.Invoke(0);
-        OnRoomMessLevelChanged?.Invoke(0);
-        OnBodyDirtyLevelChanged?.Invoke(0);
-        OnBadHealthyChanged?.Invoke(BadHealthy);
-        OnBadDependencyChanged?.Invoke(BadDependency);
+        int previous = Stamina;
+        Stamina = Clamp((long)Stamina + amount, int.MinValue, int.MaxValue);
+        NotifyIfChanged(previous, Stamina);
     }
 
-    // ───── 每日流程 ─────
-    public void OnDayStart()
+    /// <summary>增加上限不補次數；降低上限時僅裁切超出部分，保留負值。</summary>
+    public void SetShootTimesMax(int value)
     {
-        ResetShootTimes();
-        ApplySemenDailyReset();
+        value = Math.Max(ShootTimesMin, value);
+        if (value == ShootTimesMax) return;
+        int previous = ShootTimes;
+        if (value < ShootTimesMax)
+            ShootTimes = Math.Min(ShootTimes, value);
+        ShootTimesMax = value;
+        if (previous != ShootTimes) OnShootTimesChanged?.Invoke(Clamp((long)ShootTimes - previous, int.MinValue, int.MaxValue));
+        OnChanged?.Invoke();
     }
 
-    public void OnDayEnd()
+    public void AddShootTimesMax(int amount)
+        => SetShootTimesMax(Clamp((long)ShootTimesMax + amount, ShootTimesMin, int.MaxValue));
+
+    public void SetShootTimes(int value)
     {
-        if (UnityEngine.Random.value < ROOM_MESS_DAILY_GAIN_CHANCE)
-        {
-            AddRoomMessLevel(1);
-
-        }
-
-        //AddBodyDirtyLevel(1); // 與房間同步：每日結束身體也會變髒一點。若不想要可移除此行。
-
-        ApplyDependencyDailyGain();
+        int previous = ShootTimes;
+        ShootTimes = Clamp(value, ShootTimesMin, ShootTimesMax);
+        NotifyIfChanged(previous, ShootTimes, OnShootTimesChanged);
     }
 
-    public void NextDay()
+    public void AddShootTimes(int amount)
+        => SetShootTimes(Clamp((long)ShootTimes + amount, ShootTimesMin, ShootTimesMax));
+
+    /// <summary>忽略遊戲上下限，僅受 int 可表示範圍限制。</summary>
+    public void ForceAddShootTimes(int amount)
     {
-        OnDayEnd();
-        // Day 由 TimeSystemModel.DayIndex 管理，這裡不再遞增。
-        OnDayStart();
+        int previous = ShootTimes;
+        ShootTimes = Clamp((long)ShootTimes + amount, int.MinValue, int.MaxValue);
+        NotifyIfChanged(previous, ShootTimes, OnShootTimesChanged);
     }
 
-    // ───── 主角核心數值方法 ─────
-    public void ApplyStatusChange(ProtagonistStatusChange change)
+    public void SetLust(int value)
     {
-        AddStress(change.stressDelta);
-        AddLifePower(change.lifePowerDelta);
-        AddSociality(change.socialityDelta);
-        AddDependency(change.dependencyDelta);
+        int previous = Lust;
+        Lust = Clamp(value, LustMin, LustMax);
+        NotifyIfChanged(previous, Lust);
     }
 
-    public void AddStress(int delta)
+    public void AddLust(int amount) => SetLust(Clamp((long)Lust + amount, LustMin, LustMax));
+
+    public void SetStickerCount(int value)
     {
-        ApplyStressDelta(ApplyBadHealthyModifier(delta));
+        int previous = StickerCount;
+        StickerCount = Clamp(value, StickerCountMin, StickerCountMax);
+        NotifyIfChanged(previous, StickerCount);
     }
 
-    /// <summary>
-    /// 「狀態不好」的壓力修正：增加壓力時再 +1、減少壓力時少 -1（兩者皆為 delta + 1）。
-    /// 例：+5 → +6；-5 → -4；-1 → 0（等於這次減壓無效）。
-    /// </summary>
-    private int ApplyBadHealthyModifier(int delta)
+    public void AddStickerCount(int amount)
+        => SetStickerCount(Clamp((long)StickerCount + amount, StickerCountMin, StickerCountMax));
+
+    public void SetPendingStickerCount(int value)
     {
-        if (!BadHealthy || delta == 0) return delta;
-        return delta + 1;
+        int previous = PendingStickerCount;
+        PendingStickerCount = Clamp(value, PendingStickerCountMin, PendingStickerCountMax);
+        NotifyIfChanged(previous, PendingStickerCount);
     }
 
-    /// <summary>實際套用壓力變化（不經過 BadHealthy 修正）。SetStress 走這裡以確保精確設定。</summary>
-    private void ApplyStressDelta(int delta)
+    public void AddPendingStickerCount(int amount)
+        => SetPendingStickerCount(Clamp((long)PendingStickerCount + amount,
+            PendingStickerCountMin, PendingStickerCountMax));
+
+    /// <summary>盡量將待領貼紙轉入持有量；放不下的保留待領，沒有轉入時回傳 false。</summary>
+    public bool RedeemPendingStickers()
     {
-        if (delta == 0) return;
+        int availableSpace = Math.Max(0, StickerCountMax - StickerCount);
+        int redeemed = Math.Min(PendingStickerCount, availableSpace);
+        if (redeemed <= 0) return false;
 
-        int prevValue = Stress;
-        StatusGrade prevGrade = GetStressGrade();
-        Stress = ClampStress(Stress + delta);
-
-        DisableBadHealthyIfStressLow();
-
-        if (Stress == prevValue) return;
-
-        OnStressChanged?.Invoke(Stress - prevValue);
-
-        StatusGrade newGrade = GetStressGrade();
-        if (newGrade != prevGrade)
-            OnStressGradeChanged?.Invoke(prevGrade, newGrade);
+        // 兩個數值都完成更新後才通知，避免 UI 看到只更新一半的資料。
+        StickerCount += redeemed;
+        PendingStickerCount -= redeemed;
+        OnChanged?.Invoke();
+        return true;
     }
 
-    public void ReduceStress(int delta)
+    // 金錢上下限固定於此，不列入頂部的可調設定區。
+    private static int ClampMoney(long value) => Clamp(value, 0, 999999);
+
+    public void SetMoney(int value)
     {
-        if (delta <= 0) return;
-        AddStress(-delta);
+        int previous = Money;
+        Money = ClampMoney(value);
+        NotifyIfChanged(previous, Money, OnMoneyChanged);
     }
 
-    public void SetStress(int value)
-    {
-        ApplyStressDelta(ClampStress(value) - Stress);
-    }
+    /// <summary>正數增加、負數扣除；先以 long 相加，避免整數溢位。</summary>
+    public void AddMoney(int amount) => SetMoney(ClampMoney((long)Money + amount));
 
-    public void AddLifePower(int delta)
-    {
-        if (delta == 0) return;
-
-        int prevValue = LifePower;
-        StatusGrade prevGrade = GetLifeGrade();
-        LifePower = ClampStatus(LifePower + delta);
-
-        if (LifePower == prevValue) return;
-
-        OnLifePowerChanged?.Invoke(LifePower - prevValue);
-
-        StatusGrade newGrade = GetLifeGrade();
-        if (newGrade != prevGrade)
-            OnLifeGradeChanged?.Invoke(prevGrade, newGrade);
-    }
-
-    public void ReduceLifePower(int delta)
-    {
-        if (delta <= 0) return;
-        AddLifePower(-delta);
-    }
-
-    public void SetLifePower(int value)
-    {
-        AddLifePower(ClampStatus(value) - LifePower);
-    }
-
-    public void AddSociality(int delta)
-    {
-        if (delta == 0) return;
-
-        int prevValue = Sociality;
-        StatusGrade prevGrade = GetSocialityGrade();
-        Sociality = ClampStatus(Sociality + delta);
-
-        if (Sociality == prevValue) return;
-
-        OnSocialityChanged?.Invoke(Sociality - prevValue);
-
-        StatusGrade newGrade = GetSocialityGrade();
-        if (newGrade != prevGrade)
-            OnSocialityGradeChanged?.Invoke(prevGrade, newGrade);
-    }
-
-    public void ReduceSociality(int delta)
-    {
-        if (delta <= 0) return;
-        AddSociality(-delta);
-    }
-
-    public void SetSociality(int value)
-    {
-        AddSociality(ClampStatus(value) - Sociality);
-    }
-
-    public void AddDependency(int delta)
-    {
-        if (delta == 0) return;
-
-        int prevValue = Dependency;
-        StatusGrade prevGrade = GetDependencyGrade();
-        Dependency = ClampDependency(Dependency + delta);
-
-        DisableBadDependencyIfDependencyLow();
-
-        if (Dependency == prevValue) return;
-
-        OnDependencyChanged?.Invoke(Dependency - prevValue);
-
-        StatusGrade newGrade = GetDependencyGrade();
-        if (newGrade != prevGrade)
-            OnDependencyGradeChanged?.Invoke(prevGrade, newGrade);
-    }
-
-    public void ReduceDependency(int delta)
-    {
-        if (delta <= 0) return;
-        AddDependency(-delta);
-    }
-
-    public void SetDependency(int value)
-    {
-        AddDependency(ClampDependency(value) - Dependency);
-    }
-
-    /// <summary>每日依賴度上升。由每日流程 (OnDayEnd) 呼叫。</summary>
-    public void ApplyDependencyDailyGain()
-    {
-        AddDependency(DEPENDENCY_DAILY_GAIN);
-    }
-
-    // ───── Money / SkillPoints ─────
-    public bool CanReduceMoney(int cost)
-    {
-        if (cost < 0) return false;
-        if (cost == 0) return true;
-        return Money >= cost;
-    }
-
+    public bool CanReduceMoney(int cost) => cost >= 0 && Money >= cost;
     public bool TryReduceMoney(int cost)
     {
         if (!CanReduceMoney(cost)) return false;
@@ -458,42 +227,15 @@ public class ProtagonistStatusModel
         return true;
     }
 
-    public void AddMoney(int delta)
+    public void SetSkillPoints(int value)
     {
-        if (delta == 0) return;
-        int prev = Money;
-        Money = Math.Max(0, Money + delta);
-        if (Money != prev) OnMoneyChanged?.Invoke(Money - prev);
+        int previous = SkillPoints;
+        SkillPoints = Math.Max(0, value);
+        NotifyIfChanged(previous, SkillPoints, OnSkillPointsChanged);
     }
-
-    public void SetMoney(int amount)
-    {
-        int prev = Money;
-        Money = Math.Max(0, amount);
-        if (Money != prev) OnMoneyChanged?.Invoke(Money - prev);
-    }
-
-    public void AddSkillPoints(int delta)
-    {
-        if (delta == 0) return;
-        int prev = SkillPoints;
-        SkillPoints = Math.Max(0, SkillPoints + delta);
-        if (SkillPoints != prev) OnSkillPointsChanged?.Invoke(SkillPoints - prev);
-    }
-
-    public void ReduceSkillPoints(int delta)
-    {
-        if (delta <= 0) return;
-        AddSkillPoints(-delta);
-    }
-
-    public bool CanReduceSkillPoints(int cost)
-    {
-        if (cost < 0) return false;
-        if (cost == 0) return true;
-        return SkillPoints >= cost;
-    }
-
+    public void AddSkillPoints(int amount) => SetSkillPoints(Clamp((long)SkillPoints + amount, 0, int.MaxValue));
+    public void ReduceSkillPoints(int amount) { if (amount > 0) AddSkillPoints(-amount); }
+    public bool CanReduceSkillPoints(int cost) => cost >= 0 && SkillPoints >= cost;
     public bool TryReduceSkillPoints(int cost)
     {
         if (!CanReduceSkillPoints(cost)) return false;
@@ -501,264 +243,110 @@ public class ProtagonistStatusModel
         return true;
     }
 
-    public void SetSkillPoints(int amount)
-    {
-        int prev = SkillPoints;
-        SkillPoints = Math.Max(0, amount);
-        if (SkillPoints != prev) OnSkillPointsChanged?.Invoke(SkillPoints - prev);
-    }
-
-    // ───── Semen（射精感） ─────
-
     public int GetSemen() => Semen;
-
-    /// <summary>設定射精感，限制在 0～100；只有實際改變時通知新值。</summary>
     public void SetSemen(int value)
     {
-        value = Math.Max(0, Math.Min(SemenMax, value));
+        value = Clamp(value, SemenMin, SemenLimit);
         if (Semen == value) return;
         Semen = value;
         OnSemenChanged?.Invoke(Semen);
+        OnChanged?.Invoke();
     }
+    public void AddSemen(int amount) => SetSemen(Clamp((long)Semen + amount, SemenMin, SemenLimit));
+    public void ApplySemenDailyReset() => SetSemen(SemenMin);
 
-    /// <summary>增減射精感，不套用倍率、不改變射精次數；超出範圍的部分捨棄。</summary>
-    public void AddSemen(int amount)
-    {
-        long newValue = (long)Semen + amount;
-        SetSemen((int)Math.Max(0L, Math.Min(SemenMax, newValue)));
-    }
-
-    /// <summary>每日開始時將射精感歸零。</summary>
-    public void ApplySemenDailyReset() => SetSemen(0);
-
-    // ───── ShootTimes（射精次數） ─────
-
-    /// <summary>查詢目前射精次數。</summary>
-    public int CheckShootTimes() => ShootTimes;
-
-    /// <summary>增加射精次數。可以超過 Max，無上限。</summary>
-    public void AddShootTimes(int delta)
-    {
-        if (delta == 0) return;
-        int prev = ShootTimes;
-        ShootTimes += delta;
-        if (ShootTimes != prev) OnShootTimesChanged?.Invoke(ShootTimes - prev);
-    }
-
-    /// <summary>
-    /// 嘗試消耗射精次數（amount 為正數）。
-    /// 若扣除後會低於 Min，回傳 false 且不扣除。
-    /// </summary>
-    public bool TryReduceShootTimes(int amount = 1)
-    {
-        if (amount <= 0) return true;
-        if (ShootTimes - amount < SHOOT_TIMES_MIN) return false;
-
-        int prev = ShootTimes;
-        ShootTimes -= amount;
-        if (ShootTimes != prev) OnShootTimesChanged?.Invoke(ShootTimes - prev);
-        return true;
-    }
-
-    /// <summary>
-    /// 重製射精次數回 Max。若目前超過 Max 也會被截回 Max。
-    /// OnDayStart 會自動呼叫，也可由外部獨立呼叫。
-    /// </summary>
-    public void ResetShootTimes()
-    {
-        int prev = ShootTimes;
-        ShootTimes = SHOOT_TIMES_MAX;
-        if (ShootTimes != prev) OnShootTimesChanged?.Invoke(ShootTimes - prev);
-    }
-
-    // ───── RoomMessLevel（房間髒亂度） ─────
-
-    /// <summary>查詢目前房間髒亂度。</summary>
     public int CheckRoomMessLevel() => RoomMessLevel;
-
-    /// <summary>增加髒亂度。封頂於 Max，不會超過。</summary>
-    public void AddRoomMessLevel(int delta)
-    {
-        if (delta == 0) return;
-        int prev = RoomMessLevel;
-        RoomMessLevel = ClampRoomMessLevel(RoomMessLevel + delta);
-        if (RoomMessLevel != prev) OnRoomMessLevelChanged?.Invoke(RoomMessLevel - prev);
-    }
-
-    /// <summary>降低髒亂度（delta 為正數）。保底於 Min，不會低於。</summary>
-    public void ReduceRoomMessLevel(int delta)
-    {
-        if (delta <= 0) return;
-        AddRoomMessLevel(-delta);
-    }
-
-    /// <summary>直接設定髒亂度，會夾在 Min~Max。</summary>
     public void SetRoomMessLevel(int value)
     {
-        int prev = RoomMessLevel;
-        RoomMessLevel = ClampRoomMessLevel(value);
-        if (RoomMessLevel != prev) OnRoomMessLevelChanged?.Invoke(RoomMessLevel - prev);
+        int previous = RoomMessLevel;
+        RoomMessLevel = Clamp(value, RoomMessLevelMin, RoomMessLevelMax);
+        NotifyIfChanged(previous, RoomMessLevel, OnRoomMessLevelChanged);
+    }
+    public void AddRoomMessLevel(int amount)
+        => SetRoomMessLevel(Clamp((long)RoomMessLevel + amount, RoomMessLevelMin, RoomMessLevelMax));
+    public void ReduceRoomMessLevel(int amount) { if (amount > 0) AddRoomMessLevel(-amount); }
+
+    /// <summary>日終保留房間隨機變髒；日初恢復體力、射精次數並清空射精感。</summary>
+    public void NextDay()
+    {
+        OnDayEnd();
+        OnDayStart();
     }
 
-    // ───── BodyDirtyLevel（身體髒污度） ─────
-
-    /// <summary>查詢目前身體髒污度。</summary>
-    public int CheckBodyDirtyLevel() => BodyDirtyLevel;
-
-    /// <summary>增加髒污度。封頂於 Max，不會超過。</summary>
-    public void AddBodyDirtyLevel(int delta)
+    public void OnDayEnd()
     {
-        if (delta == 0) return;
-        int prev = BodyDirtyLevel;
-        BodyDirtyLevel = ClampBodyDirtyLevel(BodyDirtyLevel + delta);
-        if (BodyDirtyLevel != prev) OnBodyDirtyLevelChanged?.Invoke(BodyDirtyLevel - prev);
+        if (UnityEngine.Random.value < RoomMessDailyGainChance)
+            AddRoomMessLevel(RoomMessDailyGain);
     }
 
-    /// <summary>降低髒污度（delta 為正數）。保底於 Min，不會低於。</summary>
-    public void ReduceBodyDirtyLevel(int delta)
+    public void OnDayStart()
     {
-        if (delta <= 0) return;
-        AddBodyDirtyLevel(-delta);
+        int previousStamina = Stamina;
+        int previousShootTimes = ShootTimes;
+        int previousSemen = Semen;
+        Stamina = Stamina < 0
+            ? Clamp(NegativeStaminaDailyReset, StaminaMin, StaminaMax)
+            : Clamp((long)Stamina + StaminaDailyRecovery, StaminaMin, StaminaMax);
+        ShootTimes = ShootTimes <= 0
+            ? Clamp(ExhaustedShootTimesDailyReset, ShootTimesMin, ShootTimesMax)
+            : Clamp((long)ShootTimes + ShootTimesDailyRecovery, ShootTimesMin, ShootTimesMax);
+        Semen = SemenMin;
+        // 完成整批變更後才通知；避免讀到一半的日初狀態。
+        if (previousShootTimes != ShootTimes)
+            OnShootTimesChanged?.Invoke(Clamp((long)ShootTimes - previousShootTimes, int.MinValue, int.MaxValue));
+        if (previousSemen != Semen) OnSemenChanged?.Invoke(Semen);
+        if (previousStamina != Stamina || previousShootTimes != ShootTimes || previousSemen != Semen)
+            OnChanged?.Invoke();
     }
 
-    /// <summary>直接設定髒污度，會夾在 Min~Max。</summary>
-    public void SetBodyDirtyLevel(int value)
+    /// <summary>開局補滿體力與射精次數；整批初始化由 Service 統一通知刷新。</summary>
+    public void NewGame(bool notify = true)
     {
-        int prev = BodyDirtyLevel;
-        BodyDirtyLevel = ClampBodyDirtyLevel(value);
-        if (BodyDirtyLevel != prev) OnBodyDirtyLevelChanged?.Invoke(BodyDirtyLevel - prev);
+        StaminaMax = Math.Max(StaminaMin, InitialStaminaMax);
+        Stamina = StaminaMax;
+        ShootTimesMax = Math.Max(ShootTimesMin, InitialShootTimesMax);
+        ShootTimes = ShootTimesMax;
+        Lust = Clamp(InitialLust, LustMin, LustMax);
+        StickerCount = Clamp(InitialStickerCount, StickerCountMin, StickerCountMax);
+        PendingStickerCount = Clamp(InitialPendingStickerCount, PendingStickerCountMin, PendingStickerCountMax);
+        Money = ClampMoney(InitialMoney);
+        SkillPoints = Math.Max(0, InitialSkillPoints);
+        Semen = Clamp(InitialSemen, SemenMin, SemenLimit);
+        RoomMessLevel = Clamp(InitialRoomMessLevel, RoomMessLevelMin, RoomMessLevelMax);
+        if (notify)
+        {
+            OnMoneyChanged?.Invoke(0);
+            OnSkillPointsChanged?.Invoke(0);
+            OnShootTimesChanged?.Invoke(0);
+            OnRoomMessLevelChanged?.Invoke(0);
+            OnSemenChanged?.Invoke(Semen);
+            OnChanged?.Invoke();
+        }
     }
 
-    // ───── BadHealthy（狀態不好） ─────
-
-    /// <summary>開啟「狀態不好」。開啟期間：增加壓力再 +1、減少壓力少 -1。</summary>
-    public void EnableBadHealthy() => SetBadHealthy(true);
-
-    /// <summary>解除「狀態不好」。Stress 調整後小於等於門檻時也會自動呼叫。</summary>
-    public void DisableBadHealthy() => SetBadHealthy(false);
-
-    /// <summary>直接設定「狀態不好」。狀態有變化時觸發 OnBadHealthyChanged。</summary>
-    public void SetBadHealthy(bool value)
+    public ProtagonistSaveData ToSaveData() => new ProtagonistSaveData
     {
-        if (BadHealthy == value) return;
-        BadHealthy = value;
-        OnBadHealthyChanged?.Invoke(BadHealthy);
-    }
+        StaminaMax = StaminaMax, Stamina = Stamina,
+        ShootTimesMax = ShootTimesMax, ShootTimes = ShootTimes,
+        Lust = Lust, StickerCount = StickerCount, PendingStickerCount = PendingStickerCount,
+        Money = Money, SkillPoints = SkillPoints, Semen = Semen, RoomMessLevel = RoomMessLevel
+    };
 
-    private void DisableBadHealthyIfStressLow()
+    /// <summary>靜默還原；完成所有 Model 載入後由 OnGameStatusLoaded 統一刷新。</summary>
+    public void LoadFromSaveData(ProtagonistSaveData data)
     {
-        if (Stress <= BAD_HEALTHY_AUTO_DISABLE_THRESHOLD)
-            DisableBadHealthy();
-    }
-
-    // ───── BadDependency（不良依賴） ─────
-
-    /// <summary>開啟「不良依賴」。開啟期間每次進入新 Phase 增加壓力。</summary>
-    public void EnableBadDependency() => SetBadDependency(true);
-
-    /// <summary>解除「不良依賴」。Dependency 小於等於門檻時也會自動呼叫。</summary>
-    public void DisableBadDependency() => SetBadDependency(false);
-
-    /// <summary>直接設定「不良依賴」，不受依賴度門檻限制。</summary>
-    public void SetBadDependency(bool value)
-    {
-        if (BadDependency == value) return;
-        BadDependency = value;
-        OnBadDependencyChanged?.Invoke(BadDependency);
-    }
-
-    private void DisableBadDependencyIfDependencyLow()
-    {
-        if (Dependency <= BAD_DEPENDENCY_AUTO_DISABLE_THRESHOLD)
-            DisableBadDependency();
-    }
-
-    /// <summary>Phase 變化時套用「不良依賴」效果。壓力變化會走既有 BadHealthy 修正。</summary>
-    public void ApplyBadDependencyPhaseStress()
-    {
-        if (!BadDependency) return;
-        AddStress(BAD_DEPENDENCY_PHASE_STRESS_GAIN);
-    }
-
-    // ───── 分級查詢 ─────
-    public StatusGrade GetStressGrade()
-    {
-        if (Stress >= STRESS_EXTREME_THRESHOLD) return StatusGrade.Extreme;
-        if (Stress >= STRESS_HIGH_THRESHOLD) return StatusGrade.High;
-        if (Stress >= STRESS_MEDIUM_THRESHOLD) return StatusGrade.Medium;
-        return StatusGrade.Low;
-    }
-
-    public StatusGrade GetLifeGrade()
-    {
-        if (LifePower >= LIFE_EXTREME_THRESHOLD) return StatusGrade.Extreme;
-        if (LifePower >= LIFE_HIGH_THRESHOLD) return StatusGrade.High;
-        if (LifePower >= LIFE_MEDIUM_THRESHOLD) return StatusGrade.Medium;
-        return StatusGrade.Low;
-    }
-
-    public StatusGrade GetSocialityGrade()
-    {
-        if (Sociality >= SOCIALITY_EXTREME_THRESHOLD) return StatusGrade.Extreme;
-        if (Sociality >= SOCIALITY_HIGH_THRESHOLD) return StatusGrade.High;
-        if (Sociality >= SOCIALITY_MEDIUM_THRESHOLD) return StatusGrade.Medium;
-        return StatusGrade.Low;
-    }
-
-    public StatusGrade GetDependencyGrade()
-    {
-        if (Dependency >= DEPENDENCY_EXTREME_THRESHOLD) return StatusGrade.Extreme;
-        if (Dependency >= DEPENDENCY_HIGH_THRESHOLD) return StatusGrade.High;
-        if (Dependency >= DEPENDENCY_MEDIUM_THRESHOLD) return StatusGrade.Medium;
-        return StatusGrade.Low;
-    }
-
-    // ───── Bool 快捷查詢 ─────
-    public bool IsStressHigh() => Stress >= STRESS_HIGH_THRESHOLD;
-    public bool IsStressExtreme() => Stress >= STRESS_EXTREME_THRESHOLD;
-
-    public bool IsLifeLow() => LifePower < LIFE_MEDIUM_THRESHOLD;
-    public bool IsLifeHigh() => LifePower >= LIFE_HIGH_THRESHOLD;
-
-    public bool IsSocialityLow() => Sociality < SOCIALITY_MEDIUM_THRESHOLD;
-    public bool IsSocialityHigh() => Sociality >= SOCIALITY_HIGH_THRESHOLD;
-
-    public bool IsDependencyHigh() => Dependency >= DEPENDENCY_HIGH_THRESHOLD;
-    public bool IsDependencyExtreme() => Dependency >= DEPENDENCY_EXTREME_THRESHOLD;
-
-    // ───── 內部工具 ─────
-    private static int ClampStatus(int value)
-    {
-        if (value < MIN_STATUS_VALUE) return MIN_STATUS_VALUE;
-        if (value > MAX_STATUS_VALUE) return MAX_STATUS_VALUE;
-        return value;
-    }
-
-    private static int ClampStress(int value)
-    {
-        if (value < STRESS_MIN_VALUE) return STRESS_MIN_VALUE;
-        if (value > STRESS_MAX_VALUE) return STRESS_MAX_VALUE;
-        return value;
-    }
-
-    private static int ClampDependency(int value)
-    {
-        if (value < DEPENDENCY_MIN_VALUE) return DEPENDENCY_MIN_VALUE;
-        if (value > DEPENDENCY_MAX_VALUE) return DEPENDENCY_MAX_VALUE;
-        return value;
-    }
-
-    private static int ClampRoomMessLevel(int value)
-    {
-        if (value < ROOM_MESS_LEVEL_MIN) return ROOM_MESS_LEVEL_MIN;
-        if (value > ROOM_MESS_LEVEL_MAX) return ROOM_MESS_LEVEL_MAX;
-        return value;
-    }
-
-    private static int ClampBodyDirtyLevel(int value)
-    {
-        if (value < BODY_DIRTY_LEVEL_MIN) return BODY_DIRTY_LEVEL_MIN;
-        if (value > BODY_DIRTY_LEVEL_MAX) return BODY_DIRTY_LEVEL_MAX;
-        return value;
+        if (data == null) { NewGame(notify: false); return; }
+        StaminaMax = Math.Max(StaminaMin, data.StaminaMax);
+        ShootTimesMax = Math.Max(ShootTimesMin, data.ShootTimesMax);
+        // ForceAdd 的負值及超上限值都是合法狀態，讀檔不得裁切。
+        Stamina = data.Stamina;
+        ShootTimes = data.ShootTimes;
+        Lust = Clamp(data.Lust, LustMin, LustMax);
+        StickerCount = Clamp(data.StickerCount, StickerCountMin, StickerCountMax);
+        PendingStickerCount = Clamp(data.PendingStickerCount, PendingStickerCountMin, PendingStickerCountMax);
+        Money = ClampMoney(data.Money);
+        SkillPoints = Math.Max(0, data.SkillPoints);
+        Semen = Clamp(data.Semen, SemenMin, SemenLimit);
+        RoomMessLevel = Clamp(data.RoomMessLevel, RoomMessLevelMin, RoomMessLevelMax);
     }
 }

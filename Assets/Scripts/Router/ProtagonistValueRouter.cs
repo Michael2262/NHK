@@ -15,10 +15,10 @@ public class ProtagonistValueRouter : MonoBehaviour
         None,
         CheckMoney,
         CheckSkillPoints,
-        CheckStressAtMost,
-        CheckLifePowerAtLeast,
-        CheckSocialityAtLeast,
-        CheckDependencyAtLeast
+        [UnityEngine.InspectorName("已退役：CheckStressAtMost")] CheckStressAtMost,
+        [UnityEngine.InspectorName("已退役：CheckLifePowerAtLeast")] CheckLifePowerAtLeast,
+        [UnityEngine.InspectorName("已退役：CheckSocialityAtLeast")] CheckSocialityAtLeast,
+        [UnityEngine.InspectorName("已退役：CheckDependencyAtLeast")] CheckDependencyAtLeast
     }
 
     [Header("數值檢查設定")]
@@ -163,16 +163,16 @@ public class ProtagonistValueRouter : MonoBehaviour
                 return p.CanReduceSkillPoints(threshold);
 
             case CheckType.CheckStressAtMost:
-                return p.Stress <= threshold;
+                return false; // 舊四維條件已退役。
 
             case CheckType.CheckLifePowerAtLeast:
-                return p.LifePower >= threshold;
+                return false; // 舊四維條件已退役。
 
             case CheckType.CheckSocialityAtLeast:
-                return p.Sociality >= threshold;
+                return false; // 舊四維條件已退役。
 
             case CheckType.CheckDependencyAtLeast:
-                return p.Dependency >= threshold;
+                return false; // 舊四維條件已退役。
 
             default:
                 return false;

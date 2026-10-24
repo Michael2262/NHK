@@ -178,12 +178,7 @@ public class RequirementUnavailable : MonoBehaviour
 
             if (RuleAsset.HasProtagonistCondition && svc.Protagonist != null)
             {
-                svc.Protagonist.OnStressChanged += OnAnyChanged;
-                svc.Protagonist.OnLifePowerChanged += OnAnyChanged;
-                svc.Protagonist.OnSocialityChanged += OnAnyChanged;
-                svc.Protagonist.OnDependencyChanged += OnAnyChanged;
                 svc.Protagonist.OnRoomMessLevelChanged += OnAnyChanged;
-                svc.Protagonist.OnBodyDirtyLevelChanged += OnAnyChanged;
             }
         }
         else if (Conditions != null)
@@ -206,12 +201,7 @@ public class RequirementUnavailable : MonoBehaviour
                 }
                 else if (!protagonistSubscribed && svc.Protagonist != null)
                 {
-                    svc.Protagonist.OnStressChanged += OnAnyChanged;
-                    svc.Protagonist.OnLifePowerChanged += OnAnyChanged;
-                    svc.Protagonist.OnSocialityChanged += OnAnyChanged;
-                    svc.Protagonist.OnDependencyChanged += OnAnyChanged;
                     svc.Protagonist.OnRoomMessLevelChanged += OnAnyChanged;
-                    svc.Protagonist.OnBodyDirtyLevelChanged += OnAnyChanged;
                     protagonistSubscribed = true;
                 }
             }
@@ -242,12 +232,7 @@ public class RequirementUnavailable : MonoBehaviour
 
             if (RuleAsset.HasProtagonistCondition && svc.Protagonist != null)
             {
-                svc.Protagonist.OnStressChanged -= OnAnyChanged;
-                svc.Protagonist.OnLifePowerChanged -= OnAnyChanged;
-                svc.Protagonist.OnSocialityChanged -= OnAnyChanged;
-                svc.Protagonist.OnDependencyChanged -= OnAnyChanged;
                 svc.Protagonist.OnRoomMessLevelChanged -= OnAnyChanged;
-                svc.Protagonist.OnBodyDirtyLevelChanged -= OnAnyChanged;
             }
         }
         else if (Conditions != null)
@@ -269,12 +254,7 @@ public class RequirementUnavailable : MonoBehaviour
                 }
                 else if (!protagonistUnsubscribed && svc.Protagonist != null)
                 {
-                    svc.Protagonist.OnStressChanged -= OnAnyChanged;
-                    svc.Protagonist.OnLifePowerChanged -= OnAnyChanged;
-                    svc.Protagonist.OnSocialityChanged -= OnAnyChanged;
-                    svc.Protagonist.OnDependencyChanged -= OnAnyChanged;
                     svc.Protagonist.OnRoomMessLevelChanged -= OnAnyChanged;
-                    svc.Protagonist.OnBodyDirtyLevelChanged -= OnAnyChanged;
                     protagonistUnsubscribed = true;
                 }
             }

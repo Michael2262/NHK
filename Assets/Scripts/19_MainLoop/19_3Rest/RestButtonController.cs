@@ -3,18 +3,11 @@ using UnityEngine;
 /// <summary>
 /// NHK 版休息按鈕控制器。
 /// 舊版用途：回復 Stamina。
-/// NHK 用途：透過休息降低 Stress，並推進時間。
+/// 用途：推進休息時間；跨日由正式主角 Model 恢復資源。
 /// </summary>
 public class RestButtonController : MonoBehaviour
 {
     public static RestButtonController Instance { get; private set; }
-
-    [Header("NHK 壓力回復設定")]
-    [Tooltip("每休息 1 個 Slot 可降低的壓力值。")]
-    [SerializeField] private int stressRecoveryPerSlot = 10;
-
-    [Tooltip("睡到隔天時額外降低的壓力值。")]
-    [SerializeField] private int nightlyStressRecovery = 20;
 
     private GameStatusService _service;
     private ProtagonistStatusModel _protagonist;
@@ -53,9 +46,7 @@ public class RestButtonController : MonoBehaviour
         SceneController.PerformSlotTransition(
             onMidTransition: () =>
             {
-                int recovered = RecoverStressBySlots(slotsRested);
                 _time.TryAdvanceTime(slotsRested);
-                Debug.Log($"[RestButton/NHK] 休息 1 Slot，壓力 -{recovered}。");
             }
         );
     }
@@ -68,9 +59,7 @@ public class RestButtonController : MonoBehaviour
         SceneController.PerformSlotTransition(
             onMidTransition: () =>
             {
-                int recovered = RecoverStressBySlots(slotsToNextPhase);
                 _time.TryAdvanceTime(slotsToNextPhase);
-                Debug.Log($"[RestButton/NHK] 休息到下一 Phase，經過 {slotsToNextPhase} Slots，壓力 -{recovered}。");
             }
         );
     }
@@ -80,8 +69,6 @@ public class RestButtonController : MonoBehaviour
         if (!CanRestToNextDay()) return;
 
         int remainingSlots = GetSlotsToNextDay();
-        int recovered = RecoverStressBySlots(remainingSlots) + RecoverNightlyStress();
-        Debug.Log($"[RestButton/NHK] 休息到隔天，經過 {remainingSlots} Slots，總壓力 -{recovered}。");
         _time.SkipToNextDay();
     }
 
@@ -120,42 +107,17 @@ public class RestButtonController : MonoBehaviour
 
     public int CalculateRestOneSlotPreview()
     {
-        if (!CanRestOneSlot()) return 0;
-        return CalculateActualStressRecovery(1, false);
+        return 0; // 不再預覽舊壓力回復；跨日恢復由正式主角 Model 負責。
     }
 
     public int CalculateRestToNextPhasePreview()
     {
-        if (!CanRestToNextPhase()) return 0;
-        return CalculateActualStressRecovery(GetSlotsToNextPhase(), false);
+        return 0; // 不再預覽舊壓力回復；跨日恢復由正式主角 Model 負責。
     }
 
     public int CalculateRestToNextDayPreview()
     {
-        if (!IsReady()) return 0;
-        return CalculateActualStressRecovery(GetSlotsToNextDay(), true);
-    }
-
-    private int RecoverStressBySlots(int slots)
-    {
-        int recovered = CalculateActualStressRecovery(slots, false);
-        _protagonist.ReduceStress(recovered);
-        return recovered;
-    }
-
-    private int RecoverNightlyStress()
-    {
-        int recovered = Mathf.Min(nightlyStressRecovery, _protagonist.Stress);
-        _protagonist.ReduceStress(recovered);
-        return recovered;
-    }
-
-    private int CalculateActualStressRecovery(int slots, bool includeNightly)
-    {
-        if (_protagonist == null) return 0;
-        int raw = Mathf.Max(0, slots) * stressRecoveryPerSlot;
-        if (includeNightly) raw += nightlyStressRecovery;
-        return Mathf.Clamp(raw, 0, _protagonist.Stress);
+        return 0; // 不再預覽舊壓力回復；跨日恢復由正式主角 Model 負責。
     }
 
     private int GetSlotsToNextPhase()

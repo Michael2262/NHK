@@ -55,13 +55,13 @@ public enum UnlockStatType
     HCount,
 
     // ───── 主角數值 ─────
-    Stress,
-    LifePower,
-    Sociality,
-    Dependency,
+    [UnityEngine.InspectorName("已退役：Stress")] Stress,
+    [UnityEngine.InspectorName("已退役：LifePower")] LifePower,
+    [UnityEngine.InspectorName("已退役：Sociality")] Sociality,
+    [UnityEngine.InspectorName("已退役：Dependency")] Dependency,
     RoomMessLevel,
     // 追加，放最後以免打亂既有 Rule / Mirror .asset 的列舉索引
-    BodyDirtyLevel,
+    [UnityEngine.InspectorName("已退役：BodyDirtyLevel")] BodyDirtyLevel,
     // 女主角數值（追加，放最後以免打亂既有 Rule / Mirror .asset 的列舉索引）
     Affinity
 }
@@ -137,8 +137,8 @@ public class StatMirror
 /// </summary>
 public enum ProtagonistBoolState
 {
-    BadHealthy,
-    BadDependency
+    [UnityEngine.InspectorName("已退役：BadHealthy")] BadHealthy,
+    [UnityEngine.InspectorName("已退役：BadDependency")] BadDependency
 }
 
 /// <summary>
@@ -204,29 +204,19 @@ public static class ProgressUnlockUtility
                 return true;
 
             case UnlockStatType.Stress:
-                if (protagonist == null) return false;
-                value = protagonist.Stress;
-                return true;
+                return false; // 舊數值已退役。
             case UnlockStatType.LifePower:
-                if (protagonist == null) return false;
-                value = protagonist.LifePower;
-                return true;
+                return false; // 舊數值已退役。
             case UnlockStatType.Sociality:
-                if (protagonist == null) return false;
-                value = protagonist.Sociality;
-                return true;
+                return false; // 舊數值已退役。
             case UnlockStatType.Dependency:
-                if (protagonist == null) return false;
-                value = protagonist.Dependency;
-                return true;
+                return false; // 舊數值已退役。
             case UnlockStatType.RoomMessLevel:
                 if (protagonist == null) return false;
                 value = protagonist.RoomMessLevel;
                 return true;
             case UnlockStatType.BodyDirtyLevel:
-                if (protagonist == null) return false;
-                value = protagonist.BodyDirtyLevel;
-                return true;
+                return false; // 舊數值已退役。
 
             default:
                 return false;
@@ -240,19 +230,8 @@ public static class ProgressUnlockUtility
         out bool value)
     {
         value = false;
-        if (protagonist == null) return false;
-
-        switch (state)
-        {
-            case ProtagonistBoolState.BadHealthy:
-                value = protagonist.BadHealthy;
-                return true;
-            case ProtagonistBoolState.BadDependency:
-                value = protagonist.BadDependency;
-                return true;
-            default:
-                return false;
-        }
+        // 舊負面狀態已退役，不再同步其旗標。
+        return false;
     }
 
     /// <summary> 依運算子比較 value 與 threshold </summary>

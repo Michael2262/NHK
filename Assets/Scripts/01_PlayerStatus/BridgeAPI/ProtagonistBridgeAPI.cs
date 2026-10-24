@@ -1,66 +1,81 @@
 using UnityEngine;
 
-/// <summary>
-/// NHK 版主角數值變化 UnityEvent 橋接 API。
-/// 保留原檔名 / class 名，供 Inspector 的 UnityEvent 拖曳使用。
-/// 
-/// 提供核心數值、金錢、技能點、時間、射精感、射精次數、房間／身體髒污度及狀態開關。
-/// </summary>
+/// <summary>正式主角 UnityEvent 接口；範圍、結算與存檔全部由 Model 負責。</summary>
 [AddComponentMenu("Game/API/Protagonist Bridge API")]
 public class ProtagonistBridgeAPI : MonoBehaviour
 {
     private ProtagonistStatusModel P => GameStatusService.Instance?.Protagonist;
 
-    // ==========================================
-    // NHK Core Values
-    // ==========================================
+    // ───── 體力上限 ─────
+    public int GetStaminaMax() => P?.StaminaMax ?? 0;
+    public void SetStaminaMax(int value) => P?.SetStaminaMax(value);
+    public void AddStaminaMax(int amount) => P?.AddStaminaMax(amount);
 
-    public void AddStress(int amount) => P?.AddStress(amount);
-    public void ReduceStress(int amount) => P?.ReduceStress(amount);
-    public void SetStress(int value) => P?.SetStress(value);
+    // ───── 體力 ─────
+    public int GetStamina() => P?.Stamina ?? 0;
+    public void SetStamina(int value) => P?.SetStamina(value);
+    public void AddStamina(int amount) => P?.AddStamina(amount);
+    public void ForceAddStamina(int amount) => P?.ForceAddStamina(amount);
 
-    public void AddLifePower(int amount) => P?.AddLifePower(amount);
-    public void ReduceLifePower(int amount) => P?.ReduceLifePower(amount);
-    public void SetLifePower(int value) => P?.SetLifePower(value);
+    // ───── 射精次數上限 ─────
+    public int GetShootTimesMax() => P?.ShootTimesMax ?? 0;
+    public void SetShootTimesMax(int value) => P?.SetShootTimesMax(value);
+    public void AddShootTimesMax(int amount) => P?.AddShootTimesMax(amount);
 
-    public void AddSociality(int amount) => P?.AddSociality(amount);
-    public void ReduceSociality(int amount) => P?.ReduceSociality(amount);
-    public void SetSociality(int value) => P?.SetSociality(value);
+    // ───── 射精次數 ─────
+    public int GetShootTimes() => P?.ShootTimes ?? 0;
+    public void SetShootTimes(int value) => P?.SetShootTimes(value);
+    public void AddShootTimes(int amount) => P?.AddShootTimes(amount);
+    public void ForceAddShootTimes(int amount) => P?.ForceAddShootTimes(amount);
 
-    public void AddDependency(int amount) => P?.AddDependency(amount);
-    public void ReduceDependency(int amount) => P?.ReduceDependency(amount);
-    public void SetDependency(int value) => P?.SetDependency(value);
+    // ───── 邪念 ─────
+    public int GetLust() => P?.Lust ?? 0;
+    public void SetLust(int value) => P?.SetLust(value);
+    public void AddLust(int amount) => P?.AddLust(amount);
 
-    public void ApplyStatusChange(int stressDelta, int lifePowerDelta, int socialityDelta, int dependencyDelta)
-    {
-        P?.ApplyStatusChange(new ProtagonistStatusChange(stressDelta, lifePowerDelta, socialityDelta, dependencyDelta));
-    }
+    // ───── 持有貼紙 ─────
+    public int GetStickerCount() => P?.StickerCount ?? 0;
+    public void SetStickerCount(int value) => P?.SetStickerCount(value);
+    public void AddStickerCount(int amount) => P?.AddStickerCount(amount);
 
-    // ==========================================
-    // Money / SkillPoints
-    // ==========================================
+    // ───── 待領貼紙 ─────
+    public int GetPendingStickerCount() => P?.PendingStickerCount ?? 0;
+    public void SetPendingStickerCount(int value) => P?.SetPendingStickerCount(value);
+    public void AddPendingStickerCount(int amount) => P?.AddPendingStickerCount(amount);
+    public void RedeemPendingStickers() => P?.RedeemPendingStickers();
 
+    // ───── 金錢 ─────
+    public int GetMoney() => P?.Money ?? 0;
+    public void SetMoney(int value) => P?.SetMoney(value);
+    public void AddMoney(int amount) => P?.AddMoney(amount);
     public void ReduceMoney(int amount)
     {
-        bool success = P?.TryReduceMoney(amount) ?? false;
-        if (!success) Debug.LogWarning($"[ProtagonistBridgeAPI] Money 不足，無法扣除 {amount}");
+        if (P?.TryReduceMoney(amount) != true)
+            Debug.LogWarning("[ProtagonistBridgeAPI] 金錢不足、數量無效或 Model 尚未初始化。", this);
     }
 
-    public void AddMoney(int amount) => P?.AddMoney(amount);
-    public void SetMoney(int amount) => P?.SetMoney(amount);
-
+    // ───── 技能點 ─────
+    public int GetSkillPoints() => P?.SkillPoints ?? 0;
+    public void SetSkillPoints(int value) => P?.SetSkillPoints(value);
+    public void AddSkillPoints(int amount) => P?.AddSkillPoints(amount);
     public void ReduceSkillPoints(int amount)
     {
-        bool success = P?.TryReduceSkillPoints(amount) ?? false;
-        if (!success) Debug.LogWarning($"[ProtagonistBridgeAPI] SkillPoints 不足，無法扣除 {amount}");
+        if (P?.TryReduceSkillPoints(amount) != true)
+            Debug.LogWarning("[ProtagonistBridgeAPI] 技能點不足、數量無效或 Model 尚未初始化。", this);
     }
 
-    public void AddSkillPoints(int amount) => P?.AddSkillPoints(amount);
-    public void SetSkillPoints(int amount) => P?.SetSkillPoints(amount);
+    // ───── 射精感 ─────
+    public int GetSemen() => P?.Semen ?? 0;
+    public void SetSemen(int value) => P?.SetSemen(value);
+    public void AddSemen(int amount) => P?.AddSemen(amount);
 
-    // ==========================================
-    // Time
-    // ==========================================
+    // ───── 房間髒亂 ─────
+    public int GetRoomMessLevel() => P?.RoomMessLevel ?? 0;
+    public void SetRoomMessLevel(int value) => P?.SetRoomMessLevel(value);
+    public void AddRoomMessLevel(int amount) => P?.AddRoomMessLevel(amount);
+    public void ReduceRoomMessLevel(int amount) => P?.ReduceRoomMessLevel(amount);
+
+    public bool GetIsOverShoot() => P?.IsOverShoot ?? false;
 
     public void AdvanceTime(int slots)
     {
@@ -72,66 +87,4 @@ public class ProtagonistBridgeAPI : MonoBehaviour
         }
         t.AdvanceTime(slots);
     }
-
-    // ==========================================
-    // 射精感：範圍與變更通知由 Model 處理。
-    // ==========================================
-
-    public int GetSemen() => P?.GetSemen() ?? 0;
-    public void SetSemen(int value) => P?.SetSemen(value);
-    /// <summary>正數增加、負數減少射精感。</summary>
-    public void AddSemen(int amount) => P?.AddSemen(amount);
-
-    // ==========================================
-    // 射精次數
-    // ==========================================
-
-    /// <summary>增加射精次數，沿用 Model 規則，可超過每日重設值。</summary>
-    public void AddShootTimes(int amount) => P?.AddShootTimes(amount);
-
-    /// <summary>以正數指定扣除次數；低於 Model 下限時不扣除並提示。</summary>
-    public void ReduceShootTimes(int amount)
-    {
-        var model = P;
-        if (model == null)
-        {
-            Debug.LogWarning("[ProtagonistBridgeAPI] 主角 Model 尚未初始化，無法扣除射精次數。", this);
-            return;
-        }
-
-        if (!model.TryReduceShootTimes(amount))
-        {
-            Debug.LogWarning($"[ProtagonistBridgeAPI] 射精次數不足，無法扣除 {amount}；下限為 {ProtagonistStatusModel.SHOOT_TIMES_MIN}。", this);
-        }
-    }
-
-    /// <summary>重設射精次數為 Model 的每日初始值，目前為 3。</summary>
-    public void ResetShootTimes() => P?.ResetShootTimes();
-
-    // ==========================================
-    // 房間髒亂度 / 身體髒污度：範圍由 Model 處理。
-    // ==========================================
-
-    public void AddRoomMessLevel(int amount) => P?.AddRoomMessLevel(amount);
-    /// <summary>以正數指定減少的房間髒亂度。</summary>
-    public void ReduceRoomMessLevel(int amount) => P?.ReduceRoomMessLevel(amount);
-    public void SetRoomMessLevel(int value) => P?.SetRoomMessLevel(value);
-
-    public void AddBodyDirtyLevel(int amount) => P?.AddBodyDirtyLevel(amount);
-    /// <summary>以正數指定減少的身體髒污度。</summary>
-    public void ReduceBodyDirtyLevel(int amount) => P?.ReduceBodyDirtyLevel(amount);
-    public void SetBodyDirtyLevel(int value) => P?.SetBodyDirtyLevel(value);
-
-    // ==========================================
-    // 狀態開關
-    // ==========================================
-
-    public void SetBadHealthy(bool value) => P?.SetBadHealthy(value);
-    public void EnableBadHealthy() => SetBadHealthy(true);
-    public void DisableBadHealthy() => SetBadHealthy(false);
-
-    /// <summary>設定不良依賴；能否開啟及自動解除門檻由 Model 決定。</summary>
-    public void SetBadDependency(bool value) => P?.SetBadDependency(value);
-    public void EnableBadDependency() => SetBadDependency(true);
-    public void DisableBadDependency() => SetBadDependency(false);
 }

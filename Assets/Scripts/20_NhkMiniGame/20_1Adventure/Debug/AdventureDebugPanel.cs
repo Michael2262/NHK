@@ -81,7 +81,7 @@ public class AdventureDebugPanel : MonoBehaviour
             GUILayout.Label($"已出過  任務:{(run.QuestHappened ? "是" : "否")}  特色:{(run.SpecialHappened ? "是" : "否")}");
         }
         if (p != null)
-            GUILayout.Label($"壓力：{p.Stress}   社會性：{p.Sociality}   生活力：{p.LifePower}   $：{p.Money}");
+            GUILayout.Label($"體力：{p.Stamina}/{p.StaminaMax}   邪念：{p.Lust}   $：{p.Money}");
 
         // ── 目前的牌 ──
         GUILayout.Space(4);

@@ -1,37 +1,18 @@
 using System;
 
-/// <summary>
-/// 職責：ProtagonistStatusModel 的存檔數據容器。
-/// Day 由 TimeSaveData 統一管理，不再重複存放。
-/// </summary>
+/// <summary>主角存檔。欄位初始值供舊 JSON 缺欄位時使用；退役欄位由 Newtonsoft 忽略。</summary>
 [Serializable]
 public class ProtagonistSaveData
 {
-    // ───── NHK 主角核心數值 ─────
-    public int Stress;       // 壓力：0～100，越高越危險
-    public int LifePower;    // 生活力：0～100，越高越能維持正常生活
-    public int Sociality;    // 社會性：0～100，越高越能面對外界
-    public int Dependency;   // 依賴度：0～100，主角對妹妹的依賴
-
-    // ───── 保留資源 ─────
-    public int Money;
-    public int SkillPoints;
-
-    // ───── 射精次數 ─────
-    public int ShootTimes;
-
-    // ───── 射精感（0～100；舊存檔缺欄位時預設為 0） ─────
-    public int Semen;
-
-    // ───── 房間髒亂度 ─────
-    public int RoomMessLevel;
-
-    // ───── 身體髒污度（0～25；舊存檔缺欄位時反序列化為 0） ─────
-    public int BodyDirtyLevel;
-
-    // ───── 狀態不好（壓力調整後小於等於 40 時自動解除；舊存檔缺欄位時反序列化預設 false） ─────
-    public bool BadHealthy;
-
-    // ───── 不良依賴（手動開關；舊存檔缺欄位時反序列化預設 false） ─────
-    public bool BadDependency;
+    public int StaminaMax = ProtagonistStatusModel.InitialStaminaMax;
+    public int Stamina = ProtagonistStatusModel.InitialStaminaMax;
+    public int ShootTimesMax = ProtagonistStatusModel.InitialShootTimesMax;
+    public int ShootTimes = ProtagonistStatusModel.InitialShootTimesMax;
+    public int Lust = ProtagonistStatusModel.InitialLust;
+    public int StickerCount = ProtagonistStatusModel.InitialStickerCount;
+    public int PendingStickerCount = ProtagonistStatusModel.InitialPendingStickerCount;
+    public int Money = ProtagonistStatusModel.InitialMoney;
+    public int SkillPoints = ProtagonistStatusModel.InitialSkillPoints;
+    public int Semen = ProtagonistStatusModel.InitialSemen;
+    public int RoomMessLevel = ProtagonistStatusModel.InitialRoomMessLevel;
 }

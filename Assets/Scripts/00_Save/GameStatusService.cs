@@ -30,8 +30,6 @@ public class GameStatusService : MonoBehaviour
     [SerializeField] private DayTriggerConfig dayTriggerConfig; //
     [SerializeField] private StatChangePackageDatabase statChangePackageDatabase; // 數值變化套組資料庫
 
-
-
     [Header("存檔通知（已改為事件驅動，此欄位不再使用）")]
     [SerializeField] private SaveNotification saveNotification; // 保留欄位避免序列化報錯，但不再使用
 
@@ -56,8 +54,7 @@ public class GameStatusService : MonoBehaviour
     // Model 實例 (數據層) - 可供外部查詢
     // ==========================================================
     public ProtagonistStatusModel Protagonist { get; private set; }
-    // 數值實驗使用獨立實例，不取代正式角色，也不參與存讀檔。
-    public NHK.StateTest.ProtagonistStatusModel TestProtagonist { get; private set; }
+    // 女主角測試版仍使用獨立實例；主角已統一使用正式 Model。
     public NHK.StateTest.HeroineStatusModel TestHeroine { get; private set; }
     public ProtagonistInventoryModel Inventory { get; private set; }
     public ProtagonistSkillModel Skills { get; private set; }
@@ -81,8 +78,6 @@ public class GameStatusService : MonoBehaviour
     public CurrentScenarioModel Scenario { get; private set; } // 當前情境 Model
     public GlobalProgressModel GlobalProgress { get; private set; } // 全域進度（跨存檔）
     public VisualModeModel VisualMode { get; private set; } // 視覺 mode（Tachie body mode + 全域 BG/CG mode）
-
-
 
     // ==========================================================
     // 公開的 Config 存取點 (讓 Manager 讀取)
@@ -152,7 +147,6 @@ public class GameStatusService : MonoBehaviour
         // --- 1. 實例化 Model (數據層) ---
         // ProtagonistStatusModel: 無參數建構函式
         Protagonist = new ProtagonistStatusModel();
-        TestProtagonist = new NHK.StateTest.ProtagonistStatusModel();
         TestHeroine = new NHK.StateTest.HeroineStatusModel();
 
         Inventory = new ProtagonistInventoryModel();
@@ -190,7 +184,6 @@ public class GameStatusService : MonoBehaviour
         InitializeHeroineModels();
         // 也呼叫獨立方法來初始化家人
         InitializeRiskAgentModels();
-
 
         Scenario = new CurrentScenarioModel(); // 實例化情境 Model
 
@@ -265,7 +258,6 @@ public class GameStatusService : MonoBehaviour
 
         Debug.Log("GameStatusService: All core systems initialized.");
 
-
     }
 
     /// <summary>
@@ -297,7 +289,7 @@ public class GameStatusService : MonoBehaviour
         Time.OnPhaseChanged += () =>
         {
             ProgressFlags.ClearPhaseFlags();
-            Protagonist.ApplyBadDependencyPhaseStress();
+            // 舊不良依賴與壓力結算已退役。
             _scheduleProcessor?.NotifyPhaseChanged();
             _dayTriggerProcessor?.NotifyPhaseChanged();
             ValueTriggerManager.OnValueChanged("Phase", Time.CurrentPhaseIndex);
@@ -348,9 +340,8 @@ public class GameStatusService : MonoBehaviour
         DialogueManager.ResetDatabase(DatabaseResetOptions.KeepAllLoaded); // 重置當前的對話資料庫
 
         // 重置所有 Model 的數值
-        Protagonist.NewGame();
+        Protagonist.NewGame(notify: false);
         // 保留實例與訂閱；等 NotifyGameStatusLoaded 統一刷新。
-        TestProtagonist.NewGame(notify: false);
         TestHeroine.NewGame(notify: false);
         Skills.NewGame();
         Inventory.NewGame();
@@ -488,8 +479,6 @@ public class GameStatusService : MonoBehaviour
         }
     }
 
-
-
     // 我們需要一個新的公共方法來啟動整個流程
     public void SetSlotIndex(int slotIndex)
     {
@@ -519,9 +508,8 @@ public class GameStatusService : MonoBehaviour
         // 1. 清除昨日標記，並啟用隔日預約。
         ProgressFlags.HandleDayPassed();
 
-        // 2. 主角數值重置 (原本的邏輯)
+        // 2. 正式主角跨日結算（體力、射精次數、射精感與房間髒亂）
         Protagonist.NextDay();
-        TestProtagonist.NextDay();
 
         // 3. 商店限制重置
         ShopStatus.ResetDailyLimits(itemDatabase);
@@ -625,7 +613,6 @@ public class GameStatusService : MonoBehaviour
             Debug.Log($"已成功創建/重置風險代理人: {agentData.agentName} (ID: {agentData.agentID})");
         }
     }
-
 
     // ==========================================================
     // ProgressUnlockManager

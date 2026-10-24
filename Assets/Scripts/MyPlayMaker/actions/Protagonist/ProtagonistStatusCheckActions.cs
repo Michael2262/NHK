@@ -51,6 +51,7 @@ public abstract class ProtagonistIntCheckActionBase : FsmStateAction
     private bool _lastResult;
     private bool _initialized;
 
+    protected virtual bool IsRetired => false;
     protected abstract string DebugName { get; }
     protected abstract int GetCurrentValue(ProtagonistStatusModel protagonist);
 
@@ -89,7 +90,7 @@ public abstract class ProtagonistIntCheckActionBase : FsmStateAction
         int current = GetCurrentValue(protagonist);
         if (storeValue != null && !storeValue.IsNone) storeValue.Value = current;
 
-        bool result = ProtagonistCheckUtil.CompareInt(current, compareMode, threshold.Value);
+        bool result = !IsRetired && ProtagonistCheckUtil.CompareInt(current, compareMode, threshold.Value);
         if (everyFrame)
         {
             bool shouldFire = !onlyFireOnChange.Value || !_initialized || result != _lastResult;
@@ -111,32 +112,44 @@ public abstract class ProtagonistIntCheckActionBase : FsmStateAction
 [Tooltip("比較主角壓力 Stress 與指定閾值。")]
 public class CheckStress : ProtagonistIntCheckActionBase
 {
+    protected override bool IsRetired => true;
     protected override string DebugName => nameof(CheckStress);
-    protected override int GetCurrentValue(ProtagonistStatusModel protagonist) => protagonist.Stress;
+    protected override int GetCurrentValue(ProtagonistStatusModel protagonist) {
+        return 0; // 舊四維已退役，IsRetired 保證比較不通過。
+    }
 }
 
 [ActionCategory("Protagonist Status")]
 [Tooltip("比較主角生活力 LifePower 與指定閾值。")]
 public class CheckLifePower : ProtagonistIntCheckActionBase
 {
+    protected override bool IsRetired => true;
     protected override string DebugName => nameof(CheckLifePower);
-    protected override int GetCurrentValue(ProtagonistStatusModel protagonist) => protagonist.LifePower;
+    protected override int GetCurrentValue(ProtagonistStatusModel protagonist) {
+        return 0; // 舊四維已退役，IsRetired 保證比較不通過。
+    }
 }
 
 [ActionCategory("Protagonist Status")]
 [Tooltip("比較主角社會性 Sociality 與指定閾值。社會性為正向值，越高越好。")]
 public class CheckSociality : ProtagonistIntCheckActionBase
 {
+    protected override bool IsRetired => true;
     protected override string DebugName => nameof(CheckSociality);
-    protected override int GetCurrentValue(ProtagonistStatusModel protagonist) => protagonist.Sociality;
+    protected override int GetCurrentValue(ProtagonistStatusModel protagonist) {
+        return 0; // 舊四維已退役，IsRetired 保證比較不通過。
+    }
 }
 
 [ActionCategory("Protagonist Status")]
 [Tooltip("比較主角依賴度 Dependency 與指定閾值。")]
 public class CheckDependency : ProtagonistIntCheckActionBase
 {
+    protected override bool IsRetired => true;
     protected override string DebugName => nameof(CheckDependency);
-    protected override int GetCurrentValue(ProtagonistStatusModel protagonist) => protagonist.Dependency;
+    protected override int GetCurrentValue(ProtagonistStatusModel protagonist) {
+        return 0; // 舊四維已退役，IsRetired 保證比較不通過。
+    }
 }
 
 [ActionCategory("Protagonist Status")]
@@ -159,7 +172,7 @@ public class CheckSkillPoints : ProtagonistIntCheckActionBase
 // Obsolete compatibility checks
 // ==========================================================
 [ActionCategory("Protagonist Status")]
-[Tooltip("舊版 CheckStamina。NHK 中以 MentalCapacity = 100 - Stress 進行比較。")]
+[Tooltip("比較正式主角體力，可讀取透支後的負值。")]
 public class CheckStamina : FsmStateAction
 {
     public enum CompareMode { GreaterThan, GreaterOrEqual, Equal, LessOrEqual, LessThan }
@@ -198,7 +211,7 @@ public class CheckStamina : FsmStateAction
     {
         var p = GameStatusService.Instance?.Protagonist;
         if (p == null) return;
-        float current = 100 - p.Stress;
+        float current = p.Stamina;
         if (storeStamina != null && !storeStamina.IsNone) storeStamina.Value = current;
 
         bool result = false;

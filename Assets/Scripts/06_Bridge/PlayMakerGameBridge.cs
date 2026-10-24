@@ -25,10 +25,6 @@ public class PlayMakerGameBridge : MonoBehaviour
     public ProtagonistStatusModel Protagonist => _service?.Protagonist;
     public TimeSystemModel Time => _service?.Time;
 
-    public int PlayerStress => Protagonist?.Stress ?? 0;
-    public int PlayerLifePower => Protagonist?.LifePower ?? 0;
-    public int PlayerSociality => Protagonist?.Sociality ?? 0;
-    public int PlayerDependency => Protagonist?.Dependency ?? 0;
     public int PlayerMoney => Protagonist?.Money ?? 0;
     public int PlayerSkillPoints => Protagonist?.SkillPoints ?? 0;
     public int CurrentDay => Time?.DayIndex ?? 1;
@@ -48,15 +44,6 @@ public class PlayMakerGameBridge : MonoBehaviour
         _service?.TimeManager?.AdvanceTime(1);
     }
 
-    public void AddPlayerStress(int amount) => Protagonist?.AddStress(amount);
-    public void ReducePlayerStress(int amount) => Protagonist?.ReduceStress(amount);
-    public void AddPlayerLifePower(int amount) => Protagonist?.AddLifePower(amount);
-    public void ReducePlayerLifePower(int amount) => Protagonist?.ReduceLifePower(amount);
-    public void AddPlayerSociality(int amount) => Protagonist?.AddSociality(amount);
-    public void ReducePlayerSociality(int amount) => Protagonist?.ReduceSociality(amount);
-    public void AddPlayerDependency(int amount) => Protagonist?.AddDependency(amount);
-    public void ReducePlayerDependency(int amount) => Protagonist?.ReduceDependency(amount);
-
     public void AddPlayerMoney(int amount) => Protagonist?.AddMoney(amount);
     public bool TryReducePlayerMoney(int cost) => Protagonist?.TryReduceMoney(cost) ?? false;
     public void AddPlayerSkillPoints(int amount) => Protagonist?.AddSkillPoints(amount);
@@ -65,7 +52,7 @@ public class PlayMakerGameBridge : MonoBehaviour
     // Legacy method aliases. These are kept to avoid old FSM references breaking immediately.
     public void AddPlayerAction(int amount) => Debug.LogWarning("[PlayMakerGameBridge] AddPlayerAction ignored in NHK.");
     public bool TryReducePlayerAction(int cost) => true;
-    public void AddPlayerSuspicion(int amount) => AddPlayerStress(amount);
+
     public void AddPlayerExcuseCharge(int amount) => Debug.LogWarning("[PlayMakerGameBridge] AddPlayerExcuseCharge ignored in NHK.");
     public void ReducePlayerExcuseCharge(int amount) => Debug.LogWarning("[PlayMakerGameBridge] ReducePlayerExcuseCharge ignored in NHK.");
 

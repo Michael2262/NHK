@@ -65,15 +65,13 @@ public class SkillSystemManager
         switch (skill.EffectType)
         {
             // 舊版攻擊 / 防禦效果在 NHK 中不再使用。
-            // 為避免舊 SkillData 失效，暫時轉成較保守的主角狀態補正。
+            // 保留序列化編號供舊 SkillData 辨識，不再轉成其他數值。
             case SkillEffectType.PermanentAttackIncrease:
-                _pStatus.AddLifePower(skill.EffectValue);
-                Debug.Log($"[SkillSystem] 舊 PermanentAttackIncrease 已轉換為 LifePower +{skill.EffectValue}");
+                Debug.LogWarning("[SkillSystem] 此技能的舊四維效果已退役，請重新設定效果。");
                 break;
 
             case SkillEffectType.PermanentDefenseIncrease:
-                _pStatus.ReduceStress(skill.EffectValue);
-                Debug.Log($"[SkillSystem] 舊 PermanentDefenseIncrease 已轉換為 Stress -{skill.EffectValue}");
+                Debug.LogWarning("[SkillSystem] 此技能的舊四維效果已退役，請重新設定效果。");
                 break;
 
             case SkillEffectType.UnlockNewAction:

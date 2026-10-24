@@ -224,184 +224,120 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
     // ========================================================
     // Stress (壓力)
     // ========================================================
-    public class SequencerCommandAddStress : SequencerCommandProtagonistResourceBase
+    public class SequencerCommandAddStress : SequencerCommand
     {
-        protected override string ResourceTypeKey => "Stress";
-        protected override string CommandName => "AddStress";
-        protected override int GetCurrentValue(ProtagonistStatusModel p) => p.Stress;
-
-        protected override int ApplyChange(ProtagonistStatusModel p, int parameter)
+        public void Awake()
         {
-            int prev = p.Stress;
-            p.AddStress(parameter);
-            return p.Stress - prev;
+            Debug.LogWarning("[SequencerCommandAddStress] 舊主角數值已退役，請更新對話指令。");
+            Stop();
         }
     }
 
-    public class SequencerCommandReduceStress : SequencerCommandProtagonistResourceBase
+    public class SequencerCommandReduceStress : SequencerCommand
     {
-        protected override string ResourceTypeKey => "Stress";
-        protected override string CommandName => "ReduceStress";
-        protected override int GetCurrentValue(ProtagonistStatusModel p) => p.Stress;
-
-        protected override int ApplyChange(ProtagonistStatusModel p, int parameter)
+        public void Awake()
         {
-            int amount = Math.Max(0, parameter);
-            int prev = p.Stress;
-            p.ReduceStress(amount);
-            return p.Stress - prev;
+            Debug.LogWarning("[SequencerCommandReduceStress] 舊主角數值已退役，請更新對話指令。");
+            Stop();
         }
     }
 
-    public class SequencerCommandSetStress : SequencerCommandProtagonistResourceBase
+    public class SequencerCommandSetStress : SequencerCommand
     {
-        protected override string ResourceTypeKey => "Stress";
-        protected override string CommandName => "SetStress";
-        protected override int GetCurrentValue(ProtagonistStatusModel p) => p.Stress;
-
-        protected override int ApplyChange(ProtagonistStatusModel p, int parameter)
+        public void Awake()
         {
-            int prev = p.Stress;
-            p.SetStress(parameter);
-            return p.Stress - prev;
+            Debug.LogWarning("[SequencerCommandSetStress] 舊主角數值已退役，請更新對話指令。");
+            Stop();
         }
     }
 
     // ========================================================
     // LifePower (生活力)
     // ========================================================
-    public class SequencerCommandAddLifePower : SequencerCommandProtagonistResourceBase
+    public class SequencerCommandAddLifePower : SequencerCommand
     {
-        protected override string ResourceTypeKey => "LifePower";
-        protected override string CommandName => "AddLifePower";
-        protected override int GetCurrentValue(ProtagonistStatusModel p) => p.LifePower;
-
-        protected override int ApplyChange(ProtagonistStatusModel p, int parameter)
+        public void Awake()
         {
-            int prev = p.LifePower;
-            p.AddLifePower(parameter);
-            return p.LifePower - prev;
+            Debug.LogWarning("[SequencerCommandAddLifePower] 舊主角數值已退役，請更新對話指令。");
+            Stop();
         }
     }
 
-    public class SequencerCommandReduceLifePower : SequencerCommandProtagonistResourceBase
+    public class SequencerCommandReduceLifePower : SequencerCommand
     {
-        protected override string ResourceTypeKey => "LifePower";
-        protected override string CommandName => "ReduceLifePower";
-        protected override int GetCurrentValue(ProtagonistStatusModel p) => p.LifePower;
-
-        protected override int ApplyChange(ProtagonistStatusModel p, int parameter)
+        public void Awake()
         {
-            int amount = Math.Max(0, parameter);
-            int prev = p.LifePower;
-            p.ReduceLifePower(amount);
-            return p.LifePower - prev;
+            Debug.LogWarning("[SequencerCommandReduceLifePower] 舊主角數值已退役，請更新對話指令。");
+            Stop();
         }
     }
 
-    public class SequencerCommandSetLifePower : SequencerCommandProtagonistResourceBase
+    public class SequencerCommandSetLifePower : SequencerCommand
     {
-        protected override string ResourceTypeKey => "LifePower";
-        protected override string CommandName => "SetLifePower";
-        protected override int GetCurrentValue(ProtagonistStatusModel p) => p.LifePower;
-
-        protected override int ApplyChange(ProtagonistStatusModel p, int parameter)
+        public void Awake()
         {
-            int prev = p.LifePower;
-            p.SetLifePower(parameter);
-            return p.LifePower - prev;
+            Debug.LogWarning("[SequencerCommandSetLifePower] 舊主角數值已退役，請更新對話指令。");
+            Stop();
         }
     }
 
     // ========================================================
     // Sociality (社會性)
     // ========================================================
-    public class SequencerCommandAddSociality : SequencerCommandProtagonistResourceBase
+    public class SequencerCommandAddSociality : SequencerCommand
     {
-        protected override string ResourceTypeKey => "Sociality";
-        protected override string CommandName => "AddSociality";
-        protected override int GetCurrentValue(ProtagonistStatusModel p) => p.Sociality;
-
-        protected override int ApplyChange(ProtagonistStatusModel p, int parameter)
+        public void Awake()
         {
-            int prev = p.Sociality;
-            p.AddSociality(parameter);
-            return p.Sociality - prev;
+            Debug.LogWarning("[SequencerCommandAddSociality] 舊主角數值已退役，請更新對話指令。");
+            Stop();
         }
     }
 
-    public class SequencerCommandReduceSociality : SequencerCommandProtagonistResourceBase
+    public class SequencerCommandReduceSociality : SequencerCommand
     {
-        protected override string ResourceTypeKey => "Sociality";
-        protected override string CommandName => "ReduceSociality";
-        protected override int GetCurrentValue(ProtagonistStatusModel p) => p.Sociality;
-
-        protected override int ApplyChange(ProtagonistStatusModel p, int parameter)
+        public void Awake()
         {
-            int amount = Math.Max(0, parameter);
-            int prev = p.Sociality;
-            p.ReduceSociality(amount);
-            return p.Sociality - prev;
+            Debug.LogWarning("[SequencerCommandReduceSociality] 舊主角數值已退役，請更新對話指令。");
+            Stop();
         }
     }
 
-    public class SequencerCommandSetSociality : SequencerCommandProtagonistResourceBase
+    public class SequencerCommandSetSociality : SequencerCommand
     {
-        protected override string ResourceTypeKey => "Sociality";
-        protected override string CommandName => "SetSociality";
-        protected override int GetCurrentValue(ProtagonistStatusModel p) => p.Sociality;
-
-        protected override int ApplyChange(ProtagonistStatusModel p, int parameter)
+        public void Awake()
         {
-            int prev = p.Sociality;
-            p.SetSociality(parameter);
-            return p.Sociality - prev;
+            Debug.LogWarning("[SequencerCommandSetSociality] 舊主角數值已退役，請更新對話指令。");
+            Stop();
         }
     }
 
     // ========================================================
     // Dependency (依賴度)
     // ========================================================
-    public class SequencerCommandAddDependency : SequencerCommandProtagonistResourceBase
+    public class SequencerCommandAddDependency : SequencerCommand
     {
-        protected override string ResourceTypeKey => "Dependency";
-        protected override string CommandName => "AddDependency";
-        protected override int GetCurrentValue(ProtagonistStatusModel p) => p.Dependency;
-
-        protected override int ApplyChange(ProtagonistStatusModel p, int parameter)
+        public void Awake()
         {
-            int prev = p.Dependency;
-            p.AddDependency(parameter);
-            return p.Dependency - prev;
+            Debug.LogWarning("[SequencerCommandAddDependency] 舊主角數值已退役，請更新對話指令。");
+            Stop();
         }
     }
 
-    public class SequencerCommandReduceDependency : SequencerCommandProtagonistResourceBase
+    public class SequencerCommandReduceDependency : SequencerCommand
     {
-        protected override string ResourceTypeKey => "Dependency";
-        protected override string CommandName => "ReduceDependency";
-        protected override int GetCurrentValue(ProtagonistStatusModel p) => p.Dependency;
-
-        protected override int ApplyChange(ProtagonistStatusModel p, int parameter)
+        public void Awake()
         {
-            int amount = Math.Max(0, parameter);
-            int prev = p.Dependency;
-            p.ReduceDependency(amount);
-            return p.Dependency - prev;
+            Debug.LogWarning("[SequencerCommandReduceDependency] 舊主角數值已退役，請更新對話指令。");
+            Stop();
         }
     }
 
-    public class SequencerCommandSetDependency : SequencerCommandProtagonistResourceBase
+    public class SequencerCommandSetDependency : SequencerCommand
     {
-        protected override string ResourceTypeKey => "Dependency";
-        protected override string CommandName => "SetDependency";
-        protected override int GetCurrentValue(ProtagonistStatusModel p) => p.Dependency;
-
-        protected override int ApplyChange(ProtagonistStatusModel p, int parameter)
+        public void Awake()
         {
-            int prev = p.Dependency;
-            p.SetDependency(parameter);
-            return p.Dependency - prev;
+            Debug.LogWarning("[SequencerCommandSetDependency] 舊主角數值已退役，請更新對話指令。");
+            Stop();
         }
     }
 
@@ -456,46 +392,30 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
     // BodyDirty（身體髒污度 0~25）
     // ResourceTypeKey 用 "BodyDirtyLevel"，與 ResourceType 列舉一致。
     // ========================================================
-    public class SequencerCommandAddBodyDirty : SequencerCommandProtagonistResourceBase
+    public class SequencerCommandAddBodyDirty : SequencerCommand
     {
-        protected override string ResourceTypeKey => "BodyDirtyLevel";
-        protected override string CommandName => "AddBodyDirty";
-        protected override int GetCurrentValue(ProtagonistStatusModel p) => p.BodyDirtyLevel;
-
-        protected override int ApplyChange(ProtagonistStatusModel p, int parameter)
+        public void Awake()
         {
-            int prev = p.BodyDirtyLevel;
-            p.AddBodyDirtyLevel(parameter);
-            return p.BodyDirtyLevel - prev;
+            Debug.LogWarning("[SequencerCommandAddBodyDirty] 舊主角數值已退役，請更新對話指令。");
+            Stop();
         }
     }
 
-    public class SequencerCommandReduceBodyDirty : SequencerCommandProtagonistResourceBase
+    public class SequencerCommandReduceBodyDirty : SequencerCommand
     {
-        protected override string ResourceTypeKey => "BodyDirtyLevel";
-        protected override string CommandName => "ReduceBodyDirty";
-        protected override int GetCurrentValue(ProtagonistStatusModel p) => p.BodyDirtyLevel;
-
-        protected override int ApplyChange(ProtagonistStatusModel p, int parameter)
+        public void Awake()
         {
-            int amount = Math.Max(0, parameter);
-            int prev = p.BodyDirtyLevel;
-            p.ReduceBodyDirtyLevel(amount);
-            return p.BodyDirtyLevel - prev;
+            Debug.LogWarning("[SequencerCommandReduceBodyDirty] 舊主角數值已退役，請更新對話指令。");
+            Stop();
         }
     }
 
-    public class SequencerCommandSetBodyDirty : SequencerCommandProtagonistResourceBase
+    public class SequencerCommandSetBodyDirty : SequencerCommand
     {
-        protected override string ResourceTypeKey => "BodyDirtyLevel";
-        protected override string CommandName => "SetBodyDirty";
-        protected override int GetCurrentValue(ProtagonistStatusModel p) => p.BodyDirtyLevel;
-
-        protected override int ApplyChange(ProtagonistStatusModel p, int parameter)
+        public void Awake()
         {
-            int prev = p.BodyDirtyLevel;
-            p.SetBodyDirtyLevel(parameter);
-            return p.BodyDirtyLevel - prev;
+            Debug.LogWarning("[SequencerCommandSetBodyDirty] 舊主角數值已退役，請更新對話指令。");
+            Stop();
         }
     }
 
@@ -511,13 +431,13 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
     {
         protected override string ResourceTypeKey => "ShootTimes";
         protected override string CommandName => "AddShootTimes";
-        protected override int GetCurrentValue(ProtagonistStatusModel p) => p.CheckShootTimes();
+        protected override int GetCurrentValue(ProtagonistStatusModel p) => p.ShootTimes;
 
         protected override int ApplyChange(ProtagonistStatusModel p, int parameter)
         {
-            int prev = p.CheckShootTimes();
+            int prev = p.ShootTimes;
             p.AddShootTimes(parameter);
-            return p.CheckShootTimes() - prev;
+            return (int)System.Math.Max(int.MinValue, System.Math.Min(int.MaxValue, (long)p.ShootTimes - prev));
         }
     }
 
@@ -529,14 +449,14 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
     {
         protected override string ResourceTypeKey => "ShootTimes";
         protected override string CommandName => "ReduceShootTimes";
-        protected override int GetCurrentValue(ProtagonistStatusModel p) => p.CheckShootTimes();
+        protected override int GetCurrentValue(ProtagonistStatusModel p) => p.ShootTimes;
 
         protected override int ApplyChange(ProtagonistStatusModel p, int parameter)
         {
             int amount = Math.Max(0, parameter);
-            int prev = p.CheckShootTimes();
-            p.TryReduceShootTimes(amount);
-            return p.CheckShootTimes() - prev;
+            int prev = p.ShootTimes;
+            p.ForceAddShootTimes(-amount);
+            return (int)System.Math.Max(int.MinValue, System.Math.Min(int.MaxValue, (long)p.ShootTimes - prev));
         }
     }
 
@@ -553,29 +473,7 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
     {
         public void Awake()
         {
-            string mode = GetParameter(0, string.Empty).Trim().ToLower();
-
-            var p = ProtagonistStatusSequencerUtil.GetProtagonist("BadHealthy");
-            if (p != null)
-            {
-                switch (mode)
-                {
-                    case "on":
-                    case "true":
-                    case "add":
-                        p.SetBadHealthy(true);
-                        break;
-                    case "off":
-                    case "false":
-                    case "remove":
-                        p.SetBadHealthy(false);
-                        break;
-                    default:
-                        Debug.LogWarning($"Dialogue System: BadHealthy 未知參數 '{mode}'，請使用 on / off。");
-                        break;
-                }
-            }
-
+            Debug.LogWarning("[SequencerCommandBadHealthy] 舊主角數值已退役，請更新對話指令。");
             Stop();
         }
     }
@@ -593,29 +491,7 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
     {
         public void Awake()
         {
-            string mode = GetParameter(0, string.Empty).Trim().ToLower();
-
-            var p = ProtagonistStatusSequencerUtil.GetProtagonist("BadDependency");
-            if (p != null)
-            {
-                switch (mode)
-                {
-                    case "on":
-                    case "true":
-                    case "add":
-                        p.SetBadDependency(true);
-                        break;
-                    case "off":
-                    case "false":
-                    case "remove":
-                        p.SetBadDependency(false);
-                        break;
-                    default:
-                        Debug.LogWarning($"Dialogue System: BadDependency 未知參數 '{mode}'，請使用 on / off。");
-                        break;
-                }
-            }
-
+            Debug.LogWarning("[SequencerCommandBadDependency] 舊主角數值已退役，請更新對話指令。");
             Stop();
         }
     }

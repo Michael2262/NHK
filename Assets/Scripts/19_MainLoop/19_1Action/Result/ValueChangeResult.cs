@@ -15,15 +15,15 @@ public class ValueChangeResult : MonoBehaviour
     // ==================================================
     public enum ResourceType
     {
-        Stress,
-        LifePower,
-        Sociality,
-        Dependency,
+        [UnityEngine.InspectorName("已退役：Stress")] Stress,
+        [UnityEngine.InspectorName("已退役：LifePower")] LifePower,
+        [UnityEngine.InspectorName("已退役：Sociality")] Sociality,
+        [UnityEngine.InspectorName("已退役：Dependency")] Dependency,
         Money,
         SkillPoints,
         RoomMessLevel,
         // 追加，放最後以免打亂既有 ValueChangeReporter 等序列化元件的列舉索引
-        BodyDirtyLevel
+        [UnityEngine.InspectorName("已退役：BodyDirtyLevel")] BodyDirtyLevel
     }
 
     // ==================================================
@@ -252,6 +252,7 @@ public class ValueChangeResult : MonoBehaviour
 
         foreach (var item in manualDeductions)
         {
+            if (IsRetired(item.resourceType)) continue;
             if (handledTypes.Contains(item.resourceType))
             {
                 Debug.Log($"[ValueChangeResult] 跳過主動扣除（已由 Router 處理）- {item.resourceType}");
@@ -417,6 +418,7 @@ public class ValueChangeResult : MonoBehaviour
     {
         foreach (var item in resourceGains)
         {
+            if (IsRetired(item.resourceType)) continue;
             var (finalAmount, itemEffect) = ProcessRandomEffect(item.baseAmount, item.randomEffect);
             TriggerRandomEffectEvents(itemEffect);
 
@@ -461,18 +463,7 @@ public class ValueChangeResult : MonoBehaviour
 
         switch (type)
         {
-            case ResourceType.Stress:
-                p.ReduceStress(amount);
-                break;
-            case ResourceType.LifePower:
-                p.ReduceLifePower(amount);
-                break;
-            case ResourceType.Sociality:
-                p.ReduceSociality(amount);
-                break;
-            case ResourceType.Dependency:
-                p.ReduceDependency(amount);
-                break;
+
             case ResourceType.Money:
                 p.TryReduceMoney(amount);
                 break;
@@ -482,9 +473,7 @@ public class ValueChangeResult : MonoBehaviour
             case ResourceType.RoomMessLevel:
                 p.ReduceRoomMessLevel(amount);
                 break;
-            case ResourceType.BodyDirtyLevel:
-                p.ReduceBodyDirtyLevel(amount);
-                break;
+
         }
     }
 
@@ -494,18 +483,7 @@ public class ValueChangeResult : MonoBehaviour
 
         switch (type)
         {
-            case ResourceType.Stress:
-                p.AddStress(amount);
-                break;
-            case ResourceType.LifePower:
-                p.AddLifePower(amount);
-                break;
-            case ResourceType.Sociality:
-                p.AddSociality(amount);
-                break;
-            case ResourceType.Dependency:
-                p.AddDependency(amount);
-                break;
+
             case ResourceType.Money:
                 p.AddMoney(amount);
                 break;
@@ -515,9 +493,7 @@ public class ValueChangeResult : MonoBehaviour
             case ResourceType.RoomMessLevel:
                 p.AddRoomMessLevel(amount);
                 break;
-            case ResourceType.BodyDirtyLevel:
-                p.AddBodyDirtyLevel(amount);
-                break;
+
         }
     }
 
@@ -640,4 +616,7 @@ public class ValueChangeResult : MonoBehaviour
     }
 
     public void SetAutoReport(bool value) => autoReport = value;
+    private static bool IsRetired(ResourceType type)
+        => type == ResourceType.Stress || type == ResourceType.LifePower || type == ResourceType.Sociality
+        || type == ResourceType.Dependency || type == ResourceType.BodyDirtyLevel;
 }

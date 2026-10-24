@@ -164,7 +164,8 @@ public class PlayMakerMinigameAdapter_Multi2 : MonoBehaviour, IMinigameControlle
     {
         if (_context?.Protagonist != null)
         {
-            int stress = _context.Protagonist.Stress;
+            // 舊 global_Stress 已退役；清為 0 避免 FSM 殘留上次數字。
+            int stress = 0;
 
             FsmInt globalStressVar = PlayMakerGlobals.Instance.Variables.FindFsmInt("global_Stress");
             if (globalStressVar != null) globalStressVar.Value = stress;
