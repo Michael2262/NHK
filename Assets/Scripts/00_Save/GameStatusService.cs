@@ -54,8 +54,6 @@ public class GameStatusService : MonoBehaviour
     // Model 實例 (數據層) - 可供外部查詢
     // ==========================================================
     public ProtagonistStatusModel Protagonist { get; private set; }
-    // 女主角測試版仍使用獨立實例；主角已統一使用正式 Model。
-    public NHK.StateTest.HeroineStatusModel TestHeroine { get; private set; }
     public ProtagonistInventoryModel Inventory { get; private set; }
     public ProtagonistSkillModel Skills { get; private set; }
     public TimeSystemModel Time { get; private set; }
@@ -147,7 +145,6 @@ public class GameStatusService : MonoBehaviour
         // --- 1. 實例化 Model (數據層) ---
         // ProtagonistStatusModel: 無參數建構函式
         Protagonist = new ProtagonistStatusModel();
-        TestHeroine = new NHK.StateTest.HeroineStatusModel();
 
         Inventory = new ProtagonistInventoryModel();
         ProgressFlags = new ProgressFlagModel();
@@ -294,27 +291,18 @@ public class GameStatusService : MonoBehaviour
             _dayTriggerProcessor?.NotifyPhaseChanged();
             ValueTriggerManager.OnValueChanged("Phase", Time.CurrentPhaseIndex);
 
-            //每次換 Phase 時，對所有女主角執可疑度衰減
-            foreach (var heroine in Heroines.Values)
-            {
-                //heroine.ApplyExcitementDecay();
-                //heroine.ApplySuspicionDecay();
-            }
         };
         TimeManager.OnDayPassed += () =>
         {
             if (_suppressDaySettlement) return;
 
             ValueTriggerManager.OnValueChanged("Phase", Time.CurrentPhaseIndex);
-            //每次換Day 時，對所有女主興奮度衰減
+            // 換日：每位女主角獨立結算性興味、興奮與高潮。
             foreach (var heroine in Heroines.Values)
             {
-                heroine.ApplyExcitementDecay();
-                heroine.ApplySuspicionDecay();
                 heroine.ApplyLibidoDecay();
                 heroine.ApplyExcitementDailyReset();
                 heroine.ApplyOrgasmDailyReset();
-                heroine.ApplyFrustrationDailyReset();
                 heroine.AdvanceCycleDay(); // 推進排卵週期計數器
             }
         };
@@ -341,8 +329,6 @@ public class GameStatusService : MonoBehaviour
 
         // 重置所有 Model 的數值
         Protagonist.NewGame(notify: false);
-        // 保留實例與訂閱；等 NotifyGameStatusLoaded 統一刷新。
-        TestHeroine.NewGame(notify: false);
         Skills.NewGame();
         Inventory.NewGame();
         ShopStatus.NewGame();
@@ -565,6 +551,17 @@ public class GameStatusService : MonoBehaviour
     // ==========================================================
     // 負責初始化/重置所有女主角的方法
     // ==========================================================
+
+    /// <summary>以 ID 查找正式女主角；僅有一位時允許省略 ID，多角色時必須指定。</summary>
+    public HeroineStatusModel GetHeroine(string heroineID)
+    {
+        if (Heroines == null) return null;
+        if (!string.IsNullOrWhiteSpace(heroineID))
+            return Heroines.TryGetValue(heroineID, out var heroine) ? heroine : null;
+        if (Heroines.Count == 1)
+            foreach (var onlyHeroine in Heroines.Values) return onlyHeroine;
+        return null;
+    }
 
     private void InitializeHeroineModels()
     {

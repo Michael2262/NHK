@@ -165,6 +165,13 @@ public class ItemUseService
         }
 
         // ── 第 2 層：GiftCondition 條件檢查 ──
+        var giftEffects = config.GetGiftEffectsFor(heroineID);
+        if (giftEffects != null && giftEffects.Exists(effect => effect != null && effect.IsRetired))
+        {
+            Debug.LogWarning($"[ItemUseService] 道具 {itemID} 含已退役的女主角效果，請重新配置；本次送禮不執行。");
+            return GiftResult.InvalidTarget;
+        }
+
         var conditions = config.GetGiftConditionsFor(heroineID);
         foreach (var condition in conditions)
         {
@@ -247,6 +254,13 @@ public class ItemUseService
 
         if (!gameStatus.Heroines.TryGetValue(heroineID, out var heroine))
             return GiftResult.InvalidTarget;
+
+        var giftEffects = config.GetGiftEffectsFor(heroineID);
+        if (giftEffects != null && giftEffects.Exists(effect => effect != null && effect.IsRetired))
+        {
+            Debug.LogWarning($"[ItemUseService] 道具 {itemID} 含已退役的女主角效果，請重新配置；本次送禮不執行。");
+            return GiftResult.InvalidTarget;
+        }
 
         var conditions = config.GetGiftConditionsFor(heroineID);
         foreach (var condition in conditions)

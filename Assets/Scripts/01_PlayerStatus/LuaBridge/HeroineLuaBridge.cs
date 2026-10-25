@@ -1,59 +1,7 @@
 using UnityEngine;
 using PixelCrushers.DialogueSystem;
 
-/// <summary>
-/// 將 HeroineStatusModel 的數值橋接到 Pixel Crushers Dialogue System 的 Lua 環境。
-///
-/// ── 情緒卡查詢 ──
-///   GetEmotionCardCount("sister", "Shy")           → 該情緒卡的張數
-///   GetEmotionDeckMax("sister")                    → 卡池上限
-///   GetIntimateMoodScore("sister")                 → 親密情緒分數 (Shy+Relaxed+Maternal)
-///   GetNegativeMoodScore("sister")                 → 負面情緒分數 (Angry+Disappointed)
-///   GetCareMoodScore("sister")                     → 關懷情緒分數 (Worried+Maternal)
-///   IsDisappointmentHigh("sister")                 → 失望卡 ≥ 3
-///   IsMaternalHigh("sister")                       → 母性卡 ≥ 3
-///   IsShyHigh("sister")                            → 害羞卡 ≥ 3
-///
-/// ── 情緒 ──
-///   GetCurrentEmotion("sister")                    → 主導情緒（獨立儲存值）
-///   SetCurrentEmotion("sister", "Shy")             → 設定主導情緒
-///   GetDominantEmotion("sister")                   → 大宗情緒（卡池最多者）
-///
-/// ── 性慾 ──
-///   GetLibido("sister")                            → 性慾值 (0~150)
-///   SetLibido("sister", 50)                        → 設定性慾值
-///   AddLibido("sister", 10)                        → 增減性慾值
-///
-/// ── 獨立興奮度 ──
-/// 興奮度：GetExcitement("sister")、SetExcitement("sister", 50)、
-/// AddExcitement("sister", 10)、WeightedAddExcitement("sister", 10)。
-/// 僅 WeightedAddExcitement 的正數套用性慾倍率，結果四捨五入。
-///
-/// ── 獨立高潮度 ──
-///   GetOrgasm("sister")、SetOrgasm("sister", 50)、AddOrgasm("sister", -10)。
-///   範圍 0~100，每日歸零。
-///
-/// ── 獨立不滿值 ──
-///   滿值條件：GetFrustration("sister") >= GetFrustrationMax("sister")。
-///   調整：SetFrustration("sister", 3)、AddFrustration("sister", -1)、SetFrustrationMax("sister", 7)。
-///
-/// ── 信賴 ──
-///   GetTrust("sister")                             → 信賴值 (0~150)
-///   SetTrust("sister", 50)                         → 設定信賴值
-///   AddTrust("sister", 10)                         → 增減信賴值
-///
-/// ── 好感度 ──
-///   GetAffinity("sister")                          → 好感度 (0~150)
-///   SetAffinity("sister", 50)                      → 設定好感度
-///   AddAffinity("sister", 10)                      → 增減好感度
-///
-/// ── H 次數 ──
-///   GetHCount("sister")                            → H 次數
-///
-/// ── 發情 ──
-///   IsInHeat("sister")                             → 是否正在發情（存檔獨立開關）
-///   SetInHeat("sister", true)                      → 設定發情開關
-/// </summary>
+/// <summary>正式女主角數值與當前情緒的 Lua 入口；舊卡池與不滿接口已退役。</summary>
 public class HeroineLuaBridge : MonoBehaviour
 {
     public static HeroineLuaBridge Instance { get; private set; }
@@ -71,17 +19,9 @@ public class HeroineLuaBridge : MonoBehaviour
 
     void OnEnable()
     {
-        // 獨立不滿值與目前上限（條件查詢與 Script 調整）
-        Lua.RegisterFunction("GetFrustration", this,
-            SymbolExtensions.GetMethodInfo(() => GetFrustration(string.Empty)));
-        Lua.RegisterFunction("GetFrustrationMax", this,
-            SymbolExtensions.GetMethodInfo(() => GetFrustrationMax(string.Empty)));
-        Lua.RegisterFunction("SetFrustration", this,
-            SymbolExtensions.GetMethodInfo(() => SetFrustration(string.Empty, (double)0)));
-        Lua.RegisterFunction("AddFrustration", this,
-            SymbolExtensions.GetMethodInfo(() => AddFrustration(string.Empty, (double)0)));
-        Lua.RegisterFunction("SetFrustrationMax", this,
-            SymbolExtensions.GetMethodInfo(() => SetFrustrationMax(string.Empty, (double)0)));
+        Lua.RegisterFunction("GetMood", this, SymbolExtensions.GetMethodInfo(() => GetMood(string.Empty)));
+        Lua.RegisterFunction("SetMood", this, SymbolExtensions.GetMethodInfo(() => SetMood(string.Empty, (double)0)));
+        Lua.RegisterFunction("AddMood", this, SymbolExtensions.GetMethodInfo(() => AddMood(string.Empty, (double)0)));
 
         // 獨立高潮度
         Lua.RegisterFunction("GetOrgasm", this,
@@ -101,31 +41,11 @@ public class HeroineLuaBridge : MonoBehaviour
         Lua.RegisterFunction("WeightedAddExcitement", this,
             SymbolExtensions.GetMethodInfo(() => WeightedAddExcitement(string.Empty, (double)0)));
 
-        // ── 情緒卡查詢 ──
-        Lua.RegisterFunction("GetEmotionCardCount", this,
-            SymbolExtensions.GetMethodInfo(() => GetEmotionCardCount(string.Empty, string.Empty)));
-        Lua.RegisterFunction("GetEmotionDeckMax", this,
-            SymbolExtensions.GetMethodInfo(() => GetEmotionDeckMax(string.Empty)));
-        Lua.RegisterFunction("GetIntimateMoodScore", this,
-            SymbolExtensions.GetMethodInfo(() => GetIntimateMoodScore(string.Empty)));
-        Lua.RegisterFunction("GetNegativeMoodScore", this,
-            SymbolExtensions.GetMethodInfo(() => GetNegativeMoodScore(string.Empty)));
-        Lua.RegisterFunction("GetCareMoodScore", this,
-            SymbolExtensions.GetMethodInfo(() => GetCareMoodScore(string.Empty)));
-        Lua.RegisterFunction("IsDisappointmentHigh", this,
-            SymbolExtensions.GetMethodInfo(() => IsDisappointmentHigh(string.Empty)));
-        Lua.RegisterFunction("IsMaternalHigh", this,
-            SymbolExtensions.GetMethodInfo(() => IsMaternalHigh(string.Empty)));
-        Lua.RegisterFunction("IsShyHigh", this,
-            SymbolExtensions.GetMethodInfo(() => IsShyHigh(string.Empty)));
-
         // ── 情緒 ──
         Lua.RegisterFunction("GetCurrentEmotion", this,
             SymbolExtensions.GetMethodInfo(() => GetCurrentEmotion(string.Empty)));
         Lua.RegisterFunction("SetCurrentEmotion", this,
             SymbolExtensions.GetMethodInfo(() => SetCurrentEmotion(string.Empty, string.Empty)));
-        Lua.RegisterFunction("GetDominantEmotion", this,
-            SymbolExtensions.GetMethodInfo(() => GetDominantEmotion(string.Empty)));
 
         // ── 性慾 ──
         Lua.RegisterFunction("GetLibido", this,
@@ -164,11 +84,9 @@ public class HeroineLuaBridge : MonoBehaviour
 
     void OnDisable()
     {
-        Lua.UnregisterFunction("GetFrustration");
-        Lua.UnregisterFunction("GetFrustrationMax");
-        Lua.UnregisterFunction("SetFrustration");
-        Lua.UnregisterFunction("AddFrustration");
-        Lua.UnregisterFunction("SetFrustrationMax");
+        Lua.UnregisterFunction("GetMood");
+        Lua.UnregisterFunction("SetMood");
+        Lua.UnregisterFunction("AddMood");
 
         Lua.UnregisterFunction("GetOrgasm");
         Lua.UnregisterFunction("SetOrgasm");
@@ -179,18 +97,8 @@ public class HeroineLuaBridge : MonoBehaviour
         Lua.UnregisterFunction("AddExcitement");
         Lua.UnregisterFunction("WeightedAddExcitement");
 
-        Lua.UnregisterFunction("GetEmotionCardCount");
-        Lua.UnregisterFunction("GetEmotionDeckMax");
-        Lua.UnregisterFunction("GetIntimateMoodScore");
-        Lua.UnregisterFunction("GetNegativeMoodScore");
-        Lua.UnregisterFunction("GetCareMoodScore");
-        Lua.UnregisterFunction("IsDisappointmentHigh");
-        Lua.UnregisterFunction("IsMaternalHigh");
-        Lua.UnregisterFunction("IsShyHigh");
-
         Lua.UnregisterFunction("GetCurrentEmotion");
         Lua.UnregisterFunction("SetCurrentEmotion");
-        Lua.UnregisterFunction("GetDominantEmotion");
 
         Lua.UnregisterFunction("GetLibido");
         Lua.UnregisterFunction("SetLibido");
@@ -225,48 +133,6 @@ public class HeroineLuaBridge : MonoBehaviour
     }
 
     // ─────────────────────────────────────────────
-    // 情緒卡查詢
-    // ─────────────────────────────────────────────
-
-    public double GetEmotionCardCount(string heroineID, string emotionName)
-    {
-        var model = GetModel(heroineID);
-        if (model == null) return 0;
-
-        if (!System.Enum.TryParse(emotionName?.Trim(), true, out HeroineEmotionCardType emotion))
-        {
-            Debug.LogWarning($"[HeroineLuaBridge] GetEmotionCardCount 無法解析情緒類型: {emotionName}");
-            return 0;
-        }
-
-        return model.GetCardCount(emotion);
-    }
-
-    public double GetEmotionDeckMax(string heroineID)
-    {
-        return GetModel(heroineID)?.EmotionDeckMaxCount ?? 0;
-    }
-
-    public double GetIntimateMoodScore(string heroineID)
-    {
-        return GetModel(heroineID)?.GetIntimateMoodScore() ?? 0;
-    }
-
-    public double GetNegativeMoodScore(string heroineID)
-    {
-        return GetModel(heroineID)?.GetNegativeMoodScore() ?? 0;
-    }
-
-    public double GetCareMoodScore(string heroineID)
-    {
-        return GetModel(heroineID)?.GetCareMoodScore() ?? 0;
-    }
-
-    public bool IsDisappointmentHigh(string heroineID) => GetModel(heroineID)?.IsDisappointmentHigh() ?? false;
-    public bool IsMaternalHigh(string heroineID) => GetModel(heroineID)?.IsMaternalHigh() ?? false;
-    public bool IsShyHigh(string heroineID) => GetModel(heroineID)?.IsShyHigh() ?? false;
-
-    // ─────────────────────────────────────────────
     // 情緒
     // ─────────────────────────────────────────────
 
@@ -290,12 +156,6 @@ public class HeroineLuaBridge : MonoBehaviour
         m.SetCurrentEmotion(emotion);
     }
 
-    public string GetDominantEmotion(string heroineID)
-    {
-        var m = GetModel(heroineID);
-        return m != null ? m.DominantEmotion.ToString() : string.Empty;
-    }
-
     // ─────────────────────────────────────────────
     // 性慾
     // ─────────────────────────────────────────────
@@ -305,22 +165,11 @@ public class HeroineLuaBridge : MonoBehaviour
         return GetModel(heroineID)?.Libido ?? 0;
     }
 
-    // Lua 數字沿用其他整數數值的轉型方式；倍率與四捨五入集中於 Model。
+    // Lua 數字轉為整數；Model 處理範圍，Weighted 別名不再套用倍率。
     public double GetExcitement(string heroineID) => GetModel(heroineID)?.GetExcitement() ?? 0;
     public void SetExcitement(string heroineID, double value) => GetModel(heroineID)?.SetExcitement((int)value);
     public void AddExcitement(string heroineID, double amount) => GetModel(heroineID)?.AddExcitement((int)amount);
-    public void WeightedAddExcitement(string heroineID, double amount) => GetModel(heroineID)?.WeightedAddExcitement((int)amount);
-
-    /// <summary>取得指定女主角的不滿值。</summary>
-    public double GetFrustration(string heroineID) => GetModel(heroineID)?.GetFrustration() ?? 0;
-    /// <summary>取得目前上限；找不到角色時使用預設上限，避免 0 >= 0 誤判滿值。</summary>
-    public double GetFrustrationMax(string heroineID) => GetModel(heroineID)?.FrustrationMax ?? HeroineStatusModel.DefaultFrustrationMax;
-    /// <summary>設定不滿值；沿用其他 Lua 數值入口，小數部分截去，範圍由 Model 處理。</summary>
-    public void SetFrustration(string heroineID, double value) => GetModel(heroineID)?.SetFrustration((int)value);
-    /// <summary>正數增加、負數減少不滿值。</summary>
-    public void AddFrustration(string heroineID, double amount) => GetModel(heroineID)?.AddFrustration((int)amount);
-    /// <summary>設定不滿值上限；最低值與目前數值校正由 Model 處理。</summary>
-    public void SetFrustrationMax(string heroineID, double value) => GetModel(heroineID)?.SetFrustrationMax((int)value);
+    public void WeightedAddExcitement(string heroineID, double amount) => GetModel(heroineID)?.AddExcitement((int)amount);
 
     public double GetOrgasm(string heroineID) => GetModel(heroineID)?.GetOrgasm() ?? 0;
     public void SetOrgasm(string heroineID, double value) => GetModel(heroineID)?.SetOrgasm((int)value);
@@ -350,7 +199,7 @@ public class HeroineLuaBridge : MonoBehaviour
     }
 
     /// <summary>
-    /// 設定信賴值（0~150）。
+    /// 設定信賴值（0~999）。
     /// Lua: SetTrust("sister", 50)
     /// </summary>
     public void SetTrust(string heroineID, double value)
@@ -381,7 +230,7 @@ public class HeroineLuaBridge : MonoBehaviour
     }
 
     /// <summary>
-    /// 設定好感度（0~150）。
+    /// 設定好感度（0~999）。
     /// Lua: SetAffinity("sister", 50)
     /// </summary>
     public void SetAffinity(string heroineID, double value)
@@ -425,4 +274,7 @@ public class HeroineLuaBridge : MonoBehaviour
     {
         GetModel(heroineID)?.SetInHeat(value);
     }
+    public double GetMood(string heroineID) => GetModel(heroineID)?.Mood ?? 0;
+    public void SetMood(string heroineID, double value) => GetModel(heroineID)?.SetMood((int)value);
+    public void AddMood(string heroineID, double amount) => GetModel(heroineID)?.AddMood((int)amount);
 }

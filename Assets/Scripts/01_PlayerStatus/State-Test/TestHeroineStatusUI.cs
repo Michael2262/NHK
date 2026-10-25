@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace NHK.StateTest
 {
-    /// <summary>只顯示測試版最終數值；名稱標籤由場景自行配置，欄位可留空。</summary>
+    /// <summary>顯示正式女主角最終數值（保留舊元件名稱）；名稱標籤由場景自行配置，欄位可留空。</summary>
     [AddComponentMenu("Game/State Test/Test Heroine Status UI")]
     public class TestHeroineStatusUI : MonoBehaviour
     {
@@ -16,8 +16,11 @@ namespace NHK.StateTest
         [Tooltip("性興味；只顯示值，不附加名稱。")]
         [SerializeField] private TMP_Text libidoText;
 
+        [SerializeField, Tooltip("正式角色 ID；只有一位角色時可留空。") ] private string heroineID;
+        public void SetHeroineID(string id) { heroineID = id; RefreshUI(); }
+
         private GameStatusService service;
-        private HeroineStatusModel model;
+        private global::HeroineStatusModel model;
 
         private void OnEnable() => RefreshUI();
 
@@ -26,7 +29,7 @@ namespace NHK.StateTest
             // 只檢查資料來源；正常狀態由事件刷新文字，不每幀重寫。
             // 也支援 UI 比 Service 先啟用或 Service 在執行期間重建。
             var current = GameStatusService.Instance;
-            var currentModel = current != null ? current.TestHeroine : null;
+            var currentModel = current != null ? current.GetHeroine(heroineID) : null;
             if (!ReferenceEquals(service, current) || !ReferenceEquals(model, currentModel))
                 RefreshUI();
         }
@@ -44,7 +47,7 @@ namespace NHK.StateTest
         private void Bind()
         {
             var current = GameStatusService.Instance;
-            var currentModel = current != null ? current.TestHeroine : null;
+            var currentModel = current != null ? current.GetHeroine(heroineID) : null;
             if (ReferenceEquals(service, current) && ReferenceEquals(model, currentModel)) return;
 
             Unbind();

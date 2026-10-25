@@ -67,9 +67,6 @@ public class PlayMakerMinigameAdapter_Multi2 : MonoBehaviour, IMinigameControlle
             MinigameManager.Instance.RegisterMinigameController(this);
     }
 
-    private struct LewdnessSnapshot { public int StartLevel; public int StartExp; }
-    private Dictionary<string, LewdnessSnapshot> _lewdnessSnapshots = new Dictionary<string, LewdnessSnapshot>();
-
     public void Initialize(MinigameContext context)
     {
         this._context = context;
@@ -93,9 +90,6 @@ public class PlayMakerMinigameAdapter_Multi2 : MonoBehaviour, IMinigameControlle
 
         if (_activeFSMCount == 0) { Debug.LogError("[Adapter] 無法初始化任何 FSM。"); OnGameFinished?.Invoke(); }
 
-        _lewdnessSnapshots.Clear();
-        foreach (var h in _heroinesList)
-            _lewdnessSnapshots[h.HeroineID] = new LewdnessSnapshot { StartLevel = h.LewdnessLevel, StartExp = h.LewdnessExp };
     }
 
     public void StartGame()
@@ -176,43 +170,31 @@ public class PlayMakerMinigameAdapter_Multi2 : MonoBehaviour, IMinigameControlle
         }
     }
 
+    private static void SetCurrentValue(PlayMakerFSM fsm, string name, int value)
+    {
+        var variable = fsm.FsmVariables.FindFsmInt(name);
+        if (variable != null) variable.Value = value;
+    }
+
     private void InitializeFSMs()
     {
-        for (int i = 0; i < _heroinesList.Count; i++)
+        Debug.LogWarning("[PlayMakerMinigameAdapter_Multi2] 舊等級、經驗、個人可疑度不再注入或結算；請在 Editor 更新使用這些變數的 FSM。", this);
+        for (int i = 0; i < _heroinesList.Count && i < targetFSMs.Length; i++)
         {
-            if (i >= targetFSMs.Length) break;
-            PlayMakerFSM fsm = targetFSMs[i];
+            var fsm = targetFSMs[i];
             if (fsm == null) continue;
             var heroine = _heroinesList[i];
-
             fsm.FsmVariables.GetFsmString("fsm_HeroineID").Value = heroine.HeroineID;
-
-            FsmInt fsmLv = fsm.FsmVariables.FindFsmInt("fsm_LocalExcitedLv"); if (fsmLv != null) fsmLv.Value = heroine.BaseExcitementLevel;
-
-            // fsm_LocalExcitement改 由 FSM 自行管理
-            //FsmInt fsmExp = fsm.FsmVariables.FindFsmInt("fsm_LocalExcitement"); if (fsmExp != null) fsmExp.Value = heroine.BaseExcitementExp;
-
-            FsmInt fsmLewdLevel = fsm.FsmVariables.FindFsmInt("fsm_LewdnessLevel"); if (fsmLewdLevel != null) fsmLewdLevel.Value = heroine.LewdnessLevel;
-            FsmInt fsmLewdExp = fsm.FsmVariables.FindFsmInt("fsm_LewdnessExp"); if (fsmLewdExp != null) fsmLewdExp.Value = heroine.LewdnessExp;
-
-            // 個人可疑度改 由 FSM 自行管理
-            //FsmInt fsmPersonalSusp = fsm.FsmVariables.FindFsmInt("fsm_PersonalSuspicion"); if (fsmPersonalSusp != null) fsmPersonalSusp.Value = heroine.PersonalSuspicion;
-            FsmInt fsmPersonalSuspMax = fsm.FsmVariables.FindFsmInt("fsm_PersonalSuspicionMax"); if (fsmPersonalSuspMax != null) fsmPersonalSuspMax.Value = heroine.PersonalSuspicionMax;
-
-            // 親密度
-            FsmInt fsmAffinityLv = fsm.FsmVariables.FindFsmInt("fsm_LocalAffinityLv"); if (fsmAffinityLv != null) fsmAffinityLv.Value = heroine.BaseAffinityLevel;
-            FsmInt fsmAffinityExp = fsm.FsmVariables.FindFsmInt("fsm_LocalAffinityExp"); if (fsmAffinityExp != null) fsmAffinityExp.Value = heroine.BaseAffinityExp;
-            int affinityThreshold = heroine.GetCurrentAffinityThreshold(heroine.BaseAffinityLevel);
-            FsmInt fsmAffinityMax = fsm.FsmVariables.FindFsmInt("fsm_AffinityMax"); if (fsmAffinityMax != null) fsmAffinityMax.Value = affinityThreshold;
-            FsmBool fsmIsAffinityMaxLv = fsm.FsmVariables.FindFsmBool("IsAffinityMaxLv"); if (fsmIsAffinityMaxLv != null) fsmIsAffinityMaxLv.Value = heroine.IsAffinityLevelLocked(heroine.BaseAffinityLevel);
-
-            // 情緒
-            FsmEnum fsmEmotion = fsm.FsmVariables.FindFsmEnum("fsm_Emotion"); if (fsmEmotion != null) fsmEmotion.Value = heroine.CurrentEmotion;
-
-            int currentThreshold = heroine.GetCurrentExcitementThreshold(heroine.BaseExcitementLevel);
-            FsmInt fsmMaxExp = fsm.FsmVariables.FindFsmInt("fsm_ExcitementMax"); if (fsmMaxExp != null) fsmMaxExp.Value = currentThreshold;
-            FsmBool fsmIsMaxLv = fsm.FsmVariables.FindFsmBool("IsExcitementMaxLv"); if (fsmIsMaxLv != null) fsmIsMaxLv.Value = heroine.IsExcitementLevelLocked(heroine.BaseExcitementLevel);
-
+            // 只注入有明確新語意的選填欄位，不沿用舊經驗變數名稱。
+            SetCurrentValue(fsm, "fsm_Trust", heroine.Trust);
+            SetCurrentValue(fsm, "fsm_Affinity", heroine.Affinity);
+            SetCurrentValue(fsm, "fsm_Mood", heroine.Mood);
+            SetCurrentValue(fsm, "fsm_Libido", heroine.Libido);
+            SetCurrentValue(fsm, "fsm_Excitement", heroine.Excitement);
+            SetCurrentValue(fsm, "fsm_Orgasm", heroine.Orgasm);
+            var emotion = fsm.FsmVariables.FindFsmEnum("fsm_Emotion");
+            if (emotion != null && emotion.EnumType == typeof(HeroineEmotionCardType))
+                emotion.Value = heroine.CurrentEmotion;
             _activeFSMCount++;
         }
     }

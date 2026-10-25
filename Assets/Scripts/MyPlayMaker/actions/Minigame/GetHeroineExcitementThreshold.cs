@@ -32,36 +32,10 @@ namespace HutongGames.PlayMaker.Actions
         }
 
         public override void OnEnter()
-        {
-            DoGetThreshold();
-
-            if (!everyFrame)
-            {
-                Finish();
-            }
-        }
+        { Debug.LogWarning("[GetHeroineExcitementThreshold] 舊等級／經驗門檻功能已退役，請移除此 FSM Action。"); Finish(); }
 
         public override void OnUpdate()
-        {
-            DoGetThreshold();
-        }
+        {}
 
-        private void DoGetThreshold()
-        {
-            if (heroineID == null || string.IsNullOrEmpty(heroineID.Value)) return;
-            if (storeResult == null) return;
-
-            // 1. 從 GameStatusService 獲取對應的女主角 Model
-            // 注意：確保你的 GameStatusService.Instance 是可以全域訪問的
-            if (GameStatusService.Instance != null && GameStatusService.Instance.Heroines.TryGetValue(heroineID.Value, out var heroine))
-            {
-                // 2. 呼叫我們之前在 Model 中建立的 public 方法
-                storeResult.Value = heroine.GetCurrentExcitementThreshold(level.Value);
-            }
-            else
-            {
-                Debug.LogWarning($"[FSM Action] 找不到 ID 為 {heroineID.Value} 的女主角數據。");
-            }
-        }
     }
 }

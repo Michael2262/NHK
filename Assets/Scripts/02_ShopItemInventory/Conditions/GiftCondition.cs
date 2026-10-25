@@ -25,57 +25,50 @@ public abstract class GiftCondition
     public abstract bool IsMet(HeroineStatusModel heroine);
 }
 
-
 // ==========================================================
 // 具體條件：親密度等級門檻
 // ==========================================================
 
 [System.Serializable]
+[System.Obsolete("舊等級條件已退役，請改用數值條件。") ]
 public class MinAffinityLevelCondition : GiftCondition
 {
     [Tooltip("女主角的親密度等級必須 >= 此值才能收禮")]
     public int RequiredLevel = 1;
 
     public override bool IsMet(HeroineStatusModel heroine)
-    {
-        return heroine.BaseAffinityLevel >= RequiredLevel;
-    }
+    { Debug.LogWarning("[MinAffinityLevelCondition] 舊等級條件已退役，條件不通過；請改用新數值條件並重新設定門檻。"); return false; }
 }
-
 
 // ==========================================================
 // 具體條件：開發度等級門檻
 // ==========================================================
 
 [System.Serializable]
+[System.Obsolete("舊等級條件已退役，請改用數值條件。") ]
 public class MinLewdnessLevelCondition : GiftCondition
 {
     [Tooltip("女主角的開發度等級必須 >= 此值才能收禮")]
     public int RequiredLevel = 1;
 
     public override bool IsMet(HeroineStatusModel heroine)
-    {
-        return heroine.LewdnessLevel >= RequiredLevel;
-    }
+    { Debug.LogWarning("[MinLewdnessLevelCondition] 舊等級條件已退役，條件不通過；請改用新數值條件並重新設定門檻。"); return false; }
 }
-
 
 // ==========================================================
 // 具體條件：興奮度等級門檻
 // ==========================================================
 
 [System.Serializable]
+[System.Obsolete("舊等級條件已退役，請改用數值條件。") ]
 public class MinExcitementLevelCondition : GiftCondition
 {
     [Tooltip("女主角的總興奮度等級必須 >= 此值才能收禮")]
     public int RequiredLevel = 1;
 
     public override bool IsMet(HeroineStatusModel heroine)
-    {
-        return heroine.TotalExcitementLevel >= RequiredLevel;
-    }
+    { Debug.LogWarning("[MinExcitementLevelCondition] 舊等級條件已退役，條件不通過；請改用新數值條件並重新設定門檻。"); return false; }
 }
-
 
 // ==========================================================
 // 具體條件：複合條件（多條件全部通過才算通過）
@@ -98,4 +91,44 @@ public class CompositeCondition : GiftCondition
         }
         return true;
     }
+}
+
+/// <summary>以正式 Trust 數值檢查送禮門檻。</summary>
+[System.Serializable]
+public class MinTrustValueCondition : GiftCondition
+{
+    [Min(0)] public int RequiredValue = 0;
+    public override bool IsMet(HeroineStatusModel heroine) => heroine != null && heroine.Trust >= RequiredValue;
+}
+
+/// <summary>以正式 Affinity 數值檢查送禮門檻。</summary>
+[System.Serializable]
+public class MinAffinityValueCondition : GiftCondition
+{
+    [Min(0)] public int RequiredValue = 0;
+    public override bool IsMet(HeroineStatusModel heroine) => heroine != null && heroine.Affinity >= RequiredValue;
+}
+
+/// <summary>以正式 Mood 數值檢查送禮門檻。</summary>
+[System.Serializable]
+public class MinMoodValueCondition : GiftCondition
+{
+    [Min(0)] public int RequiredValue = 0;
+    public override bool IsMet(HeroineStatusModel heroine) => heroine != null && heroine.Mood >= RequiredValue;
+}
+
+/// <summary>以正式 Libido 數值檢查送禮門檻。</summary>
+[System.Serializable]
+public class MinLibidoValueCondition : GiftCondition
+{
+    [Min(0)] public int RequiredValue = 0;
+    public override bool IsMet(HeroineStatusModel heroine) => heroine != null && heroine.Libido >= RequiredValue;
+}
+
+/// <summary>以正式 Excitement 數值檢查送禮門檻。</summary>
+[System.Serializable]
+public class MinExcitementValueCondition : GiftCondition
+{
+    [Min(0)] public int RequiredValue = 0;
+    public override bool IsMet(HeroineStatusModel heroine) => heroine != null && heroine.Excitement >= RequiredValue;
 }

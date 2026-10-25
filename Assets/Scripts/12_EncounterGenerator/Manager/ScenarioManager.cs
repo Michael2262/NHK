@@ -307,9 +307,6 @@ public class ScenarioManager : MonoBehaviour
             // 如果該角色已經被階段 A 攔截，則跳過隨機排程
             if (handledHeroineIDs.Contains(hID)) continue;
 
-            // 檢查是否不在家 (例如上學中)
-            if (_service.Heroines[hID].IsCurrentlyAbsent(day, phase)) continue;
-
             // ── B1. 先嘗試使用「今日鍊」
             ScheduleScenario result = TryResolveFromDailyChain(scheduleConfig, hID, phase, slot);
 

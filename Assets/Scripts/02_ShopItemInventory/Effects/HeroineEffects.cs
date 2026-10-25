@@ -5,46 +5,30 @@ using UnityEngine;
 // 女主角效果：加好感經驗（固定值）
 // ==========================================================
 [System.Serializable]
+[System.Obsolete("舊女主角數值效果已停用，請重新配置道具。") ]
 public class AddAffinityExpEffect : ItemEffect
 {
     public override EffectTarget Target => EffectTarget.Heroine;
+    public override bool IsRetired => true;
 
     public int Amount = 20;
 
     public override void Apply(EffectContext ctx)
-    {
-        if (ctx.Heroine == null)
-        {
-            Debug.LogWarning("[AddAffinityExpEffect] ctx.Heroine 為 null，跳過");
-            return;
-        }
-        ctx.Heroine.AddAffinityExp(Amount);
-    }
+    { Debug.LogWarning("[AddAffinityExpEffect] 舊女主角數值效果已退役，請在道具設定中重新配置。"); }
 
     public override ValueChangeRecord? ReportChange(EffectContext ctx)
-    {
-        if (ctx.Heroine == null) return null;
-        return new ValueChangeRecord
-        {
-            isHeroineResource = true,
-            resourceTypeKey = "AffinityExp",
-            finalAmount = Amount,
-            effectResult = Amount > 0
-                ? ValueChangeResult.EffectResult.Good
-                : ValueChangeResult.EffectResult.Bad,
-            heroineNameKey = ctx.Heroine.NameTextKey
-        };
-    }
+    { return null; }
 }
-
 
 // ==========================================================
 // 女主角效果：加好感經驗（依開發度等級線性加成）
 // ==========================================================
 [System.Serializable]
+[System.Obsolete("舊女主角數值效果已停用，請重新配置道具。") ]
 public class ScaledAffinityExpEffect : ItemEffect
 {
     public override EffectTarget Target => EffectTarget.Heroine;
+    public override bool IsRetired => true;
 
     public int BaseAmount = 20;
 
@@ -52,40 +36,21 @@ public class ScaledAffinityExpEffect : ItemEffect
     public int BonusPerLewdnessLevel = 5;
 
     public override void Apply(EffectContext ctx)
-    {
-        if (ctx.Heroine == null) return;
-
-        int bonus = ctx.Heroine.LewdnessLevel * BonusPerLewdnessLevel;
-        int total = BaseAmount + bonus;
-        ctx.Heroine.AddAffinityExp(total);
-    }
+    { Debug.LogWarning("[ScaledAffinityExpEffect] 舊女主角數值效果已退役，請在道具設定中重新配置。"); }
 
     public override ValueChangeRecord? ReportChange(EffectContext ctx)
-    {
-        if (ctx.Heroine == null) return null;
-        int bonus = ctx.Heroine.LewdnessLevel * BonusPerLewdnessLevel;
-        int total = BaseAmount + bonus;
-        return new ValueChangeRecord
-        {
-            isHeroineResource = true,
-            resourceTypeKey = "AffinityExp",
-            finalAmount = total,
-            effectResult = total > 0
-                ? ValueChangeResult.EffectResult.Good
-                : ValueChangeResult.EffectResult.Bad,
-            heroineNameKey = ctx.Heroine.NameTextKey
-        };
-    }
+    { return null; }
 }
-
 
 // ==========================================================
 // 女主角效果：加好感經驗（依興奮度查表）
 // ==========================================================
 [System.Serializable]
+[System.Obsolete("舊女主角數值效果已停用，請重新配置道具。") ]
 public class TableAffinityExpEffect : ItemEffect
 {
     public override EffectTarget Target => EffectTarget.Heroine;
+    public override bool IsRetired => true;
 
     [System.Serializable]
     public class TierEntry
@@ -101,269 +66,146 @@ public class TableAffinityExpEffect : ItemEffect
     public int FallbackAmount = 10;
 
     public override void Apply(EffectContext ctx)
-    {
-        if (ctx.Heroine == null) return;
-
-        int amount = FallbackAmount;
-        foreach (var tier in Tiers)
-        {
-            if (ctx.Heroine.TotalExcitementLevel >= tier.MinExcitementLevel)
-            {
-                amount = tier.AffinityAmount;
-                break;
-            }
-        }
-        ctx.Heroine.AddAffinityExp(amount);
-    }
+    { Debug.LogWarning("[TableAffinityExpEffect] 舊女主角數值效果已退役，請在道具設定中重新配置。"); }
 
     public override ValueChangeRecord? ReportChange(EffectContext ctx)
-    {
-        if (ctx.Heroine == null) return null;
-        int amount = FallbackAmount;
-        foreach (var tier in Tiers)
-        {
-            if (ctx.Heroine.TotalExcitementLevel >= tier.MinExcitementLevel)
-            {
-                amount = tier.AffinityAmount;
-                break;
-            }
-        }
-        return new ValueChangeRecord
-        {
-            isHeroineResource = true,
-            resourceTypeKey = "AffinityExp",
-            finalAmount = amount,
-            effectResult = amount > 0
-                ? ValueChangeResult.EffectResult.Good
-                : ValueChangeResult.EffectResult.Bad,
-            heroineNameKey = ctx.Heroine.NameTextKey
-        };
-    }
+    { return null; }
 }
-
 
 // ==========================================================
 // 女主角效果：加興奮經驗
 // ==========================================================
 [System.Serializable]
+[System.Obsolete("舊女主角數值效果已停用，請重新配置道具。") ]
 public class AddExcitementExpEffect : ItemEffect
 {
     public override EffectTarget Target => EffectTarget.Heroine;
+    public override bool IsRetired => true;
 
     public int Amount = 10;
 
     public override void Apply(EffectContext ctx)
-    {
-        if (ctx.Heroine == null) return;
-        ctx.Heroine.AddExcitementExp(Amount);
-    }
+    { Debug.LogWarning("[AddExcitementExpEffect] 舊女主角數值效果已退役，請在道具設定中重新配置。"); }
 
     public override ValueChangeRecord? ReportChange(EffectContext ctx)
-    {
-        if (ctx.Heroine == null) return null;
-        return new ValueChangeRecord
-        {
-            isHeroineResource = true,
-            resourceTypeKey = "ExcitementExp",
-            finalAmount = Amount,
-            effectResult = Amount > 0
-                ? ValueChangeResult.EffectResult.Good
-    :           ValueChangeResult.EffectResult.Bad,
-            heroineNameKey = ctx.Heroine.NameTextKey
-        };
-    }
+    { return null; }
 }
-
 
 // ==========================================================
 // 女主角效果：加開發度經驗
 // ==========================================================
 [System.Serializable]
+[System.Obsolete("舊女主角數值效果已停用，請重新配置道具。") ]
 public class AddLewdnessExpEffect : ItemEffect
 {
     public override EffectTarget Target => EffectTarget.Heroine;
+    public override bool IsRetired => true;
 
     public int Amount = 10;
 
     public override void Apply(EffectContext ctx)
-    {
-        if (ctx.Heroine == null) return;
-        ctx.Heroine.AddLewdnessExp(Amount);
-    }
+    { Debug.LogWarning("[AddLewdnessExpEffect] 舊女主角數值效果已退役，請在道具設定中重新配置。"); }
 
     public override ValueChangeRecord? ReportChange(EffectContext ctx)
-    {
-        if (ctx.Heroine == null) return null;
-        return new ValueChangeRecord
-        {
-            isHeroineResource = true,
-            resourceTypeKey = "LewdnessExp",
-            finalAmount = Amount,
-            effectResult = Amount > 0
-                ? ValueChangeResult.EffectResult.Good
-                : ValueChangeResult.EffectResult.Bad,
-            heroineNameKey = ctx.Heroine.NameTextKey
-        };
-    }
+    { return null; }
 }
-
 
 // ==========================================================
 // 女主角效果：加不快值
 // ==========================================================
 [System.Serializable]
+[System.Obsolete("舊女主角數值效果已停用，請重新配置道具。") ]
 public class AddDiscomfortEffect : ItemEffect
 {
     public override EffectTarget Target => EffectTarget.Heroine;
+    public override bool IsRetired => true;
 
     public int Amount = 10;
 
     public override void Apply(EffectContext ctx)
-    {
-        if (ctx.Heroine == null) return;
-        ctx.Heroine.AddDiscomfort(Amount);
-    }
+    { Debug.LogWarning("[AddDiscomfortEffect] 舊女主角數值效果已退役，請在道具設定中重新配置。"); }
 
     public override ValueChangeRecord? ReportChange(EffectContext ctx)
-    {
-        if (ctx.Heroine == null) return null;
-        return new ValueChangeRecord
-        {
-            isHeroineResource = true,
-            resourceTypeKey = "Discomfort",
-            finalAmount = Amount,
-            effectResult = ValueChangeResult.EffectResult.Normal,
-            heroineNameKey = ctx.Heroine.NameTextKey
-        };
-    }
+    { return null; }
 }
-
 
 // ==========================================================
 // 女主角效果：加體力
 // ==========================================================
 [System.Serializable]
+[System.Obsolete("舊女主角數值效果已停用，請重新配置道具。") ]
 public class AddHeroineStaminaEffect : ItemEffect
 {
     public override EffectTarget Target => EffectTarget.Heroine;
+    public override bool IsRetired => true;
 
     public int Amount = 10;
 
     public override void Apply(EffectContext ctx)
-    {
-        if (ctx.Heroine == null) return;
-        ctx.Heroine.AddStamina(Amount);
-    }
+    { Debug.LogWarning("[AddHeroineStaminaEffect] 舊女主角數值效果已退役，請在道具設定中重新配置。"); }
 
     public override ValueChangeRecord? ReportChange(EffectContext ctx)
-    {
-        if (ctx.Heroine == null) return null;
-        return new ValueChangeRecord
-        {
-            isHeroineResource = true,
-            resourceTypeKey = "Stamina",
-            finalAmount = Amount,
-            effectResult = ValueChangeResult.EffectResult.Normal,
-            heroineNameKey = ctx.Heroine.NameTextKey
-        };
-    }
+    { return null; }
 }
-
 
 // ==========================================================
 // 女主角效果：加精神力
 // ==========================================================
 [System.Serializable]
+[System.Obsolete("舊女主角數值效果已停用，請重新配置道具。") ]
 public class AddHeroineSpiritEffect : ItemEffect
 {
     public override EffectTarget Target => EffectTarget.Heroine;
+    public override bool IsRetired => true;
 
     public int Amount = 10;
 
     public override void Apply(EffectContext ctx)
-    {
-        if (ctx.Heroine == null) return;
-        ctx.Heroine.AddSpirit(Amount);
-    }
+    { Debug.LogWarning("[AddHeroineSpiritEffect] 舊女主角數值效果已退役，請在道具設定中重新配置。"); }
 
     public override ValueChangeRecord? ReportChange(EffectContext ctx)
-    {
-        if (ctx.Heroine == null) return null;
-        return new ValueChangeRecord
-        {
-            isHeroineResource = true,
-            resourceTypeKey = "Spirit",
-            finalAmount = Amount,
-            effectResult = ValueChangeResult.EffectResult.Normal,
-            heroineNameKey = ctx.Heroine.NameTextKey
-        };
-    }
+    { return null; }
 }
-
 
 // ==========================================================
 // 女主角效果：增減個人可疑度
 // ==========================================================
 [System.Serializable]
+[System.Obsolete("舊女主角數值效果已停用，請重新配置道具。") ]
 public class AddPersonalSuspicionEffect : ItemEffect
 {
     public override EffectTarget Target => EffectTarget.Heroine;
+    public override bool IsRetired => true;
 
     [Tooltip("正數 = 增加可疑度，負數 = 減少可疑度")]
     public int Amount = -100;
 
     public override void Apply(EffectContext ctx)
-    {
-        if (ctx.Heroine == null) return;
-        ctx.Heroine.AddPersonalSuspicion(Amount);
-    }
+    { Debug.LogWarning("[AddPersonalSuspicionEffect] 舊女主角數值效果已退役，請在道具設定中重新配置。"); }
 
     public override ValueChangeRecord? ReportChange(EffectContext ctx)
-    {
-        if (ctx.Heroine == null) return null;
-        return new ValueChangeRecord
-        {
-            isHeroineResource = true,
-            resourceTypeKey = "Suspicion",
-            finalAmount = Amount,
-            effectResult = ValueChangeResult.EffectResult.Normal,
-            heroineNameKey = ctx.Heroine.NameTextKey
-        };
-    }
+    { return null; }
 }
-
 
 // ==========================================================
 // 女主角效果：增加個人可疑度上限
 // ==========================================================
 [System.Serializable]
+[System.Obsolete("舊女主角數值效果已停用，請重新配置道具。") ]
 public class AddPersonalSuspicionMaxEffect : ItemEffect
 {
     public override EffectTarget Target => EffectTarget.Heroine;
+    public override bool IsRetired => true;
 
     [Tooltip("增加的可疑度上限量")]
     public int Amount = 200;
 
     public override void Apply(EffectContext ctx)
-    {
-        if (ctx.Heroine == null) return;
-        ctx.Heroine.AddPersonalSuspicionMax(Amount);
-    }
+    { Debug.LogWarning("[AddPersonalSuspicionMaxEffect] 舊女主角數值效果已退役，請在道具設定中重新配置。"); }
 
     public override ValueChangeRecord? ReportChange(EffectContext ctx)
-    {
-        if (ctx.Heroine == null) return null;
-        return new ValueChangeRecord
-        {
-            isHeroineResource = true,
-            resourceTypeKey = "SuspicionMax",
-            finalAmount = Amount,
-            effectResult = ValueChangeResult.EffectResult.Normal,
-            heroineNameKey = ctx.Heroine.NameTextKey
-        };
-    }
+    { return null; }
 }
-
 
 // ==========================================================
 // 女主角效果：開啟發情狀態
@@ -384,7 +226,6 @@ public class SetInHeatEffect : ItemEffect
 
     // 狀態開關類效果不需要數值報告，維持回傳 null
 }
-
 
 // ==========================================================
 // 女主角效果：送禮成功時開啟 Flag

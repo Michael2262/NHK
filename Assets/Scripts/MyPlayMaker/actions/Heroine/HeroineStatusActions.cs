@@ -116,7 +116,8 @@ public static class HeroineActionHelper
 // SetEmotion（舊名保留，功能同 AddEmotionCard）
 // ============================================================
 [ActionCategory("Heroine Status")]
-[Tooltip("舊名保留：新增指定情緒卡（等同 AddEmotionCard）。")]
+[Tooltip("已退役：情緒卡池已移除，請刪除此舊 Action。")]
+[System.Obsolete("情緒卡池已退役，請移除此 Action。") ]
 public class SetEmotion : FsmStateAction
 {
     [RequiredField] public FsmString heroineID;
@@ -132,18 +133,15 @@ public class SetEmotion : FsmStateAction
     }
 
     public override void OnEnter()
-    {
-        if (HeroineActionHelper.TryGetHeroine(heroineID.Value, out var heroine, "SetEmotion"))
-            heroine.ReplaceEmotionCard((HeroineEmotionCardType)newEmotion.Value);
-        Finish();
-    }
+    { Debug.LogWarning("[SetEmotion] 情緒卡池已退役，請移除此舊 Action。");  Finish(); }
 }
 
 // ============================================================
 // AddEmotionCard
 // ============================================================
 [ActionCategory("Heroine Status")]
-[Tooltip("新增一張情緒卡（依規則自動替換最舊的對立卡）。")]
+[Tooltip("已退役：情緒卡池已移除，請刪除此舊 Action。")]
+[System.Obsolete("情緒卡池已退役，請移除此 Action。") ]
 public class AddEmotionCard : FsmStateAction
 {
     [RequiredField] public FsmString heroineID;
@@ -159,18 +157,15 @@ public class AddEmotionCard : FsmStateAction
     }
 
     public override void OnEnter()
-    {
-        if (HeroineActionHelper.TryGetHeroine(heroineID.Value, out var heroine, "AddEmotionCard"))
-            heroine.ReplaceEmotionCard((HeroineEmotionCardType)emotion.Value);
-        Finish();
-    }
+    { Debug.LogWarning("[AddEmotionCard] 情緒卡池已退役，請移除此舊 Action。");  Finish(); }
 }
 
 // ============================================================
 // RemoveEmotionCard
 // ============================================================
 [ActionCategory("Heroine Status")]
-[Tooltip("移除一張指定情緒卡。卡池沒有該情緒則失敗。")]
+[Tooltip("已退役：情緒卡池已移除，請刪除此舊 Action。")]
+[System.Obsolete("情緒卡池已退役，請移除此 Action。") ]
 public class RemoveEmotionCard : FsmStateAction
 {
     [RequiredField] public FsmString heroineID;
@@ -195,25 +190,15 @@ public class RemoveEmotionCard : FsmStateAction
     }
 
     public override void OnEnter()
-    {
-        bool success = false;
-
-        if (HeroineActionHelper.TryGetHeroine(heroineID.Value, out var heroine, "RemoveEmotionCard"))
-            success = heroine.RemoveOneCardOfType((HeroineEmotionCardType)emotion.Value);
-
-        if (storeSuccess != null && !storeSuccess.IsNone)
-            storeSuccess.Value = success;
-
-        Fsm.Event(success ? successEvent : failedEvent);
-        Finish();
-    }
+    { Debug.LogWarning("[RemoveEmotionCard] 情緒卡池已退役，請移除此舊 Action。"); if (storeSuccess != null && !storeSuccess.IsNone) storeSuccess.Value = false; Fsm.Event(failedEvent); Finish(); }
 }
 
 // ============================================================
 // HeroineEmotionCardChange（合併版：選 AddOrReplace / RemoveOne）
 // ============================================================
 [ActionCategory("Heroine Status")]
-[Tooltip("女主角情緒卡增減。AddOrReplace 新增/替換；RemoveOne 移除一張。")]
+[Tooltip("已退役：情緒卡池已移除，請刪除此舊 Action。")]
+[System.Obsolete("情緒卡池已退役，請移除此 Action。") ]
 public class HeroineEmotionCardChange : FsmStateAction
 {
     [RequiredField] public FsmString heroineID;
@@ -242,35 +227,7 @@ public class HeroineEmotionCardChange : FsmStateAction
     }
 
     public override void OnEnter()
-    {
-        if (!HeroineActionHelper.TryGetHeroine(heroineID.Value, out var heroine, "HeroineEmotionCardChange"))
-        {
-            SetResult(false);
-            Fsm.Event(failedEvent);
-            Finish();
-            return;
-        }
-
-        var type = (HeroineEmotionCardType)emotion.Value;
-        var op = operation != null && operation.Value != null
-            ? (HeroineEmotionCardChangeOperation)operation.Value
-            : HeroineEmotionCardChangeOperation.AddOrReplace;
-
-        bool success = true;
-        switch (op)
-        {
-            case HeroineEmotionCardChangeOperation.RemoveOne:
-                success = heroine.RemoveOneCardOfType(type);
-                break;
-            default:
-                heroine.ReplaceEmotionCard(type);
-                break;
-        }
-
-        SetResult(success);
-        Fsm.Event(success ? successEvent : failedEvent);
-        Finish();
-    }
+    { Debug.LogWarning("[HeroineEmotionCardChange] 情緒卡池已退役，請移除此舊 Action。"); SetResult(false); Fsm.Event(failedEvent); Finish(); }
 
     private void SetResult(bool success)
     {
@@ -287,7 +244,8 @@ public class HeroineEmotionCardChange : FsmStateAction
 // CheckEmotionCardCount
 // ============================================================
 [ActionCategory("Heroine Status")]
-[Tooltip("檢查指定情緒卡數量是否符合條件（>, >=, ==, <, <=）。")]
+[Tooltip("已退役：情緒卡池已移除，請刪除此舊 Action。")]
+[System.Obsolete("情緒卡池已退役，請移除此 Action。") ]
 public class CheckEmotionCardCount : FsmStateAction
 {
     [RequiredField] public FsmString heroineID;
@@ -319,26 +277,7 @@ public class CheckEmotionCardCount : FsmStateAction
     }
 
     public override void OnEnter()
-    {
-        if (!HeroineActionHelper.TryGetHeroine(heroineID.Value, out var heroine, "CheckEmotionCardCount"))
-        {
-            Fsm.Event(failEvent);
-            Finish();
-            return;
-        }
-
-        int count = heroine.GetCardCount((HeroineEmotionCardType)emotion.Value);
-
-        if (storeCount != null && !storeCount.IsNone)
-            storeCount.Value = count;
-
-        var op = compareOperator != null && compareOperator.Value != null
-            ? (HeroineCompareOp)compareOperator.Value
-            : HeroineCompareOp.GreaterOrEqual;
-
-        Fsm.Event(HeroineActionHelper.Compare(count, threshold.Value, op) ? passEvent : failEvent);
-        Finish();
-    }
+    { Debug.LogWarning("[CheckEmotionCardCount] 情緒卡池已退役，請移除此舊 Action。"); if (storeCount != null && !storeCount.IsNone) storeCount.Value = 0; Fsm.Event(failEvent); Finish(); }
 }
 
 // ############################################################
@@ -450,6 +389,7 @@ public class SetCurrentEmotionAction : FsmStateAction
 // ============================================================
 [ActionCategory("Heroine Status")]
 [Tooltip("檢查大宗情緒（DominantEmotion，卡池最多者），依情緒類型送出對應路線事件。未設定的情緒走 defaultEvent。")]
+[System.Obsolete("情緒卡池已退役，請移除此 Action。") ]
 public class CheckDominantEmotion : FsmStateAction
 {
     [RequiredField] public FsmString heroineID;
@@ -490,28 +430,7 @@ public class CheckDominantEmotion : FsmStateAction
     }
 
     public override void OnEnter()
-    {
-        if (!HeroineActionHelper.TryGetHeroine(heroineID.Value, out var heroine, "CheckDominantEmotion"))
-        {
-            Fsm.Event(failedEvent);
-            Finish();
-            return;
-        }
-
-        var dominant = heroine.DominantEmotion;
-
-        if (storeDominant != null && !storeDominant.IsNone)
-            storeDominant.Value = dominant;
-        if (storeDominantString != null && !storeDominantString.IsNone)
-            storeDominantString.Value = dominant.ToString();
-
-        Fsm.Event(HeroineActionHelper.GetEmotionRouteEvent(
-            dominant,
-            angryEvent, shyEvent, worriedEvent,
-            maternalEvent, relaxedEvent, disappointedEvent,
-            normalEvent, defaultEvent));
-        Finish();
-    }
+    { Debug.LogWarning("[CheckDominantEmotion] 情緒卡池已退役，請移除此舊 Action。");  Finish(); }
 }
 
 // ############################################################
@@ -823,7 +742,7 @@ public class CheckTrust : FsmStateAction
     public FsmEnum compareOperator;
 
     [RequiredField]
-    [Tooltip("比較門檻值（要拿來對照的目標數字）。例：compareOperator 選 >=、threshold 填 50，代表「信賴 >= 50 時算通過」。信賴範圍 0~150，預設 50。")]
+    [Tooltip("比較門檻值（要拿來對照的目標數字）。例：compareOperator 選 >=、threshold 填 50，代表「信賴 >= 50 時算通過」。信賴範圍 0~999，預設 50。")]
     public FsmInt threshold;
 
     [UIHint(UIHint.Variable)]
@@ -1200,7 +1119,7 @@ public class AddExcitementAction : FsmStateAction
 }
 
 [ActionCategory("Heroine Status")]
-[Tooltip("加權增減獨立興奮度；正數依性慾乘 1~2 倍並四捨五入，負數直接扣除。")]
+[Tooltip("舊名稱保留：一般增減獨立興奮度，已取消性興味加成。")]
 public class WeightedAddExcitementAction : FsmStateAction
 {
     [RequiredField] public FsmString heroineID;
@@ -1211,7 +1130,7 @@ public class WeightedAddExcitementAction : FsmStateAction
     public override void OnEnter()
     {
         if (HeroineActionHelper.TryGetHeroine(heroineID.Value, out var h, "WeightedAddExcitementAction"))
-            h.WeightedAddExcitement(amount.Value);
+            h.AddExcitement(amount.Value);
         Finish();
     }
 }
@@ -1350,6 +1269,110 @@ public class CheckOrgasm : FsmStateAction
         }
 
         int val = h.Orgasm;
+        if (storeValue != null && !storeValue.IsNone) storeValue.Value = val;
+
+        var op = compareOperator != null && compareOperator.Value != null
+            ? (HeroineCompareOp)compareOperator.Value
+            : HeroineCompareOp.GreaterOrEqual;
+
+        Fsm.Event(HeroineActionHelper.Compare(val, threshold.Value, op) ? passEvent : failEvent);
+        Finish();
+    }
+}
+
+[ActionCategory("Heroine Status")]
+public class GetMood : FsmStateAction
+{
+    [RequiredField] public FsmString heroineID;
+    [RequiredField][UIHint(UIHint.Variable)] public FsmInt storeValue;
+
+    public override void Reset() { heroineID = null; storeValue = null; }
+
+    public override void OnEnter()
+    {
+        if (HeroineActionHelper.TryGetHeroine(heroineID.Value, out var h, "GetMood"))
+            storeValue.Value = h.Mood;
+        Finish();
+    }
+}
+
+[ActionCategory("Heroine Status")]
+public class SetMoodAction : FsmStateAction
+{
+    [RequiredField] public FsmString heroineID;
+    [RequiredField] public FsmInt value;
+
+    public override void Reset() { heroineID = null; value = 0; }
+
+    public override void OnEnter()
+    {
+        if (HeroineActionHelper.TryGetHeroine(heroineID.Value, out var h, "SetMoodAction"))
+            h.SetMood(value.Value);
+        Finish();
+    }
+}
+
+[ActionCategory("Heroine Status")]
+public class AddMoodAction : FsmStateAction
+{
+    [RequiredField] public FsmString heroineID;
+    [RequiredField] public FsmInt amount;
+
+    public override void Reset() { heroineID = null; amount = 0; }
+
+    public override void OnEnter()
+    {
+        if (HeroineActionHelper.TryGetHeroine(heroineID.Value, out var h, "AddMoodAction"))
+            h.AddMood(amount.Value);
+        Finish();
+    }
+}
+
+[ActionCategory("Heroine Status")]
+public class CheckMood : FsmStateAction
+{
+    [RequiredField]
+    [Tooltip("要檢查的女主角 ID。")]
+    public FsmString heroineID;
+
+    [ObjectType(typeof(HeroineCompareOp))]
+    [Tooltip("比較運算子：拿「目前心情值」跟下方 threshold 做比較。可選 >, >=, ==, <=, <。")]
+    public FsmEnum compareOperator;
+
+    [RequiredField]
+    [Tooltip("比較門檻值（要拿來對照的目標數字）。例：compareOperator 選 >=、threshold 填 5，代表「心情 >= 5 時算通過」。心情範圍 0~10，預設 5。")]
+    public FsmInt threshold;
+
+    [UIHint(UIHint.Variable)]
+    [Tooltip("（選填）把「目前讀到的心情值」存進這個 FSM 變數，方便後續狀態直接使用或顯示。不需要就留空，不影響 pass/fail 判斷。")]
+    public FsmInt storeValue;
+
+    [Tooltip("比較「成立」時送出的 Event（心情達標分支）。")]
+    public FsmEvent passEvent;
+
+    [Tooltip("比較「不成立」時送出的 Event（心情不足分支）；找不到該女主角時也會走這裡。")]
+    public FsmEvent failEvent;
+
+    public override void Reset()
+    {
+        heroineID = null;
+        compareOperator = HeroineCompareOp.GreaterOrEqual;
+        threshold = 5;
+        storeValue = null;
+        passEvent = null;
+        failEvent = null;
+    }
+
+    public override void OnEnter()
+    {
+        if (!HeroineActionHelper.TryGetHeroine(heroineID.Value, out var h, "CheckMood"))
+        {
+            Fsm.Event(failEvent);
+            Finish();
+            return;
+        }
+
+        int val = h.Mood;
         if (storeValue != null && !storeValue.IsNone) storeValue.Value = val;
 
         var op = compareOperator != null && compareOperator.Value != null

@@ -10,13 +10,11 @@ using UnityEngine;
 ///
 /// 目前對應 NHK 版 HeroineStatusModel：
 /// - Libido 性慾值
-/// - Excitement 獨立興奮度（一般／加權增減）
+/// - Excitement 獨立興奮度（無性興味加成）
 /// - Orgasm 獨立高潮度
-/// - Frustration 獨立不滿值與上限
 /// - Trust 信賴值 / Affinity 好感度
 /// - IsInHeat 發情開關
 /// - HCount H 次數
-/// - Emotion Card 情緒卡池
 /// - CurrentEmotion 主導情緒
 ///
 /// 注意：
@@ -89,7 +87,7 @@ public class HeroineBridge : MonoBehaviour
     // ==========================================================
 
     public void AddLibido(int amount) => H?.AddLibido(amount);
-    public void ReduceLibido(int amount) => H?.AddLibido(-Mathf.Abs(amount));
+    public void ReduceLibido(int amount) => H?.AddLibido(ToReductionDelta(amount));
     public void SetLibido(int value) => H?.SetLibido(value);
 
     public void AddLibidoDefault() => AddLibido(defaultLibidoAmount);
@@ -97,14 +95,15 @@ public class HeroineBridge : MonoBehaviour
     public void SetLibidoZero() => SetLibido(0);
     public void SetLibidoMax() => SetLibido(HeroineStatusModel.LibidoMax);
 
-    // 獨立興奮度：所有範圍與加權規則由 Model 處理。
+    // 獨立興奮度：範圍由 Model 處理。
     public int GetExcitement() => H?.GetExcitement() ?? 0;
     public void SetExcitement(int value) => H?.SetExcitement(value);
     public void AddExcitement(int amount) => H?.AddExcitement(amount);
     /// <summary>依輸入的絕對值減少興奮度，不套用性慾倍率。</summary>
     public void ReduceExcitement(int amount) => H?.AddExcitement(ToReductionDelta(amount));
     public void SetExcitementZero() => SetExcitement(0);
-    public void WeightedAddExcitement(int amount) => H?.WeightedAddExcitement(amount);
+    /// <summary>舊綁定相容入口，已移除性興味加成，等同 AddExcitement。</summary>
+    public void WeightedAddExcitement(int amount) => H?.AddExcitement(amount);
 
     // 獨立高潮度
     public int GetOrgasm() => H?.GetOrgasm() ?? 0;
@@ -114,21 +113,15 @@ public class HeroineBridge : MonoBehaviour
     public void ReduceOrgasm(int amount) => H?.AddOrgasm(ToReductionDelta(amount));
     public void SetOrgasmZero() => SetOrgasm(0);
 
-    // 獨立不滿值：數值範圍與上限限制由 Model 處理。
-    public int GetFrustration() => H?.GetFrustration() ?? 0;
-    public int GetFrustrationMax() => H?.FrustrationMax ?? HeroineStatusModel.DefaultFrustrationMax;
-    public void SetFrustration(int value) => H?.SetFrustration(value);
-    /// <summary>正數增加、負數減少不滿值。</summary>
-    public void AddFrustration(int amount) => H?.AddFrustration(amount);
-    /// <summary>依輸入的絕對值減少不滿值。</summary>
-    public void ReduceFrustration(int amount) => H?.AddFrustration(ToReductionDelta(amount));
-    public void SetFrustrationZero() => SetFrustration(0);
-    /// <summary>設定不滿值上限，最低為 1；同步限制目前值。</summary>
-    public void SetFrustrationMax(int value) => H?.SetFrustrationMax(value);
-
     // ==========================================================
     // 信賴 / 好感度：範圍限制由 Model 處理。
     // ==========================================================
+
+    public int GetTrust() => H?.GetTrust() ?? 0;
+    public int GetAffinity() => H?.GetAffinity() ?? 0;
+    public int GetMood() => H?.GetMood() ?? 0;
+    public void SetMood(int value) => H?.SetMood(value);
+    public void AddMood(int amount) => H?.AddMood(amount);
 
     public void AddTrust(int amount) => H?.AddTrust(amount);
     /// <summary>依輸入的絕對值減少信賴。</summary>
@@ -156,56 +149,12 @@ public class HeroineBridge : MonoBehaviour
     // ==========================================================
 
     public void AddHCount(int amount) => H?.AddHCount(amount);
-    public void ReduceHCount(int amount) => H?.AddHCount(-Mathf.Abs(amount));
+    public void ReduceHCount(int amount) => H?.AddHCount(ToReductionDelta(amount));
     public void SetHCount(int value) => H?.SetHCount(value);
 
     public void AddHCountDefault() => AddHCount(defaultHCountAmount);
     public void ReduceHCountDefault() => ReduceHCount(defaultHCountAmount);
     public void SetHCountZero() => SetHCount(0);
-
-    // ==========================================================
-    // Emotion Card - Generic
-    // ==========================================================
-
-    /// <summary>
-    /// 新增一張情緒卡。HeroineStatusModel 內部會依規則替換卡池中的卡。
-    /// 若 Unity Inspector 無法選 enum 參數，請改用下方 AddAngryCard / AddShyCard 等明確方法。
-    /// </summary>
-    public void AddEmotionCard(HeroineEmotionCardType type) => H?.AddEmotionCard(type);
-
-    public void ReplaceEmotionCard(HeroineEmotionCardType type) => H?.ReplaceEmotionCard(type);
-
-    public void RemoveOneCardOfType(HeroineEmotionCardType type)
-    {
-        var heroine = H;
-        if (heroine == null) return;
-
-        bool removed = heroine.RemoveOneCardOfType(type);
-        if (!removed)
-        {
-            Debug.Log($"[HeroineBridge] {heroine.HeroineID} 沒有可移除的 {type} 情緒卡。", this);
-        }
-    }
-
-    public void RemoveOldestCard() => H?.RemoveOldestCard();
-
-    // ==========================================================
-    // Emotion Card - Explicit Button Methods
-    // ==========================================================
-
-    public void AddAngryCard() => AddEmotionCard(HeroineEmotionCardType.Angry);
-    public void AddShyCard() => AddEmotionCard(HeroineEmotionCardType.Shy);
-    public void AddWorriedCard() => AddEmotionCard(HeroineEmotionCardType.Worried);
-    public void AddMaternalCard() => AddEmotionCard(HeroineEmotionCardType.Maternal);
-    public void AddRelaxedCard() => AddEmotionCard(HeroineEmotionCardType.Relaxed);
-    public void AddDisappointedCard() => AddEmotionCard(HeroineEmotionCardType.Disappointed);
-
-    public void RemoveAngryCard() => RemoveOneCardOfType(HeroineEmotionCardType.Angry);
-    public void RemoveShyCard() => RemoveOneCardOfType(HeroineEmotionCardType.Shy);
-    public void RemoveWorriedCard() => RemoveOneCardOfType(HeroineEmotionCardType.Worried);
-    public void RemoveMaternalCard() => RemoveOneCardOfType(HeroineEmotionCardType.Maternal);
-    public void RemoveRelaxedCard() => RemoveOneCardOfType(HeroineEmotionCardType.Relaxed);
-    public void RemoveDisappointedCard() => RemoveOneCardOfType(HeroineEmotionCardType.Disappointed);
 
     // ==========================================================
     // Current Emotion / 主導情緒

@@ -63,7 +63,8 @@ public enum UnlockStatType
     // 追加，放最後以免打亂既有 Rule / Mirror .asset 的列舉索引
     [UnityEngine.InspectorName("已退役：BodyDirtyLevel")] BodyDirtyLevel,
     // 女主角數值（追加，放最後以免打亂既有 Rule / Mirror .asset 的列舉索引）
-    Affinity
+    Affinity,
+    Mood // 追加，維持既有規則的索引
 }
 
 /// <summary>
@@ -169,6 +170,7 @@ public static class ProgressUnlockUtility
     {
         return stat == UnlockStatType.Libido
             || stat == UnlockStatType.Trust
+            || stat == UnlockStatType.Mood
             || stat == UnlockStatType.Affinity
             || stat == UnlockStatType.HCount;
     }
@@ -193,6 +195,10 @@ public static class ProgressUnlockUtility
             case UnlockStatType.Trust:
                 if (heroine == null) return false;
                 value = heroine.Trust;
+                return true;
+            case UnlockStatType.Mood:
+                if (heroine == null) return false;
+                value = heroine.Mood;
                 return true;
             case UnlockStatType.Affinity:
                 if (heroine == null) return false;

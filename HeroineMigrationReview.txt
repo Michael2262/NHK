@@ -1,0 +1,185 @@
+女主角正式數值整併：Editor 檢查清單
+
+完成範圍
+- HeroineStatusModel 頂部集中可調常數：Trust/Affinity 0～999 初始0、Mood 0～10 初始5、Libido 0～250 初始0。
+- Excitement/Orgasm 保留獨立 0～100；興奮取消性興味倍率。普通跨日興奮歸0，發情最多保留50；高潮跨日歸0，不自動增加 HCount。
+- Libido 每日衰減2：只有當日未曾實際增加才衰減。Set 向上也算；滿值正數 Add 不算。旗標按角色保存並跨日重置。
+- CurrentEmotion 初始 Angry，與 Mood 互相獨立。處女、週期、懷孕維持預留接口，尚未實作進度保存。
+- 多角色、身分、名稱、Statistics 保留；測試 Bridge/UI 改讀正式角色，不再持有獨立 TestHeroine。
+- 舊數值、卡池、不滿、個人可疑度、女主角狀態效果、等級與經驗查詢及事件已從 Model 移除。
+- Mood 支援正式 Bridge、測試 Bridge、Lua、PlayMaker、HeroineStatChange、StatChangePackage、ProgressUnlock；UI 的 textMood 是選填欄位。
+- HeroineUI 好感顯示改成單純數字，不再加 Lv.；詳細面板改讀獨立好感／興奮值。
+
+需要在 Unity Editor 操作
+1. TestHeroineBridge / TestHeroineStatusUI：填正式 Heroine ID；只有一位正式角色才可留空。測試資料本來未存檔，沒有舊測試數值可轉存。
+2. 情緒卡相關 UnityEvent、Lua 和 FSM：移除卡池操作／卡數／大宗情緒查詢。當前情緒仍可使用 GetCurrentEmotion / SetCurrentEmotion。
+3. EmotionCardDrawMachine：Current 與 Mock 可用；Bulk、Random、Fake、Adjacent 已停用。失敗回傳 null，不用虛構情緒作為成功結果。
+4. 舊結局與評價：HeroineEndingTrigger 目前不觸發，舊等級評價 Action 不查表；需先設計新條件，不能把原等級門檻直接當成好感積分。
+5. ExcitementConditionChecker：重新填新興奮值門檻，並勾 useValueThreshold 才會啟用。舊等級門檻不會自動沿用。
+6. 舊送禮效果／條件：保留序列化型別以便搬移；新增選單隱藏已退役型別。含退役效果的禮物會被擋下，避免無效消耗。
+7. 舊小遊戲：不再注入等級／經驗／個人可疑度，也不再把舊報告寫回 Model。新 fsm_Trust / fsm_Affinity / fsm_Mood / fsm_Libido / fsm_Excitement / fsm_Orgasm 只作選填初始化輸入。
+   舊 ReportGameFinishedFromFSM 保留簽名作為結束報告，仍發 HEROINE_i_FINISHED / ALL_HEROINES_FINISHED；新的數值結算需另行設定。
+   LewdnessSliderPerformance 不再播放或發完成事件；務必移除 FSM 中啟動舊演出與等待 FINISH_SLIDER_ANIM 的步驟，否則舊流程會停在等待狀態。
+8. FrustrationSliderVisualizer：停用顯示及門檻事件，請從場景移除不滿 UI。
+9. 詳細女主角面板的開發度、可疑度、盛怒欄位不再顯示；舊等級關係文字顯示 ---，需自行調整版面／重新設計評價條件。
+10. 舊 Lua 卡數、不滿、情緒分數函式不再註冊；請替換對話腳本中的呼叫。WeightedAddExcitement 舊綁定仍可用，但已等同一般 AddExcitement。
+
+存檔與驗證
+- 保留原 Trust/Affinity/Libido/Excitement/Orgasm/Emotion/HCount/IsInHeat/StatisticsData 欄位語意；舊檔多餘欄位由 Newtonsoft 忽略。
+- 缺 Mood 的舊檔預設5；明確儲存的0仍為0。缺 LibidoIncreasedToday 的舊檔以 false 處理，讀檔本身不算增加。
+- LoadFromSaveData 不逐項發事件，使用 OnGameStatusLoaded 統一刷新。
+- 已通過 41 項純 Model 隔離檢查：上下限、防溢位、多角色、實際增加判斷、跨日回呼、JSON 新舊檔與靜默載入。
+- Assets/Scripts C# 語法掃描無錯誤；未執行 Unity 專案編譯或 Play Mode。
+- Editor 請驗證：新遊戲初始值、切換角色、各入口 Add/Set、兩次跨日、存讀檔、多角色 UI 與上述舊 FSM 清理。
+
+資產候選位置（唯讀掃描）
+以下是文字中命中腳本 GUID／型別／方法的位置，不代表該功能一定會被執行。
+PlayMaker 部分資料可能被編碼，不能將文字未命中視為「沒有綁定」。場景、Prefab、Asset、Meta 均未修改。
+
+TestHeroineBridge：1 個候選位置
+  Assets/MyScenes/TestState/Scene1.unity:25323
+
+TestHeroineStatusUI：1 個候選位置
+  Assets/MyScenes/TestState/Scene1.unity:624
+
+HeroineEndingTrigger：4 個候選位置
+  Assets/_Recovery/1 (2).unity:13943
+  Assets/_Recovery/1 (2).unity:13976
+  Assets/MyScenes/Global/GlobalStatusUI.unity:14699
+  Assets/MyScenes/Global/GlobalStatusUI.unity:14732
+
+FrustrationSliderVisualizer：1 個候選位置
+  Assets/MyScenes/MiniGame/Missionary.unity:19038
+
+LewdnessSliderPerformance：4 個候選位置
+  Assets/_Recovery/0 (6).unity:9997
+  Assets/MyScenes/MiniGame/old/Common_Close_Sit.unity:8025
+  Assets/MyScenes/MiniGame/old/Common_Close_Missionary.unity:15290
+  Assets/Prefabs/MiniGame/MiniGame_TouchGame/Result/#ResultUIFSM-Canvas(world space).prefab:8770
+
+PlayMakerMinigameAdapter_Multi2：7 個候選位置
+  Assets/_Recovery/0 (6).unity:17856
+  Assets/MyScenes/MiniGame/old/test/LivingRoom_Long_Touch_Old.unity:14018
+  Assets/MyScenes/MiniGame/old/Common_Close_Sit.unity:14576
+  Assets/MyScenes/MiniGame/old/Common_Close_Missionary.unity:25272
+  Assets/MyScenes/MiniGame/old/LivingRoom_Long_Touch.unity:13575
+  Assets/MyScenes/MiniGame/old/sample/MischiefGameScene_Single.unity:12086
+  Assets/MyScenes/MiniGame/old/sample/MischiefGameScene_Muti.unity:13861
+
+MinigameResultHandler：5 個候選位置
+  Assets/_Recovery/0 (6).unity:11624
+  Assets/MyScenes/MiniGame/old/StubMinigame.unity:8145
+  Assets/MyScenes/MiniGame/old/Common_Close_Sit.unity:8807
+  Assets/MyScenes/MiniGame/old/Common_Close_Missionary.unity:16967
+  Assets/MyScenes/MiniGame/old/LivingRoom_Long_Touch.unity:8067
+
+ExcitementConditionChecker：1 個候選位置
+  Assets/MyScenes/SpineScene.unity:3012
+
+舊送禮條件／效果：1 個候選位置
+  Assets/Resources/SHOP/Item/energizer.asset:41
+
+舊 FSM Action／對話指令：52 個候選位置
+  Assets/_Recovery/0 (6).unity:53109
+  Assets/_Recovery/0 (6).unity:53194
+  Assets/_Recovery/0 (6).unity:54359
+  Assets/Dialogue Data/My Dialogue Database.asset:69710
+  Assets/Dialogue Data/My Dialogue Database.asset:75885
+  Assets/Dialogue Data/My Dialogue Database.asset:85741
+  Assets/Dialogue Data/My Dialogue Database.asset:119611
+  Assets/Dialogue Data/My Dialogue Database.asset:121457
+  Assets/Dialogue Data/My Dialogue Database.asset:122358
+  Assets/Dialogue Data/My Dialogue Database.asset:179865
+  Assets/Dialogue Data/My Dialogue Database.asset:242312
+  Assets/Dialogue Data/My Dialogue Database.asset:243147
+  Assets/Dialogue Data/My Dialogue Database.asset:248939
+  Assets/Dialogue Data/My Dialogue Database.asset:254129
+  Assets/Dialogue Data/My Dialogue Database.asset:366729
+  Assets/Dialogue Data/My Dialogue Database.asset:469262
+  Assets/Dialogue Data/My Dialogue Database (Auto-Backup).asset:69710
+  Assets/Dialogue Data/My Dialogue Database (Auto-Backup).asset:75885
+  Assets/Dialogue Data/My Dialogue Database (Auto-Backup).asset:85741
+  Assets/Dialogue Data/My Dialogue Database (Auto-Backup).asset:119611
+  Assets/Dialogue Data/My Dialogue Database (Auto-Backup).asset:121457
+  Assets/Dialogue Data/My Dialogue Database (Auto-Backup).asset:122358
+  Assets/Dialogue Data/My Dialogue Database (Auto-Backup).asset:179865
+  Assets/Dialogue Data/My Dialogue Database (Auto-Backup).asset:242312
+  Assets/Dialogue Data/My Dialogue Database (Auto-Backup).asset:243147
+  Assets/Dialogue Data/My Dialogue Database (Auto-Backup).asset:248939
+  Assets/Dialogue Data/My Dialogue Database (Auto-Backup).asset:254129
+  Assets/Dialogue Data/My Dialogue Database (Auto-Backup).asset:366729
+  Assets/Dialogue Data/My Dialogue Database (Auto-Backup).asset:469262
+  Assets/MyScenes/TestState/Scene1.unity:8178
+  Assets/MyScenes/Global/GlobalStatusUI.unity:1846
+  Assets/MyScenes/Global/GlobalStatusUI.unity:3500
+  Assets/MyScenes/Global/GlobalStatusUI.unity:6656
+  Assets/MyScenes/Global/GlobalStatusUI.unity:23572
+  Assets/MyScenes/Global/GlobalStatusUI.unity:24625
+  Assets/MyScenes/Global/GlobalStatusUI.unity:27089
+  Assets/MyScenes/Global/GlobalStatusUI.unity:28031
+  Assets/MyScenes/MiniGame/Tease2.unity:2700
+  Assets/MyScenes/MiniGame/Tease2.unity:3251
+  Assets/MyScenes/Hub/Room.unity:18292
+  Assets/MyScenes/MiniGame/old/StubMinigame.unity:28290
+  Assets/MyScenes/MiniGame/old/StubMinigame.unity:28375
+  Assets/MyScenes/MiniGame/old/StubMinigame.unity:29240
+  Assets/MyScenes/MiniGame/old/Common_Close_Sit.unity:50053
+  Assets/MyScenes/MiniGame/old/Common_Close_Sit.unity:50138
+  Assets/MyScenes/MiniGame/old/Common_Close_Sit.unity:51303
+  Assets/MyScenes/MiniGame/old/Common_Close_Missionary.unity:66464
+  Assets/MyScenes/MiniGame/old/Common_Close_Missionary.unity:66549
+  Assets/MyScenes/MiniGame/old/Common_Close_Missionary.unity:67714
+  Assets/MyScenes/MiniGame/old/LivingRoom_Long_Touch.unity:46367
+  Assets/MyScenes/MiniGame/old/LivingRoom_Long_Touch.unity:46452
+  Assets/MyScenes/MiniGame/old/LivingRoom_Long_Touch.unity:47317
+
+已移除的 UnityEvent 方法：7 個候選位置
+  Assets/MyScenes/Global/GlobalStatusUI.unity:1846
+  Assets/MyScenes/Global/GlobalStatusUI.unity:3500
+  Assets/MyScenes/Global/GlobalStatusUI.unity:6656
+  Assets/MyScenes/Global/GlobalStatusUI.unity:24625
+  Assets/MyScenes/Global/GlobalStatusUI.unity:27089
+  Assets/MyScenes/Global/GlobalStatusUI.unity:28031
+  Assets/MyScenes/MiniGame/Missionary.unity:5952
+
+變更檔案（相對 D:/Dev/NHKProject）
+  Assets/Scripts/00_Save/GameStatusService.cs
+  Assets/Scripts/01_PlayerStatus/BridgeAPI/HeroineBridge.cs
+  Assets/Scripts/01_PlayerStatus/Config/HeroineStatusConfig.cs
+  Assets/Scripts/01_PlayerStatus/Config/StatChangePackageDatabase.cs
+  Assets/Scripts/01_PlayerStatus/DTO/HeroineSaveData.cs
+  Assets/Scripts/01_PlayerStatus/Debug/HeroineDebugUI.cs
+  Assets/Scripts/01_PlayerStatus/EmotionCardDraw/EmotionCardDrawMachine.cs
+  Assets/Scripts/01_PlayerStatus/EndTrigger/HeroineEndingTrigger.cs
+  Assets/Scripts/01_PlayerStatus/LuaBridge/HeroineLuaBridge.cs
+  Assets/Scripts/01_PlayerStatus/Models/HeroineStatusModel.cs
+  Assets/Scripts/01_PlayerStatus/StatChange/StatChangeService.cs
+  Assets/Scripts/01_PlayerStatus/State-Test/HeroineStatusModel.cs
+  Assets/Scripts/01_PlayerStatus/State-Test/TestHeroineBridge.cs
+  Assets/Scripts/01_PlayerStatus/State-Test/TestHeroineStatusUI.cs
+  Assets/Scripts/01_PlayerStatus/Unlock/ProgressUnlockCommon.cs
+  Assets/Scripts/01_PlayerStatus/Unlock/ProgressUnlockManager.cs
+  Assets/Scripts/02_ShopItemInventory/Conditions/GiftCondition.cs
+  Assets/Scripts/02_ShopItemInventory/Effects/Editor/ItemConfigDataEditor.cs
+  Assets/Scripts/02_ShopItemInventory/Effects/HeroineEffects.cs
+  Assets/Scripts/02_ShopItemInventory/Effects/ItemEffect.cs
+  Assets/Scripts/02_ShopItemInventory/Service/ItemUseService.cs
+  Assets/Scripts/05_MainUI/UI/HeroineStatusUI.cs
+  Assets/Scripts/05_MainUI/UI/HeroineUI.cs
+  Assets/Scripts/06_Bridge/HeroineStatusDebugBridge.cs
+  Assets/Scripts/06_Bridge/PlayMakerGameBridge.cs
+  Assets/Scripts/11_MiniGame/11-2TouchGame/Adapter/Editor/PlayMakerMinigameAdapter_Multi2Editor.cs
+  Assets/Scripts/11_MiniGame/11-2TouchGame/Adapter/PlayMakerMinigameAdapter_Multi2.cs
+  Assets/Scripts/11_MiniGame/11-2TouchGame/Result/MinigameResultHandler.cs
+  Assets/Scripts/11_MiniGame/11-2TouchGame/UI/FrustrationSliderVisualizer.cs
+  Assets/Scripts/11_MiniGame/11-2TouchGame/UI/LewdnessSliderPerformance.cs
+  Assets/Scripts/11_MiniGame/Manager/MinigameManager.cs
+  Assets/Scripts/Enum/HeroineEmotionCardType.cs
+  Assets/Scripts/MyDialogueSystem/Sequencer/SequencerCommandHeroine/SequencerCommandHeroineEmotionCardChange.cs
+  Assets/Scripts/MyDialogueSystem/Sequencer/SequencerCommandHeroine/SequencerCommandHeroineStatChange.cs
+  Assets/Scripts/MyPlayMaker/actions/Heroine/HeroineEvaluationActions.cs
+  Assets/Scripts/MyPlayMaker/actions/Heroine/HeroineStatusActions.cs
+  Assets/Scripts/MyPlayMaker/actions/Minigame/CheckHeroineLevelLock.cs
+  Assets/Scripts/MyPlayMaker/actions/Minigame/GetHeroineExcitementThreshold.cs
+  Assets/Scripts/Spine/SpineAni/ConditionalSystem/ExcitementConditionChecker.cs
+  CLAUDE.md

@@ -1,7 +1,5 @@
 using System;
 using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 /// <summary>
@@ -13,18 +11,22 @@ public enum EmotionResultMode
     Current,
 
     /// <summary>結果 = 大宗情緒（DominantEmotion，卡池最多者）。</summary>
+    [InspectorName("已退役：Bulk")]
     Bulk,
 
     /// <summary>結果 = 從卡池 10 取 1 隨機抽選。</summary>
+    [InspectorName("已退役：Random")]
     Random,
 
     /// <summary>結果 = 直接指定，但指定的情緒必須存在於卡池中。失敗時退回 Random。</summary>
+    [InspectorName("已退役：Fake")]
     Fake,
 
     /// <summary>結果 = 直接指定，不管卡池有沒有。</summary>
     Mock,
 
     /// <summary>結果 = 情緒鄰近抽選。依據 CurrentEmotion 限定可抽到的情緒，再從卡池中隨機。</summary>
+    [InspectorName("已退役：Adjacent")]
     Adjacent
 }
 
@@ -75,7 +77,7 @@ public class EmotionDrawResult
 ///
 /// 結果模式（EmotionResultMode）與表演模式（EmotionShowMode）完全解耦。
 /// 呼叫端可以任意組合，例如：
-/// - Random 結果 + Big 表演
+/// - Current 結果 + Big 表演
 /// - Current 結果 + None 表演
 /// - Mock 指定結果 + Small 表演
 /// </summary>
@@ -211,180 +213,22 @@ public class EmotionCardDrawMachine : MonoBehaviour
     private EmotionDrawResult ResolveResult(HeroineStatusModel heroine, string heroineID,
         EmotionResultMode resultMode, EmotionShowMode showMode, HeroineEmotionCardType specifiedEmotion)
     {
-        var result = new EmotionDrawResult
+        if (heroine == null || (resultMode != EmotionResultMode.Current && resultMode != EmotionResultMode.Mock))
         {
-            ResultMode = resultMode,
-            ShowMode = showMode,
-            HeroineID = heroineID
+            Debug.LogWarning("[EmotionCardDrawMachine] 角色不存在或所選模式依賴已退役卡池；請改用 Current 或 Mock。", this);
+            return null;
+        }
+        if (resultMode == EmotionResultMode.Mock && !Enum.IsDefined(typeof(HeroineEmotionCardType), specifiedEmotion))
+            return null;
+        var emotion = resultMode == EmotionResultMode.Current ? heroine.CurrentEmotion : specifiedEmotion;
+        return new EmotionDrawResult
+        {
+            HeroineID = heroineID, ResultMode = resultMode, ShowMode = showMode,
+            ResultEmotion = emotion, PerformanceEmotion = emotion,
+            RequestedEmotion = specifiedEmotion,
+            FakeRequested = resultMode == EmotionResultMode.Mock,
+            FakeSucceeded = resultMode == EmotionResultMode.Mock
         };
-
-        switch (resultMode)
-        {
-            case EmotionResultMode.Current:
-                // ★ Normal 誠實回傳：當下心情是 Normal 就回 Normal，
-                //   抽選臉由 Catalog 的 Normal Entry 提供（未配置時 View 只印 Warning、表情不變）。
-                //   對話端請注意 Lua 變數可能拿到 "Normal"。
-                result.ResultEmotion = heroine != null ? heroine.CurrentEmotion : HeroineEmotionCardType.Angry;
-                break;
-
-            case EmotionResultMode.Bulk:
-                result.ResultEmotion = heroine != null ? heroine.GetDominantEmotion() : HeroineEmotionCardType.Angry;
-                break;
-
-            case EmotionResultMode.Random:
-                result.ResultEmotion = GetRandomFromDeck(heroine);
-                break;
-
-            case EmotionResultMode.Fake:
-                result.FakeRequested = true;
-                result.RequestedEmotion = specifiedEmotion;
-                bool canFake = heroine != null && heroine.GetCardCount(specifiedEmotion) > 0;
-                result.FakeSucceeded = canFake;
-                result.ResultEmotion = canFake ? specifiedEmotion : GetRandomFromDeck(heroine);
-                break;
-
-            case EmotionResultMode.Mock:
-                result.FakeRequested = true;
-                result.RequestedEmotion = specifiedEmotion;
-                result.FakeSucceeded = true;
-                result.ResultEmotion = specifiedEmotion;
-                break;
-
-            case EmotionResultMode.Adjacent:
-                result.ResultEmotion = GetAdjacentRandomFromDeck(heroine);
-                break;
-
-            default:
-                result.ResultEmotion = heroine != null ? heroine.CurrentEmotion : HeroineEmotionCardType.Angry;
-                break;
-        }
-
-        // 大抽選表演需要額外一個表演用情緒
-        if (showMode == EmotionShowMode.Big)
-            result.PerformanceEmotion = GetRandomFromDeck(heroine);
-        else
-            result.PerformanceEmotion = result.ResultEmotion;
-
-        return result;
-    }
-
-    /// <summary>
-    /// 從卡池隨機抽一張（Normal 卡也是合法結果）。
-    /// </summary>
-    private HeroineEmotionCardType GetRandomFromDeck(HeroineStatusModel heroine)
-    {
-        if (heroine == null) return HeroineEmotionCardType.Angry;
-
-        IReadOnlyList<HeroineEmotionCardSaveData> deck = heroine.EmotionDeck;
-        if (deck == null || deck.Count == 0) return heroine.GetDominantEmotion();
-
-        int index = UnityEngine.Random.Range(0, deck.Count);
-        return deck[index].Type;
-    }
-
-    /// <summary>
-    /// 情緒鄰近抽選：依據主導情緒（CurrentEmotion）取得可抽到的情緒清單，
-    /// 再從卡池中只抽這些情緒。若卡池中沒有任何鄰近情緒的卡，退回主導情緒。
-    /// </summary>
-    private HeroineEmotionCardType GetAdjacentRandomFromDeck(HeroineStatusModel heroine)
-    {
-        if (heroine == null) return HeroineEmotionCardType.Angry;
-
-        var current = heroine.CurrentEmotion;
-        var allowed = GetAdjacentEmotions(current);
-
-        IReadOnlyList<HeroineEmotionCardSaveData> deck = heroine.EmotionDeck;
-        if (deck == null || deck.Count == 0) return current;
-
-        // 篩選卡池中屬於鄰近情緒的卡
-        var candidates = new List<HeroineEmotionCardSaveData>();
-        foreach (var card in deck)
-        {
-            if (allowed.Contains(card.Type))
-                candidates.Add(card);
-        }
-
-        if (candidates.Count == 0) return current;
-
-        int index = UnityEngine.Random.Range(0, candidates.Count);
-        return candidates[index].Type;
-    }
-
-    /// <summary>
-    /// 取得指定主導情緒的鄰近情緒清單（含自身）。
-    /// Normal 採「只出不進」：從 Normal 可走向任何情緒（含留在 Normal），
-    /// 但其他情緒的鄰近清單不含 Normal。
-    /// </summary>
-    private static HashSet<HeroineEmotionCardType> GetAdjacentEmotions(HeroineEmotionCardType current)
-    {
-        switch (current)
-        {
-            case HeroineEmotionCardType.Normal:
-                return new HashSet<HeroineEmotionCardType>
-                {
-                    HeroineEmotionCardType.Normal,
-                    HeroineEmotionCardType.Angry,
-                    HeroineEmotionCardType.Shy,
-                    HeroineEmotionCardType.Worried,
-                    HeroineEmotionCardType.Maternal,
-                    HeroineEmotionCardType.Relaxed,
-                    HeroineEmotionCardType.Disappointed
-                };
-
-            case HeroineEmotionCardType.Angry:
-                return new HashSet<HeroineEmotionCardType>
-                {
-                    HeroineEmotionCardType.Angry,
-                    HeroineEmotionCardType.Worried,
-                    HeroineEmotionCardType.Disappointed
-                };
-
-            case HeroineEmotionCardType.Worried:
-                return new HashSet<HeroineEmotionCardType>
-                {
-                    HeroineEmotionCardType.Worried,
-                    HeroineEmotionCardType.Maternal,
-                    HeroineEmotionCardType.Angry
-                };
-
-            case HeroineEmotionCardType.Maternal:
-                return new HashSet<HeroineEmotionCardType>
-                {
-                    HeroineEmotionCardType.Maternal,
-                    HeroineEmotionCardType.Worried,
-                    HeroineEmotionCardType.Relaxed,
-                    HeroineEmotionCardType.Shy
-                };
-
-            case HeroineEmotionCardType.Relaxed:
-                return new HashSet<HeroineEmotionCardType>
-                {
-                    HeroineEmotionCardType.Relaxed,
-                    HeroineEmotionCardType.Shy,
-                    HeroineEmotionCardType.Maternal
-                };
-
-            case HeroineEmotionCardType.Shy:
-                return new HashSet<HeroineEmotionCardType>
-                {
-                    HeroineEmotionCardType.Shy,
-                    HeroineEmotionCardType.Relaxed,
-                    HeroineEmotionCardType.Maternal,
-                    HeroineEmotionCardType.Angry
-                };
-
-            case HeroineEmotionCardType.Disappointed:
-                return new HashSet<HeroineEmotionCardType>
-                {
-                    HeroineEmotionCardType.Disappointed,
-                    HeroineEmotionCardType.Angry,
-                    HeroineEmotionCardType.Worried
-                };
-
-            default:
-                // 未知情緒：回傳空集合，讓呼叫端退回主導情緒
-                return new HashSet<HeroineEmotionCardType>();
-        }
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -395,35 +239,15 @@ public class EmotionCardDrawMachine : MonoBehaviour
         EmotionResultMode resultMode, EmotionShowMode showMode,
         HeroineEmotionCardType specifiedEmotion, Action<EmotionDrawResult> onComplete)
     {
-        if (heroine == null)
-        {
-            Debug.LogWarning($"[EmotionCardDrawMachine] StartDraw failed: heroine is null. heroineID={heroineID}");
-            var fallback = new EmotionDrawResult
-            {
-                ResultEmotion = HeroineEmotionCardType.Angry,
-                ResultMode = resultMode,
-                ShowMode = showMode,
-                HeroineID = heroineID
-            };
-            onComplete?.Invoke(fallback);
-            return;
-        }
-
+        var result = ResolveResult(heroine, heroineID, resultMode, showMode, specifiedEmotion);
+        if (result == null) { onComplete?.Invoke(null); return; }
         if (currentDrawRoutine != null)
         {
             StopCoroutine(currentDrawRoutine);
             currentDrawRoutine = null;
             isDrawing = false;
         }
-
-        EmotionDrawResult result = ResolveResult(heroine, heroineID, resultMode, showMode, specifiedEmotion);
-
-        if (showMode == EmotionShowMode.None)
-        {
-            onComplete?.Invoke(result);
-            return;
-        }
-
+        if (showMode == EmotionShowMode.None) { onComplete?.Invoke(result); return; }
         currentDrawRoutine = StartCoroutine(DrawRoutine(heroine, result, onComplete));
     }
 
@@ -535,24 +359,6 @@ public class EmotionCardDrawMachine : MonoBehaviour
 
     private HeroineStatusModel GetHeroineByID(string heroineID)
     {
-        if (GameStatusService.Instance == null)
-        {
-            Debug.LogWarning("[EmotionCardDrawMachine] GameStatusService.Instance is null.");
-            return null;
-        }
-
-        if (GameStatusService.Instance.Heroines == null || GameStatusService.Instance.Heroines.Count == 0)
-        {
-            Debug.LogWarning("[EmotionCardDrawMachine] GameStatusService.Heroines is empty.");
-            return null;
-        }
-
-        if (!string.IsNullOrEmpty(heroineID) && GameStatusService.Instance.Heroines.TryGetValue(heroineID, out var heroine))
-            return heroine;
-
-        if (!string.IsNullOrEmpty(heroineID))
-            Debug.LogWarning($"[EmotionCardDrawMachine] HeroineID not found: {heroineID}. Fallback to first heroine.");
-
-        return GameStatusService.Instance.Heroines.Values.FirstOrDefault();
+        return GameStatusService.Instance?.GetHeroine(heroineID);
     }
 }

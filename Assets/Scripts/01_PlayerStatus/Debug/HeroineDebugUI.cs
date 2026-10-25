@@ -5,7 +5,7 @@ using System;
 
 /// <summary>
 /// 職責：顯示「單一」女主角的 NHK 除錯資訊，並訂閱其數據變更事件。
-/// 顯示項目：名稱、主導情緒、大宗情緒、情緒卡池分佈、性慾、H次數。
+/// 顯示項目：名稱、當前情緒與正式女主角數值。
 /// </summary>
 public class HeroineDebugUI : MonoBehaviour
 {
@@ -18,21 +18,18 @@ public class HeroineDebugUI : MonoBehaviour
 
     [Header("Emotions")]
     [SerializeField] private TextMeshProUGUI textCurrentEmotion;
-    [SerializeField] private TextMeshProUGUI textDominantEmotion;
-    [SerializeField] private TextMeshProUGUI textEmotionDeck;
 
     [Header("Stats")]
     [SerializeField] private TextMeshProUGUI textLibido;
     [SerializeField] private TextMeshProUGUI textHCount;
 
-    private HeroineStatusModel _model;
+    [SerializeField] private TextMeshProUGUI textTrust;
+    [SerializeField] private TextMeshProUGUI textAffinity;
+    [SerializeField] private TextMeshProUGUI textMood;
+    [SerializeField] private TextMeshProUGUI textExcitement;
+    [SerializeField] private TextMeshProUGUI textOrgasm;
 
-    // 快取 delegate 以便正確取消訂閱
-    private Action _onDeckChanged;
-    private Action<HeroineEmotionCardType> _onCurrentEmotionChanged;
-    private Action<HeroineEmotionCardType> _onDominantEmotionChanged;
-    private Action<int> _onLibidoChanged;
-    private Action<int> _onHCountChanged;
+    private HeroineStatusModel _model;
 
     /// <summary>
     /// 若 Inspector 有填 heroineID，自動從 GameStatusService 取得對應 Model。
@@ -94,78 +91,28 @@ public class HeroineDebugUI : MonoBehaviour
     /// </summary>
     public void Initialize(HeroineStatusModel model)
     {
-        // 若已訂閱舊 model，先解除
         Unsubscribe();
-
         _model = model;
-
-        // 建立 delegate 快取
-        _onDeckChanged = RefreshUI;
-        _onCurrentEmotionChanged = _ => RefreshUI();
-        _onDominantEmotionChanged = _ => RefreshUI();
-        _onLibidoChanged = _ => RefreshUI();
-        _onHCountChanged = _ => RefreshUI();
-
-        // 訂閱 NHK 核心事件
-        _model.OnEmotionDeckChanged += _onDeckChanged;
-        _model.OnCurrentEmotionChanged += _onCurrentEmotionChanged;
-        _model.OnDominantEmotionChanged += _onDominantEmotionChanged;
-        _model.OnLibidoChanged += _onLibidoChanged;
-        _model.OnHCountChanged += _onHCountChanged;
-
-        Debug.Log($"<color=lime>[HeroineDebugUI] 訂閱成功: {_model.Name} ({_model.HeroineID})</color>", this);
+        if (_model != null) _model.OnChanged += RefreshUI;
         RefreshUI();
     }
 
     private void RefreshUI()
     {
         if (_model == null) return;
-        Debug.Log($"<color=yellow>[HeroineDebugUI] RefreshUI 被呼叫 — " +
-                  $"Current={_model.CurrentEmotion}, Dominant={_model.DominantEmotion}, " +
-                  $"Libido={_model.Libido}, HCount={_model.HCount}</color>", this);
-
-        if (textName != null)
-            textName.text = _model.Name;
-
-        if (textCurrentEmotion != null)
-            textCurrentEmotion.text = $"主導情緒: {_model.CurrentEmotion}";
-
-        if (textDominantEmotion != null)
-            textDominantEmotion.text = $"大宗情緒: {_model.DominantEmotion}";
-
-        if (textEmotionDeck != null)
-            textEmotionDeck.text = BuildDeckString();
-
-        if (textLibido != null)
-            textLibido.text = $"性慾: {_model.Libido} / {HeroineStatusModel.LibidoMax}";
-
-        if (textHCount != null)
-            textHCount.text = $"H回數: {_model.HCount}";
-    }
-
-    private string BuildDeckString()
-    {
-        int angry = _model.GetCardCount(HeroineEmotionCardType.Angry);
-        int shy = _model.GetCardCount(HeroineEmotionCardType.Shy);
-        int worried = _model.GetCardCount(HeroineEmotionCardType.Worried);
-        int maternal = _model.GetCardCount(HeroineEmotionCardType.Maternal);
-        int relaxed = _model.GetCardCount(HeroineEmotionCardType.Relaxed);
-        int disapp = _model.GetCardCount(HeroineEmotionCardType.Disappointed);
-
-        return $"卡池 [{_model.GetEmotionDeckCount()}/{_model.EmotionDeckMaxCount}]\n"
-             + $"  怒{angry} 羞{shy} 憂{worried} 母{maternal} 鬆{relaxed} 失{disapp}";
+        if (textName != null) textName.text = _model.Name;
+        if (textCurrentEmotion != null) textCurrentEmotion.text = _model.CurrentEmotion.ToString();
+        if (textLibido != null) textLibido.text = _model.Libido.ToString();
+        if (textHCount != null) textHCount.text = _model.HCount.ToString();
+        if (textTrust != null) textTrust.text = _model.Trust.ToString();
+        if (textAffinity != null) textAffinity.text = _model.Affinity.ToString();
+        if (textMood != null) textMood.text = _model.Mood.ToString();
+        if (textExcitement != null) textExcitement.text = _model.Excitement.ToString();
+        if (textOrgasm != null) textOrgasm.text = _model.Orgasm.ToString();
     }
 
     private void Unsubscribe()
-    {
-        if (_model == null) return;
-
-        _model.OnEmotionDeckChanged -= _onDeckChanged;
-        _model.OnCurrentEmotionChanged -= _onCurrentEmotionChanged;
-        _model.OnDominantEmotionChanged -= _onDominantEmotionChanged;
-        _model.OnLibidoChanged -= _onLibidoChanged;
-        _model.OnHCountChanged -= _onHCountChanged;
-    }
+    { if (_model != null) _model.OnChanged -= RefreshUI; }
 
     private void OnDestroy()
     {

@@ -1,32 +1,19 @@
 using System;
-using System.Collections.Generic;
 
-/// <summary>
-/// NHK 版女主角存檔資料。
-/// 核心只保存情緒卡池、目前主導情緒、HCount，以及暫留統計/狀態效果資料。
-/// </summary>
+/// <summary>女主角現役數值與統計。舊 JSON 的卡池、舊能力等多餘欄位不再讀取。</summary>
 [Serializable]
 public class HeroineSaveData
 {
-    public HeroineEmotionCardType Emotion;
-    public HeroineEmotionCardType DominantEmotion;
-    public int Libido;
-    // 獨立興奮度；舊存檔缺少欄位時預設為 0。
-    public int Excitement;
-    // 獨立高潮度；舊存檔缺少欄位時預設為 0。
-    public int Orgasm;
-    // 獨立不滿值與可調上限；舊存檔缺少欄位時為 0 / 5。
-    public int Frustration;
-    public int FrustrationMax = HeroineStatusModel.DefaultFrustrationMax;
+    public HeroineEmotionCardType Emotion = HeroineStatusModel.InitialEmotion;
     public int Trust;
     public int Affinity;
+    // 舊存檔未包含 Mood 時使用初始值；明確保存的 0 仍維持 0。
+    public int Mood = HeroineStatusModel.InitialMood;
+    public int Libido;
+    public bool LibidoIncreasedToday;
+    public int Excitement;
+    public int Orgasm;
     public int HCount;
     public bool IsInHeat;
-
-    public int NextEmotionCardOrder;
-    public List<HeroineEmotionCardSaveData> EmotionDeckData = new List<HeroineEmotionCardSaveData>();
-
-    // 暫留相容資料。若後續確認無引用，可以再移除。
     public HeroineStatisticsSaveData StatisticsData;
-    public ProtagonistStatusEffectSaveData StatusEffectData;
 }

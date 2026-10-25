@@ -71,42 +71,25 @@ public class PlayMakerGameBridge : MonoBehaviour
     }
 
     public int GetHeroineDiscomfortMax(string heroineId)
-    {
-        HeroineStatusModel heroine = GetHeroine(heroineId);
-        return heroine != null ? heroine.DiscomfortMax : 100;
-    }
+    { Debug.LogWarning("[PlayMakerGameBridge] 此女主角舊功能已退役，請重新設定 FSM。"); return 0; }
 
     public int GetHeroineExcitement(string heroineId)
-    {
-        HeroineStatusModel heroine = GetHeroine(heroineId);
-        return heroine != null ? heroine.BaseExcitementExp : 0;
-    }
+    { return GetHeroine(heroineId)?.GetExcitement() ?? 0; }
 
     public int GetHeroineExcitementLv(string heroineId)
-    {
-        HeroineStatusModel heroine = GetHeroine(heroineId);
-        return heroine != null ? heroine.BaseExcitementLevel : 0;
-    }
+    { Debug.LogWarning("[PlayMakerGameBridge] 此女主角舊功能已退役，請重新設定 FSM。"); return 0; }
 
     public void AddHeroineExcitement(string heroineId, int amount)
-    {
-        GetHeroine(heroineId)?.AddExcitementExp(amount);
-    }
+    { GetHeroine(heroineId)?.AddExcitement(amount); }
 
     public void SetHeroineExcitement(string heroineId, int level, int exp)
-    {
-        GetHeroine(heroineId)?.SetExcitement(level, exp);
-    }
+    { Debug.LogWarning("[PlayMakerGameBridge] 此女主角舊功能已退役，請重新設定 FSM。"); }
 
     public void AddHeroineDiscomfort(string heroineId, int amount)
-    {
-        GetHeroine(heroineId)?.AddDiscomfort(amount);
-    }
+    { Debug.LogWarning("[PlayMakerGameBridge] 此女主角舊功能已退役，請重新設定 FSM。"); }
 
     public void ResetHeroineDiscomfort(string heroineId)
-    {
-        GetHeroine(heroineId)?.ResetDiscomfort();
-    }
+    { Debug.LogWarning("[PlayMakerGameBridge] 此女主角舊功能已退役，請重新設定 FSM。"); }
 
     public void AddHeroineOrgasm(string heroineId, int amount)
     {

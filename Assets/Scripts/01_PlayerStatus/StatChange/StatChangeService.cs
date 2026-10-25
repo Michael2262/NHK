@@ -35,7 +35,7 @@ public struct StatPreviewItem
     }
 
     /// <summary>是否為女主角數值（Libido / Trust / Affinity）。</summary>
-    public bool IsHeroine => kind == StatKind.Libido || kind == StatKind.Trust || kind == StatKind.Affinity;
+    public bool IsHeroine => kind == StatKind.Libido || kind == StatKind.Trust || kind == StatKind.Affinity || kind == StatKind.Mood;
 }
 
 public class StatChangeService
@@ -218,6 +218,9 @@ public class StatChangeService
             case StatKind.Trust:
                 if (op.op == StatOp.Set) heroine.SetTrust(op.amount); else heroine.AddTrust(op.amount);
                 break;
+            case StatKind.Mood:
+                if (op.op == StatOp.Set) heroine.SetMood(op.amount); else heroine.AddMood(op.amount);
+                break;
             case StatKind.Affinity:
                 if (op.op == StatOp.Set) heroine.SetAffinity(op.amount); else heroine.AddAffinity(op.amount);
                 break;
@@ -245,6 +248,7 @@ public class StatChangeService
             case StatKind.Libido: return heroine.Libido;
             case StatKind.Trust: return heroine.Trust;
             case StatKind.Affinity: return heroine.Affinity;
+            case StatKind.Mood: return heroine.Mood;
             default: return 0;
         }
     }

@@ -1,893 +1,247 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using UnityEngine;
 
-/// <summary>
-/// NHK 版女主角狀態模型。
-///
-/// 核心責任：
-/// 1. 保存女主角識別資訊。
-/// 2. 管理固定張數的情緒卡池。
-/// 3. DominantEmotion（大宗情緒）：由卡池自動計算，數量最多者。
-/// 4. CurrentEmotion（主導情緒）：獨立儲存，可由外部 Set。
-/// 5. LastAddedEmotion：最近一次被新增的情緒。
-/// 6. Libido（性慾）：0~150 的獨立數值，每日衰減 LibidoDailyDecay。
-/// 7. Trust（信賴）：0~150 的獨立數值。
-/// 8. Affinity（好感度）：0~100 的獨立數值。
-/// 9. Excitement（興奮度）：0~100 的獨立數值。
-/// 10. Orgasm（高潮度）：0~100 的獨立數值。
-///  
-/// 11. 提供情緒分數與卡片替換規則。
-/// 12. 保存 H 次數。
-///
-/// DominantEmotion 規則：
-/// - 不允許外部主動設定。
-/// - 每當情緒卡池變動，自動重新計算。
-/// - 數量最多者成為 DominantEmotion。
-/// - 若數量一樣多，取 tied emotions 中最近加入卡池的情緒。
-/// </summary>
+/// <summary>正式女主角數值；每個實例代表一位角色，由 GameStatusService.Heroines 持有。</summary>
 public class HeroineStatusModel
 {
-    // ─────────────────────────────────────────────────────────────
-    // Core identity
-    // ─────────────────────────────────────────────────────────────
+    // ==========================================================
+    // 可調數值設定：同類放在一起。初始值於建立角色／新遊戲時套用。
+    // ==========================================================
+
+    // ───── 信賴 ─────
+    public const int TrustMin = 0;
+    public const int TrustMax = 999;
+    public const int InitialTrust = 0;
+
+    // ───── 好感 ─────
+    public const int AffinityMin = 0;
+    public const int AffinityMax = 999;
+    public const int InitialAffinity = 0;
+
+    // ───── 心情 ─────
+    public const int MoodMin = 0;
+    public const int MoodMax = 10;
+    public const int InitialMood = 5;
+
+    // ───── 性興味 ─────
+    public const int LibidoMin = 0;
+    public const int LibidoMax = 250;
+    public const int InitialLibido = 0;
+    public const int LibidoDailyDecay = 2; // 當日不曾實際增加才衰減
+
+    // ───── 興奮 ─────
+    public const int ExcitementMin = 0;
+    public const int ExcitementMax = 100;
+    public const int InitialExcitement = 0;
+    public const int ExcitementInHeatDailyRetentionMax = 50; // 發情中跨日最多保留值
+
+    // ───── 高潮 ─────
+    public const int OrgasmMin = 0;
+    public const int OrgasmLimit = 100;
+    public const int InitialOrgasm = 0;
+
+    // ───── 次數與狀態 ─────
+    public const int InitialHCount = 0;
+    public const bool InitialIsInHeat = false;
+    public const HeroineEmotionCardType InitialEmotion = HeroineEmotionCardType.Angry;
+
+    // ==========================================================
+    // 角色資料與執行期間狀態
+    // ==========================================================
     public string HeroineID { get; }
     public string NameTextKey { get; }
     public string Name { get; }
-
-    // ─────────────────────────────────────────────────────────────
-    // NHK core state
-    // ─────────────────────────────────────────────────────────────
-    public int EmotionDeckMaxCount { get; private set; }
-
-    /// <summary>大宗情緒：由卡池自動計算。</summary>
-    public HeroineEmotionCardType DominantEmotion { get; private set; }
-
-    /// <summary>主導情緒：獨立儲存，可由外部 Set。</summary>
-    public HeroineEmotionCardType CurrentEmotion { get; private set; }
-
-    /// <summary>性慾值，0~LibidoMax。</summary>
-    public int Libido { get; private set; }
-    public const int LibidoMax = 150;
-    public const int LibidoDailyDecay = 2;
-
-    /// <summary>獨立興奮度，0~100；與舊版興奮等級／經驗值分開。</summary>
-    public int Excitement { get; private set; }
-    public const int ExcitementMax = 100;
-    public const int ExcitementInHeatDailyRetentionMax = 50;
-    public const int LIBIDO_MEDIUM_THRESHOLD = 50;
-    public const int LIBIDO_HIGH_THRESHOLD = 120;
-
-    /// <summary>獨立高潮度，0~100，每日歸零。</summary>
-    public int Orgasm { get; private set; }
-    public int OrgasmMax => 100;
-
-    /// <summary>獨立不滿值，0～FrustrationMax；不直接改變主導情緒。</summary>
-    public int Frustration { get; private set; }
-    public const int DefaultFrustrationMax = 5;
-    public int FrustrationMax { get; private set; } = DefaultFrustrationMax;
-    private int frustrationRevision;
-
-    /// <summary>信賴值，0~TrustMax。</summary>
-    public int Trust { get; private set; }
-    public const int TrustMax = 150;
-
-    /// <summary>好感度，0~AffinityMax。</summary>
-    public int Affinity { get; private set; }
-    public const int AffinityMax = 150;
-
-    public int HCount { get; private set; }
-
-    /// <summary>發情狀態：獨立開關，存入存檔，由劇情/FSM 明確 SetInHeat 控制。</summary>
-    public bool IsInHeat { get; private set; }
-
-    private readonly HeroineStatusConfig cfg;
-    private readonly HeroineStat sourceStat;
-    private readonly List<HeroineEmotionCardSaveData> emotionDeck = new List<HeroineEmotionCardSaveData>();
-    private int nextEmotionCardOrder;
-
-    public IReadOnlyList<HeroineEmotionCardSaveData> EmotionDeck => emotionDeck;
-
-    public HeroineStatisticsModel Statistics { get; private set; }
-    public ProtagonistStatusEffectModel StatusEffectModel { get; private set; }
-
-    // ─────────────────────────────────────────────────────────────
-    // NHK events
-    // ─────────────────────────────────────────────────────────────
-    public event Action OnEmotionDeckChanged;
-    public event Action<HeroineEmotionCardType> OnEmotionCardAdded;
-    public event Action<HeroineEmotionCardType> OnEmotionCardRemoved;
-    public event Action<HeroineEmotionCardType> OnDominantEmotionChanged;
+    public HeroineEmotionCardType CurrentEmotion { get; private set; } = InitialEmotion;
+    public bool IsInHeat { get; private set; } = InitialIsInHeat;
+    public int HCount { get; private set; } = InitialHCount;
+    public int OrgasmMax => OrgasmLimit;
+    /// <summary>每位角色獨立記錄，存檔保留；讀檔不算數值增加。</summary>
+    public bool LibidoIncreasedToday { get; private set; }
+    public HeroineStatisticsModel Statistics { get; private set; } = new HeroineStatisticsModel();
+    public event Action OnChanged;
     public event Action<HeroineEmotionCardType> OnCurrentEmotionChanged;
-    public event Action<int> OnLibidoChanged;
-    /// <summary>獨立興奮度改變時傳回新值；讀檔後請透過 OnGameStatusLoaded 統一刷新。</summary>
-    public event Action<int> OnExcitementValueChanged;
-    /// <summary>高潮度改變時傳回新值；讀檔後透過 OnGameStatusLoaded 統一刷新。</summary>
-    public event Action<int> OnOrgasmChanged;
-    /// <summary>不滿值改變時傳回新值；讀檔後透過 OnGameStatusLoaded 統一刷新。</summary>
-    public event Action<int> OnFrustrationChanged;
-    /// <summary>不滿值上限改變時傳回新上限。</summary>
-    public event Action<int> OnFrustrationMaxChanged;
-    /// <summary>不滿值由未滿轉為滿值時通知；滿值不自動歸零，也不改變心情。</summary>
-    public event Action OnFrustrationFull;
-    public event Action<int> OnTrustChanged;
-    public event Action<int> OnAffinityChanged;
-    public event Action<int> OnHCountChanged;
     public event Action<bool> OnInHeatChanged;
-
-    // 向下相容：舊的 OnEmotionChanged 對應新的 OnCurrentEmotionChanged
+    public event Action<int> OnHCountChanged;
     public event Action<HeroineEmotionCardType> OnEmotionChanged
     {
         add => OnCurrentEmotionChanged += value;
         remove => OnCurrentEmotionChanged -= value;
     }
-
-    // ─────────────────────────────────────────────────────────────
-    // Compatibility events from previous project.
-    // NHK 新功能請不要再依賴這些事件。
-    // ─────────────────────────────────────────────────────────────
-    public event Action<int> OnLewdnessChanged;
-    public event Action<int> OnExcitementLevelChanged;
-    public event Action<int> OnExcitementChanged;
-    public event Action<int> OnDiscomfortChanged;
-    public event Action OnDiscomfortFull;
-    public event Action OnOrgasmFull;
-    public event Action<int> OnPersonalSuspicionChanged;
-    public event Action OnPersonalSuspicionReachedMax;
-    public event Action<VirginityState> OnVirginityChanged;
-    public event Action<int> OnExcitementDecayAmountChanged;
-    public event Action<bool> OnEnragedChanged;
-    public event Action OnHeroineFlagsChanged;
-    public event Action<int> OnAttackChanged;
-    public event Action<int> OnDefenseChanged;
-    public event Action<int> OnPatienceChanged;
-    public event Action<int> OnStaminaChanged;
-    public event Action<int> OnSpiritChanged;
-    public event Action<int> OnTotalExcitementLevelChanged;
-    public event Action<int> OnCycleDayChanged;
-    public event Action<OvulationDayType> OnOvulationDayTypeChanged;
-    public event Action<PregnancyState> OnPregnancyStateChanged;
-    public event Action<bool> OnConceiveAttempted;
+    public int Trust { get; private set; } = InitialTrust;
+    public event Action<int> OnTrustChanged;
+    public int Affinity { get; private set; } = InitialAffinity;
+    public event Action<int> OnAffinityChanged;
+    public int Mood { get; private set; } = InitialMood;
+    public event Action<int> OnMoodChanged;
+    public int Libido { get; private set; } = InitialLibido;
+    public event Action<int> OnLibidoChanged;
+    public int Excitement { get; private set; } = InitialExcitement;
+    public event Action<int> OnExcitementValueChanged;
+    public int Orgasm { get; private set; } = InitialOrgasm;
+    public event Action<int> OnOrgasmChanged;
 
     public HeroineStatusModel(HeroineStat stat, HeroineStatusConfig config)
     {
         if (stat == null) throw new ArgumentNullException(nameof(stat));
-
-        sourceStat = stat;
         HeroineID = stat.ID;
         NameTextKey = stat.NameTextKey;
         Name = stat.Name;
-        cfg = config;
-        EmotionDeckMaxCount = Mathf.Max(1, config != null ? config.EmotionDeckMaxCount : 10);
-
-        DominantEmotion = HeroineEmotionCardType.Angry;
-        CurrentEmotion = HeroineEmotionCardType.Angry;
-        Libido = 0;
-        Excitement = 0;
-        Orgasm = 0;
-        Frustration = 0;
-        Trust = 20;
-        Affinity = 0;
-        HCount = 0;
-
-        Statistics = new HeroineStatisticsModel();
-        StatusEffectModel = new ProtagonistStatusEffectModel();
-        if (StatusEffectModel != null)
-        {
-            StatusEffectModel.OnEffectsChanged += RecalculateTotalStats;
-        }
-
-        InitializeDefaultEmotionDeck(stat);
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // Emotion deck initialization
-    // ─────────────────────────────────────────────────────────────
-    public void InitializeDefaultEmotionDeck(HeroineStat stat = null)
-    {
-        HeroineEmotionCardType oldDominant = CalculateDominantEmotion();
+    private static int Clamp(long value, int min, int max)
+        => (int)Math.Max(min, Math.Min(max, value));
 
-        emotionDeck.Clear();
-        nextEmotionCardOrder = 0;
+    // ==========================================================
+    // 數值操作：先以 long 計算，超出範圍時截斷，避免 int 溢位。
+    // ==========================================================
 
-        HeroineStat targetStat = stat ?? sourceStat;
-        AddInitialCards(targetStat, HeroineEmotionCardType.Normal);
-        AddInitialCards(targetStat, HeroineEmotionCardType.Angry);
-        AddInitialCards(targetStat, HeroineEmotionCardType.Shy);
-        AddInitialCards(targetStat, HeroineEmotionCardType.Worried);
-        AddInitialCards(targetStat, HeroineEmotionCardType.Maternal);
-        AddInitialCards(targetStat, HeroineEmotionCardType.Relaxed);
-        AddInitialCards(targetStat, HeroineEmotionCardType.Disappointed);
-
-        NormalizeDeckSize();
-        NotifyDeckChanged(oldDominant, forceNotify: true);
-    }
-
-    private void AddInitialCards(HeroineStat stat, HeroineEmotionCardType type)
-    {
-        int count = cfg != null ? cfg.GetInitialCardCount(stat, type) : GetFallbackInitialCount(type);
-        for (int i = 0; i < count; i++) AddCardInternal(type);
-    }
-
-    private int GetFallbackInitialCount(HeroineEmotionCardType type)
-    {
-        switch (type)
-        {
-            case HeroineEmotionCardType.Normal: return 0;
-            case HeroineEmotionCardType.Angry: return 8;
-            case HeroineEmotionCardType.Shy: return 2;
-            default: return 0;
-        }
-    }
-
-    private void NormalizeDeckSize()
-    {
-        while (emotionDeck.Count > EmotionDeckMaxCount)
-        {
-            RemoveOldestCardInternal();
-        }
-
-        while (emotionDeck.Count < EmotionDeckMaxCount)
-        {
-            AddCardInternal(HeroineEmotionCardType.Angry);
-        }
-    }
-
-    // ─────────────────────────────────────────────────────────────
-    // Emotion deck query
-    // ─────────────────────────────────────────────────────────────
-    public int GetCardCount(HeroineEmotionCardType type)
-    {
-        return emotionDeck.Count(c => c.Type == type);
-    }
-
-    public int GetEmotionDeckCount() => emotionDeck.Count;
-
-    /// <summary>
-    /// 計算大宗情緒（卡池數量最多者）。
-    /// 舊名 GetDominantEmotion，保留公開介面。
-    /// </summary>
-    public HeroineEmotionCardType GetDominantEmotion()
-    {
-        if (emotionDeck.Count == 0) return HeroineEmotionCardType.Angry;
-        return CalculateDominantEmotion();
-    }
-
-    private HeroineEmotionCardType CalculateDominantEmotion()
-    {
-        if (emotionDeck.Count == 0) return HeroineEmotionCardType.Angry;
-
-        int maxCount = emotionDeck
-            .GroupBy(c => c.Type)
-            .Max(g => g.Count());
-
-        var tiedTypes = emotionDeck
-            .GroupBy(c => c.Type)
-            .Where(g => g.Count() == maxCount)
-            .Select(g => g.Key)
-            .ToHashSet();
-
-        return emotionDeck
-            .Where(c => tiedTypes.Contains(c.Type))
-            .OrderByDescending(c => c.AddedOrder)
-            .First()
-            .Type;
-    }
-
-    public int GetIntimateMoodScore()
-    {
-        return GetCardCount(HeroineEmotionCardType.Shy)
-             + GetCardCount(HeroineEmotionCardType.Relaxed)
-             + GetCardCount(HeroineEmotionCardType.Maternal);
-    }
-
-    public int GetNegativeMoodScore()
-    {
-        return GetCardCount(HeroineEmotionCardType.Angry)
-             + GetCardCount(HeroineEmotionCardType.Disappointed);
-    }
-
-    public int GetCareMoodScore()
-    {
-        return GetCardCount(HeroineEmotionCardType.Worried)
-             + GetCardCount(HeroineEmotionCardType.Maternal);
-    }
-
-    public bool IsDisappointmentHigh() => GetCardCount(HeroineEmotionCardType.Disappointed) >= 3;
-    public bool IsMaternalHigh() => GetCardCount(HeroineEmotionCardType.Maternal) >= 3;
-    public bool IsShyHigh() => GetCardCount(HeroineEmotionCardType.Shy) >= 3;
-
-    // ─────────────────────────────────────────────────────────────
-    // CurrentEmotion（主導情緒）── 獨立儲存，可外部設定
-    // ─────────────────────────────────────────────────────────────
-
-    /// <summary>
-    /// 設定主導情緒。
-    /// </summary>
-    public void SetCurrentEmotion(HeroineEmotionCardType emotion)
-    {
-        if (CurrentEmotion == emotion) return;
-        CurrentEmotion = emotion;
-        OnCurrentEmotionChanged?.Invoke(CurrentEmotion);
-    }
-
-    // ─────────────────────────────────────────────────────────────
-    // Libido（性慾）
-    // ─────────────────────────────────────────────────────────────
-
-    /// <summary>增減性慾值。</summary>
-    public void AddLibido(int amount)
-    {
-        if (amount == 0) return;
-        int newValue = Mathf.Clamp(Libido + amount, 0, LibidoMax);
-        if (Libido == newValue) return;
-        Libido = newValue;
-        OnLibidoChanged?.Invoke(Libido);
-    }
-
-    /// <summary>直接設定性慾值。</summary>
-    public void SetLibido(int value)
-    {
-        value = Mathf.Clamp(value, 0, LibidoMax);
-        if (Libido == value) return;
-        Libido = value;
-        OnLibidoChanged?.Invoke(Libido);
-    }
-
-    /// <summary>取得目前性慾值。</summary>
-    public int GetLibido() => Libido;
-
-    /// <summary>每日性慾衰減。由 GameStatusService 在換日時呼叫。</summary>
-    public void ApplyLibidoDecay()
-    {
-        AddLibido(-LibidoDailyDecay);
-    }
-
-    /// <summary>取得獨立興奮度。</summary>
-    public int GetExcitement() => Excitement;
-
-    /// <summary>直接設定興奮度，不套用性慾倍率。</summary>
-    public void SetExcitement(int value)
-    {
-        value = Mathf.Clamp(value, 0, ExcitementMax);
-        if (Excitement == value) return;
-        Excitement = value;
-        OnExcitementValueChanged?.Invoke(Excitement);
-    }
-
-    /// <summary>一般增減興奮度，不套用性慾倍率。</summary>
-    public void AddExcitement(int amount)
-    {
-        // 先使用 long 相加，避免極大輸入溢位後反向變動。
-        long newValue = (long)Excitement + amount;
-        SetExcitement((int)Math.Max(0L, Math.Min(ExcitementMax, newValue)));
-    }
-
-    /// <summary>正數依性慾套用 1~2 倍並四捨五入；零或負數沿用一般增減。</summary>
-    public void WeightedAddExcitement(int amount)
-    {
-        if (amount <= 0)
-        {
-            AddExcitement(amount);
-            return;
-        }
-
-        int libidoOffset = Mathf.Clamp(Libido - LIBIDO_MEDIUM_THRESHOLD,
-            0, LIBIDO_HIGH_THRESHOLD - LIBIDO_MEDIUM_THRESHOLD);
-        double multiplier = 1d + (double)libidoOffset
-            / (LIBIDO_HIGH_THRESHOLD - LIBIDO_MEDIUM_THRESHOLD);
-        double increase = Math.Round(amount * multiplier, MidpointRounding.AwayFromZero);
-        // 最大僅需增加 100，轉回 int 前先限制，避免倍率運算溢位。
-        AddExcitement((int)Math.Min(ExcitementMax, increase));
-    }
-
-    /// <summary>跨日結算：平時歸零；發情中保留目前值，但最多 50。</summary>
-    public void ApplyExcitementDailyReset()
-    {
-        SetExcitement(IsInHeat ? Mathf.Min(Excitement, ExcitementInHeatDailyRetentionMax) : 0);
-    }
-
-    /// <summary>取得獨立高潮度。</summary>
-    public int GetOrgasm() => Orgasm;
-
-    /// <summary>設定高潮度，限制在 0~100。</summary>
-    public void SetOrgasm(int value)
-    {
-        value = Mathf.Clamp(value, 0, OrgasmMax);
-        if (Orgasm == value) return;
-        Orgasm = value;
-        OnOrgasmChanged?.Invoke(Orgasm);
-    }
-
-    /// <summary>一般增減高潮度，不套用倍率，也不改變 H 次數。</summary>
-    public void AddOrgasm(int amount)
-    {
-        long newValue = (long)Orgasm + amount;
-        SetOrgasm((int)Math.Max(0L, Math.Min(OrgasmMax, newValue)));
-    }
-
-    /// <summary>跨日結算：無論是否發情，一律歸零。</summary>
-    public void ApplyOrgasmDailyReset() => SetOrgasm(0);
-
-    // 保留既有呼叫入口，統一轉交獨立數值操作。
-    public void ReduceOrgasm(int amount) => AddOrgasm((int)Math.Min(int.MaxValue, -(long)amount));
-    public void ResetOrgasm() => SetOrgasm(0);
-
-    // ───── Frustration（不滿值） ─────
-    public int GetFrustration() => Frustration;
-
-    /// <summary>設定不滿值，限制在 0～目前上限。</summary>
-    public void SetFrustration(int value) => ApplyFrustration(value, FrustrationMax);
-
-    /// <summary>正數增加、負數減少；超出範圍的部分捨棄。</summary>
-    public void AddFrustration(int amount)
-    {
-        long newValue = (long)Frustration + amount;
-        SetFrustration((int)Math.Max(0L, Math.Min(FrustrationMax, newValue)));
-    }
-
-    /// <summary>設定上限，最低為 1；同步限制目前值，未滿轉滿時也會通知。</summary>
-    public void SetFrustrationMax(int value) => ApplyFrustration(Frustration, Math.Max(1, value));
-
-    private void ApplyFrustration(int value, int maximum)
-    {
-        value = Mathf.Clamp(value, 0, maximum);
-        bool valueChanged = Frustration != value;
-        bool maxChanged = FrustrationMax != maximum;
-        if (!valueChanged && !maxChanged) return;
-
-        bool reachedFull = Frustration < FrustrationMax && value == maximum;
-        Frustration = value;
-        FrustrationMax = maximum;
-        int revision = unchecked(++frustrationRevision);
-
-        // 先完成數值與上限更新；訂閱者若再次修改或讀檔，停止本次過期通知。
-        if (maxChanged) OnFrustrationMaxChanged?.Invoke(maximum);
-        if (revision != frustrationRevision) return;
-        if (valueChanged) OnFrustrationChanged?.Invoke(value);
-        if (revision != frustrationRevision) return;
-        if (reachedFull) OnFrustrationFull?.Invoke();
-    }
-
-    /// <summary>生氣或失望時保留目前值，最多上限減 2（最低 0）；其他心情歸零。</summary>
-    public void ApplyFrustrationDailyReset()
-    {
-        bool retain = CurrentEmotion == HeroineEmotionCardType.Angry
-            || CurrentEmotion == HeroineEmotionCardType.Disappointed;
-        SetFrustration(retain ? Math.Min(Frustration, Math.Max(0, FrustrationMax - 2)) : 0);
-    }
-
-    // ─────────────────────────────────────────────────────────────
-    // Trust（信賴）
-    // ─────────────────────────────────────────────────────────────
-
-    /// <summary>增減信賴值。</summary>
-    public void AddTrust(int amount)
-    {
-        if (amount == 0) return;
-        int newValue = Mathf.Clamp(Trust + amount, 0, TrustMax);
-        if (Trust == newValue) return;
-        Trust = newValue;
-        OnTrustChanged?.Invoke(Trust);
-    }
-
-    /// <summary>直接設定信賴值。</summary>
+    public int GetTrust() => Trust;
+    public void AddTrust(int amount) => SetTrust(Clamp((long)Trust + amount, TrustMin, TrustMax));
     public void SetTrust(int value)
     {
-        value = Mathf.Clamp(value, 0, TrustMax);
+        value = Clamp(value, TrustMin, TrustMax);
         if (Trust == value) return;
         Trust = value;
-        OnTrustChanged?.Invoke(Trust);
+        OnTrustChanged?.Invoke(value);
+        OnChanged?.Invoke();
     }
 
-    /// <summary>取得目前信賴值。</summary>
-    public int GetTrust() => Trust;
-
-    // ─────────────────────────────────────────────────────────────
-    // Affinity（好感度）
-    // ─────────────────────────────────────────────────────────────
-
-    /// <summary>增減好感度。</summary>
-    public void AddAffinity(int amount)
-    {
-        if (amount == 0) return;
-        int newValue = Mathf.Clamp(Affinity + amount, 0, AffinityMax);
-        if (Affinity == newValue) return;
-        Affinity = newValue;
-        OnAffinityChanged?.Invoke(Affinity);
-    }
-
-    /// <summary>直接設定好感度。</summary>
+    public int GetAffinity() => Affinity;
+    public void AddAffinity(int amount) => SetAffinity(Clamp((long)Affinity + amount, AffinityMin, AffinityMax));
     public void SetAffinity(int value)
     {
-        value = Mathf.Clamp(value, 0, AffinityMax);
+        value = Clamp(value, AffinityMin, AffinityMax);
         if (Affinity == value) return;
         Affinity = value;
-        OnAffinityChanged?.Invoke(Affinity);
+        OnAffinityChanged?.Invoke(value);
+        OnChanged?.Invoke();
     }
 
-    /// <summary>取得目前好感度。</summary>
-    public int GetAffinity() => Affinity;
-
-    // ─────────────────────────────────────────────────────────────
-    // Emotion deck mutation
-    // ─────────────────────────────────────────────────────────────
-    public void AddEmotionCard(HeroineEmotionCardType type)
+    public int GetMood() => Mood;
+    public void AddMood(int amount) => SetMood(Clamp((long)Mood + amount, MoodMin, MoodMax));
+    public void SetMood(int value)
     {
-        ReplaceEmotionCard(type);
+        value = Clamp(value, MoodMin, MoodMax);
+        if (Mood == value) return;
+        Mood = value;
+        OnMoodChanged?.Invoke(value);
+        OnChanged?.Invoke();
     }
 
-    public void ReplaceEmotionCard(HeroineEmotionCardType newType)
+    public int GetLibido() => Libido;
+    public void AddLibido(int amount) => SetLibido(Clamp((long)Libido + amount, LibidoMin, LibidoMax));
+    public void SetLibido(int value)
     {
-        HeroineEmotionCardType oldDominant = CalculateDominantEmotion();
-
-        AddCardInternal(newType);
-        OnEmotionCardAdded?.Invoke(newType);
-
-        while (emotionDeck.Count > EmotionDeckMaxCount)
-        {
-            HeroineEmotionCardSaveData cardToRemove = FindCardToRemove(newType);
-            RemoveCardInternal(cardToRemove);
-        }
-
-        NotifyDeckChanged(oldDominant);
+        value = Clamp(value, LibidoMin, LibidoMax);
+        if (Libido == value) return;
+        if (value > Libido) LibidoIncreasedToday = true;
+        Libido = value;
+        OnLibidoChanged?.Invoke(value);
+        OnChanged?.Invoke();
     }
 
-    public bool RemoveOneCardOfType(HeroineEmotionCardType type)
+    public int GetExcitement() => Excitement;
+    public void AddExcitement(int amount) => SetExcitement(Clamp((long)Excitement + amount, ExcitementMin, ExcitementMax));
+    public void SetExcitement(int value)
     {
-        HeroineEmotionCardType oldDominant = CalculateDominantEmotion();
-        var target = emotionDeck
-            .Where(c => c.Type == type)
-            .OrderBy(c => c.AddedOrder)
-            .FirstOrDefault();
-
-        if (target == null) return false;
-
-        RemoveCardInternal(target);
-        NotifyDeckChanged(oldDominant);
-        return true;
+        value = Clamp(value, ExcitementMin, ExcitementMax);
+        if (Excitement == value) return;
+        Excitement = value;
+        OnExcitementValueChanged?.Invoke(value);
+        OnChanged?.Invoke();
     }
 
-    public void RemoveOldestCard()
+    public int GetOrgasm() => Orgasm;
+    public void AddOrgasm(int amount) => SetOrgasm(Clamp((long)Orgasm + amount, OrgasmMin, OrgasmMax));
+    public void SetOrgasm(int value)
     {
-        HeroineEmotionCardType oldDominant = CalculateDominantEmotion();
-        RemoveOldestCardInternal();
-        NotifyDeckChanged(oldDominant);
+        value = Clamp(value, OrgasmMin, OrgasmMax);
+        if (Orgasm == value) return;
+        Orgasm = value;
+        OnOrgasmChanged?.Invoke(value);
+        OnChanged?.Invoke();
     }
 
-    private void AddCardInternal(HeroineEmotionCardType type)
-    {
-        emotionDeck.Add(new HeroineEmotionCardSaveData
-        {
-            Type = type,
-            AddedOrder = nextEmotionCardOrder++
-        });
-    }
-
-    private void RemoveOldestCardInternal()
-    {
-        if (emotionDeck.Count == 0) return;
-        var oldest = emotionDeck.OrderBy(c => c.AddedOrder).First();
-        RemoveCardInternal(oldest);
-    }
-
-    private void RemoveCardInternal(HeroineEmotionCardSaveData card)
-    {
-        if (card == null) return;
-        if (emotionDeck.Remove(card))
-        {
-            OnEmotionCardRemoved?.Invoke(card.Type);
-        }
-    }
-
-    private HeroineEmotionCardSaveData FindCardToRemove(HeroineEmotionCardType newType)
-    {
-        foreach (var opposite in GetOppositeEmotionPriority(newType))
-        {
-            var target = emotionDeck
-                .Where(c => c.Type == opposite)
-                .OrderBy(c => c.AddedOrder)
-                .FirstOrDefault();
-            if (target != null) return target;
-        }
-
-        var groups = emotionDeck
-            .GroupBy(c => c.Type)
-            .Select(g => new { Type = g.Key, Count = g.Count() })
-            .OrderByDescending(g => g.Count)
-            .ToList();
-
-        foreach (var g in groups)
-        {
-            if (g.Type == newType && groups.Count > 1) continue;
-            var target = emotionDeck
-                .Where(c => c.Type == g.Type)
-                .OrderBy(c => c.AddedOrder)
-                .FirstOrDefault();
-            if (target != null) return target;
-        }
-
-        return emotionDeck.OrderBy(c => c.AddedOrder).FirstOrDefault();
-    }
-
-    public HeroineEmotionCardType[] GetOppositeEmotionPriority(HeroineEmotionCardType newType)
-    {
-        switch (newType)
-        {
-            case HeroineEmotionCardType.Angry:
-                return new[] { HeroineEmotionCardType.Relaxed, HeroineEmotionCardType.Shy, HeroineEmotionCardType.Maternal };
-            case HeroineEmotionCardType.Shy:
-                return new[] { HeroineEmotionCardType.Angry, HeroineEmotionCardType.Disappointed, HeroineEmotionCardType.Relaxed };
-            case HeroineEmotionCardType.Worried:
-                return new[] { HeroineEmotionCardType.Angry, HeroineEmotionCardType.Relaxed, HeroineEmotionCardType.Shy };
-            case HeroineEmotionCardType.Maternal:
-                return new[] { HeroineEmotionCardType.Angry, HeroineEmotionCardType.Disappointed, HeroineEmotionCardType.Relaxed };
-            case HeroineEmotionCardType.Relaxed:
-                return new[] { HeroineEmotionCardType.Angry, HeroineEmotionCardType.Worried, HeroineEmotionCardType.Disappointed };
-            case HeroineEmotionCardType.Disappointed:
-                return new[] { HeroineEmotionCardType.Relaxed, HeroineEmotionCardType.Shy, HeroineEmotionCardType.Maternal, HeroineEmotionCardType.Worried };
-            default:
-                return Array.Empty<HeroineEmotionCardType>();
-        }
-    }
-
-    private void NotifyDeckChanged(HeroineEmotionCardType oldDominant, bool forceNotify = false)
-    {
-        OnEmotionDeckChanged?.Invoke();
-
-        HeroineEmotionCardType newDominant = CalculateDominantEmotion();
-        if (newDominant != oldDominant || forceNotify)
-        {
-            DominantEmotion = newDominant;
-            OnDominantEmotionChanged?.Invoke(newDominant);
-        }
-        else
-        {
-            DominantEmotion = newDominant;
-        }
-    }
-
-    // ─────────────────────────────────────────────────────────────
-    // H count
-    // ─────────────────────────────────────────────────────────────
-    public void AddHCount(int amount = 1)
-    {
-        if (amount == 0) return;
-        HCount = Mathf.Max(0, HCount + amount);
-        OnHCountChanged?.Invoke(HCount);
-    }
-
+    public void ReduceOrgasm(int amount) => SetOrgasm(Clamp((long)Orgasm - amount, OrgasmMin, OrgasmMax));
+    public void ResetOrgasm() => SetOrgasm(0);
+    public void AddHCount(int amount = 1) => SetHCount(Clamp((long)HCount + amount, 0, int.MaxValue));
     public void SetHCount(int value)
     {
-        value = Mathf.Max(0, value);
+        value = Math.Max(0, value);
         if (HCount == value) return;
         HCount = value;
-        OnHCountChanged?.Invoke(HCount);
+        OnHCountChanged?.Invoke(value);
+        OnChanged?.Invoke();
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // Save / load
-    // ─────────────────────────────────────────────────────────────
-    public HeroineSaveData ToSaveData()
+    public HeroineEmotionCardType GetCurrentEmotion() => CurrentEmotion;
+    public void SetCurrentEmotion(HeroineEmotionCardType emotion)
     {
-        return new HeroineSaveData
-        {
-            Emotion = CurrentEmotion,
-            DominantEmotion = DominantEmotion,
-            Libido = Libido,
-            Excitement = Excitement,
-            Orgasm = Orgasm,
-            Frustration = Frustration,
-            FrustrationMax = FrustrationMax,
-            Trust = Trust,
-            Affinity = Affinity,
-            HCount = HCount,
-            IsInHeat = IsInHeat,
-            NextEmotionCardOrder = nextEmotionCardOrder,
-            EmotionDeckData = emotionDeck
-                .Select(c => new HeroineEmotionCardSaveData { Type = c.Type, AddedOrder = c.AddedOrder })
-                .ToList(),
-            StatisticsData = Statistics?.ToSaveData(),
-            StatusEffectData = StatusEffectModel?.ToSaveData()
-        };
+        if (!Enum.IsDefined(typeof(HeroineEmotionCardType), emotion) || CurrentEmotion == emotion) return;
+        CurrentEmotion = emotion;
+        OnCurrentEmotionChanged?.Invoke(emotion);
+        OnChanged?.Invoke();
     }
 
-    public void LoadFromSaveData(HeroineSaveData data)
-    {
-        LoadFromSaveData(data, null);
-    }
-
-    public void LoadFromSaveData(HeroineSaveData data, StatusEffectDatabase effectDatabase)
-    {
-        if (data == null) return;
-
-        HeroineEmotionCardType oldDominant = CalculateDominantEmotion();
-
-        HCount = Mathf.Max(0, data.HCount);
-        CurrentEmotion = data.Emotion;
-        Libido = Mathf.Clamp(data.Libido, 0, LibidoMax);
-        // 直接還原，不逐項廣播；缺少此欄位的舊存檔預設為 0。
-        Excitement = Mathf.Clamp(data.Excitement, 0, ExcitementMax);
-        Orgasm = Mathf.Clamp(data.Orgasm, 0, OrgasmMax);
-        // 不廣播變更或滿值事件；舊存檔使用 DTO 的預設上限 5。
-        FrustrationMax = Math.Max(1, data.FrustrationMax);
-        Frustration = Mathf.Clamp(data.Frustration, 0, FrustrationMax);
-        unchecked { frustrationRevision++; }
-        Trust = Mathf.Clamp(data.Trust, 0, TrustMax);
-        Affinity = Mathf.Clamp(data.Affinity, 0, AffinityMax);
-        IsInHeat = data.IsInHeat;
-        nextEmotionCardOrder = Mathf.Max(0, data.NextEmotionCardOrder);
-
-        emotionDeck.Clear();
-        if (data.EmotionDeckData != null && data.EmotionDeckData.Count > 0)
-        {
-            foreach (var card in data.EmotionDeckData)
-            {
-                if (card == null) continue;
-                emotionDeck.Add(new HeroineEmotionCardSaveData { Type = card.Type, AddedOrder = card.AddedOrder });
-                nextEmotionCardOrder = Mathf.Max(nextEmotionCardOrder, card.AddedOrder + 1);
-            }
-        }
-        else
-        {
-            InitializeDefaultEmotionDeck(sourceStat);
-        }
-
-        NormalizeDeckSize();
-
-        Statistics = new HeroineStatisticsModel();
-        if (data.StatisticsData != null) Statistics.LoadFromSaveData(data.StatisticsData);
-
-        StatusEffectModel = new ProtagonistStatusEffectModel();
-        if (StatusEffectModel != null)
-        {
-            StatusEffectModel.OnEffectsChanged += RecalculateTotalStats;
-        }
-        if (data.StatusEffectData != null) StatusEffectModel.LoadFromSaveData(data.StatusEffectData, effectDatabase);
-
-        OnHCountChanged?.Invoke(HCount);
-        OnLibidoChanged?.Invoke(Libido);
-        OnTrustChanged?.Invoke(Trust);
-        OnAffinityChanged?.Invoke(Affinity);
-        OnInHeatChanged?.Invoke(IsInHeat);
-        OnCurrentEmotionChanged?.Invoke(CurrentEmotion);
-        NotifyDeckChanged(oldDominant, forceNotify: true);
-    }
-
-    // ─────────────────────────────────────────────────────────────
-    // Compatibility layer from previous project.
-    // 這些成員只為了降低舊腳本編譯錯誤。NHK 新腳本請不要再使用。
-    // ─────────────────────────────────────────────────────────────
-    public int LewdnessLevel => GetCardCount(HeroineEmotionCardType.Shy);
-    public int LewdnessExp => 0;
-    public int BaseAffinityLevel => GetCardCount(HeroineEmotionCardType.Relaxed);
-    public int BaseAffinityExp => 0;
-    public int BaseExcitementLevel => GetCardCount(HeroineEmotionCardType.Shy);
-    public int BaseExcitementExp => 0;
-    public int TotalExcitementLevel => BaseExcitementLevel;
-
-    public int Discomfort => 0;
-    public int DiscomfortMax => 100;
-
-    public int PersonalSuspicion => GetNegativeMoodScore();
-    public int PersonalSuspicionMax => EmotionDeckMaxCount;
-    public int SuspicionDecayAmount => 0;
-    public int SuspicionReliefAmount => 0;
-    public bool IsSuspicionAtMax => IsDisappointmentHigh();
-
-    public VirginityState Virginity => VirginityState.Virgin;
-    public int CurrentCycleDay => 1;
-    public bool IsCyclePaused => true;
-    public PregnancyState Pregnancy => PregnancyState.NotPregnant;
-    public int EarlyPregnancyDaysElapsed => 0;
-
-    public int BaseAttack => 0;
-    public int BaseDefense => 0;
-    public int TotalAttack => 0;
-    public int TotalDefense => 0;
-    public int Patience => 0;
-    public int Stamina => 100;
-    public int StaminaMax => 100;
-    public int Spirit => 100;
-    public int SpiritMax => 100;
-    public int ExcitementDecayAmount => 0;
-    public bool IsEnraged => false;
-
-    public bool IsGoneForever => false;
-    public int AbsentUntilDay => 0;
-    public int AbsentUntilPhase => -1;
-
-    public void RecalculateTotalStats()
-    {
-        OnTotalExcitementLevelChanged?.Invoke(TotalExcitementLevel);
-    }
-
-    public int GetCurrentLewdnessThreshold(int level) => 100;
-    public int GetCurrentAffinityThreshold(int level) => 100;
-    public int GetCurrentExcitementThreshold(int level) => 100;
-
-    public void AddLewdnessExp(int delta)
-    {
-        if (delta > 0) ReplaceEmotionCard(HeroineEmotionCardType.Shy);
-        else if (delta < 0) ReplaceEmotionCard(HeroineEmotionCardType.Angry);
-        OnLewdnessChanged?.Invoke(delta);
-    }
-    public void ReduceLewdnessExp(int delta) => AddLewdnessExp(-delta);
-    public void SetLewdness(int level, int exp = 0) => OnLewdnessChanged?.Invoke(level);
-
-    public void AddAffinityExp(int delta)
-    {
-        if (delta > 0) ReplaceEmotionCard(HeroineEmotionCardType.Relaxed);
-        else if (delta < 0) ReplaceEmotionCard(HeroineEmotionCardType.Disappointed);
-        OnAffinityChanged?.Invoke(delta);
-    }
-    public void ReduceAffinityExp(int delta) => AddAffinityExp(-delta);
-    public void SetAffinity(int level, int exp = 0) => OnAffinityChanged?.Invoke(level);
-    public void SetAffinityLevelLock(int level, bool isLocked) { }
-    public bool IsAffinityLevelLocked(int level) => false;
-
-    public void AddExcitementExp(int delta)
-    {
-        if (delta > 0) ReplaceEmotionCard(HeroineEmotionCardType.Shy);
-        else if (delta < 0) ReplaceEmotionCard(HeroineEmotionCardType.Relaxed);
-        OnExcitementChanged?.Invoke(delta);
-        OnExcitementLevelChanged?.Invoke(BaseExcitementLevel);
-    }
-    public void ReduceExcitementExp(int delta) => AddExcitementExp(-delta);
-    // 舊版等級／經驗值入口必須明確傳入兩個參數，避免與獨立興奮度混用。
-    public void SetExcitement(int level, int exp)
-    {
-        OnExcitementLevelChanged?.Invoke(level);
-        OnExcitementChanged?.Invoke(exp);
-    }
-    public void SetExcitementLevelLock(int level, bool isLocked) { }
-    public bool IsExcitementLevelLocked(int level) => false;
-
-    public void AddDiscomfort(int amount)
-    {
-        if (amount > 0) ReplaceEmotionCard(HeroineEmotionCardType.Angry);
-        OnDiscomfortChanged?.Invoke(amount);
-    }
-    public void ReduceDiscomfort(int amount) => AddDiscomfort(-amount);
-    public void ResetDiscomfort() => OnDiscomfortChanged?.Invoke(0);
-
-    public void AddPersonalSuspicion(int amount)
-    {
-        if (amount > 0) ReplaceEmotionCard(HeroineEmotionCardType.Disappointed);
-        OnPersonalSuspicionChanged?.Invoke(amount);
-    }
-    public void ReducePersonalSuspicion(int amount) => AddPersonalSuspicion(-amount);
-    public void SetPersonalSuspicion(int value) => OnPersonalSuspicionChanged?.Invoke(value);
-    public void SetPersonalSuspicionMax(int value) => OnPersonalSuspicionChanged?.Invoke(PersonalSuspicion);
-    public void AddPersonalSuspicionMax(int value) => OnPersonalSuspicionChanged?.Invoke(PersonalSuspicion);
-    public void SetSuspicionDecayAmount(int amount) => OnPersonalSuspicionChanged?.Invoke(PersonalSuspicion);
-    public void AddSuspicionDecayAmount(int amount) => OnPersonalSuspicionChanged?.Invoke(PersonalSuspicion);
-    public void ApplySuspicionDecay() { }
-    public void ApplySuspicionRelief() { }
-
-    public void SetVirginity(VirginityState state, string firstPartnerId = null) => OnVirginityChanged?.Invoke(state);
-    public void SetExcitementDecayAmount(int amount) => OnExcitementDecayAmountChanged?.Invoke(amount);
     public void SetInHeat(bool value)
     {
         if (IsInHeat == value) return;
         IsInHeat = value;
         OnInHeatChanged?.Invoke(value);
+        OnChanged?.Invoke();
     }
-    public void SetEnraged(bool value) => OnEnragedChanged?.Invoke(value);
-    public void ApplyExcitementDecay() => OnExcitementChanged?.Invoke(0);
 
-    public void AddAttack(int amount) => OnAttackChanged?.Invoke(amount);
-    public void AddDefense(int amount) => OnDefenseChanged?.Invoke(amount);
-    public void AddPatience(int amount) => OnPatienceChanged?.Invoke(amount);
-    public void AddStamina(int amount) => OnStaminaChanged?.Invoke(amount);
-    public void AddSpirit(int amount) => OnSpiritChanged?.Invoke(amount);
+    // ───── 跨日結算：由 GameStatusService 對每位角色呼叫一次 ─────
+    public void ApplyLibidoDecay()
+    {
+        bool skipDecay = LibidoIncreasedToday;
+        // 在廣播事件前清除，事件中若增加 Libido，會正確記為新一天的增加。
+        LibidoIncreasedToday = false;
+        if (!skipDecay) AddLibido(-LibidoDailyDecay);
+    }
 
-    public void SetAbsentForever() => OnHeroineFlagsChanged?.Invoke();
-    public void SetAbsentUntil(int day, int phase = -1) => OnHeroineFlagsChanged?.Invoke();
-    public void ClearAbsentStatus() => OnHeroineFlagsChanged?.Invoke();
-    public bool IsCurrentlyAbsent(int currentDay, int currentPhase) => false;
+    public void ApplyExcitementDailyReset()
+        => SetExcitement(IsInHeat ? Math.Min(Excitement, ExcitementInHeatDailyRetentionMax) : 0);
+    public void ApplyOrgasmDailyReset() => SetOrgasm(0);
 
+    // ───── 存讀檔：還原時不逐項通知，由 Service 統一刷新 ─────
+    public HeroineSaveData ToSaveData() => new HeroineSaveData
+    {
+        Emotion = CurrentEmotion,
+        Trust = Trust, Affinity = Affinity, Mood = Mood, Libido = Libido,
+        LibidoIncreasedToday = LibidoIncreasedToday,
+        Excitement = Excitement, Orgasm = Orgasm, HCount = HCount,
+        IsInHeat = IsInHeat, StatisticsData = Statistics.ToSaveData()
+    };
+
+    public void LoadFromSaveData(HeroineSaveData data)
+    {
+        if (data == null) return;
+        CurrentEmotion = Enum.IsDefined(typeof(HeroineEmotionCardType), data.Emotion) ? data.Emotion : InitialEmotion;
+        Trust = Clamp(data.Trust, TrustMin, TrustMax);
+        Affinity = Clamp(data.Affinity, AffinityMin, AffinityMax);
+        Mood = Clamp(data.Mood, MoodMin, MoodMax);
+        Libido = Clamp(data.Libido, LibidoMin, LibidoMax);
+        LibidoIncreasedToday = data.LibidoIncreasedToday;
+        Excitement = Clamp(data.Excitement, ExcitementMin, ExcitementMax);
+        Orgasm = Clamp(data.Orgasm, OrgasmMin, OrgasmMax);
+        HCount = Math.Max(0, data.HCount);
+        IsInHeat = data.IsInHeat;
+        Statistics = new HeroineStatisticsModel();
+        if (data.StatisticsData != null) Statistics.LoadFromSaveData(data.StatisticsData);
+    }
+
+    // ───── 未來系統預留接口：目前不保存處女、週期或懷孕進度 ─────
+    public VirginityState Virginity => VirginityState.Virgin;
+    public int CurrentCycleDay => 1;
+    public bool IsCyclePaused => true;
+    public PregnancyState Pregnancy => PregnancyState.NotPregnant;
+    public int EarlyPregnancyDaysElapsed => 0;
+    public event Action<VirginityState> OnVirginityChanged;
+    public event Action<int> OnCycleDayChanged;
+    public event Action<OvulationDayType> OnOvulationDayTypeChanged;
+    public event Action<PregnancyState> OnPregnancyStateChanged;
+    public event Action<bool> OnConceiveAttempted;
+    public void SetVirginity(VirginityState state, string firstPartnerId = null) => OnVirginityChanged?.Invoke(state);
     public void AdvanceCycleDay() => OnCycleDayChanged?.Invoke(CurrentCycleDay);
     public OvulationDayType GetCurrentOvulationDayType() => OvulationDayType.Safe;
     public bool TryConceive(string partnerId = null)

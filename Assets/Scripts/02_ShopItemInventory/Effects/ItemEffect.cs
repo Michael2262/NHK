@@ -23,6 +23,9 @@ public abstract class ItemEffect
     /// </summary>
     public virtual EffectTarget Target => EffectTarget.Any;
 
+    /// <summary>已退役效果需先重新配置，禁止將空操作當成送禮成功。</summary>
+    public virtual bool IsRetired => false;
+
     /// <summary>
     /// 執行效果。
     /// </summary>

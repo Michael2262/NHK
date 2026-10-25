@@ -37,7 +37,7 @@ public class ItemConfigDataEditor : Editor
     {
         _allEffectTypes = AppDomain.CurrentDomain.GetAssemblies()
             .SelectMany(a => { try { return a.GetTypes(); } catch { return Type.EmptyTypes; } })
-            .Where(t => t.IsClass && !t.IsAbstract && t.IsSubclassOf(typeof(ItemEffect)))
+            .Where(t => t.IsClass && !t.IsAbstract && t.IsSubclassOf(typeof(ItemEffect)) && !Attribute.IsDefined(t, typeof(ObsoleteAttribute)))
             .OrderBy(t => t.Name)
             .ToArray();
 
@@ -59,7 +59,7 @@ public class ItemConfigDataEditor : Editor
 
         _conditionTypes = AppDomain.CurrentDomain.GetAssemblies()
             .SelectMany(a => { try { return a.GetTypes(); } catch { return Type.EmptyTypes; } })
-            .Where(t => t.IsClass && !t.IsAbstract && t.IsSubclassOf(typeof(GiftCondition)))
+            .Where(t => t.IsClass && !t.IsAbstract && t.IsSubclassOf(typeof(GiftCondition)) && !Attribute.IsDefined(t, typeof(ObsoleteAttribute)))
             .OrderBy(t => t.Name)
             .ToArray();
         _conditionTypeNames = _conditionTypes.Select(t => FormatTypeName(t)).ToArray();

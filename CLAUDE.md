@@ -215,17 +215,18 @@ public List<HeroineSaveData> HeroineSaveDataList; // value（與 IDs 同 index �
 
 5. **邏輯放 Model，不要放 MonoBehaviour**：Bridge / UI / Trigger 只做轉接與顯示。
 
-6. **區分 `HeroineStatusModel` 的現役數值與舊相容層**：
-   - `Excitement` 已是 **0～100 的獨立興奮度**，使用 `GetExcitement()`、`SetExcitement(int value)`、
-     `AddExcitement(int amount)`；一般增減與直接設定不套用性慾倍率。
-   - `WeightedAddExcitement(int amount)` 僅對正數依 `Libido` 套用 1～2 倍：性慾 ≤50 為 1 倍、
-     ≥120 為 2 倍，中間線性變化，結果四捨五入（中點遠離零）；零或負數沿用一般增減。
-   - 興奮度跨日由 `ApplyExcitementDailyReset()` 處理：平時歸零；發情中保留目前值，但最多 50。
-     數值範圍、倍率與跨日規則集中在 Model，Bridge 只負責轉接。
-   - 舊版興奮等級／經驗值入口，如 `BaseExcitementLevel`、`AddExcitementExp`、
-     `SetExcitement(int level, int exp)`，仍屬相容層，新功能不得使用。
-   - `AddAttack`、`Discomfort`、`Virginity` 等舊相容成員也不應用於新功能；請使用情緒卡池、
-     `Libido`、`Trust`、`Affinity`、獨立 `Excitement`／`Orgasm`、`HCount`、`IsInHeat` 等現役 API。
+6. **女主角數值以正式 `HeroineStatusModel` 為唯一來源**：
+   - 多角色由 `GameStatusService.Heroines` 依 ID 持有；測試 Bridge / UI 亦使用正式 Model。
+   - `Trust`、`Affinity`：0～999，初始 0；`Mood`：0～10，初始 5。
+   - `Libido`：0～250；當日沒有實際增加才跨日衰減 2，滿值時正數 Add 不算增加。
+     `LibidoIncreasedToday` 每位角色獨立保存，讀檔不算增加，跨日後重新記錄。
+   - `Excitement`：0～100 的獨立數值，不套用 Libido 倍率；跨日平時歸零、發情中最多保留 50。
+     Bridge / Lua 的 `WeightedAddExcitement` 舊名稱只作為 `AddExcitement` 別名。
+   - `Orgasm`：0～100，跨日歸零，不自動增加 `HCount`。
+   - 情緒只保留 `CurrentEmotion`（初始 Angry），與 `Mood` 互相獨立。
+   - 情緒卡池、Frustration、PersonalSuspicion、舊能力／等級／經驗／鎖定與女主角 StatusEffectModel 已退役。
+     舊序列化工具可保留型別供搬移，但不得把舊門檻自動解讀為新數值。
+   - 處女／週期／懷孕僅保留預留接口；可調數值集中在 Model 頂部。
 
 ---
 

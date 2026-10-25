@@ -67,10 +67,10 @@ public class HeroineStatusUI : MonoBehaviour
     [SerializeField] private TMP_Text lewdnessLevelText;       // "開發度 Lv.0"
     [SerializeField] private TMP_Text lewdnessExpText;         // "(125/500)"
     [SerializeField] private Slider lewdnessBar;               // 開發度經驗條
-    [SerializeField] private TMP_Text excitementLevelText;     // "興奮度 Lv.0"
+    [SerializeField] private TMP_Text excitementLevelText;     // 興奮值（保留舊欄位名以維持綁定）
     [SerializeField] private TMP_Text excitementExpText;       // "(50/150)"
     [SerializeField] private Slider excitementBar;             // 興奮度條
-    [SerializeField] private TMP_Text affinityLevelText;       // "好感度 Lv.0"
+    [SerializeField] private TMP_Text affinityLevelText;       // 好感值（保留舊欄位名以維持綁定）
     [SerializeField] private TMP_Text affinityExpText;         // "(80/200)"
     [SerializeField] private Slider affinityBar;               // 好感度條
     [SerializeField] private TMP_Text suspicionText;           // 個人可疑度（超過 100 變紅）
@@ -78,6 +78,11 @@ public class HeroineStatusUI : MonoBehaviour
     [SerializeField] private Color suspicionDangerColor = Color.red;
     [SerializeField] private int suspicionDangerThreshold = 100;
     [SerializeField] private Button switchCharacterButton;     // 切換角色按鈕
+
+    [Header("新數值（選填）")]
+    [SerializeField] private TMP_Text textTrust;
+    [SerializeField] private TMP_Text textMood;
+    [SerializeField] private TMP_Text textLibido;
 
     // ── 中間下方：Tab 切換 ──
     [Header("── 中間下方：Tab 切換 ──")]
@@ -175,12 +180,17 @@ public class HeroineStatusUI : MonoBehaviour
     private int _detailPageIndex = 0;
     private Vector2 _leftAreaOriginalPos;
     private Tween _slideTween;
+    private HeroineStatusModel _displayedHeroine;
+    private GameStatusService _service;
 
     // ══════════════════════════════════════════
     //  初始化
     // ══════════════════════════════════════════
     private void Start()
     {
+        _service = GameStatusService.Instance;
+        if (_service != null) _service.OnGameStatusLoaded += HandleGameStatusLoaded;
+
         // Tab 按鈕事件
         tabRelationship.onClick.AddListener(() => SwitchTab(0));
         tabBasicInfo.onClick.AddListener(() => SwitchTab(1));
@@ -250,12 +260,35 @@ public class HeroineStatusUI : MonoBehaviour
 
     public void Close()
     {
+        BindDisplayedHeroine(null);
         _slideTween?.Kill();
         HideAllTachie();
         SetCanvasGroupActive(false);
     }
 
-    public bool IsOpen => canvasGroup.alpha > 0f;
+    public bool IsOpen => canvasGroup != null && canvasGroup.alpha > 0f;
+
+    private void HandleGameStatusLoaded()
+    {
+        BindDisplayedHeroine(null);
+        if (IsOpen) RefreshAll();
+    }
+
+    private void BindDisplayedHeroine(HeroineStatusModel heroine)
+    {
+        if (ReferenceEquals(_displayedHeroine, heroine)) return;
+        if (_displayedHeroine != null) _displayedHeroine.OnChanged -= RefreshAll;
+        _displayedHeroine = heroine;
+        if (_displayedHeroine != null) _displayedHeroine.OnChanged += RefreshAll;
+    }
+
+    private void OnDestroy()
+    {
+        BindDisplayedHeroine(null);
+        if (_service != null) _service.OnGameStatusLoaded -= HandleGameStatusLoaded;
+        _slideTween?.Kill();
+        if (Instance == this) Instance = null;
+    }
 
     private void SetCanvasGroupActive(bool active)
     {
@@ -409,54 +442,45 @@ public class HeroineStatusUI : MonoBehaviour
     // ══════════════════════════════════════════
     private void RefreshAll()
     {
-        if (!GameStatusService.Instance.Heroines.TryGetValue(CurrentHeroineID, out var heroine)) return;
+        var heroine = GameStatusService.Instance?.GetHeroine(CurrentHeroineID);
+        BindDisplayedHeroine(heroine);
+        if (heroine == null) return;
         var stats = heroine.Statistics;
         var cfg = GameStatusService.Instance.HeroineConfig;
         var stat = cfg.GetStat(CurrentHeroineID);
 
         // ── 右側：狀態圖示 ──
         inHeatIcon.SetActive(heroine.IsInHeat);
-        enragedIcon.SetActive(heroine.IsEnraged);
+        if (enragedIcon != null) enragedIcon.SetActive(false);
 
         // ── 中間上方：角色資訊 ──
         nameText.text = Localize(heroine.NameTextKey);
 
-        // 開發度
-        int lewdLv = heroine.LewdnessLevel;
-        int lewdExp = heroine.LewdnessExp;
-        int lewdExpMax = GetLewdnessExpMax(cfg, lewdLv);
-        lewdnessLevelText.text = LocalizeFormat("Status.LewdnessLevel", lewdLv);
-        lewdnessExpText.text = $"({lewdExp}/{lewdExpMax})";
-        lewdnessBar.maxValue = lewdExpMax;
-        lewdnessBar.value = lewdExp;
+        // 退役欄位不再顯示，原綁定保留供 Editor 整理版面。
+        if (lewdnessLevelText != null) lewdnessLevelText.gameObject.SetActive(false);
+        if (lewdnessExpText != null) lewdnessExpText.gameObject.SetActive(false);
+        if (lewdnessBar != null) lewdnessBar.gameObject.SetActive(false);
+        if (suspicionText != null) suspicionText.gameObject.SetActive(false);
 
-        // 興奮度
-        int excLv = heroine.TotalExcitementLevel;
-        int excExp = heroine.BaseExcitementExp;
-        int excExpMax = heroine.GetCurrentExcitementThreshold(heroine.BaseExcitementLevel);
-        excitementLevelText.text = LocalizeFormat("Status.ExcitementLevel", excLv);
-        excitementExpText.text = $"({excExp}/{excExpMax})";
-        excitementBar.maxValue = excExpMax;
-        excitementBar.value = excExp;
-
-        // 好感度
-        int affLv = heroine.BaseAffinityLevel;
-        int affExp = heroine.BaseAffinityExp;
-        int affExpMax = GetAffinityExpMax(cfg, affLv);
-        affinityLevelText.text = LocalizeFormat("Status.AffinityLevel", affLv);
-        affinityExpText.text = $"({affExp}/{affExpMax})";
-        affinityBar.maxValue = affExpMax;
-        affinityBar.value = affExp;
-
-        // 個人可疑度（超過閾值變紅字）
-        if (suspicionText != null)
+        if (excitementLevelText != null) excitementLevelText.text = heroine.Excitement.ToString();
+        if (excitementExpText != null) excitementExpText.text = $"{heroine.Excitement}/{HeroineStatusModel.ExcitementMax}";
+        if (excitementBar != null)
         {
-            int suspicion = heroine.PersonalSuspicion;
-            suspicionText.text = suspicion.ToString();
-            suspicionText.color = (suspicion > suspicionDangerThreshold)
-                ? suspicionDangerColor
-                : suspicionNormalColor;
+            excitementBar.minValue = HeroineStatusModel.ExcitementMin;
+            excitementBar.maxValue = HeroineStatusModel.ExcitementMax;
+            excitementBar.value = heroine.Excitement;
         }
+        if (affinityLevelText != null) affinityLevelText.text = heroine.Affinity.ToString();
+        if (affinityExpText != null) affinityExpText.text = $"{heroine.Affinity}/{HeroineStatusModel.AffinityMax}";
+        if (affinityBar != null)
+        {
+            affinityBar.minValue = HeroineStatusModel.AffinityMin;
+            affinityBar.maxValue = HeroineStatusModel.AffinityMax;
+            affinityBar.value = heroine.Affinity;
+        }
+        if (textTrust != null) textTrust.text = heroine.Trust.ToString();
+        if (textMood != null) textMood.text = heroine.Mood.ToString();
+        if (textLibido != null) textLibido.text = heroine.Libido.ToString();
 
         // ── Tab 1：與你的關係 ──
         RefreshRelationship(heroine);
@@ -480,13 +504,9 @@ public class HeroineStatusUI : MonoBehaviour
     // ──────────────────────────────────────────
     private void RefreshRelationship(HeroineStatusModel heroine)
     {
-        // 兩人的關係（自述）— 依親密度查表
-        string affinityKey = evaluationConfig?.GetAffinityEvaluation(CurrentHeroineID, heroine.BaseAffinityLevel);
-        relationSelfDesc.text = !string.IsNullOrEmpty(affinityKey) ? Localize(affinityKey) : "---";
-
-        // 她對你的看法 — 依開發度查表
-        string lewdKey = evaluationConfig?.GetLewdnessEvaluation(CurrentHeroineID, heroine.LewdnessLevel);
-        relationHerView.text = !string.IsNullOrEmpty(lewdKey) ? Localize(lewdKey) : "---";
+        // 舊等級評價不映射成新好感積分，等待新的關係規則。
+        if (relationSelfDesc != null) relationSelfDesc.text = "---";
+        if (relationHerView != null) relationHerView.text = "---";
     }
 
     // ──────────────────────────────────────────
@@ -496,8 +516,7 @@ public class HeroineStatusUI : MonoBehaviour
     {
         basicAge.text = stat.Age.ToString();
 
-        string relationKey = evaluationConfig?.GetRelationshipLabel(CurrentHeroineID, heroine.BaseAffinityLevel);
-        basicRelationship.text = !string.IsNullOrEmpty(relationKey) ? Localize(relationKey) : "---";
+        basicRelationship.text = "---"; // 舊等級關係查表已退役。
 
         basicSexHistory.text = GetVirginityDisplayText(heroine.Virginity);
 
@@ -610,22 +629,6 @@ public class HeroineStatusUI : MonoBehaviour
             case HeroineStatisticType.SexInToilet: return "Location.Toilet";
             default: return "Status.None";
         }
-    }
-
-    private int GetLewdnessExpMax(HeroineStatusConfig cfg, int level)
-    {
-        if (cfg.lewdnessExpTable != null && level < cfg.lewdnessExpTable.Count)
-            return cfg.lewdnessExpTable[level];
-        return cfg.excitementExpPerLevel;
-    }
-
-    private int GetAffinityExpMax(HeroineStatusConfig cfg, int level)
-    {
-        // 親密度是從 Lv.1 起算，index = level - 1
-        int idx = level - 1;
-        if (cfg.affinityExpTable != null && idx >= 0 && idx < cfg.affinityExpTable.Count)
-            return cfg.affinityExpTable[idx];
-        return 100; // fallback
     }
 
     // ══════════════════════════════════════════

@@ -2,18 +2,21 @@ using UnityEngine;
 
 namespace NHK.StateTest
 {
-    /// <summary>測試版數值轉接；掛上元件後可由 Button／UnityEvent 呼叫。</summary>
+    /// <summary>正式女主角數值轉接（保留舊元件名稱）；掛上元件後可由 Button／UnityEvent 呼叫。</summary>
     [AddComponentMenu("Game/State Test/Test Heroine Bridge")]
     public class TestHeroineBridge : MonoBehaviour
     {
-        private HeroineStatusModel Model
+        [SerializeField, Tooltip("正式角色 ID；只有一位角色時可留空。") ] private string heroineID;
+        public void SetHeroineID(string id) => heroineID = id;
+
+        private global::HeroineStatusModel Model
         {
             get
             {
                 var service = GameStatusService.Instance;
-                var model = service != null ? service.TestHeroine : null;
+                var model = service != null ? service.GetHeroine(heroineID) : null;
                 if (model == null)
-                    Debug.LogWarning("[TestHeroineBridge] 測試 Model 尚未初始化，請確認場景中有 GameStatusService。", this);
+                    Debug.LogWarning("[TestHeroineBridge] 找不到正式女主角，請確認 GameStatusService 與 Heroine ID；多角色時不可留空。", this);
                 return model;
             }
         }

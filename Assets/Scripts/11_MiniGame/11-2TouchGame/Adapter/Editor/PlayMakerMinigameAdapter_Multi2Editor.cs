@@ -7,22 +7,14 @@ public class PlayMakerMinigameAdapter_Multi2Editor : Editor
     // 對應表：純靜態資料，不佔序列化空間
     private static readonly string[][] MappingTable = new string[][]
     {
-        //  說明                   FSM 變數名                    資料來源
-        new[]{ "女主角唯一 ID",     "fsm_HeroineID",             "HeroineID" },
-        new[]{ "基礎興奮等級",      "fsm_LocalExcitedLv",        "BaseExcitementLevel" },
-        //new[]{ "基礎興奮經驗值",    "fsm_LocalExcitement",       "BaseExcitementExp" },
-        new[]{ "興奮經驗門檻",       "fsm_ExcitementMax",         "GetCurrentExcitementThreshold()" },
-        new[]{ "興奮等級已達上限",   "IsExcitementMaxLv",         "IsExcitementLevelLocked()" },
-        new[]{ "開發度等級",        "fsm_LewdnessLevel",         "LewdnessLevel" },
-        new[]{ "開發度經驗值",      "fsm_LewdnessExp",           "LewdnessExp" },
-        new[]{ "親密度等級",        "fsm_LocalAffinityLv",       "BaseAffinityLevel" },
-        new[]{ "親密度經驗值",      "fsm_LocalAffinityExp",      "BaseAffinityExp" },
-        new[]{ "親密度經驗門檻",     "fsm_AffinityMax",           "GetCurrentAffinityThreshold()" },
-        new[]{ "親密度等級已達上限", "IsAffinityMaxLv",           "IsAffinityLevelLocked()" },
-        new[]{ "目前情緒",          "fsm_Emotion",               "CurrentEmotion (enum)" },
-        new[]{ "遊戲得分",          "fsm_GameScore",             "FSM 回報 (int)" },
-        //new[]{ "個人可疑度",        "fsm_PersonalSuspicion",     "PersonalSuspicion" },
-        new[]{ "個人可疑度上限",    "fsm_PersonalSuspicionMax",  "PersonalSuspicionMax" },
+        new[]{ "女主角 ID", "fsm_HeroineID", "HeroineID" },
+        new[]{ "信賴", "fsm_Trust", "Trust" },
+        new[]{ "好感積分", "fsm_Affinity", "Affinity" },
+        new[]{ "心情", "fsm_Mood", "Mood" },
+        new[]{ "性興味", "fsm_Libido", "Libido" },
+        new[]{ "興奮", "fsm_Excitement", "Excitement" },
+        new[]{ "高潮", "fsm_Orgasm", "Orgasm" },
+        new[]{ "當前情緒", "fsm_Emotion", "CurrentEmotion (HeroineEmotionCardType)" },
     };
 
     private bool _showMapping = true;
@@ -31,6 +23,7 @@ public class PlayMakerMinigameAdapter_Multi2Editor : Editor
     {
         // 先畫預設的 Inspector（FSM 配置、結果處理器、時間配置等）
         DrawDefaultInspector();
+        EditorGUILayout.HelpBox("舊等級／經驗／個人可疑度注入與結算已停用。下列新版數值是選填的初始化輸入；不會自動寫回 Model。", MessageType.Warning);
 
         EditorGUILayout.Space(8);
 

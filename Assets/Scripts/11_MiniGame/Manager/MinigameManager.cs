@@ -10,7 +10,6 @@ public class MinigameManager : MonoBehaviour
     public static MinigameManager Instance { get; private set; }
 
     // 暫存字典 (開發度)
-    private Dictionary<string, int> _pendingLewdnessExp = new Dictionary<string, int>();
 
     // ============================================================================
     // 【v4 改動】結束後動作系統 (Post-Game Actions) 已遷移至 SceneActionQueueModel
@@ -142,11 +141,7 @@ public class MinigameManager : MonoBehaviour
     /// 暫存點數(開發度)的方法
     /// </summary>
     public void AccumulateLewdness(string heroineID, int amount)
-    {
-        if (!_pendingLewdnessExp.ContainsKey(heroineID))
-            _pendingLewdnessExp[heroineID] = 0;
-        _pendingLewdnessExp[heroineID] += amount;
-    }
+    { Debug.LogWarning("[MinigameManager] 舊開發度經驗結算已退役；不會換算到新版數值。"); }
 
     /// <summary>
     /// 跳轉下一關的方法
@@ -221,15 +216,7 @@ public class MinigameManager : MonoBehaviour
         _currentMinigame.OnGameFinished -= HandleMinigameFinished;
         _currentMinigame = null;
 
-        // ============================================
-        // 步驟 4: 結算開發度
-        // ============================================
-        foreach (var entry in _pendingLewdnessExp)
-        {
-            if (_gss.Heroines.TryGetValue(entry.Key, out var heroine))
-                heroine.AddLewdnessExp(entry.Value);
-        }
-        _pendingLewdnessExp.Clear();
+        // 舊開發度經驗結算已退役。
 
         // ============================================
         // 步驟 5: 返回原場景（根據是否跨日選擇方式）

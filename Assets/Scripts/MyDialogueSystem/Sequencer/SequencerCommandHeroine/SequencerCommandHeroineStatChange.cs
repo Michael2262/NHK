@@ -5,10 +5,10 @@
 //   HeroineStatChange(heroineID, statName, operation, amount)
 //   HeroineStatChange(heroineID, statName, operation, amount, resultLuaVariable)
 //
-// statName   = libido | trust | affinity | excitement | orgasm
+// statName   = libido | trust | affinity | mood | excitement | orgasm
 // operation  = add | set | get | weightedadd（僅 excitement）
 // get 的 amount 填 0 作為佔位；不修改數值，結果寫入 resultLuaVariable。
-// weightedadd 僅正數套用性慾倍率；倍率、四捨五入與上下限由 Model 處理。
+// weightedadd 保留舊指令名稱，現在與 add 相同，不再套用性興味倍率。
 //
 // 範例：
 //   HeroineStatChange(sister, excitement, add, 10)
@@ -86,6 +86,12 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
                     resultValue = heroine.Trust;
                     break;
 
+                case "mood":
+                case "心情":
+                    ApplyOperation(heroine, operation, amount, StatTarget.Mood);
+                    resultValue = heroine.Mood;
+                    break;
+
                 case "affinity":
                 case "好感度":
                     ApplyOperation(heroine, operation, amount, StatTarget.Affinity);
@@ -105,7 +111,7 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
                     break;
 
                 default:
-                    Debug.LogWarning($"[HeroineStatChange] 無法辨識 statName: {statName}，支援 libido / trust / affinity / excitement / orgasm", this);
+                    Debug.LogWarning($"[HeroineStatChange] 無法辨識 statName: {statName}，支援 libido / trust / affinity / mood / excitement / orgasm", this);
                     Stop();
                     return;
             }
@@ -119,14 +125,14 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
             Stop();
         }
 
-        private enum StatTarget { Libido, Trust, Affinity, Excitement, Orgasm }
+        private enum StatTarget { Libido, Trust, Affinity, Excitement, Orgasm, Mood }
 
         private static void ApplyOperation(HeroineStatusModel heroine, string operation, int amount, StatTarget target)
         {
             if (operation == "get") return;
             if (operation == "weightedadd")
             {
-                if (target == StatTarget.Excitement) heroine.WeightedAddExcitement(amount);
+                if (target == StatTarget.Excitement) heroine.AddExcitement(amount);
                 return;
             }
 
@@ -155,6 +161,9 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
                     break;
                 case StatTarget.Trust:
                     if (isSet) heroine.SetTrust(amount); else heroine.AddTrust(amount);
+                    break;
+                case StatTarget.Mood:
+                    if (isSet) heroine.SetMood(amount); else heroine.AddMood(amount);
                     break;
                 case StatTarget.Affinity:
                     if (isSet) heroine.SetAffinity(amount); else heroine.AddAffinity(amount);

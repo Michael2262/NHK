@@ -35,33 +35,8 @@ public class GetAffinityEvaluation : FsmStateAction
 
     public override void OnEnter()
     {
-        if (evaluationConfig == null)
-        {
-            Debug.LogWarning("[GetAffinityEvaluation] evaluationConfig 未指定！");
-            Finish();
-            return;
-        }
-
-        int level;
-        if (!overrideLevel.IsNone)
-        {
-            level = overrideLevel.Value;
-        }
-        else
-        {
-            if (!GameStatusService.Instance.Heroines.TryGetValue(heroineID.Value, out var heroine))
-            {
-                Debug.LogWarning($"[GetAffinityEvaluation] 找不到女主角: {heroineID.Value}");
-                Finish();
-                return;
-            }
-            level = heroine.BaseAffinityLevel;
-        }
-
-        string key = evaluationConfig.GetAffinityEvaluation(heroineID.Value, level);
-        if (!storeTextKey.IsNone)
-            storeTextKey.Value = key ?? "";
-
+        Debug.LogWarning("[GetAffinityEvaluation] 舊等級評價已退役，請改用自行定義的新數值條件。");
+        if (storeTextKey != null && !storeTextKey.IsNone) storeTextKey.Value = "";
         Finish();
     }
 }
@@ -99,33 +74,8 @@ public class GetLewdnessEvaluation : FsmStateAction
 
     public override void OnEnter()
     {
-        if (evaluationConfig == null)
-        {
-            Debug.LogWarning("[GetLewdnessEvaluation] evaluationConfig 未指定！");
-            Finish();
-            return;
-        }
-
-        int level;
-        if (!overrideLevel.IsNone)
-        {
-            level = overrideLevel.Value;
-        }
-        else
-        {
-            if (!GameStatusService.Instance.Heroines.TryGetValue(heroineID.Value, out var heroine))
-            {
-                Debug.LogWarning($"[GetLewdnessEvaluation] 找不到女主角: {heroineID.Value}");
-                Finish();
-                return;
-            }
-            level = heroine.LewdnessLevel;
-        }
-
-        string key = evaluationConfig.GetLewdnessEvaluation(heroineID.Value, level);
-        if (!storeTextKey.IsNone)
-            storeTextKey.Value = key ?? "";
-
+        Debug.LogWarning("[GetLewdnessEvaluation] 舊等級評價已退役，請改用自行定義的新數值條件。");
+        if (storeTextKey != null && !storeTextKey.IsNone) storeTextKey.Value = "";
         Finish();
     }
 }
@@ -163,33 +113,8 @@ public class GetRelationshipLabel : FsmStateAction
 
     public override void OnEnter()
     {
-        if (evaluationConfig == null)
-        {
-            Debug.LogWarning("[GetRelationshipLabel] evaluationConfig 未指定！");
-            Finish();
-            return;
-        }
-
-        int level;
-        if (!overrideLevel.IsNone)
-        {
-            level = overrideLevel.Value;
-        }
-        else
-        {
-            if (!GameStatusService.Instance.Heroines.TryGetValue(heroineID.Value, out var heroine))
-            {
-                Debug.LogWarning($"[GetRelationshipLabel] 找不到女主角: {heroineID.Value}");
-                Finish();
-                return;
-            }
-            level = heroine.BaseAffinityLevel;
-        }
-
-        string key = evaluationConfig.GetRelationshipLabel(heroineID.Value, level);
-        if (!storeTextKey.IsNone)
-            storeTextKey.Value = key ?? "";
-
+        Debug.LogWarning("[GetRelationshipLabel] 舊等級評價已退役，請改用自行定義的新數值條件。");
+        if (storeTextKey != null && !storeTextKey.IsNone) storeTextKey.Value = "";
         Finish();
     }
 }

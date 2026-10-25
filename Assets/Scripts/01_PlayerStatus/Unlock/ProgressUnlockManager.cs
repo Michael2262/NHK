@@ -217,6 +217,7 @@ public class ProgressUnlockManager
             model.OnTrustChanged += handler;
             model.OnHCountChanged += handler;
             model.OnAffinityChanged += handler;
+            model.OnMoodChanged += handler;
 
             _heroineHandlers[id] = handler;
         }
@@ -248,6 +249,7 @@ public class ProgressUnlockManager
             kv.Value.OnTrustChanged -= handler;
             kv.Value.OnHCountChanged -= handler;
             kv.Value.OnAffinityChanged -= handler;
+            kv.Value.OnMoodChanged -= handler;
         }
         _heroineHandlers.Clear();
 

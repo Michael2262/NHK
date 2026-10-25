@@ -40,49 +40,10 @@ namespace HutongGames.PlayMaker.Actions
         }
 
         public override void OnEnter()
-        {
-            DoCheckLock();
-
-            if (!everyFrame)
-            {
-                Finish();
-            }
-        }
+        { Debug.LogWarning("[CheckHeroineLevelLock] 舊等級／經驗門檻功能已退役，請移除此 FSM Action。"); Finish(); }
 
         public override void OnUpdate()
-        {
-            DoCheckLock();
-        }
+        {}
 
-        private void DoCheckLock()
-        {
-            if (heroineID == null || string.IsNullOrEmpty(heroineID.Value)) return;
-
-            // 從 GameStatusService 獲取對應的女主角 Model
-            if (GameStatusService.Instance != null && GameStatusService.Instance.Heroines.TryGetValue(heroineID.Value, out var heroine))
-            {
-                // 呼叫 Model 裡的 IsExcitementLevelLocked 方法
-                bool lockedStatus = heroine.IsExcitementLevelLocked(level.Value);
-
-                if (isLocked != null)
-                {
-                    isLocked.Value = lockedStatus;
-                }
-
-                // 根據狀態觸發對應事件
-                if (lockedStatus)
-                {
-                    Fsm.Event(lockedEvent);
-                }
-                else
-                {
-                    Fsm.Event(notLockedEvent);
-                }
-            }
-            else
-            {
-                Debug.LogWarning($"[FSM Action] 找不到 ID 為 {heroineID.Value} 的女主角數據。");
-            }
-        }
     }
 }
