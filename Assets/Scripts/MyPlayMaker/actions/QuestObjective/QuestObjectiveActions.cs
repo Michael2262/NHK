@@ -5,7 +5,7 @@ using Tooltip = HutongGames.PlayMaker.TooltipAttribute;
 namespace MyGame.Actions
 {
     [ActionCategory("Quest - Objectives")]
-    [Tooltip("顯示任務目標（未顯示 → 已顯示未完成）。")]
+    [Tooltip("已退役：不再顯示任務目標，請移除此 Action。")]
     public class RevealQuestObjective : FsmStateAction
     {
         [RequiredField]
@@ -14,14 +14,13 @@ namespace MyGame.Actions
 
         public override void OnEnter()
         {
-            if (objectiveDef != null)
-                GameStatusService.Instance.QuestObjectives.Reveal(objectiveDef.ObjectiveID);
+            Debug.LogWarning("[RevealQuestObjective] 舊任務系統已退役，請在 Unity Editor 移除此 Action。");
             Finish();
         }
     }
 
     [ActionCategory("Quest - Objectives")]
-    [Tooltip("完成任務目標（任何狀態 → 已完成）。若 SO 勾了 MirrorFlagOnComplete，會同步加 Persistent Flag：ObjDone_目標ID。")]
+    [Tooltip("已退役：不再完成任務或設定 Flag，請移除此 Action。")]
     public class CompleteQuestObjective : FsmStateAction
     {
         [RequiredField]
@@ -30,14 +29,13 @@ namespace MyGame.Actions
 
         public override void OnEnter()
         {
-            if (objectiveDef != null)
-                GameStatusService.Instance.QuestObjectives.Complete(objectiveDef.ObjectiveID);
+            Debug.LogWarning("[CompleteQuestObjective] 舊任務系統已退役，請在 Unity Editor 移除此 Action。");
             Finish();
         }
     }
 
     [ActionCategory("Quest - Objectives")]
-    [Tooltip("隱藏任務目標（回到未顯示）。主要給除錯 / 特殊劇情用。")]
+    [Tooltip("已退役：不再隱藏任務目標，請移除此 Action。")]
     public class HideQuestObjective : FsmStateAction
     {
         [RequiredField]
@@ -46,14 +44,13 @@ namespace MyGame.Actions
 
         public override void OnEnter()
         {
-            if (objectiveDef != null)
-                GameStatusService.Instance.QuestObjectives.Hide(objectiveDef.ObjectiveID);
+            Debug.LogWarning("[HideQuestObjective] 舊任務系統已退役，請在 Unity Editor 移除此 Action。");
             Finish();
         }
     }
 
     [ActionCategory("Quest - Objectives")]
-    [Tooltip("檢查任務目標狀態，儲存布林結果並可發送事件。")]
+    [Tooltip("已退役：固定回傳 false 並發送不相符事件，請移除此 Action。")]
     public class CheckQuestObjectiveState : FsmStateAction
     {
         [RequiredField]
@@ -76,16 +73,9 @@ namespace MyGame.Actions
 
         public override void OnEnter()
         {
-            if (objectiveDef != null)
-            {
-                var current = GameStatusService.Instance.QuestObjectives.GetState(objectiveDef.ObjectiveID);
-                bool match = current == (QuestObjectiveState)compareState.Value;
-
-                if (!storeResult.IsNone) storeResult.Value = match;
-
-                if (match && isMatchEvent != null) Fsm.Event(isMatchEvent);
-                else if (!match && isNotMatchEvent != null) Fsm.Event(isNotMatchEvent);
-            }
+            Debug.LogWarning("[CheckQuestObjectiveState] 舊任務系統已退役，固定視為不相符；請在 Unity Editor 移除此 Action。");
+            if (storeResult != null && !storeResult.IsNone) storeResult.Value = false;
+            if (isNotMatchEvent != null) Fsm.Event(isNotMatchEvent);
             Finish();
         }
     }

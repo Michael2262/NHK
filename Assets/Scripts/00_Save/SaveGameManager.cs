@@ -212,8 +212,6 @@ public class SaveGameManager
         _gameStatusService.StatusEffectModel.LoadFromSaveData(data.StatusEffectData, _gameStatusService.StatusEffectDatabase);
         _gameStatusService.ProgressFlags.LoadFromSaveData(data.ProgressFlagData);
         _gameStatusService.PendingDelivery.LoadFromSaveData(data.DeliveryData);
-        // 任務目標（舊存檔此欄位為 null，Model 內會視為全部未顯示）
-        _gameStatusService.QuestObjectives.LoadFromSaveData(data.QuestObjectiveData);
 
         // --- 女主角數據 ---
         if (data.HeroineIDs.Count == data.HeroineSaveDataList.Count)
@@ -278,7 +276,6 @@ public class SaveGameManager
         data.StatusEffectData = _gameStatusService.StatusEffectModel.ToSaveData();
         data.ProgressFlagData = _gameStatusService.ProgressFlags.ToSaveData();
         data.DeliveryData = _gameStatusService.PendingDelivery.ToSaveData();
-        data.QuestObjectiveData = _gameStatusService.QuestObjectives.ToSaveData();
 
         data.HeroineIDs.Clear();
         data.HeroineSaveDataList.Clear();
