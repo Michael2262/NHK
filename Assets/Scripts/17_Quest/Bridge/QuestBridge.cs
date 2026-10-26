@@ -1,12 +1,33 @@
 using UnityEngine;
 
-/// <summary>轉接任務啟停、成功次數與已發獎紀錄；不判定成功或執行獎勵效果。</summary>
+/// <summary>轉接任務啟停、成功次數、已發獎紀錄與追蹤 UI 刷新；不判定成功或執行獎勵效果。</summary>
 [AddComponentMenu("NHK/Quest/Quest Bridge")]
 public sealed class QuestBridge : MonoBehaviour
 {
     [Header("目標任務")]
-    [Tooltip("拖入要操作的 Quest SO；ID 就是 SO 檔名。所有無參數操作都使用這筆任務。")]
+    [Tooltip("拖入要操作的 Quest SO；ID 就是 SO 檔名。無參數的任務操作使用這筆任務，刷新 UI 不需要指定任務。")]
     [SerializeField] private QuestDefinition targetQuest;
+
+    [Header("任務追蹤 UI")]
+    [Tooltip("拖入要刷新的 QuestTrackerUI；刷新時會依資料庫順序重新挑選顯示任務。")]
+    [SerializeField] private QuestTrackerUI targetTrackerUI;
+
+    /// <summary>供 UnityEvent 呼叫，重新挑選指定追蹤 UI 的任務清單。</summary>
+    [ContextMenu("刷新任務追蹤 UI")]
+    public void RefreshQuestTrackerUI()
+    {
+        if (!Application.isPlaying)
+        {
+            Debug.LogWarning("[QuestBridge] 請在 Play Mode 中刷新任務追蹤 UI。", this);
+            return;
+        }
+        if (targetTrackerUI == null)
+        {
+            Debug.LogWarning("[QuestBridge] 請指定要刷新的 QuestTrackerUI。", this);
+            return;
+        }
+        targetTrackerUI.RefreshTasks();
+    }
 
     [ContextMenu("啟動任務")]
     public void ActivateQuest()
