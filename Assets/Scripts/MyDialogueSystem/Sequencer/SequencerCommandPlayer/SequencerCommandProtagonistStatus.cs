@@ -9,8 +9,8 @@
 //   <Command>(amount, type)           // 變更後在 Subtitle 顯示變化
 //
 // 範例:
-//   AddStress(10, alert)
-//   ReduceLifePower(5, type)
+//   AddStamina(-15, alert)
+//   ForceReduceShootTimes(1)
 //   SetMoney(0)
 //   AddMoney(100, type)
 //
@@ -23,7 +23,12 @@
 //   Dependency:  AddDependency / ReduceDependency / SetDependency
 //   RoomMess:    AddRoomMess / ReduceRoomMess / SetRoomMess     (房間髒亂度 0~25)
 //   BodyDirty:   AddBodyDirty / ReduceBodyDirty / SetBodyDirty  (身體髒污度 0~25)
-//   ShootTimes:  AddShootTimes / ReduceShootTimes
+//   Stamina:     AddStamina / ReduceStamina / SetStamina / ForceAddStamina / ForceReduceStamina
+//                AddStaminaMax / SetStaminaMax
+//   ShootTimes:  AddShootTimes / ReduceShootTimes / SetShootTimes / ForceAddShootTimes / ForceReduceShootTimes
+//                AddShootTimesMax / SetShootTimesMax
+//   注意：ReduceShootTimes 改為一般扣除；舊劇情若需扣成負值，請改用 ForceReduceShootTimes。
+//   上限指令的通知只報告上限差值；alert / type 需要 Text Table 有對應的 Result Key。
 //   BadHealthy:  BadHealthy(on) / BadHealthy(off)
 //   BadDependency: BadDependency(on) / BadDependency(off)
 // ============================================================
@@ -420,12 +425,144 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
     }
 
     // ========================================================
+    // Stamina（體力）
+    // ========================================================
+
+    /// <summary>
+    /// 用法: AddStamina(value) / AddStamina(value, alert) / AddStamina(value, type)
+    /// 正數增加、負數扣除；結果限制在 0 到目前上限。
+    /// </summary>
+    public class SequencerCommandAddStamina : SequencerCommandProtagonistResourceBase
+    {
+        protected override string ResourceTypeKey => "Stamina";
+        protected override string CommandName => "AddStamina";
+        protected override int GetCurrentValue(ProtagonistStatusModel p) => p.Stamina;
+
+        protected override int ApplyChange(ProtagonistStatusModel p, int parameter)
+        {
+            int prev = p.Stamina;
+            p.AddStamina(parameter);
+            return (int)Math.Max(int.MinValue, Math.Min(int.MaxValue, (long)p.Stamina - prev));
+        }
+    }
+
+    /// <summary>
+    /// 用法: ReduceStamina(value) / ReduceStamina(value, alert) / ReduceStamina(value, type)
+    /// 以正數指定一般扣除量；結果限制在 0 到目前上限，非正數不處理。
+    /// </summary>
+    public class SequencerCommandReduceStamina : SequencerCommandProtagonistResourceBase
+    {
+        protected override string ResourceTypeKey => "Stamina";
+        protected override string CommandName => "ReduceStamina";
+        protected override int GetCurrentValue(ProtagonistStatusModel p) => p.Stamina;
+
+        protected override int ApplyChange(ProtagonistStatusModel p, int parameter)
+        {
+            if (parameter <= 0) return 0;
+            int prev = p.Stamina;
+            p.AddStamina(-parameter);
+            return (int)Math.Max(int.MinValue, Math.Min(int.MaxValue, (long)p.Stamina - prev));
+        }
+    }
+
+    /// <summary>
+    /// 用法: SetStamina(value) / SetStamina(value, alert) / SetStamina(value, type)
+    /// 設定目前值；結果限制在 0 到目前上限。
+    /// </summary>
+    public class SequencerCommandSetStamina : SequencerCommandProtagonistResourceBase
+    {
+        protected override string ResourceTypeKey => "Stamina";
+        protected override string CommandName => "SetStamina";
+        protected override int GetCurrentValue(ProtagonistStatusModel p) => p.Stamina;
+
+        protected override int ApplyChange(ProtagonistStatusModel p, int parameter)
+        {
+            int prev = p.Stamina;
+            p.SetStamina(parameter);
+            return (int)Math.Max(int.MinValue, Math.Min(int.MaxValue, (long)p.Stamina - prev));
+        }
+    }
+
+    /// <summary>
+    /// 用法: ForceAddStamina(value) / ForceAddStamina(value, alert) / ForceAddStamina(value, type)
+    /// 強制增減，允許負值與超出上限；僅受 int 儲存範圍限制。
+    /// </summary>
+    public class SequencerCommandForceAddStamina : SequencerCommandProtagonistResourceBase
+    {
+        protected override string ResourceTypeKey => "Stamina";
+        protected override string CommandName => "ForceAddStamina";
+        protected override int GetCurrentValue(ProtagonistStatusModel p) => p.Stamina;
+
+        protected override int ApplyChange(ProtagonistStatusModel p, int parameter)
+        {
+            int prev = p.Stamina;
+            p.ForceAddStamina(parameter);
+            return (int)Math.Max(int.MinValue, Math.Min(int.MaxValue, (long)p.Stamina - prev));
+        }
+    }
+
+    /// <summary>
+    /// 用法: ForceReduceStamina(value) / ForceReduceStamina(value, alert) / ForceReduceStamina(value, type)
+    /// 以正數指定強制扣除量，允許扣成負值；非正數不處理。
+    /// </summary>
+    public class SequencerCommandForceReduceStamina : SequencerCommandProtagonistResourceBase
+    {
+        protected override string ResourceTypeKey => "Stamina";
+        protected override string CommandName => "ForceReduceStamina";
+        protected override int GetCurrentValue(ProtagonistStatusModel p) => p.Stamina;
+
+        protected override int ApplyChange(ProtagonistStatusModel p, int parameter)
+        {
+            if (parameter <= 0) return 0;
+            int prev = p.Stamina;
+            p.ForceAddStamina(-parameter);
+            return (int)Math.Max(int.MinValue, Math.Min(int.MaxValue, (long)p.Stamina - prev));
+        }
+    }
+
+    /// <summary>
+    /// 用法: AddStaminaMax(value) / AddStaminaMax(value, alert) / AddStaminaMax(value, type)
+    /// 增減上限，不自動補滿；降低上限時由 Model 裁切超出部分。
+    /// </summary>
+    public class SequencerCommandAddStaminaMax : SequencerCommandProtagonistResourceBase
+    {
+        protected override string ResourceTypeKey => "StaminaMax";
+        protected override string CommandName => "AddStaminaMax";
+        protected override int GetCurrentValue(ProtagonistStatusModel p) => p.StaminaMax;
+
+        protected override int ApplyChange(ProtagonistStatusModel p, int parameter)
+        {
+            int prev = p.StaminaMax;
+            p.AddStaminaMax(parameter);
+            return (int)Math.Max(int.MinValue, Math.Min(int.MaxValue, (long)p.StaminaMax - prev));
+        }
+    }
+
+    /// <summary>
+    /// 用法: SetStaminaMax(value) / SetStaminaMax(value, alert) / SetStaminaMax(value, type)
+    /// 設定上限，不自動補滿；降低上限時由 Model 裁切超出部分。
+    /// </summary>
+    public class SequencerCommandSetStaminaMax : SequencerCommandProtagonistResourceBase
+    {
+        protected override string ResourceTypeKey => "StaminaMax";
+        protected override string CommandName => "SetStaminaMax";
+        protected override int GetCurrentValue(ProtagonistStatusModel p) => p.StaminaMax;
+
+        protected override int ApplyChange(ProtagonistStatusModel p, int parameter)
+        {
+            int prev = p.StaminaMax;
+            p.SetStaminaMax(parameter);
+            return (int)Math.Max(int.MinValue, Math.Min(int.MaxValue, (long)p.StaminaMax - prev));
+        }
+    }
+
+    // ========================================================
     // ShootTimes（射精次數）
     // ========================================================
 
     /// <summary>
-    /// 用法: AddShootTimes(amount) / AddShootTimes(amount, alert)
-    /// 無上限，可以一直加。
+    /// 用法: AddShootTimes(value) / AddShootTimes(value, alert) / AddShootTimes(value, type)
+    /// 正數增加、負數扣除；結果限制在 0 到目前上限。
     /// </summary>
     public class SequencerCommandAddShootTimes : SequencerCommandProtagonistResourceBase
     {
@@ -437,13 +574,13 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
         {
             int prev = p.ShootTimes;
             p.AddShootTimes(parameter);
-            return (int)System.Math.Max(int.MinValue, System.Math.Min(int.MaxValue, (long)p.ShootTimes - prev));
+            return (int)Math.Max(int.MinValue, Math.Min(int.MaxValue, (long)p.ShootTimes - prev));
         }
     }
 
     /// <summary>
-    /// 用法: ReduceShootTimes(amount) / ReduceShootTimes(amount, alert)
-    /// 呼叫 TryReduceShootTimes，若失敗（已達下限）則 delta 為 0。
+    /// 用法: ReduceShootTimes(value) / ReduceShootTimes(value, alert) / ReduceShootTimes(value, type)
+    /// 以正數指定一般扣除量；結果限制在 0 到目前上限，非正數不處理。
     /// </summary>
     public class SequencerCommandReduceShootTimes : SequencerCommandProtagonistResourceBase
     {
@@ -453,10 +590,101 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
 
         protected override int ApplyChange(ProtagonistStatusModel p, int parameter)
         {
-            int amount = Math.Max(0, parameter);
+            if (parameter <= 0) return 0;
             int prev = p.ShootTimes;
-            p.ForceAddShootTimes(-amount);
-            return (int)System.Math.Max(int.MinValue, System.Math.Min(int.MaxValue, (long)p.ShootTimes - prev));
+            p.AddShootTimes(-parameter);
+            return (int)Math.Max(int.MinValue, Math.Min(int.MaxValue, (long)p.ShootTimes - prev));
+        }
+    }
+
+    /// <summary>
+    /// 用法: SetShootTimes(value) / SetShootTimes(value, alert) / SetShootTimes(value, type)
+    /// 設定目前值；結果限制在 0 到目前上限。
+    /// </summary>
+    public class SequencerCommandSetShootTimes : SequencerCommandProtagonistResourceBase
+    {
+        protected override string ResourceTypeKey => "ShootTimes";
+        protected override string CommandName => "SetShootTimes";
+        protected override int GetCurrentValue(ProtagonistStatusModel p) => p.ShootTimes;
+
+        protected override int ApplyChange(ProtagonistStatusModel p, int parameter)
+        {
+            int prev = p.ShootTimes;
+            p.SetShootTimes(parameter);
+            return (int)Math.Max(int.MinValue, Math.Min(int.MaxValue, (long)p.ShootTimes - prev));
+        }
+    }
+
+    /// <summary>
+    /// 用法: ForceAddShootTimes(value) / ForceAddShootTimes(value, alert) / ForceAddShootTimes(value, type)
+    /// 強制增減，允許負值與超出上限；僅受 int 儲存範圍限制。
+    /// </summary>
+    public class SequencerCommandForceAddShootTimes : SequencerCommandProtagonistResourceBase
+    {
+        protected override string ResourceTypeKey => "ShootTimes";
+        protected override string CommandName => "ForceAddShootTimes";
+        protected override int GetCurrentValue(ProtagonistStatusModel p) => p.ShootTimes;
+
+        protected override int ApplyChange(ProtagonistStatusModel p, int parameter)
+        {
+            int prev = p.ShootTimes;
+            p.ForceAddShootTimes(parameter);
+            return (int)Math.Max(int.MinValue, Math.Min(int.MaxValue, (long)p.ShootTimes - prev));
+        }
+    }
+
+    /// <summary>
+    /// 用法: ForceReduceShootTimes(value) / ForceReduceShootTimes(value, alert) / ForceReduceShootTimes(value, type)
+    /// 以正數指定強制扣除量，允許扣成負值；非正數不處理。
+    /// </summary>
+    public class SequencerCommandForceReduceShootTimes : SequencerCommandProtagonistResourceBase
+    {
+        protected override string ResourceTypeKey => "ShootTimes";
+        protected override string CommandName => "ForceReduceShootTimes";
+        protected override int GetCurrentValue(ProtagonistStatusModel p) => p.ShootTimes;
+
+        protected override int ApplyChange(ProtagonistStatusModel p, int parameter)
+        {
+            if (parameter <= 0) return 0;
+            int prev = p.ShootTimes;
+            p.ForceAddShootTimes(-parameter);
+            return (int)Math.Max(int.MinValue, Math.Min(int.MaxValue, (long)p.ShootTimes - prev));
+        }
+    }
+
+    /// <summary>
+    /// 用法: AddShootTimesMax(value) / AddShootTimesMax(value, alert) / AddShootTimesMax(value, type)
+    /// 增減上限，不自動補滿；降低上限時由 Model 裁切超出部分。
+    /// </summary>
+    public class SequencerCommandAddShootTimesMax : SequencerCommandProtagonistResourceBase
+    {
+        protected override string ResourceTypeKey => "ShootTimesMax";
+        protected override string CommandName => "AddShootTimesMax";
+        protected override int GetCurrentValue(ProtagonistStatusModel p) => p.ShootTimesMax;
+
+        protected override int ApplyChange(ProtagonistStatusModel p, int parameter)
+        {
+            int prev = p.ShootTimesMax;
+            p.AddShootTimesMax(parameter);
+            return (int)Math.Max(int.MinValue, Math.Min(int.MaxValue, (long)p.ShootTimesMax - prev));
+        }
+    }
+
+    /// <summary>
+    /// 用法: SetShootTimesMax(value) / SetShootTimesMax(value, alert) / SetShootTimesMax(value, type)
+    /// 設定上限，不自動補滿；降低上限時由 Model 裁切超出部分。
+    /// </summary>
+    public class SequencerCommandSetShootTimesMax : SequencerCommandProtagonistResourceBase
+    {
+        protected override string ResourceTypeKey => "ShootTimesMax";
+        protected override string CommandName => "SetShootTimesMax";
+        protected override int GetCurrentValue(ProtagonistStatusModel p) => p.ShootTimesMax;
+
+        protected override int ApplyChange(ProtagonistStatusModel p, int parameter)
+        {
+            int prev = p.ShootTimesMax;
+            p.SetShootTimesMax(parameter);
+            return (int)Math.Max(int.MinValue, Math.Min(int.MaxValue, (long)p.ShootTimesMax - prev));
         }
     }
 
