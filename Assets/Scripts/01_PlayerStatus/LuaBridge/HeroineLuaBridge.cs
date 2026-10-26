@@ -19,6 +19,20 @@ public class HeroineLuaBridge : MonoBehaviour
 
     void OnEnable()
     {
+        // 生理週期：機率為 0～1，階段名稱與 MenstrualCyclePhase 一致。
+        Lua.RegisterFunction("GetCyclePhase", this,
+            SymbolExtensions.GetMethodInfo(() => GetCyclePhase(string.Empty)));
+        Lua.RegisterFunction("GetCyclePhaseDay", this,
+            SymbolExtensions.GetMethodInfo(() => GetCyclePhaseDay(string.Empty)));
+        Lua.RegisterFunction("SetPregnancyProbability", this,
+            SymbolExtensions.GetMethodInfo(() => SetPregnancyProbability(string.Empty, (double)0)));
+        Lua.RegisterFunction("SetCyclePhase", this,
+            SymbolExtensions.GetMethodInfo(() => SetCyclePhase(string.Empty, string.Empty)));
+        Lua.RegisterFunction("ClearPregnancy", this,
+            SymbolExtensions.GetMethodInfo(() => ClearPregnancy(string.Empty)));
+        Lua.RegisterFunction("TryConceive", this,
+            SymbolExtensions.GetMethodInfo(() => TryConceive(string.Empty)));
+
         Lua.RegisterFunction("GetMood", this, SymbolExtensions.GetMethodInfo(() => GetMood(string.Empty)));
         Lua.RegisterFunction("SetMood", this, SymbolExtensions.GetMethodInfo(() => SetMood(string.Empty, (double)0)));
         Lua.RegisterFunction("AddMood", this, SymbolExtensions.GetMethodInfo(() => AddMood(string.Empty, (double)0)));
@@ -84,6 +98,13 @@ public class HeroineLuaBridge : MonoBehaviour
 
     void OnDisable()
     {
+        Lua.UnregisterFunction("GetCyclePhase");
+        Lua.UnregisterFunction("GetCyclePhaseDay");
+        Lua.UnregisterFunction("SetPregnancyProbability");
+        Lua.UnregisterFunction("SetCyclePhase");
+        Lua.UnregisterFunction("ClearPregnancy");
+        Lua.UnregisterFunction("TryConceive");
+
         Lua.UnregisterFunction("GetMood");
         Lua.UnregisterFunction("SetMood");
         Lua.UnregisterFunction("AddMood");
@@ -130,6 +151,26 @@ public class HeroineLuaBridge : MonoBehaviour
         if (model == null)
             Debug.LogWarning($"[HeroineLuaBridge] 找不到 HeroineID: {heroineID}");
         return model;
+    }
+
+    // 生理週期：只有明確呼叫 TryConceive 才擲骰；手動設定受精可用
+    // SetCyclePhase("角色ID", "BeforePregnant")，解除並原位恢復用 ClearPregnancy。
+    public string GetCyclePhase(string heroineID) => GetModel(heroineID)?.CurrentCyclePhase.ToString() ?? string.Empty;
+    public double GetCyclePhaseDay(string heroineID) => GetModel(heroineID)?.CurrentPhaseDay ?? 0;
+    /// <summary>設定當日機率（0～1）；Lua: SetPregnancyProbability("角色ID", 0.8)。</summary>
+    public void SetPregnancyProbability(string heroineID, double value) => GetModel(heroineID)?.SetPregnancyProbability((float)value);
+    public bool TryConceive(string heroineID) => GetModel(heroineID)?.TryConceive() ?? false;
+    public void ClearPregnancy(string heroineID) => GetModel(heroineID)?.ClearPregnancy();
+
+    public void SetCyclePhase(string heroineID, string phaseName)
+    {
+        if (!System.Enum.TryParse(phaseName?.Trim(), true, out MenstrualCyclePhase phase)
+            || !System.Enum.IsDefined(typeof(MenstrualCyclePhase), phase))
+        {
+            Debug.LogWarning($"[HeroineLuaBridge] 無法解析生理週期階段：{phaseName}");
+            return;
+        }
+        GetModel(heroineID)?.SetCyclePhase(phase);
     }
 
     // ─────────────────────────────────────────────

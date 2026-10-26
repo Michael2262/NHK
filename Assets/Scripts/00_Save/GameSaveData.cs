@@ -43,6 +43,7 @@ public class GameSaveData
     public ProtagonistStatusEffectSaveData StatusEffectData; //狀態效果的存檔數據
     public ProgressFlagSaveData ProgressFlagData;// 進度開關存檔數據
     public DeliverySaveData DeliveryData; // 網購待到貨訂單
+    public QuestSaveData QuestData; // 好寶寶任務；舊存檔缺少欄位時為 null，由 Model 靜默重設
 
     // ==========================================================
     // 女主角數據 (已修改為 JsonUtility 相容格式)

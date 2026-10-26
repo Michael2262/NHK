@@ -44,6 +44,21 @@ public class HeroineStatusModel
     public const bool InitialIsInHeat = false;
     public const HeroineEmotionCardType InitialEmotion = HeroineEmotionCardType.Angry;
 
+    // ───── 生理週期（遊戲規則）─────
+    public const int DefaultInitialCycleDay = 7;
+    public const int PeriodDays = 5;
+    public const int AfterPeriodBaseDays = 4;
+    public const int AfterPeriodVariation = 2;
+    public const int OvulationDays = 7;
+    public const int AfterOvulationDays = 6;
+    public const int BeforePeriodDays = 6;
+    public const int BeforePregnantDays = 9;
+    public const float LowPregnancyProbability = 0.05f;
+    public const float HighPregnancyProbability = 0.20f;
+
+    private static readonly Random CycleRandom = new Random();
+    private readonly int initialCycleDay;
+
     // ==========================================================
     // 角色資料與執行期間狀態
     // ==========================================================
@@ -85,6 +100,8 @@ public class HeroineStatusModel
         HeroineID = stat.ID;
         NameTextKey = stat.NameTextKey;
         Name = stat.Name;
+        initialCycleDay = stat.InitialCycleDay > 0 ? stat.InitialCycleDay : DefaultInitialCycleDay;
+        InitializeCycle();
     }
 
     private static int Clamp(long value, int min, int max)
@@ -210,7 +227,16 @@ public class HeroineStatusModel
         Trust = Trust, Affinity = Affinity, Mood = Mood, Libido = Libido,
         LibidoIncreasedToday = LibidoIncreasedToday,
         Excitement = Excitement, Orgasm = Orgasm, HCount = HCount,
-        IsInHeat = IsInHeat, StatisticsData = Statistics.ToSaveData()
+        IsInHeat = IsInHeat, StatisticsData = Statistics.ToSaveData(),
+        CycleData = new HeroineCycleSaveData
+        {
+            CurrentCycleDay = CurrentCycleDay,
+            AfterPeriodDays = AfterPeriodDays,
+            NextAfterPeriodDays = NextAfterPeriodDays,
+            Pregnancy = Pregnancy,
+            EarlyPregnancyDaysElapsed = EarlyPregnancyDaysElapsed,
+            PregnancyProbability = PregnancyProbability
+        }
     };
 
     public void LoadFromSaveData(HeroineSaveData data)
@@ -228,25 +254,218 @@ public class HeroineStatusModel
         IsInHeat = data.IsInHeat;
         Statistics = new HeroineStatisticsModel();
         if (data.StatisticsData != null) Statistics.LoadFromSaveData(data.StatisticsData);
+        LoadCycle(data.CycleData);
     }
 
-    // ───── 未來系統預留接口：目前不保存處女、週期或懷孕進度 ─────
+    // ───── 處女系統仍為預留接口 ─────
     public VirginityState Virginity => VirginityState.Virgin;
-    public int CurrentCycleDay => 1;
-    public bool IsCyclePaused => true;
-    public PregnancyState Pregnancy => PregnancyState.NotPregnant;
-    public int EarlyPregnancyDaysElapsed => 0;
     public event Action<VirginityState> OnVirginityChanged;
+    public void SetVirginity(VirginityState state, string firstPartnerId = null) => OnVirginityChanged?.Invoke(state);
+
+    // ───── 生理週期：自然週期日與懷孕進度分開保存，解除時可原位恢復 ─────
+    public int CurrentCycleDay { get; private set; }
+    /// <summary>本輪月經後天數，整輪固定，避免重抽造成週期位置改變。</summary>
+    public int AfterPeriodDays { get; private set; }
+    /// <summary>離開月經後時重抽；下一輪開始時套用。</summary>
+    public int NextAfterPeriodDays { get; private set; }
+    public int CycleLength => PeriodDays + AfterPeriodDays + OvulationDays + AfterOvulationDays + BeforePeriodDays;
+    public bool IsCyclePaused => Pregnancy != PregnancyState.NotPregnant;
+    public PregnancyState Pregnancy { get; private set; }
+    public int EarlyPregnancyDaysElapsed { get; private set; }
+    public MenstrualCyclePhase CurrentCyclePhase => Pregnancy == PregnancyState.EarlyPregnancy
+        ? MenstrualCyclePhase.BeforePregnant
+        : Pregnancy == PregnancyState.Pregnant ? MenstrualCyclePhase.Pregnant : GetNaturalCyclePhase();
+
+    /// <summary>當日機率（0～1），可手動設定；初始化、換日及切換階段時依階段重設。</summary>
+    public float PregnancyProbability { get; private set; }
+
+    /// <summary>覆寫當日機率，例如 0.8 代表 80%；跨日後恢復階段預設值。</summary>
+    public void SetPregnancyProbability(float value)
+    {
+        if (float.IsNaN(value)) return;
+        value = Math.Max(0f, Math.Min(1f, value));
+        if (PregnancyProbability == value) return;
+        PregnancyProbability = value;
+        OnChanged?.Invoke();
+    }
+
+    private float GetPhasePregnancyProbability()
+    {
+        switch (CurrentCyclePhase)
+        {
+            case MenstrualCyclePhase.AfterPeriod:
+            case MenstrualCyclePhase.AfterOvulation: return LowPregnancyProbability;
+            case MenstrualCyclePhase.Ovulation: return HighPregnancyProbability;
+            default: return 0f;
+        }
+    }
+
+    /// <summary>自然階段從 1 起算；受精顯示已經過天數（0～9），懷孕不累計天數。</summary>
+    public int CurrentPhaseDay => IsCyclePaused ? EarlyPregnancyDaysElapsed
+        : CurrentCycleDay - GetPhaseStartDay(GetNaturalCyclePhase()) + 1;
+
     public event Action<int> OnCycleDayChanged;
+    public event Action<MenstrualCyclePhase> OnCyclePhaseChanged;
     public event Action<OvulationDayType> OnOvulationDayTypeChanged;
     public event Action<PregnancyState> OnPregnancyStateChanged;
     public event Action<bool> OnConceiveAttempted;
-    public void SetVirginity(VirginityState state, string firstPartnerId = null) => OnVirginityChanged?.Invoke(state);
-    public void AdvanceCycleDay() => OnCycleDayChanged?.Invoke(CurrentCycleDay);
-    public OvulationDayType GetCurrentOvulationDayType() => OvulationDayType.Safe;
+
+    private static int RollAfterPeriodDays()
+        => CycleRandom.Next(AfterPeriodBaseDays - AfterPeriodVariation, AfterPeriodBaseDays + AfterPeriodVariation + 1);
+
+    private void InitializeCycle()
+    {
+        AfterPeriodDays = RollAfterPeriodDays();
+        NextAfterPeriodDays = AfterPeriodDays;
+        CurrentCycleDay = (initialCycleDay - 1) % CycleLength + 1;
+        // 初始位置已度過月經後時，亦準備好下一輪的天數。
+        if (CurrentCycleDay > PeriodDays + AfterPeriodDays) NextAfterPeriodDays = RollAfterPeriodDays();
+        Pregnancy = PregnancyState.NotPregnant;
+        EarlyPregnancyDaysElapsed = 0;
+        // 必須先確定週期日與階段，才設定初始機率；初始化不發送事件。
+        PregnancyProbability = GetPhasePregnancyProbability();
+    }
+
+    private void LoadCycle(HeroineCycleSaveData data)
+    {
+        if (data == null)
+        {
+            InitializeCycle();
+            return;
+        }
+
+        AfterPeriodDays = Clamp(data.AfterPeriodDays, AfterPeriodBaseDays - AfterPeriodVariation, AfterPeriodBaseDays + AfterPeriodVariation);
+        NextAfterPeriodDays = Clamp(data.NextAfterPeriodDays, AfterPeriodBaseDays - AfterPeriodVariation, AfterPeriodBaseDays + AfterPeriodVariation);
+        CurrentCycleDay = Clamp(data.CurrentCycleDay, 1, CycleLength);
+        Pregnancy = Enum.IsDefined(typeof(PregnancyState), data.Pregnancy) ? data.Pregnancy : PregnancyState.NotPregnant;
+        EarlyPregnancyDaysElapsed = Pregnancy == PregnancyState.NotPregnant ? 0
+            : Clamp(data.EarlyPregnancyDaysElapsed, 0, BeforePregnantDays);
+        if (Pregnancy == PregnancyState.EarlyPregnancy && EarlyPregnancyDaysElapsed >= BeforePregnantDays)
+            Pregnancy = PregnancyState.Pregnant;
+        // 舊檔缺少機率時依已還原的階段補值；明確存入的 0 仍須保留。
+        PregnancyProbability = data.PregnancyProbability.HasValue && !float.IsNaN(data.PregnancyProbability.Value)
+            ? Math.Max(0f, Math.Min(1f, data.PregnancyProbability.Value))
+            : GetPhasePregnancyProbability();
+    }
+
+    private MenstrualCyclePhase GetNaturalCyclePhase()
+    {
+        if (CurrentCycleDay <= PeriodDays) return MenstrualCyclePhase.Period;
+        if (CurrentCycleDay <= PeriodDays + AfterPeriodDays) return MenstrualCyclePhase.AfterPeriod;
+        if (CurrentCycleDay <= PeriodDays + AfterPeriodDays + OvulationDays) return MenstrualCyclePhase.Ovulation;
+        if (CurrentCycleDay <= PeriodDays + AfterPeriodDays + OvulationDays + AfterOvulationDays) return MenstrualCyclePhase.AfterOvulation;
+        return MenstrualCyclePhase.BeforePeriod;
+    }
+
+    private int GetPhaseStartDay(MenstrualCyclePhase phase)
+    {
+        switch (phase)
+        {
+            case MenstrualCyclePhase.Period: return 1;
+            case MenstrualCyclePhase.AfterPeriod: return PeriodDays + 1;
+            case MenstrualCyclePhase.Ovulation: return PeriodDays + AfterPeriodDays + 1;
+            case MenstrualCyclePhase.AfterOvulation: return PeriodDays + AfterPeriodDays + OvulationDays + 1;
+            case MenstrualCyclePhase.BeforePeriod: return PeriodDays + AfterPeriodDays + OvulationDays + AfterOvulationDays + 1;
+            default: throw new ArgumentOutOfRangeException(nameof(phase));
+        }
+    }
+
+    public void AdvanceCycleDay()
+    {
+        if (Pregnancy == PregnancyState.Pregnant)
+        {
+            // 懷孕雖然凍結週期，當日手動設定的機率仍須在換日時重設。
+            SetPregnancyProbability(GetPhasePregnancyProbability());
+            return;
+        }
+        var oldPhase = CurrentCyclePhase;
+        var oldPregnancy = Pregnancy;
+        var oldDayType = GetCurrentOvulationDayType();
+        int oldDay = CurrentCycleDay;
+
+        if (Pregnancy == PregnancyState.EarlyPregnancy)
+        {
+            EarlyPregnancyDaysElapsed++;
+            if (EarlyPregnancyDaysElapsed >= BeforePregnantDays) Pregnancy = PregnancyState.Pregnant;
+        }
+        else
+        {
+            CurrentCycleDay++;
+            if (CurrentCycleDay == PeriodDays + AfterPeriodDays + 1)
+                NextAfterPeriodDays = RollAfterPeriodDays();
+            if (CurrentCycleDay > CycleLength)
+            {
+                CurrentCycleDay = 1;
+                AfterPeriodDays = NextAfterPeriodDays;
+            }
+        }
+
+        NotifyCycleChanged(oldDay, oldPhase, oldPregnancy, oldDayType);
+    }
+
+    /// <summary>手動選擇自然階段時跳到該階段第 1 天；解除懷孕並原位恢復請用 ClearPregnancy。</summary>
+    public void SetCyclePhase(MenstrualCyclePhase phase)
+    {
+        if (!Enum.IsDefined(typeof(MenstrualCyclePhase), phase)) return;
+        if (phase == MenstrualCyclePhase.BeforePregnant) { SetPregnancyState(PregnancyState.EarlyPregnancy); return; }
+        if (phase == MenstrualCyclePhase.Pregnant) { SetPregnancyState(PregnancyState.Pregnant); return; }
+
+        var oldPhase = CurrentCyclePhase;
+        var oldPregnancy = Pregnancy;
+        var oldDayType = GetCurrentOvulationDayType();
+        int oldDay = CurrentCycleDay;
+        int newDay = GetPhaseStartDay(phase);
+        // 手動跳過月經後的終點亦只刷新一次；同階段重設不會重抽。
+        if (oldDay <= PeriodDays + AfterPeriodDays && newDay > PeriodDays + AfterPeriodDays)
+            NextAfterPeriodDays = RollAfterPeriodDays();
+        CurrentCycleDay = newDay;
+        Pregnancy = PregnancyState.NotPregnant;
+        EarlyPregnancyDaysElapsed = 0;
+        NotifyCycleChanged(oldDay, oldPhase, oldPregnancy, oldDayType);
+    }
+
+    public void ClearPregnancy() => SetPregnancyState(PregnancyState.NotPregnant);
+
+    public void SetPregnancyState(PregnancyState state)
+    {
+        if (!Enum.IsDefined(typeof(PregnancyState), state) || Pregnancy == state) return;
+        var oldPhase = CurrentCyclePhase;
+        var oldPregnancy = Pregnancy;
+        var oldDayType = GetCurrentOvulationDayType();
+        Pregnancy = state;
+        EarlyPregnancyDaysElapsed = state == PregnancyState.Pregnant ? BeforePregnantDays : 0;
+        NotifyCycleChanged(CurrentCycleDay, oldPhase, oldPregnancy, oldDayType);
+    }
+
+    private void NotifyCycleChanged(int oldDay, MenstrualCyclePhase oldPhase, PregnancyState oldPregnancy, OvulationDayType oldDayType)
+    {
+        // 先依更新後的階段重設機率，再通知觀察者，避免事件中讀到舊階段的值。
+        // 每次換日都會執行，即使仍處於同一階段也會清除當日覆寫。
+        PregnancyProbability = GetPhasePregnancyProbability();
+        if (CurrentCycleDay != oldDay) OnCycleDayChanged?.Invoke(CurrentCycleDay);
+        if (Pregnancy != oldPregnancy) OnPregnancyStateChanged?.Invoke(Pregnancy);
+        if (CurrentCyclePhase != oldPhase) OnCyclePhaseChanged?.Invoke(CurrentCyclePhase);
+        if (GetCurrentOvulationDayType() != oldDayType) OnOvulationDayTypeChanged?.Invoke(GetCurrentOvulationDayType());
+        OnChanged?.Invoke();
+    }
+
+    public OvulationDayType GetCurrentOvulationDayType()
+    {
+        switch (CurrentCyclePhase)
+        {
+            case MenstrualCyclePhase.AfterPeriod:
+            case MenstrualCyclePhase.AfterOvulation: return OvulationDayType.Normal;
+            case MenstrualCyclePhase.Ovulation: return OvulationDayType.Danger;
+            default: return OvulationDayType.Safe;
+        }
+    }
+
+    /// <summary>依當下機率嘗試受精；partnerId 保留供舊呼叫相容，目前不記錄對象。</summary>
     public bool TryConceive(string partnerId = null)
     {
-        OnConceiveAttempted?.Invoke(false);
-        return false;
+        bool conceived = !IsCyclePaused && PregnancyProbability > 0f && CycleRandom.NextDouble() < PregnancyProbability;
+        if (conceived) SetPregnancyState(PregnancyState.EarlyPregnancy);
+        OnConceiveAttempted?.Invoke(conceived);
+        return conceived;
     }
 }

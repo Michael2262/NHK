@@ -1,3 +1,15 @@
+/// <summary>生理週期階段；前五項自然循環，受精及懷孕由判定或手動設定進入。</summary>
+public enum MenstrualCyclePhase
+{
+    Period = 0,
+    AfterPeriod = 1,
+    Ovulation = 2,
+    AfterOvulation = 3,
+    BeforePeriod = 4,
+    BeforePregnant = 5,
+    Pregnant = 6
+}
+
 /// <summary>
 /// 排卵周期日類型。每一日歸類為危險日、通常日或安全日，決定當日懷孕機率。
 /// </summary>
@@ -5,24 +17,24 @@ public enum OvulationDayType
 {
     /// <summary>安全日 (懷孕機率 0%)</summary>
     Safe,
-    /// <summary>通常日 (懷孕機率 20%)</summary>
+    /// <summary>通常日 (遊戲懷孕機率 5%)</summary>
     Normal,
-    /// <summary>危險日 (懷孕機率 40%)</summary>
+    /// <summary>危險日 (遊戲懷孕機率 20%)</summary>
     Danger
 }
 
 /// <summary>
 /// 懷孕狀態。
-/// NotPregnant -> (TryConceive 成功) -> EarlyPregnancy -> (不穩定期過後) -> Pregnant
-/// EarlyPregnancy 期間可被事後避孕藥取消回 NotPregnant。
+/// 舊接口相容：EarlyPregnancy 對應 BeforePregnant，經過 9 次跨日後轉為 Pregnant。
+/// 手動解除後從暫停的自然週期日繼續。
 /// </summary>
 public enum PregnancyState
 {
     /// <summary>未懷孕</summary>
     NotPregnant,
-    /// <summary>早期懷孕（不穩定期，可被事後避孕藥取消）</summary>
+    /// <summary>受精（BeforePregnant）</summary>
     EarlyPregnancy,
-    /// <summary>確定懷孕（事後避孕藥無效）</summary>
+    /// <summary>懷孕，持續至手動解除</summary>
     Pregnant
 }
 

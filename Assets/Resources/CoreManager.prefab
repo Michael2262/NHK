@@ -64,6 +64,7 @@ GameObject:
   - component: {fileID: 3572347744024881451}
   - component: {fileID: 3185349154855516075}
   - component: {fileID: 3678330288682224598}
+  - component: {fileID: 3708931409507880073}
   - component: {fileID: 7256248257919297805}
   - component: {fileID: 2128504928821022967}
   - component: {fileID: 7220962431297692155}
@@ -126,6 +127,7 @@ MonoBehaviour:
   dailyScheduleConfig: {fileID: 11400000, guid: 8f2fc5d5e5f84ff4ab212521d749faf6, type: 2}
   dayTriggerConfig: {fileID: 11400000, guid: 1ca2741aca3fd1548981225d377e5b09, type: 2}
   statChangePackageDatabase: {fileID: 11400000, guid: e2e13ab31941cad4d8352a181962cc8f, type: 2}
+  questDatabase: {fileID: 11400000, guid: ec00890e584a0b74d8da6d2315cba1e6, type: 2}
   saveNotification: {fileID: 0}
   valueTriggerContainers:
   - {fileID: 11400000, guid: 10be3f854ff5a334c8c2ad4c6d2e3ae8, type: 2}
@@ -172,19 +174,19 @@ MonoBehaviour:
   - ruleName: "\u59B9\u59B9\u51FA\u73FE\u5728\u7384\u95DC\u7AD9\u8457"
     heroineID: saya
     requiredFlags:
-    - {fileID: 11400000, guid: 0ac3b17a9b69cb94086de20430b72c16, type: 2}
+    - {fileID: 0}
     priorityLocationID: Corridor
     priorityActivity: Saya_Standing
   - ruleName: "\u59B9\u59B9\u51FA\u73FE\u5728\u5BA2\u5EF3\u5750\u8457"
     heroineID: saya
     requiredFlags:
-    - {fileID: 11400000, guid: 1b6387e05c0f48d4da52e96d4eba128a, type: 2}
+    - {fileID: 0}
     priorityLocationID: LivingRoom
     priorityActivity: Saya_Sitting
   - ruleName: "\u59B9\u59B9\u51FA\u73FE\u5728\u5973\u751F\u623F\u5750\u8457"
     heroineID: saya
     requiredFlags:
-    - {fileID: 11400000, guid: 9c997e814a3ef744ca556ad6abcc26b1, type: 2}
+    - {fileID: 0}
     priorityLocationID: HeroineRoom
     priorityActivity: Saya_Sitting
   riskPriorityScripts:
@@ -192,7 +194,7 @@ MonoBehaviour:
     agentID: mom
     priorityInspectionTypeID: Mom_Cooking
     requiredFlags:
-    - {fileID: 11400000, guid: 2805b240795fdba4589ca69093b349f6, type: 2}
+    - {fileID: 0}
     priorityLocationID: LivingRoom
 --- !u!114 &3678330288682224598
 MonoBehaviour:
@@ -211,6 +213,18 @@ MonoBehaviour:
   alertSoundKey: alert_show
   alertSoundWindow: 0
   customDelay: 3
+--- !u!114 &3708931409507880073
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8658884883466889431}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8d6999afbfbc58048967d610affe24a4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::QuestLuaBridge
 --- !u!114 &7256248257919297805
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -29,6 +29,7 @@ public class GameStatusService : MonoBehaviour
     [SerializeField] private DailyScheduleConfig dailyScheduleConfig; //
     [SerializeField] private DayTriggerConfig dayTriggerConfig; //
     [SerializeField] private StatChangePackageDatabase statChangePackageDatabase; // 數值變化套組資料庫
+    [SerializeField] private QuestDatabase questDatabase; // 好寶寶任務設定；可暫留空，之後在 Editor 指定
 
     [Header("存檔通知（已改為事件驅動，此欄位不再使用）")]
     [SerializeField] private SaveNotification saveNotification; // 保留欄位避免序列化報錯，但不再使用
@@ -63,6 +64,7 @@ public class GameStatusService : MonoBehaviour
     public ShopStatusModel ShopStatus { get; private set; }
     public PendingDeliveryModel PendingDelivery { get; private set; }
     public ProgressFlagModel ProgressFlags { get; private set; }// 進度開關模型
+    public QuestModel Quests { get; private set; } // 任務進度與已發獎勵紀錄；不執行獎勵效果
 
     // 處理多女主角：使用 Dictionary 來儲存多個 Heroine Model
     public Dictionary<string, HeroineStatusModel> Heroines { get; private set; }
@@ -103,6 +105,7 @@ public class GameStatusService : MonoBehaviour
     public ShopService ShopService { get; private set; } // ShopService 的實例
     public ItemUseService ItemUseService { get; private set; }
     public StatChangeService StatChangeService { get; private set; } // 數值變化套組執行核心
+    public QuestRewardService QuestRewards { get; private set; } // 依資料庫順序領取固定任務獎勵
     public SaveGameManager SaveManager { get; private set; } // 存檔管理器
 
     private DailyScheduleProcessor _scheduleProcessor;
@@ -162,6 +165,12 @@ public class GameStatusService : MonoBehaviour
 
         // TimeSystemModel: 注入 TimeConfig
         Time = new TimeSystemModel(timeConfig);
+        // Quest 讀取遊戲日以判斷每日限制；成功判定與消耗由遊戲層處理。
+        Quests = new QuestModel(questDatabase,
+            () => Time.DayIndex,
+            message => Debug.LogWarning(message));
+        if (Quests.ConfigurationError != null)
+            Debug.LogWarning($"[GameStatusService] Quest 設定無效：{Quests.ConfigurationError}");
         TimePlayback = new TimePlaybackModel(Time, timeConfig);
         OnGameStatusLoaded += TimePlayback.Cancel;
 
@@ -193,6 +202,9 @@ public class GameStatusService : MonoBehaviour
         ShopService = new ShopService(Protagonist, Inventory, ShopStatus, PendingDelivery, ItemCatalog, () => Time.DayIndex);
         // 數值變化套組服務（套用時透過 Instance 取 Protagonist / Heroines）
         StatChangeService = new StatChangeService(statChangePackageDatabase);
+        QuestRewards = new QuestRewardService(Quests, Protagonist,
+            id => Heroines.TryGetValue(id, out var heroine) ? heroine : null,
+            ProgressFlags, message => Debug.LogWarning(message));
 
         // --- 執行依賴注入與事件訂閱 ---
         // NHK 版 ProtagonistStatusModel 不再使用 Attack / Defense / RecalculateTotalStats。
@@ -328,6 +340,7 @@ public class GameStatusService : MonoBehaviour
         Inventory.NewGame();
         ShopStatus.NewGame();
         PendingDelivery.NewGame();
+        Quests.NewGame();
 
         // Time.NewGame() → LoadInitialState() 會發一次 OnDayPassed 當「初始刷新」，
         // 但開新遊戲不是換日，不應執行每日結算（依賴+5、房間髒亂+1、女主角衰減等），

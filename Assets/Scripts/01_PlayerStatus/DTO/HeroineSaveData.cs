@@ -16,4 +16,19 @@ public class HeroineSaveData
     public int HCount;
     public bool IsInHeat;
     public HeroineStatisticsSaveData StatisticsData;
+    // null 表示舊存檔尚無週期資料，依各角色的初始週期設定建立。
+    public HeroineCycleSaveData CycleData;
+}
+
+/// <summary>每位女主角獨立保存；懷孕時仍保留暫停的自然週期位置。</summary>
+[Serializable]
+public class HeroineCycleSaveData
+{
+    public int CurrentCycleDay;
+    public int AfterPeriodDays;
+    public int NextAfterPeriodDays;
+    public PregnancyState Pregnancy;
+    public int EarlyPregnancyDaysElapsed;
+    // null 表示舊檔無此欄位；0 則是明確設定的 0%，不能當成缺值。
+    public float? PregnancyProbability;
 }

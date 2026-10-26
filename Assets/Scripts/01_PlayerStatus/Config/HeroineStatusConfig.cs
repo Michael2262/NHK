@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 /// <summary>
 /// 單一女主角的基礎設定。
-/// 保留多女主角身分設定；可調數值統一位於 HeroineStatusModel 頂部。
+/// 保留多女主角身分與初始週期設定；共用數值位於 HeroineStatusModel 頂部。
 /// </summary>
 [Serializable]
 public class HeroineStat
@@ -21,6 +21,11 @@ public class HeroineStat
 
     [Tooltip("年紀。僅供設定管理，遊戲實際顯示由劇情文本決定。")]
     public int Age = 20;
+
+    [Header("生理週期")]
+    [Min(1)]
+    [Tooltip("新遊戲的初始週期日，月經期第 1 天為起點，預設第 7 天。超過本輪總天數時循環折返。")]
+    public int InitialCycleDay = HeroineStatusModel.DefaultInitialCycleDay;
 
     [Tooltip("舊 UI 相容用：初次對象名稱 TextTable Key。NHK 原型可留空。")]
     public string FirstPartnerNameKey;

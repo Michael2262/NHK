@@ -141,6 +141,17 @@ public class HeroineBridge : MonoBehaviour
     public void EnableInHeat() => SetInHeat(true);
     public void DisableInHeat() => SetInHeat(false);
 
+    // 生理週期：日數與機率由正式 Model 管理，設定機率使用 0～1。
+    public string GetCyclePhase() => H?.CurrentCyclePhase.ToString() ?? string.Empty;
+    public int GetCyclePhaseDay() => H?.CurrentPhaseDay ?? 0;
+    /// <summary>設定當日機率（0～1），例如 0.8 代表 80%；換日後依階段重設。</summary>
+    public void SetPregnancyProbability(float value) => H?.SetPregnancyProbability(value);
+    public void SetCyclePhase(MenstrualCyclePhase phase) => H?.SetCyclePhase(phase);
+    public void BeginBeforePregnant() => H?.SetPregnancyState(PregnancyState.EarlyPregnancy);
+    public void SetPregnant() => H?.SetPregnancyState(PregnancyState.Pregnant);
+    public void ClearPregnancy() => H?.ClearPregnancy();
+    public void TryConceive() => H?.TryConceive();
+
     // 正數轉為負數，負數維持原值，避免 int.MinValue 取絕對值時溢位。
     private static int ToReductionDelta(int amount) => amount > 0 ? -amount : amount;
 

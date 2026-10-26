@@ -212,6 +212,8 @@ public class SaveGameManager
         _gameStatusService.StatusEffectModel.LoadFromSaveData(data.StatusEffectData, _gameStatusService.StatusEffectDatabase);
         _gameStatusService.ProgressFlags.LoadFromSaveData(data.ProgressFlagData);
         _gameStatusService.PendingDelivery.LoadFromSaveData(data.DeliveryData);
+        // 時間已先還原；Quest 靜默還原進度及已發獎勵紀錄，由載入完成事件統一刷新。
+        _gameStatusService.Quests.LoadFromSaveData(data.QuestData);
 
         // --- 女主角數據 ---
         if (data.HeroineIDs.Count == data.HeroineSaveDataList.Count)
@@ -276,6 +278,7 @@ public class SaveGameManager
         data.StatusEffectData = _gameStatusService.StatusEffectModel.ToSaveData();
         data.ProgressFlagData = _gameStatusService.ProgressFlags.ToSaveData();
         data.DeliveryData = _gameStatusService.PendingDelivery.ToSaveData();
+        data.QuestData = _gameStatusService.Quests.ToSaveData();
 
         data.HeroineIDs.Clear();
         data.HeroineSaveDataList.Clear();
