@@ -21,6 +21,14 @@ namespace NHK.StateTest
             }
         }
 
+        public float GetAwake() => Model?.GetAwake() ?? 0f;
+        public void SetAwake(float value) => Model?.SetAwake(value);
+        public void AddAwake(float amount) => Model?.AddAwake(amount);
+
+        public int GetInterest() => Model?.GetInterest() ?? 0;
+        public void SetInterest(int value) => Model?.SetInterest(value);
+        public void AddInterest(int amount) => Model?.AddInterest(amount);
+
         public int GetTrust() => Model?.Trust ?? 0;
         public int GetMood() => Model?.Mood ?? 0;
         public int GetAffinity() => Model?.Affinity ?? 0;

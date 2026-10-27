@@ -7,7 +7,7 @@ using UnityEngine;
 /// 女主角 ID 直接在 Inspector 中指定。
 ///
 /// 已對齊 NHK 版 HeroineStatusModel：操作當前情緒（CurrentEmotion）、
-/// 性慾（Libido）、興奮度（Excitement）、高潮度（Orgasm）、信賴（Trust）、好感度（Affinity）、H 次數（HCount）。
+/// 性興味（Interest）、性欲（Libido）、興奮度（Excitement）、高潮度（Orgasm）、信賴（Trust）、好感度（Affinity）、H 次數（HCount）。
 /// 不再使用舊專案遺留的 Lewdness stub（Affinity 已是現役獨立數值）。
 ///
 /// 為了讓 Button.onClick / UnityEvent 能無參數呼叫，多數操作同時提供：
@@ -24,10 +24,19 @@ public class HeroineStatusDebugBridge : MonoBehaviour
     [Tooltip("無參數的 Default 版方法（SetCurrentEmotionDefault）會使用此情緒。")]
     [SerializeField] private HeroineEmotionCardType defaultEmotion = HeroineEmotionCardType.Angry;
 
-    // 輔助屬性：安全地獲取目標女主角的 Model 實例
+    // Awake、性興味與心情：直接轉接至正式 Model。
+    public float GetAwake() => Model?.GetAwake() ?? 0f;
+    public void SetAwake(float value) => Model?.SetAwake(value);
+    public void AddAwake(float amount) => Model?.AddAwake(amount);
+
+    public int GetInterest() => Model?.GetInterest() ?? 0;
+    public void SetInterest(int value) => Model?.SetInterest(value);
+    public void AddInterest(int amount) => Model?.AddInterest(amount);
+
     public void SetMood(int value) => Model?.SetMood(value);
     public void AddMood(int amount) => Model?.AddMood(amount);
 
+    // 輔助屬性：安全地獲取目標女主角的 Model 實例
     private HeroineStatusModel Model
     {
         get
@@ -82,10 +91,10 @@ public class HeroineStatusDebugBridge : MonoBehaviour
     public void SetCurrentEmotionDefault() => SetCurrentEmotion((int)defaultEmotion);
 
     // ==========================================================
-    // 性慾 (Libido)
+    // 性欲 (Libido)
     // ==========================================================
 
-    /// <summary>增減性慾值（正增負減，自動 Clamp Model 定義範圍）。</summary>
+    /// <summary>增減性欲值（正增負減，自動 Clamp Model 定義範圍）。</summary>
     public void AddLibido(int amount)
     {
         var m = Model;
@@ -94,7 +103,7 @@ public class HeroineStatusDebugBridge : MonoBehaviour
         Debug.Log($"[HeroineStatusDebugBridge] ({heroineID}) Libido {(amount >= 0 ? "+" : "")}{amount} → {m.Libido}");
     }
 
-    /// <summary>直接設定性慾值（自動 Clamp Model 定義範圍）。</summary>
+    /// <summary>直接設定性欲值（自動 Clamp Model 定義範圍）。</summary>
     public void SetLibido(int value)
     {
         var m = Model;
@@ -103,7 +112,7 @@ public class HeroineStatusDebugBridge : MonoBehaviour
         Debug.Log($"[HeroineStatusDebugBridge] ({heroineID}) 設定 Libido = {m.Libido}");
     }
 
-    /// <summary>套用一次每日性慾衰減。</summary>
+    /// <summary>套用一次每日性欲衰減。</summary>
     public void ApplyLibidoDecay()
     {
         var m = Model;
@@ -112,7 +121,7 @@ public class HeroineStatusDebugBridge : MonoBehaviour
         Debug.Log($"[HeroineStatusDebugBridge] ({heroineID}) 套用每日衰減 → Libido = {m.Libido}");
     }
 
-    /// <summary>輸出目前性慾值到 Console。</summary>
+    /// <summary>輸出目前性欲值到 Console。</summary>
     public void LogLibido()
     {
         var m = Model;
@@ -124,7 +133,7 @@ public class HeroineStatusDebugBridge : MonoBehaviour
     // 興奮度 (Excitement)
     // ==========================================================
 
-    /// <summary>一般增減興奮度，不套用性慾倍率。</summary>
+    /// <summary>一般增減興奮度，不套用性欲倍率。</summary>
     public void AddExcitement(int amount)
     {
         var m = Model;
@@ -134,14 +143,14 @@ public class HeroineStatusDebugBridge : MonoBehaviour
         Debug.Log($"[HeroineStatusDebugBridge] ({heroineID}) 興奮度一般增減 {amount}：{before} → {m.GetExcitement()}");
     }
 
-    /// <summary>舊方法別名；直接增減興奮度，已取消性興味倍率。</summary>
+    /// <summary>舊方法別名；直接增減興奮度，已取消性欲倍率。</summary>
     public void WeightedAddExcitement(int amount)
     {
-        // 保留舊 UnityEvent 方法名，已取消性興味倍率。
+        // 保留舊 UnityEvent 方法名，已取消性欲倍率。
         AddExcitement(amount);
     }
 
-    /// <summary>直接設定興奮度（0~100），不套用性慾倍率。</summary>
+    /// <summary>直接設定興奮度（0~100），不套用性欲倍率。</summary>
     public void SetExcitement(int value)
     {
         var m = Model;
@@ -315,7 +324,7 @@ public class HeroineStatusDebugBridge : MonoBehaviour
         var m = Model;
         if (m == null) return;
         Debug.Log($"[HeroineStatusDebugBridge] {heroineID}: 情緒={m.CurrentEmotion}, " +
-            $"信賴={m.Trust}, 好感={m.Affinity}, 心情={m.Mood}, 性興味={m.Libido}, " +
+            $"Awake={m.Awake}, 信賴={m.Trust}, 好感={m.Affinity}, 心情={m.Mood}, 性興味={m.Interest}, 性欲={m.Libido}, " +
             $"興奮={m.Excitement}, 高潮={m.Orgasm}, H次數={m.HCount}, 發情={m.IsInHeat}");
     }
 }

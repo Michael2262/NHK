@@ -5,10 +5,14 @@ using System;
 public class HeroineSaveData
 {
     public HeroineEmotionCardType Emotion = HeroineStatusModel.InitialEmotion;
+    // 舊存檔缺少 Awake 時為 100；明確保存的 0 仍維持 0。
+    public float Awake = HeroineStatusModel.InitialAwake;
     public int Trust;
     public int Affinity;
     // 舊存檔未包含 Mood 時使用初始值；明確保存的 0 仍維持 0。
     public int Mood = HeroineStatusModel.InitialMood;
+    // 舊存檔未包含 Interest 時使用初始值。
+    public int Interest = HeroineStatusModel.InitialInterest;
     public int Libido;
     public bool LibidoIncreasedToday;
     public int Excitement;

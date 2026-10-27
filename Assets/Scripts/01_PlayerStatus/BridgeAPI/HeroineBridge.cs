@@ -9,8 +9,8 @@ using UnityEngine;
 /// 3. Button.onClick() 直接綁定本元件的 public void 方法。
 ///
 /// 目前對應 NHK 版 HeroineStatusModel：
-/// - Libido 性慾值
-/// - Excitement 獨立興奮度（無性興味加成）
+/// - Interest 性興味 / Libido 性欲值
+/// - Excitement 獨立興奮度（無性欲加成）
 /// - Orgasm 獨立高潮度
 /// - Trust 信賴值 / Affinity 好感度
 /// - IsInHeat 發情開關
@@ -29,7 +29,7 @@ public class HeroineBridge : MonoBehaviour
     [SerializeField] private string heroineID;
 
     [Header("Default Button Amount")]
-    [Tooltip("給無參數按鈕方法使用的預設性慾變化量。")]
+    [Tooltip("給無參數按鈕方法使用的預設性欲變化量。")]
     [SerializeField] private int defaultLibidoAmount = 10;
 
     [Tooltip("給無參數按鈕方法使用的預設 H 次數變化量。")]
@@ -83,7 +83,20 @@ public class HeroineBridge : MonoBehaviour
     }
 
     // ==========================================================
-    // Libido / 性慾
+    // Awake
+    // ==========================================================
+
+    public float GetAwake() => H?.GetAwake() ?? 0f;
+    public void SetAwake(float value) => H?.SetAwake(value);
+    public void AddAwake(float amount) => H?.AddAwake(amount);
+
+    // 性興味：獨立數值，範圍與防溢位由 Model 處理。
+    public int GetInterest() => H?.GetInterest() ?? 0;
+    public void SetInterest(int value) => H?.SetInterest(value);
+    public void AddInterest(int amount) => H?.AddInterest(amount);
+
+    // ==========================================================
+    // Libido / 性欲
     // ==========================================================
 
     public void AddLibido(int amount) => H?.AddLibido(amount);
@@ -99,10 +112,10 @@ public class HeroineBridge : MonoBehaviour
     public int GetExcitement() => H?.GetExcitement() ?? 0;
     public void SetExcitement(int value) => H?.SetExcitement(value);
     public void AddExcitement(int amount) => H?.AddExcitement(amount);
-    /// <summary>依輸入的絕對值減少興奮度，不套用性慾倍率。</summary>
+    /// <summary>依輸入的絕對值減少興奮度，不套用性欲倍率。</summary>
     public void ReduceExcitement(int amount) => H?.AddExcitement(ToReductionDelta(amount));
     public void SetExcitementZero() => SetExcitement(0);
-    /// <summary>舊綁定相容入口，已移除性興味加成，等同 AddExcitement。</summary>
+    /// <summary>舊綁定相容入口，已移除性欲加成，等同 AddExcitement。</summary>
     public void WeightedAddExcitement(int amount) => H?.AddExcitement(amount);
 
     // 獨立高潮度

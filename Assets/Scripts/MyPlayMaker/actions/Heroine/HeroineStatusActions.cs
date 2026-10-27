@@ -573,11 +573,113 @@ public class HeroineEmotionDraw : FsmStateAction
 }
 
 // ############################################################
-//  性慾（Libido）
+//  性興味（Interest）
 // ############################################################
 
 [ActionCategory("Heroine Status")]
-[Tooltip("取得女主角的性慾值。")]
+[Tooltip("取得女主角的性興味值。")]
+public class GetInterest : FsmStateAction
+{
+    [RequiredField] public FsmString heroineID;
+    [RequiredField][UIHint(UIHint.Variable)] public FsmInt storeValue;
+
+    public override void Reset() { heroineID = null; storeValue = null; }
+
+    public override void OnEnter()
+    {
+        if (HeroineActionHelper.TryGetHeroine(heroineID.Value, out var h, "GetInterest"))
+            storeValue.Value = h.Interest;
+        Finish();
+    }
+}
+
+[ActionCategory("Heroine Status")]
+[Tooltip("設定女主角的性興味值（0~999）。")]
+public class SetInterestAction : FsmStateAction
+{
+    [RequiredField] public FsmString heroineID;
+    [RequiredField] public FsmInt value;
+
+    public override void Reset() { heroineID = null; value = 0; }
+
+    public override void OnEnter()
+    {
+        if (HeroineActionHelper.TryGetHeroine(heroineID.Value, out var h, "SetInterestAction"))
+            h.SetInterest(value.Value);
+        Finish();
+    }
+}
+
+[ActionCategory("Heroine Status")]
+[Tooltip("增減女主角的性興味值。正值增加，負值減少。")]
+public class AddInterestAction : FsmStateAction
+{
+    [RequiredField] public FsmString heroineID;
+    [RequiredField] public FsmInt amount;
+
+    public override void Reset() { heroineID = null; amount = 0; }
+
+    public override void OnEnter()
+    {
+        if (HeroineActionHelper.TryGetHeroine(heroineID.Value, out var h, "AddInterestAction"))
+            h.AddInterest(amount.Value);
+        Finish();
+    }
+}
+
+[ActionCategory("Heroine Status")]
+[Tooltip("檢查女主角的性興味值是否符合條件（>, >=, ==, <, <=）。")]
+public class CheckInterest : FsmStateAction
+{
+    [RequiredField] public FsmString heroineID;
+
+    [ObjectType(typeof(HeroineCompareOp))]
+    public FsmEnum compareOperator;
+
+    [RequiredField] public FsmInt threshold;
+
+    [UIHint(UIHint.Variable)] public FsmInt storeValue;
+
+    public FsmEvent passEvent;
+    public FsmEvent failEvent;
+
+    public override void Reset()
+    {
+        heroineID = null;
+        compareOperator = HeroineCompareOp.GreaterOrEqual;
+        threshold = 50;
+        storeValue = null;
+        passEvent = null;
+        failEvent = null;
+    }
+
+    public override void OnEnter()
+    {
+        if (!HeroineActionHelper.TryGetHeroine(heroineID.Value, out var h, "CheckInterest"))
+        {
+            Fsm.Event(failEvent);
+            Finish();
+            return;
+        }
+
+        int val = h.Interest;
+        if (storeValue != null && !storeValue.IsNone) storeValue.Value = val;
+
+        var op = compareOperator != null && compareOperator.Value != null
+            ? (HeroineCompareOp)compareOperator.Value
+            : HeroineCompareOp.GreaterOrEqual;
+
+        Fsm.Event(HeroineActionHelper.Compare(val, threshold.Value, op) ? passEvent : failEvent);
+        Finish();
+    }
+}
+
+// ############################################################
+//  性欲（Libido）
+// ############################################################
+
+[ActionCategory("Heroine Status")]
+[Tooltip("取得女主角的性欲值。")]
 public class GetLibido : FsmStateAction
 {
     [RequiredField] public FsmString heroineID;
@@ -594,7 +696,7 @@ public class GetLibido : FsmStateAction
 }
 
 [ActionCategory("Heroine Status")]
-[Tooltip("設定女主角的性慾值（0~150）。")]
+[Tooltip("設定女主角的性欲值（0~250）。")]
 public class SetLibidoAction : FsmStateAction
 {
     [RequiredField] public FsmString heroineID;
@@ -611,7 +713,7 @@ public class SetLibidoAction : FsmStateAction
 }
 
 [ActionCategory("Heroine Status")]
-[Tooltip("增減女主角的性慾值。正值增加，負值減少。")]
+[Tooltip("增減女主角的性欲值。正值增加，負值減少。")]
 public class AddLibidoAction : FsmStateAction
 {
     [RequiredField] public FsmString heroineID;
@@ -628,7 +730,7 @@ public class AddLibidoAction : FsmStateAction
 }
 
 [ActionCategory("Heroine Status")]
-[Tooltip("檢查女主角的性慾值是否符合條件（>, >=, ==, <, <=）。")]
+[Tooltip("檢查女主角的性欲值是否符合條件（>, >=, ==, <, <=）。")]
 public class CheckLibido : FsmStateAction
 {
     [RequiredField] public FsmString heroineID;
@@ -1085,7 +1187,7 @@ public class GetExcitement : FsmStateAction
 }
 
 [ActionCategory("Heroine Status")]
-[Tooltip("直接設定獨立興奮度（0~100），不套用性慾倍率。")]
+[Tooltip("直接設定獨立興奮度（0~100），不套用性欲倍率。")]
 public class SetExcitementAction : FsmStateAction
 {
     [RequiredField] public FsmString heroineID;
@@ -1102,7 +1204,7 @@ public class SetExcitementAction : FsmStateAction
 }
 
 [ActionCategory("Heroine Status")]
-[Tooltip("一般增減獨立興奮度，不套用性慾倍率。")]
+[Tooltip("一般增減獨立興奮度，不套用性欲倍率。")]
 public class AddExcitementAction : FsmStateAction
 {
     [RequiredField] public FsmString heroineID;
@@ -1119,7 +1221,7 @@ public class AddExcitementAction : FsmStateAction
 }
 
 [ActionCategory("Heroine Status")]
-[Tooltip("舊名稱保留：一般增減獨立興奮度，已取消性興味加成。")]
+[Tooltip("舊名稱保留：一般增減獨立興奮度，已取消性欲加成。")]
 public class WeightedAddExcitementAction : FsmStateAction
 {
     [RequiredField] public FsmString heroineID;

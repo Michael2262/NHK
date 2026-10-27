@@ -61,7 +61,23 @@ public class HeroineLuaBridge : MonoBehaviour
         Lua.RegisterFunction("SetCurrentEmotion", this,
             SymbolExtensions.GetMethodInfo(() => SetCurrentEmotion(string.Empty, string.Empty)));
 
-        // ── 性慾 ──
+        // ── Awake：保留小數 ──
+        Lua.RegisterFunction("GetAwake", this,
+            SymbolExtensions.GetMethodInfo(() => GetAwake(string.Empty)));
+        Lua.RegisterFunction("SetAwake", this,
+            SymbolExtensions.GetMethodInfo(() => SetAwake(string.Empty, (double)0)));
+        Lua.RegisterFunction("AddAwake", this,
+            SymbolExtensions.GetMethodInfo(() => AddAwake(string.Empty, (double)0)));
+
+        // ── 性興味 ──
+        Lua.RegisterFunction("GetInterest", this,
+            SymbolExtensions.GetMethodInfo(() => GetInterest(string.Empty)));
+        Lua.RegisterFunction("SetInterest", this,
+            SymbolExtensions.GetMethodInfo(() => SetInterest(string.Empty, (double)0)));
+        Lua.RegisterFunction("AddInterest", this,
+            SymbolExtensions.GetMethodInfo(() => AddInterest(string.Empty, (double)0)));
+
+        // ── 性欲 ──
         Lua.RegisterFunction("GetLibido", this,
             SymbolExtensions.GetMethodInfo(() => GetLibido(string.Empty)));
         Lua.RegisterFunction("SetLibido", this,
@@ -120,6 +136,14 @@ public class HeroineLuaBridge : MonoBehaviour
 
         Lua.UnregisterFunction("GetCurrentEmotion");
         Lua.UnregisterFunction("SetCurrentEmotion");
+
+        Lua.UnregisterFunction("GetAwake");
+        Lua.UnregisterFunction("SetAwake");
+        Lua.UnregisterFunction("AddAwake");
+
+        Lua.UnregisterFunction("GetInterest");
+        Lua.UnregisterFunction("SetInterest");
+        Lua.UnregisterFunction("AddInterest");
 
         Lua.UnregisterFunction("GetLibido");
         Lua.UnregisterFunction("SetLibido");
@@ -198,7 +222,31 @@ public class HeroineLuaBridge : MonoBehaviour
     }
 
     // ─────────────────────────────────────────────
-    // 性慾
+    // Awake 與性興味
+    // ─────────────────────────────────────────────
+
+    /// <summary>Awake（0～100）；Lua 可傳入小數，範圍由 Model 限制。</summary>
+    public double GetAwake(string heroineID) => GetModel(heroineID)?.GetAwake() ?? 0f;
+    public void SetAwake(string heroineID, double value) => GetModel(heroineID)?.SetAwake((float)value);
+    public void AddAwake(string heroineID, double amount) => GetModel(heroineID)?.AddAwake((float)amount);
+
+    /// <summary>性興味（0～999）；Lua 數值超出 int 範圍時先截斷，避免轉型溢位。</summary>
+    public double GetInterest(string heroineID) => GetModel(heroineID)?.GetInterest() ?? 0;
+    public void SetInterest(string heroineID, double value)
+    {
+        if (double.IsNaN(value)) return;
+        GetModel(heroineID)?.SetInterest(ClampInterestArgument(value));
+    }
+    public void AddInterest(string heroineID, double amount)
+    {
+        if (double.IsNaN(amount)) return;
+        GetModel(heroineID)?.AddInterest(ClampInterestArgument(amount));
+    }
+    private static int ClampInterestArgument(double value)
+        => (int)System.Math.Max(int.MinValue, System.Math.Min(int.MaxValue, value));
+
+    // ─────────────────────────────────────────────
+    // 性欲
     // ─────────────────────────────────────────────
 
     public double GetLibido(string heroineID)

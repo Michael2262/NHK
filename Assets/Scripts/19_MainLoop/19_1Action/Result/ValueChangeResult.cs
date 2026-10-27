@@ -31,10 +31,11 @@ public class ValueChangeResult : MonoBehaviour
     // ==================================================
     public enum HeroineResourceType
     {
-        Libido,
+        [UnityEngine.InspectorName("性欲 (Libido)")] Libido,
         Trust,
         // 追加，放最後以免打亂既有 prefab / 場景上此元件的列舉索引
-        Affinity
+        Affinity,
+        [UnityEngine.InspectorName("性興味 (Interest)")] Interest
     }
 
     [Serializable]
@@ -402,6 +403,9 @@ public class ValueChangeResult : MonoBehaviour
     {
         switch (type)
         {
+            case HeroineResourceType.Interest:
+                heroine.AddInterest(amount);
+                break;
             case HeroineResourceType.Libido:
                 heroine.AddLibido(amount);
                 break;

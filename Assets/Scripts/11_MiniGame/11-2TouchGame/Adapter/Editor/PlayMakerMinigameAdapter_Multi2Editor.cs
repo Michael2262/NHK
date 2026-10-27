@@ -11,7 +11,7 @@ public class PlayMakerMinigameAdapter_Multi2Editor : Editor
         new[]{ "信賴", "fsm_Trust", "Trust" },
         new[]{ "好感積分", "fsm_Affinity", "Affinity" },
         new[]{ "心情", "fsm_Mood", "Mood" },
-        new[]{ "性興味", "fsm_Libido", "Libido" },
+        new[]{ "性欲", "fsm_Libido", "Libido" },
         new[]{ "興奮", "fsm_Excitement", "Excitement" },
         new[]{ "高潮", "fsm_Orgasm", "Orgasm" },
         new[]{ "當前情緒", "fsm_Emotion", "CurrentEmotion (HeroineEmotionCardType)" },

@@ -34,8 +34,8 @@ public struct StatPreviewItem
         this.delta = delta;
     }
 
-    /// <summary>是否為女主角數值（Libido / Trust / Affinity）。</summary>
-    public bool IsHeroine => kind == StatKind.Libido || kind == StatKind.Trust || kind == StatKind.Affinity || kind == StatKind.Mood;
+    /// <summary>是否為女主角數值（Libido / Trust / Affinity / Mood / Interest）。</summary>
+    public bool IsHeroine => kind == StatKind.Libido || kind == StatKind.Trust || kind == StatKind.Affinity || kind == StatKind.Mood || kind == StatKind.Interest;
 }
 
 public class StatChangeService
@@ -212,6 +212,9 @@ public class StatChangeService
 
         switch (op.kind)
         {
+            case StatKind.Interest:
+                if (op.op == StatOp.Set) heroine.SetInterest(op.amount); else heroine.AddInterest(op.amount);
+                break;
             case StatKind.Libido:
                 if (op.op == StatOp.Set) heroine.SetLibido(op.amount); else heroine.AddLibido(op.amount);
                 break;
@@ -245,6 +248,7 @@ public class StatChangeService
     {
         switch (kind)
         {
+            case StatKind.Interest: return heroine.Interest;
             case StatKind.Libido: return heroine.Libido;
             case StatKind.Trust: return heroine.Trust;
             case StatKind.Affinity: return heroine.Affinity;

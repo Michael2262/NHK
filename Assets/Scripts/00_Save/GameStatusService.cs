@@ -304,7 +304,7 @@ public class GameStatusService : MonoBehaviour
             if (_suppressDaySettlement) return;
 
             ValueTriggerManager.OnValueChanged("Phase", Time.CurrentPhaseIndex);
-            // 換日：每位女主角獨立結算性興味、興奮與高潮。
+            // 換日：每位女主角獨立結算性欲、興奮與高潮。
             foreach (var heroine in Heroines.Values)
             {
                 heroine.ApplyLibidoDecay();

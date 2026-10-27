@@ -5,12 +5,14 @@
 //   HeroineStatChange(heroineID, statName, operation, amount)
 //   HeroineStatChange(heroineID, statName, operation, amount, resultLuaVariable)
 //
-// statName   = libido | trust | affinity | mood | excitement | orgasm
+// statName   = interest | libido | trust | affinity | mood | excitement | orgasm
 // operation  = add | set | get | weightedadd（僅 excitement）
 // get 的 amount 填 0 作為佔位；不修改數值，結果寫入 resultLuaVariable。
-// weightedadd 保留舊指令名稱，現在與 add 相同，不再套用性興味倍率。
+// weightedadd 保留舊指令名稱，現在與 add 相同，不再套用性欲倍率。
 //
 // 範例：
+//   HeroineStatChange(sister, interest, add, 10)
+//   HeroineStatChange(sister, interest, get, 0, LastInterest)
 //   HeroineStatChange(sister, excitement, add, 10)
 //   HeroineStatChange(sister, excitement, weightedadd, 10)
 //   HeroineStatChange(sister, excitement, set, 50)
@@ -19,11 +21,11 @@
 //   HeroineStatChange(sister, orgasm, set, 50)
 //   HeroineStatChange(sister, orgasm, get, 0, LastOrgasm)
 //   HeroineStatChange(sister, libido, add, 10)
-//     → 姐姐性慾 +10
+//     → 姐姐性欲 +10
 //   HeroineStatChange(sister, trust, add, -5)
 //     → 姐姐信賴 -5
 //   HeroineStatChange(sister, libido, set, 100)
-//     → 姐姐性慾直接設為 100
+//     → 姐姐性欲直接設為 100
 //   HeroineStatChange(sister, trust, add, 20, LastTrustValue)
 //     → 姐姐信賴 +20，並把結果寫入 Lua 變數 LastTrustValue
 //
@@ -74,8 +76,15 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
 
             switch (statName)
             {
+                case "interest":
+                case "性興味":
+                    ApplyOperation(heroine, operation, amount, StatTarget.Interest);
+                    resultValue = heroine.Interest;
+                    break;
+
                 case "libido":
-                case "性慾":
+                case "性欲":
+                case "性慾": // 保留舊指令別名
                     ApplyOperation(heroine, operation, amount, StatTarget.Libido);
                     resultValue = heroine.Libido;
                     break;
@@ -111,7 +120,7 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
                     break;
 
                 default:
-                    Debug.LogWarning($"[HeroineStatChange] 無法辨識 statName: {statName}，支援 libido / trust / affinity / mood / excitement / orgasm", this);
+                    Debug.LogWarning($"[HeroineStatChange] 無法辨識 statName: {statName}，支援 interest / libido / trust / affinity / mood / excitement / orgasm", this);
                     Stop();
                     return;
             }
@@ -125,7 +134,7 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
             Stop();
         }
 
-        private enum StatTarget { Libido, Trust, Affinity, Excitement, Orgasm, Mood }
+        private enum StatTarget { Libido, Trust, Affinity, Excitement, Orgasm, Mood, Interest }
 
         private static void ApplyOperation(HeroineStatusModel heroine, string operation, int amount, StatTarget target)
         {
@@ -156,6 +165,9 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
 
             switch (target)
             {
+                case StatTarget.Interest:
+                    if (isSet) heroine.SetInterest(amount); else heroine.AddInterest(amount);
+                    break;
                 case StatTarget.Libido:
                     if (isSet) heroine.SetLibido(amount); else heroine.AddLibido(amount);
                     break;

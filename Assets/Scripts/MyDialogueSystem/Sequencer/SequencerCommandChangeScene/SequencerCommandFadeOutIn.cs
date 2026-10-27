@@ -6,14 +6,14 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
     // ╔════════════════════════════════════════════════════════════════════╗
     // ║  FadeOut — 壓幕（淡出至遮蔽色）                                   ║
     // ╠════════════════════════════════════════════════════════════════════╣
-    // ║  語法：FadeOut([轉場色Phase], [持續時間])                          ║
+    // ║  語法：FadeOut([持續時間], [轉場色Phase])                          ║
     // ║                                                                    ║
     // ║  參數：                                                            ║
+    // ║  - 持續時間   (選填, 預設使用 TransitionFader 的預設值)             ║
+    // ║      傳入正數秒數可自訂淡出速度；0 或負數使用預設值                ║
     // ║  - 轉場色Phase (選填, 預設 -1)                                    ║
     // ║      -1 = 依照目前 Phase 自動決定顏色                              ║
     // ║       0 = 白天, 1 = 黃昏, 2 = 晚上, 3 = 深夜                      ║
-    // ║  - 持續時間   (選填, 預設使用 TransitionFader 的預設值)             ║
-    // ║      傳入秒數可自訂淡出速度                                        ║
     // ║                                                                    ║
     // ║  說明：                                                            ║
     // ║  執行後畫面會停留在遮蔽狀態，直到呼叫 FadeIn() 才會恢復。          ║
@@ -22,16 +22,16 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
     // ║  範例：                                                            ║
     // ║  FadeOut()            → 用當前 Phase 色，預設速度淡出              ║
     // ║  FadeOut(-1)          → 同上                                       ║
-    // ║  FadeOut(2)           → 用晚上色淡出                               ║
-    // ║  FadeOut(-1, 0.5)     → 用當前 Phase 色，0.5 秒淡出               ║
-    // ║  FadeOut(2, 0.3)      → 用晚上色，0.3 秒淡出                      ║
+    // ║  FadeOut(0.5)         → 用當前 Phase 色，0.5 秒淡出                ║
+    // ║  FadeOut(-1, 2)       → 用晚上色，預設速度淡出                     ║
+    // ║  FadeOut(0.3, 2)      → 用晚上色，0.3 秒淡出                       ║
     // ╚════════════════════════════════════════════════════════════════════╝
     public class SequencerCommandFadeOut : SequencerCommand
     {
         public void Awake()
         {
-            int phaseIndex = GetParameterAsInt(0, -1);
-            float duration = GetParameterAsFloat(1, -1f);
+            float duration = GetParameterAsFloat(0, -1f);
+            int phaseIndex = GetParameterAsInt(1, -1);
 
             if (TransitionFader.Instance == null)
             {

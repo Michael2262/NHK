@@ -13,7 +13,7 @@ namespace NHK.StateTest
         [SerializeField] private TMP_Text moodText;
         [Tooltip("好感積分；只顯示值，不附加名稱。")]
         [SerializeField] private TMP_Text affinityText;
-        [Tooltip("性興味；只顯示值，不附加名稱。")]
+        [Tooltip("性欲；只顯示值，不附加名稱。")]
         [SerializeField] private TMP_Text libidoText;
 
         [SerializeField, Tooltip("正式角色 ID；只有一位角色時可留空。") ] private string heroineID;

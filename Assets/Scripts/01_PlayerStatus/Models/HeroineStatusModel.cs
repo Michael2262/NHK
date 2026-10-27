@@ -7,6 +7,11 @@ public class HeroineStatusModel
     // 可調數值設定：同類放在一起。初始值於建立角色／新遊戲時套用。
     // ==========================================================
 
+    // ───── Awake（獨立浮點數值，不做每日歸零或衰減）─────
+    public const float AwakeMin = 0f;
+    public const float AwakeMax = 100f;
+    public const float InitialAwake = 100f;
+
     // ───── 信賴 ─────
     public const int TrustMin = 0;
     public const int TrustMax = 999;
@@ -22,7 +27,12 @@ public class HeroineStatusModel
     public const int MoodMax = 10;
     public const int InitialMood = 5;
 
-    // ───── 性興味 ─────
+    // ───── 性興味（獨立數值，不做每日衰減）─────
+    public const int InterestMin = 0;
+    public const int InterestMax = 999;
+    public const int InitialInterest = 0;
+
+    // ───── 性欲 ─────
     public const int LibidoMin = 0;
     public const int LibidoMax = 250;
     public const int InitialLibido = 0;
@@ -81,12 +91,16 @@ public class HeroineStatusModel
         add => OnCurrentEmotionChanged += value;
         remove => OnCurrentEmotionChanged -= value;
     }
+    public float Awake { get; private set; } = InitialAwake;
+    public event Action<float> OnAwakeChanged;
     public int Trust { get; private set; } = InitialTrust;
     public event Action<int> OnTrustChanged;
     public int Affinity { get; private set; } = InitialAffinity;
     public event Action<int> OnAffinityChanged;
     public int Mood { get; private set; } = InitialMood;
     public event Action<int> OnMoodChanged;
+    public int Interest { get; private set; } = InitialInterest;
+    public event Action<int> OnInterestChanged;
     public int Libido { get; private set; } = InitialLibido;
     public event Action<int> OnLibidoChanged;
     public int Excitement { get; private set; } = InitialExcitement;
@@ -108,8 +122,28 @@ public class HeroineStatusModel
         => (int)Math.Max(min, Math.Min(max, value));
 
     // ==========================================================
-    // 數值操作：先以 long 計算，超出範圍時截斷，避免 int 溢位。
+    // 數值操作：整數先以 long 計算；Awake 先以 double 計算，再限制範圍。
     // ==========================================================
+
+    public float GetAwake() => Awake;
+    public void AddAwake(float amount)
+    {
+        if (float.IsNaN(amount)) return;
+        SetAwake(ClampAwake((double)Awake + amount));
+    }
+    public void SetAwake(float value)
+    {
+        if (float.IsNaN(value)) return;
+        value = ClampAwake(value);
+        if (Awake == value) return;
+        Awake = value;
+        OnAwakeChanged?.Invoke(value);
+        OnChanged?.Invoke();
+    }
+
+    // 運算與讀檔共用範圍限制；無限值截至邊界，存檔 NaN 回到初始值。
+    private static float ClampAwake(double value)
+        => double.IsNaN(value) ? InitialAwake : (float)Math.Max(AwakeMin, Math.Min(AwakeMax, value));
 
     public int GetTrust() => Trust;
     public void AddTrust(int amount) => SetTrust(Clamp((long)Trust + amount, TrustMin, TrustMax));
@@ -141,6 +175,17 @@ public class HeroineStatusModel
         if (Mood == value) return;
         Mood = value;
         OnMoodChanged?.Invoke(value);
+        OnChanged?.Invoke();
+    }
+
+    public int GetInterest() => Interest;
+    public void AddInterest(int amount) => SetInterest(Clamp((long)Interest + amount, InterestMin, InterestMax));
+    public void SetInterest(int value)
+    {
+        value = Clamp(value, InterestMin, InterestMax);
+        if (Interest == value) return;
+        Interest = value;
+        OnInterestChanged?.Invoke(value);
         OnChanged?.Invoke();
     }
 
@@ -224,7 +269,8 @@ public class HeroineStatusModel
     public HeroineSaveData ToSaveData() => new HeroineSaveData
     {
         Emotion = CurrentEmotion,
-        Trust = Trust, Affinity = Affinity, Mood = Mood, Libido = Libido,
+        Awake = Awake,
+        Trust = Trust, Affinity = Affinity, Mood = Mood, Interest = Interest, Libido = Libido,
         LibidoIncreasedToday = LibidoIncreasedToday,
         Excitement = Excitement, Orgasm = Orgasm, HCount = HCount,
         IsInHeat = IsInHeat, StatisticsData = Statistics.ToSaveData(),
@@ -243,9 +289,11 @@ public class HeroineStatusModel
     {
         if (data == null) return;
         CurrentEmotion = Enum.IsDefined(typeof(HeroineEmotionCardType), data.Emotion) ? data.Emotion : InitialEmotion;
+        Awake = ClampAwake(data.Awake);
         Trust = Clamp(data.Trust, TrustMin, TrustMax);
         Affinity = Clamp(data.Affinity, AffinityMin, AffinityMax);
         Mood = Clamp(data.Mood, MoodMin, MoodMax);
+        Interest = Clamp(data.Interest, InterestMin, InterestMax);
         Libido = Clamp(data.Libido, LibidoMin, LibidoMax);
         LibidoIncreasedToday = data.LibidoIncreasedToday;
         Excitement = Clamp(data.Excitement, ExcitementMin, ExcitementMax);
