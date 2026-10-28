@@ -9,8 +9,9 @@ using UnityEngine;
 // 職責：
 //   1. 依 ID 從 StatChangePackageDatabase 取出套組。
 //   2. 逐條把數值變化套到 GameStatusService.Instance 上的
-//      Protagonist（RoomMessLevel；舊四維與身體髒污項會略過）
-//      與指定的 Heroine（Libido/Trust）。
+//      Protagonist（RoomMessLevel / Lust）
+//      與指定的 Heroine（Libido / Trust / Affinity / Mood / Interest）。
+//      舊資產中的退役或無效數值項目會略過。
 //   3. 收集每筆「實際發生的 delta」成 ValueChangeRecord 回傳，
 //      由呼叫端（SequencerCommandStatPackage 等）決定要不要報告。
 //
@@ -55,7 +56,7 @@ public class StatChangeService
     /// 套用指定 ID 的數值變化套組。
     /// </summary>
     /// <param name="packageID">套組 ID。</param>
-    /// <param name="heroineID">女主角 ID。套組若含 Libido / Trust 變化時必填；純主角套組可省略。</param>
+    /// <param name="heroineID">女主角 ID。套組若含女主角數值變化時必填；純主角套組可省略。</param>
     /// <returns>實際發生變化（delta != 0）的記錄清單，供報告使用。永不為 null。</returns>
     public List<ValueChangeRecord> Apply(string packageID, string heroineID = null)
     {
@@ -89,7 +90,7 @@ public class StatChangeService
 
         foreach (var op in entry.ops)
         {
-            if (op == null || IsRetired(op.kind)) continue;
+            if (op == null || !op.IsSupportedKind) continue;
 
             if (op.IsHeroineStat)
             {
@@ -122,10 +123,10 @@ public class StatChangeService
     /// <summary>
     /// 試算指定 ID 的套組「會變多少」，但**不套用**任何變化（供 hover 預覽用）。
     /// 回傳每個數值的名目 delta：Add 為 amount 本身；Set 為 (目標值 − 目前值)。
-    /// 注意：不模擬 Model 的 min/max 夾值，因此預覽為名目值（例如壓力已滿仍顯示 +10）。
+    /// 注意：不模擬 Model 的 min/max 夾值，因此預覽為名目值（例如邪念已滿仍回傳 +10）。
     /// </summary>
     /// <param name="packageID">套組 ID。</param>
-    /// <param name="heroineID">女主角 ID。含 Libido / Trust 時需提供；找不到則跳過女主角項。</param>
+    /// <param name="heroineID">女主角 ID。含女主角數值時需提供；找不到則跳過女主角項。</param>
     /// <returns>delta != 0 的預覽項清單。永不為 null。</returns>
     public List<StatPreviewItem> Preview(string packageID, string heroineID = null)
     {
@@ -145,7 +146,7 @@ public class StatChangeService
 
         foreach (var op in entry.ops)
         {
-            if (op == null || IsRetired(op.kind)) continue;
+            if (op == null || !op.IsSupportedKind) continue;
 
             if (op.IsHeroineStat)
             {
@@ -193,7 +194,9 @@ public class StatChangeService
 
         switch (op.kind)
         {
-
+            case StatKind.Lust:
+                if (op.op == StatOp.Set) p.SetLust(op.amount); else p.AddLust(op.amount);
+                break;
             case StatKind.RoomMessLevel:
                 if (op.op == StatOp.Set) p.SetRoomMessLevel(op.amount); else p.AddRoomMessLevel(op.amount);
                 break;
@@ -239,6 +242,7 @@ public class StatChangeService
     {
         switch (kind)
         {
+            case StatKind.Lust: return p.Lust;
             case StatKind.RoomMessLevel: return p.RoomMessLevel;
             default: return 0;
         }
@@ -279,13 +283,10 @@ public class StatChangeService
         return new ValueChangeRecord
         {
             isHeroineResource = isHeroine,
-            resourceTypeKey = kind.ToString(),  // 與 ValueChangeReporter 的 key 規則對齊（Stress/Libido/Trust…）
+            resourceTypeKey = kind.ToString(),  // 與 ValueChangeReporter 的 key 規則對齊（Lust/Libido/Trust…）
             finalAmount = delta,
             effectResult = ValueChangeResult.EffectResult.Normal,
             heroineNameKey = heroineNameKey
         };
     }
-    private static bool IsRetired(StatKind kind)
-        => kind == StatKind.Stress || kind == StatKind.LifePower || kind == StatKind.Sociality
-        || kind == StatKind.Dependency || kind == StatKind.BodyDirtyLevel;
 }

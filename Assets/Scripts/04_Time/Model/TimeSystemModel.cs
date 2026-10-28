@@ -29,6 +29,11 @@ public class TimeSystemModel
 
     // ═════════ 事件宣告 ═════════
     public event Action<int> OnTimeSlotAdvanced;       // 告知外界時段已前進 (delta)
+    /// <summary>
+    /// 每實際消耗 1 Slot 通知一次，參數為消耗前的 Phase 索引。
+    /// Slot 位置更新後、Phase／Day 通知前結算；初始化、讀檔及直接跳日不觸發。
+    /// </summary>
+    public event Action<int> OnTimeSlotConsumed;
     public event Action OnPhaseChanged;                 // 告知外界進入新的階段 (例如：從白天進入黃昏)
     public event Action OnDayPassed;                   // 告知外界新的一天開始 (例如：Day 1 -> Day 2)
 
@@ -321,24 +326,14 @@ public class TimeSystemModel
 
         while (slots > 0)
         {
+            int consumedPhaseIndex = CurrentPhaseIndex;
             // 1. 在當前階段內推進
             if (CurrentSlotInPhase < totalSlotsInCurrentPhase)
             {
-                int remainingSlotsInPhase = totalSlotsInCurrentPhase - CurrentSlotInPhase;
-                int slotsToAdvance = Math.Min(slots, remainingSlotsInPhase);
-
-                CurrentSlotInPhase += slotsToAdvance;
-                slots -= slotsToAdvance;
-
-                if (slots > 0 && CurrentSlotInPhase == totalSlotsInCurrentPhase)
-                {
-                    // 已經填滿當前階段，準備進入下一階段
-                }
-                else if (slots == 0)
-                {
-                    // 推進完成
-                    break;
-                }
+                // 逐格結算，讓一次消耗多格時也能通知中途的狀態變化。
+                CurrentSlotInPhase++;
+                slots -= 1;
+                OnTimeSlotConsumed?.Invoke(consumedPhaseIndex);
             }
             // 2. 進入下一階段
             else if (CurrentPhaseIndex < _cfg.PhaseNames.Count - 1)
@@ -346,6 +341,7 @@ public class TimeSystemModel
                 CurrentPhaseIndex++;
                 CurrentSlotInPhase = 1;
                 slots -= 1;
+                OnTimeSlotConsumed?.Invoke(consumedPhaseIndex);
                 OnPhaseChanged?.Invoke();
                 totalSlotsInCurrentPhase = _cfg.GetTotalSlots(CurrentPhaseIndex);
             }
@@ -355,6 +351,8 @@ public class TimeSystemModel
                 CurrentPhaseIndex = 0;
                 CurrentSlotInPhase = 1;
                 slots -= 1;
+                // 先結算最後一格，再換日重設角色數值。
+                OnTimeSlotConsumed?.Invoke(consumedPhaseIndex);
                 AdvanceDay();
                 OnPhaseChanged?.Invoke();
                 break;

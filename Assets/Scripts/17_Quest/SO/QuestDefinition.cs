@@ -26,7 +26,7 @@ public sealed class QuestDefinition : ScriptableObject
 public sealed class QuestRewardDefinition
 {
     [InspectorName("主角貼紙增減")]
-    [Tooltip("直接增減實際持有的貼紙，不進入待領貼紙數值。")]
+    [Tooltip("直接增減主角持有的貼紙。")]
     public int StickerDelta;
     [InspectorName("女主角數值增減")]
     public List<QuestHeroineReward> Heroines = new List<QuestHeroineReward>();

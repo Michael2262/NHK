@@ -7,10 +7,29 @@ public class HeroineStatusModel
     // 可調數值設定：同類放在一起。初始值於建立角色／新遊戲時套用。
     // ==========================================================
 
-    // ───── Awake（獨立浮點數值，不做每日歸零或衰減）─────
+    // ───── Awake（獨立浮點數值；指定 Phase 每消耗一格扣除，換日重設）─────
     public const float AwakeMin = 0f;
-    public const float AwakeMax = 100f;
-    public const float InitialAwake = 100f;
+    public const float AwakeMax = 120f;
+    public const float InitialAwake = 120f;
+    public const int AwakeDecayPhaseIndex = 2;
+    public const float AwakeDecayPerSlot = 5f;
+    public const float AwakeDailyResetValue = 120f;
+
+    // ───── 睡眠狀態（所有女主角共用）─────
+    // 各區間含下限、不含下一狀態下限；最上層包含 AwakeMax。
+    // Wake：     [SleepStateWakeMin, AwakeMax]                     預設 100～120（含上限）
+    // Dazed：    [SleepStateDazedMin, SleepStateWakeMin)            預設 80～<100
+    // HalfAwake：[SleepStateHalfAwakeMin, SleepStateDazedMin)       預設 60～<80
+    // Sleep：    [SleepStateSleepMin, SleepStateHalfAwakeMin)       預設 40～<60
+    // SoundSleep：[SleepStateSoundSleepMin, SleepStateSleepMin)     預設 20～<40
+    // DeepSleep：[AwakeMin, SleepStateSoundSleepMin)                預設 0～<20
+    // 調整時保持 AwakeMin < SoundSleep < Sleep < HalfAwake < Dazed < Wake <= AwakeMax。
+    // 共用相鄰邊界，避免小數區間出現空隙或重疊。
+    public const float SleepStateWakeMin = 100f;
+    public const float SleepStateDazedMin = 80f;
+    public const float SleepStateHalfAwakeMin = 60f;
+    public const float SleepStateSleepMin = 40f;
+    public const float SleepStateSoundSleepMin = 20f;
 
     // ───── 信賴 ─────
     public const int TrustMin = 0;
@@ -93,6 +112,10 @@ public class HeroineStatusModel
     }
     public float Awake { get; private set; } = InitialAwake;
     public event Action<float> OnAwakeChanged;
+    /// <summary>由 Awake 即時計算；讀檔還原 Awake 後即可取得正確狀態，不另存檔。</summary>
+    public HeroineSleepState CurrentSleepState => ResolveSleepState(Awake);
+    /// <summary>一般數值操作跨越睡眠區間時通知新狀態；讀檔由 OnGameStatusLoaded 統一刷新。</summary>
+    public event Action<HeroineSleepState> OnCurrentSleepStateChanged;
     public int Trust { get; private set; } = InitialTrust;
     public event Action<int> OnTrustChanged;
     public int Affinity { get; private set; } = InitialAffinity;
@@ -136,9 +159,25 @@ public class HeroineStatusModel
         if (float.IsNaN(value)) return;
         value = ClampAwake(value);
         if (Awake == value) return;
+        var oldSleepState = CurrentSleepState;
         Awake = value;
+        var newSleepState = CurrentSleepState;
+        if (oldSleepState != newSleepState)
+            OnCurrentSleepStateChanged?.Invoke(newSleepState);
         OnAwakeChanged?.Invoke(value);
         OnChanged?.Invoke();
+    }
+
+    public HeroineSleepState GetCurrentSleepState() => CurrentSleepState;
+
+    private static HeroineSleepState ResolveSleepState(float awake)
+    {
+        if (awake >= SleepStateWakeMin) return HeroineSleepState.Wake;
+        if (awake >= SleepStateDazedMin) return HeroineSleepState.Dazed;
+        if (awake >= SleepStateHalfAwakeMin) return HeroineSleepState.HalfAwake;
+        if (awake >= SleepStateSleepMin) return HeroineSleepState.Sleep;
+        if (awake >= SleepStateSoundSleepMin) return HeroineSleepState.SoundSleep;
+        return HeroineSleepState.DeepSleep;
     }
 
     // 運算與讀檔共用範圍限制；無限值截至邊界，存檔 NaN 回到初始值。
@@ -252,7 +291,16 @@ public class HeroineStatusModel
         OnChanged?.Invoke();
     }
 
+    /// <summary>每實際消耗一格結算一次；使用消耗前的 Phase，包含離開該 Phase 的最後一格。</summary>
+    public void ApplyAwakeSlotDecay(int consumedPhaseIndex)
+    {
+        if (consumedPhaseIndex == AwakeDecayPhaseIndex)
+            AddAwake(-AwakeDecayPerSlot);
+    }
+
     // ───── 跨日結算：由 GameStatusService 對每位角色呼叫一次 ─────
+    public void ApplyAwakeDailyReset() => SetAwake(AwakeDailyResetValue);
+
     public void ApplyLibidoDecay()
     {
         bool skipDecay = LibidoIncreasedToday;

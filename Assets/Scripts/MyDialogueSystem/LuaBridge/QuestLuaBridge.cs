@@ -2,7 +2,7 @@ using UnityEngine;
 using PixelCrushers.DialogueSystem;
 
 /// <summary>
-/// 將 Quest 查詢提供給 Dialogue Conditions，啟停與領獎提供給 Script。
+/// 將 Quest 查詢提供給 Dialogue Conditions，啟停、成功計次與領獎提供給 Script。
 /// 掛在 GameStatusService 同一個常駐 GameObject，整個遊戲保留一份。
 /// </summary>
 [DisallowMultipleComponent]
@@ -27,6 +27,8 @@ public sealed class QuestLuaBridge : MonoBehaviour
             SymbolExtensions.GetMethodInfo(() => QuestHasUnclaimedRewards()));
         Lua.RegisterFunction(nameof(QuestSetActive), this,
             SymbolExtensions.GetMethodInfo(() => QuestSetActive(string.Empty, false)));
+        Lua.RegisterFunction(nameof(QuestIncreaseSuccessCount), this,
+            SymbolExtensions.GetMethodInfo(() => QuestIncreaseSuccessCount(string.Empty)));
         Lua.RegisterFunction(nameof(QuestClaimNextReward), this,
             SymbolExtensions.GetMethodInfo(() => QuestClaimNextReward()));
         _registeredBridge = this;
@@ -40,6 +42,7 @@ public sealed class QuestLuaBridge : MonoBehaviour
         Lua.UnregisterFunction(nameof(QuestHasIncomplete));
         Lua.UnregisterFunction(nameof(QuestHasUnclaimedRewards));
         Lua.UnregisterFunction(nameof(QuestSetActive));
+        Lua.UnregisterFunction(nameof(QuestIncreaseSuccessCount));
         Lua.UnregisterFunction(nameof(QuestClaimNextReward));
         _registeredBridge = null;
     }
@@ -71,6 +74,21 @@ public sealed class QuestLuaBridge : MonoBehaviour
         var result = model.SetActive(questID, active);
         if (result == QuestResult.Success) return true;
         Debug.LogWarning($"[QuestLuaBridge] 任務「{questID}」啟停設定未執行：{result}。", this);
+        return false;
+    }
+
+    /// <summary>Script：QuestIncreaseSuccessCount("Quest_ID")。成功次數加一，沿用啟動、完成與每日限制。</summary>
+    public bool QuestIncreaseSuccessCount(string questID)
+    {
+        var model = GameStatusService.Instance?.Quests;
+        if (model == null)
+        {
+            Debug.LogWarning("[QuestLuaBridge] Quest 尚未初始化，無法增加任務成功次數。", this);
+            return false;
+        }
+        var result = model.TryRecordAction(questID);
+        if (result == QuestResult.Success) return true;
+        Debug.LogWarning($"[QuestLuaBridge] 任務「{questID}」成功次數加一未執行：{result}。", this);
         return false;
     }
 

@@ -25,7 +25,6 @@ namespace NHK.StateTest
         public bool GetIsOverShoot() => Model?.IsOverShoot ?? false;
         public int GetLust() => Model?.Lust ?? 0;
         public int GetStickerCount() => Model?.StickerCount ?? 0;
-        public int GetPendingStickerCount() => Model?.PendingStickerCount ?? 0;
         public int GetMoney() => Model?.Money ?? 0;
 
         public void SetStaminaMax(int value) => Model?.SetStaminaMax(value);
@@ -42,14 +41,8 @@ namespace NHK.StateTest
         public void AddLust(int amount) => Model?.AddLust(amount);
         public void SetStickerCount(int value) => Model?.SetStickerCount(value);
         public void AddStickerCount(int amount) => Model?.AddStickerCount(amount);
-        public void SetPendingStickerCount(int value) => Model?.SetPendingStickerCount(value);
-        public void AddPendingStickerCount(int amount) => Model?.AddPendingStickerCount(amount);
         public void SetMoney(int value) => Model?.SetMoney(value);
         public void AddMoney(int amount) => Model?.AddMoney(amount);
-
-        // void 入口可綁定 Button／UnityEvent；是否有可領數量由 Model 判斷。
-        public void RedeemPendingStickers() => Model?.RedeemPendingStickers();
-
     }
 }
 

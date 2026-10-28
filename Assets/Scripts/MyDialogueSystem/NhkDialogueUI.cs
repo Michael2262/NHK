@@ -102,8 +102,9 @@ namespace PixelCrushers.DialogueSystem
 
         public override void OnContinueConversation()
         {
-            // 阻擋按鈕、快捷鍵轉來的 UI 繼續要求；計時完成走 Sequence 結束，不經此處。
-            if (NhkAutoDialogueBridge.IsBlockingContinue) return;
+            // 全螢幕點擊區與快捷鍵也會送出 UI 繼續要求，不能只隱藏繼續鈕。
+            // 同時遵守演出鎖與自動對話鎖；計時完成走 Sequence 結束，不經此處。
+            if (NhkUISubtitlePanel.IsContinueButtonLocked) return;
             base.OnContinueConversation();
         }
 

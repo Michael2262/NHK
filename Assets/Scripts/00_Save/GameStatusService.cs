@@ -272,6 +272,13 @@ public class GameStatusService : MonoBehaviour
         // 1. 訂閱 TimeManager 的事件 (即有邏輯)
         TimeManager.OnDayPassed += HandleDayPassed;
 
+        // 按每格消耗前的 Phase 結算，批次跨階段也不會漏扣或誤扣。
+        Time.OnTimeSlotConsumed += (consumedPhaseIndex) =>
+        {
+            foreach (var heroine in Heroines.Values)
+                heroine.ApplyAwakeSlotDecay(consumedPhaseIndex);
+        };
+
         // 2. 訂閱 Time Model 的細節變化，用於自動清理 Flag
         // 當時間推進(消耗 Slot)時，清理 "UntilNextSlot" 類型的 Flag
         Time.OnTimeSlotAdvanced += (slotsAdvanced) =>
@@ -304,9 +311,10 @@ public class GameStatusService : MonoBehaviour
             if (_suppressDaySettlement) return;
 
             ValueTriggerManager.OnValueChanged("Phase", Time.CurrentPhaseIndex);
-            // 換日：每位女主角獨立結算性欲、興奮與高潮。
+            // 換日：每位女主角獨立重設 Awake 並結算性欲、興奮與高潮。
             foreach (var heroine in Heroines.Values)
             {
+                heroine.ApplyAwakeDailyReset();
                 heroine.ApplyLibidoDecay();
                 heroine.ApplyExcitementDailyReset();
                 heroine.ApplyOrgasmDailyReset();

@@ -137,8 +137,15 @@ public class HeroineUI : MonoBehaviour
         if (GameStatusService.Instance != null)
             GameStatusService.Instance.OnGameStatusLoaded -= OnGameStatusLoaded;
         UnsubscribeFromModel();
-        StatusPreviewSequencer.CancelAllIfExists();
+        StatusPreviewSequencer.CancelOwnerIfExists(this);
         if (Instance == this) Instance = null;
+    }
+
+    private void OnDisable()
+    {
+        StatusPreviewSequencer.CancelOwnerIfExists(this);
+        HideAllPreviewTexts();
+        RefreshAllUI();
     }
 
     // ==========================================================
@@ -185,7 +192,7 @@ public class HeroineUI : MonoBehaviour
     {
         SetCanvasGroupVisible(false);
         UnsubscribeFromModel();
-        StatusPreviewSequencer.CancelAllIfExists();
+        StatusPreviewSequencer.CancelOwnerIfExists(this);
         HideAllPreviewTexts();
         _currentModel = null;
 
@@ -226,7 +233,7 @@ public class HeroineUI : MonoBehaviour
     private void ApplyHeroineData(string heroineID)
     {
         UnsubscribeFromModel();
-        StatusPreviewSequencer.CancelAllIfExists();
+        StatusPreviewSequencer.CancelOwnerIfExists(this);
         HideAllPreviewTexts();
 
         var service = GameStatusService.Instance;
@@ -284,7 +291,7 @@ public class HeroineUI : MonoBehaviour
     {
         int delta = newValue - _cachedInterest;
         _cachedInterest = newValue;
-        StatusPreviewSequencer.Instance.Enqueue(
+        EnqueueArrowPreview(
             InterestPreviewOrder,
             () => SetText(textInterest, newValue),
             PreviewIfAllowed(textInterestPreview, delta),
@@ -295,7 +302,7 @@ public class HeroineUI : MonoBehaviour
     {
         int delta = newValue - _cachedMood;
         _cachedMood = newValue;
-        StatusPreviewSequencer.Instance.Enqueue(
+        EnqueueArrowPreview(
             MoodPreviewOrder,
             () => SetMoodText(newValue),
             PreviewIfAllowed(textMoodPreview, delta),
@@ -329,7 +336,7 @@ public class HeroineUI : MonoBehaviour
     {
         int delta = newValue - _cachedTrust;
         _cachedTrust = newValue;
-        StatusPreviewSequencer.Instance.Enqueue(
+        EnqueueArrowPreview(
             StatusPreviewSequencer.OrderHeroineTrust,
             () => SetText(textTrust, newValue),
             PreviewIfAllowed(textTrustPreview, delta),
@@ -340,7 +347,7 @@ public class HeroineUI : MonoBehaviour
     {
         int delta = newValue - _cachedLibido;
         _cachedLibido = newValue;
-        StatusPreviewSequencer.Instance.Enqueue(
+        EnqueueArrowPreview(
             StatusPreviewSequencer.OrderHeroineLibido,
             () => SetText(textLibido, newValue),
             PreviewIfAllowed(textLibidoPreview, delta),
@@ -376,7 +383,7 @@ public class HeroineUI : MonoBehaviour
     // ==========================================================
 
     // ==========================================================
-    //  Hover 預覽（靜態）：滑鼠懸停時常駐顯示 +X / -X，移開清掉。
+    //  Hover 預覽（靜態）：滑鼠懸停時常駐顯示增減箭頭，移開清掉。
     //  顯示 Trust / Interest / Libido / Mood 的數值預覽，不改變目前主顯示。
     //  由 StatPackagePreviewPresenter 呼叫。
     // ==========================================================
@@ -421,15 +428,34 @@ public class HeroineUI : MonoBehaviour
         HidePreviewText(textMoodPreview);
     }
 
-    // 靜態顯示：直接設 +X / -X 並把 alpha 拉滿（不透明），不做動畫。
+    // 靜態顯示：以箭頭隱藏實際增減量，不做動畫；無變動時不顯示。
     private static void SetStaticPreview(TextMeshProUGUI target, int delta)
     {
         if (target == null) return;
-        target.text = delta > 0 ? $"+{delta}" : delta.ToString();
+        target.text = GetPreviewArrowText(delta);
         var c = target.color;
-        c.a = 1f;
+        c.a = delta == 0 ? 0f : 1f;
         target.color = c;
-        target.gameObject.SetActive(true);
+        if (delta != 0) target.gameObject.SetActive(true);
+    }
+
+    // 動態與 hover 共用門檻；5 仍為一個箭頭，10 仍為兩個箭頭。
+    private static string GetPreviewArrowText(int delta)
+    {
+        return StatusPreviewSequencer.GetPreviewArrowText(delta);
+    }
+
+    private void EnqueueArrowPreview(int order, System.Action applyValue,
+        TextMeshProUGUI preview, int delta)
+    {
+        if (delta == 0) return;
+        if (!isActiveAndEnabled)
+        {
+            applyValue?.Invoke();
+            return;
+        }
+        StatusPreviewSequencer.Instance.EnqueueText(
+            order, preview, GetPreviewArrowText(delta), applyValue, this);
     }
 
     private void HideAllPreviewTexts()

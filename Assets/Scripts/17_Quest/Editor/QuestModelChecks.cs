@@ -236,7 +236,6 @@ public static class QuestModelChecks
             }))
             {
                 var protagonist = new ProtagonistStatusModel();
-                protagonist.SetPendingStickerCount(9);
                 var heroine = new HeroineStatusModel(new HeroineStat { ID = "H" }, null);
                 var flags = new ProgressFlagModel();
                 var service = new QuestRewardService(f.Model, protagonist, id => id == "H" ? heroine : null, flags);
@@ -249,8 +248,8 @@ public static class QuestModelChecks
                 Expect(service.TryClaimNextReward(out string claimed) == QuestResult.Success && claimed == "Z",
                     "應領資料庫第一筆，不依字母或完成時間排序。");
                 Expect(nested == QuestResult.Busy && service.HasUnclaimedRewards, "數值事件重入不可領取下一筆。");
-                Expect(protagonist.StickerCount == 5 && protagonist.PendingStickerCount == 9,
-                    "獎勵需改實際貼紙，不改待領貼紙，並使用建立時設定。");
+                Expect(protagonist.StickerCount == 5,
+                    "獎勵需增加持有貼紙，並使用建立時設定。");
                 Expect(heroine.Mood == 3 && heroine.Trust == 7 && heroine.Libido == 10 && heroine.LibidoIncreasedToday
                     && heroine.Excitement == 0 && flags.Contains(flag.FlagID), "應套用三項正式數值與 Flag，不改興奮。");
                 Expect(f.Model.GetProgress(f.A).IsRewarded && !f.Model.GetProgress(f.A).IsActive,

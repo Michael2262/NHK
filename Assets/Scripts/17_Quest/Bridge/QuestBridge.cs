@@ -8,11 +8,7 @@ public sealed class QuestBridge : MonoBehaviour
     [Tooltip("拖入要操作的 Quest SO；ID 就是 SO 檔名。無參數的任務操作使用這筆任務，刷新 UI 不需要指定任務。")]
     [SerializeField] private QuestDefinition targetQuest;
 
-    [Header("任務追蹤 UI")]
-    [Tooltip("拖入要刷新的 QuestTrackerUI；刷新時會依資料庫順序重新挑選顯示任務。")]
-    [SerializeField] private QuestTrackerUI targetTrackerUI;
-
-    /// <summary>供 UnityEvent 呼叫，重新挑選指定追蹤 UI 的任務清單。</summary>
+    /// <summary>供 UnityEvent 呼叫，透過單例重新挑選共用追蹤 UI 的任務清單。</summary>
     [ContextMenu("刷新任務追蹤 UI")]
     public void RefreshQuestTrackerUI()
     {
@@ -21,12 +17,13 @@ public sealed class QuestBridge : MonoBehaviour
             Debug.LogWarning("[QuestBridge] 請在 Play Mode 中刷新任務追蹤 UI。", this);
             return;
         }
-        if (targetTrackerUI == null)
+        var trackerUI = QuestTrackerUI.Instance;
+        if (trackerUI == null)
         {
-            Debug.LogWarning("[QuestBridge] 請指定要刷新的 QuestTrackerUI。", this);
+            Debug.LogWarning("[QuestBridge] QuestTrackerUI 尚未就緒，請確認共用 UI 場景已載入且元件曾啟用。", this);
             return;
         }
-        targetTrackerUI.RefreshTasks();
+        trackerUI.RefreshTasks();
     }
 
     [ContextMenu("啟動任務")]

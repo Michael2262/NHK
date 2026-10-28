@@ -18,26 +18,22 @@ using UnityEngine;
 
 /// <summary>
 /// 可被套組變更的數值種類。
-/// 前四項屬主角（ProtagonistStatusModel），後兩項屬女主角（HeroineStatusModel）。
+/// RoomMessLevel / Lust 屬主角，其餘屬女主角。
 /// 列舉名稱會直接當成 ValueChangeReporter 的 resourceTypeKey 使用，請勿隨意更名。
 /// </summary>
 public enum StatKind
 {
+    // 明確保留既有序列化編號；已退役的 0～3、7 不得重用。
     // ── 主角 ──
-    [UnityEngine.InspectorName("已退役：Stress")] Stress,
-    [UnityEngine.InspectorName("已退役：LifePower")] LifePower,
-    [UnityEngine.InspectorName("已退役：Sociality")] Sociality,
-    [UnityEngine.InspectorName("已退役：Dependency")] Dependency,
-    RoomMessLevel,
+    RoomMessLevel = 4,
     // ── 女主角 ──
-    [UnityEngine.InspectorName("性欲 (Libido)")] Libido,
-    Trust,
-    // ── 主角（追加，放最後以免打亂既有套組 .asset 的列舉索引） ──
-    [UnityEngine.InspectorName("已退役：BodyDirtyLevel")] BodyDirtyLevel,
-    // ── 女主角（追加，放最後以免打亂既有套組 .asset 的列舉索引） ──
-    Affinity,
-    Mood, // 追加，維持既有序列化索引
-    [UnityEngine.InspectorName("性興味 (Interest)")] Interest
+    [UnityEngine.InspectorName("性欲 (Libido)")] Libido = 5,
+    Trust = 6,
+    Affinity = 8,
+    Mood = 9,
+    [UnityEngine.InspectorName("性興味 (Interest)")] Interest = 10,
+    // ── 主角（新增編號） ──
+    [UnityEngine.InspectorName("邪念 (Lust)")] Lust = 11
 }
 
 /// <summary>
@@ -57,7 +53,7 @@ public enum StatOp
 [Serializable]
 public class StatChangeOp
 {
-    [Tooltip("要變更的數值種類。Libido / Trust / Affinity / Mood / Interest 屬女主角，需在調用時提供 heroineID。")]
+    [Tooltip("RoomMessLevel / Lust 屬主角；Libido / Trust / Affinity / Mood / Interest 屬女主角，需在調用時提供 heroineID。")]
     public StatKind kind = StatKind.RoomMessLevel;
 
     [Tooltip("操作方式：Add 增減（帶正負號）/ Set 直接設定。")]
@@ -65,6 +61,9 @@ public class StatChangeOp
 
     [Tooltip("變化量。Add 時可填負數代表扣除；Set 時為要設定的目標值。")]
     public int amount = 0;
+
+    /// <summary>舊資產可能仍持有退役或無效編號；執行與預覽都必須略過。</summary>
+    public bool IsSupportedKind => Enum.IsDefined(typeof(StatKind), kind);
 
     /// <summary>是否為女主角數值（Libido / Trust / Affinity / Mood / Interest）。</summary>
     public bool IsHeroineStat => kind == StatKind.Libido || kind == StatKind.Trust || kind == StatKind.Affinity || kind == StatKind.Mood || kind == StatKind.Interest;
@@ -105,6 +104,37 @@ public class StatChangePackageDatabase : ScriptableObject
     {
         BuildLookup();
     }
+
+#if UNITY_EDITOR
+    [ContextMenu("清理退役與無效數值項目")]
+    private void RemoveUnsupportedOps()
+    {
+        if (entries == null) return;
+
+        int removedCount = 0;
+        foreach (var entry in entries)
+        {
+            if (entry?.ops == null) continue;
+            removedCount += entry.ops.FindAll(op => op == null || !op.IsSupportedKind).Count;
+        }
+
+        if (removedCount == 0)
+        {
+            Debug.Log("[StatChangePackageDatabase] 沒有需要清理的退役或無效數值項目。", this);
+            return;
+        }
+
+        UnityEditor.Undo.RecordObject(this, "清理退役與無效數值項目");
+        foreach (var entry in entries)
+        {
+            // 保留套組本身與 ID，即使清理後沒有任何操作，既有調用仍可正常找到套組。
+            entry?.ops?.RemoveAll(op => op == null || !op.IsSupportedKind);
+        }
+        BuildLookup();
+        UnityEditor.EditorUtility.SetDirty(this);
+        Debug.Log($"[StatChangePackageDatabase] 已清理 {removedCount} 筆退役或無效數值項目，保留所有套組 ID；可使用 Undo 復原，請儲存專案。", this);
+    }
+#endif
 
     /// <summary>
     /// 重建 ID 查找表。OnEnable 會自動呼叫；若執行期間動態改了 entries 可手動再呼叫。

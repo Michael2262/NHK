@@ -1,7 +1,7 @@
 using UnityEngine;
 using PixelCrushers.DialogueSystem;
 
-/// <summary>正式女主角數值與當前情緒的 Lua 入口；舊卡池與不滿接口已退役。</summary>
+/// <summary>正式女主角數值與狀態的 Lua 入口；Conditions 使用 Get／Is，Script 使用 Set／Add。第一個參數皆為 heroineID。</summary>
 public class HeroineLuaBridge : MonoBehaviour
 {
     public static HeroineLuaBridge Instance { get; private set; }
@@ -24,6 +24,22 @@ public class HeroineLuaBridge : MonoBehaviour
             SymbolExtensions.GetMethodInfo(() => GetCyclePhase(string.Empty)));
         Lua.RegisterFunction("GetCyclePhaseDay", this,
             SymbolExtensions.GetMethodInfo(() => GetCyclePhaseDay(string.Empty)));
+        Lua.RegisterFunction("GetCycleDay", this,
+            SymbolExtensions.GetMethodInfo(() => GetCycleDay(string.Empty)));
+        Lua.RegisterFunction("GetCycleLength", this,
+            SymbolExtensions.GetMethodInfo(() => GetCycleLength(string.Empty)));
+        Lua.RegisterFunction("IsCyclePaused", this,
+            SymbolExtensions.GetMethodInfo(() => IsCyclePaused(string.Empty)));
+        Lua.RegisterFunction("GetPregnancyProbability", this,
+            SymbolExtensions.GetMethodInfo(() => GetPregnancyProbability(string.Empty)));
+        Lua.RegisterFunction("GetPregnancyState", this,
+            SymbolExtensions.GetMethodInfo(() => GetPregnancyState(string.Empty)));
+        Lua.RegisterFunction("SetPregnancyState", this,
+            SymbolExtensions.GetMethodInfo(() => SetPregnancyState(string.Empty, string.Empty)));
+        Lua.RegisterFunction("GetEarlyPregnancyDaysElapsed", this,
+            SymbolExtensions.GetMethodInfo(() => GetEarlyPregnancyDaysElapsed(string.Empty)));
+        Lua.RegisterFunction("GetCurrentOvulationDayType", this,
+            SymbolExtensions.GetMethodInfo(() => GetCurrentOvulationDayType(string.Empty)));
         Lua.RegisterFunction("SetPregnancyProbability", this,
             SymbolExtensions.GetMethodInfo(() => SetPregnancyProbability(string.Empty, (double)0)));
         Lua.RegisterFunction("SetCyclePhase", this,
@@ -68,6 +84,8 @@ public class HeroineLuaBridge : MonoBehaviour
             SymbolExtensions.GetMethodInfo(() => SetAwake(string.Empty, (double)0)));
         Lua.RegisterFunction("AddAwake", this,
             SymbolExtensions.GetMethodInfo(() => AddAwake(string.Empty, (double)0)));
+        Lua.RegisterFunction("GetCurrentSleepState", this,
+            SymbolExtensions.GetMethodInfo(() => GetCurrentSleepState(string.Empty)));
 
         // ── 性興味 ──
         Lua.RegisterFunction("GetInterest", this,
@@ -104,6 +122,10 @@ public class HeroineLuaBridge : MonoBehaviour
         // ── H 次數 ──
         Lua.RegisterFunction("GetHCount", this,
             SymbolExtensions.GetMethodInfo(() => GetHCount(string.Empty)));
+        Lua.RegisterFunction("SetHCount", this,
+            SymbolExtensions.GetMethodInfo(() => SetHCount(string.Empty, (double)0)));
+        Lua.RegisterFunction("AddHCount", this,
+            SymbolExtensions.GetMethodInfo(() => AddHCount(string.Empty, (double)0)));
 
         // ── 發情 ──
         Lua.RegisterFunction("IsInHeat", this,
@@ -116,6 +138,14 @@ public class HeroineLuaBridge : MonoBehaviour
     {
         Lua.UnregisterFunction("GetCyclePhase");
         Lua.UnregisterFunction("GetCyclePhaseDay");
+        Lua.UnregisterFunction("GetCycleDay");
+        Lua.UnregisterFunction("GetCycleLength");
+        Lua.UnregisterFunction("IsCyclePaused");
+        Lua.UnregisterFunction("GetPregnancyProbability");
+        Lua.UnregisterFunction("GetPregnancyState");
+        Lua.UnregisterFunction("SetPregnancyState");
+        Lua.UnregisterFunction("GetEarlyPregnancyDaysElapsed");
+        Lua.UnregisterFunction("GetCurrentOvulationDayType");
         Lua.UnregisterFunction("SetPregnancyProbability");
         Lua.UnregisterFunction("SetCyclePhase");
         Lua.UnregisterFunction("ClearPregnancy");
@@ -140,6 +170,7 @@ public class HeroineLuaBridge : MonoBehaviour
         Lua.UnregisterFunction("GetAwake");
         Lua.UnregisterFunction("SetAwake");
         Lua.UnregisterFunction("AddAwake");
+        Lua.UnregisterFunction("GetCurrentSleepState");
 
         Lua.UnregisterFunction("GetInterest");
         Lua.UnregisterFunction("SetInterest");
@@ -158,6 +189,8 @@ public class HeroineLuaBridge : MonoBehaviour
         Lua.UnregisterFunction("AddAffinity");
 
         Lua.UnregisterFunction("GetHCount");
+        Lua.UnregisterFunction("SetHCount");
+        Lua.UnregisterFunction("AddHCount");
 
         Lua.UnregisterFunction("IsInHeat");
         Lua.UnregisterFunction("SetInHeat");
@@ -181,6 +214,27 @@ public class HeroineLuaBridge : MonoBehaviour
     // SetCyclePhase("角色ID", "BeforePregnant")，解除並原位恢復用 ClearPregnancy。
     public string GetCyclePhase(string heroineID) => GetModel(heroineID)?.CurrentCyclePhase.ToString() ?? string.Empty;
     public double GetCyclePhaseDay(string heroineID) => GetModel(heroineID)?.CurrentPhaseDay ?? 0;
+    public double GetCycleDay(string heroineID) => GetModel(heroineID)?.CurrentCycleDay ?? 0;
+    public double GetCycleLength(string heroineID) => GetModel(heroineID)?.CycleLength ?? 0;
+    public bool IsCyclePaused(string heroineID) => GetModel(heroineID)?.IsCyclePaused ?? false;
+    /// <summary>回傳當日機率（0～1），例如 0.8 代表 80%。</summary>
+    public double GetPregnancyProbability(string heroineID) => GetModel(heroineID)?.PregnancyProbability ?? 0f;
+    public string GetPregnancyState(string heroineID) => GetModel(heroineID)?.Pregnancy.ToString() ?? string.Empty;
+    public double GetEarlyPregnancyDaysElapsed(string heroineID) => GetModel(heroineID)?.EarlyPregnancyDaysElapsed ?? 0;
+    public string GetCurrentOvulationDayType(string heroineID) => GetModel(heroineID)?.GetCurrentOvulationDayType().ToString() ?? string.Empty;
+
+    /// <summary>狀態名稱：NotPregnant／EarlyPregnancy／Pregnant；變更與通知由 Model 處理。</summary>
+    public void SetPregnancyState(string heroineID, string stateName)
+    {
+        if (!System.Enum.TryParse(stateName?.Trim(), true, out PregnancyState state)
+            || !System.Enum.IsDefined(typeof(PregnancyState), state))
+        {
+            Debug.LogWarning($"[HeroineLuaBridge] 無法解析懷孕狀態：{stateName}");
+            return;
+        }
+        GetModel(heroineID)?.SetPregnancyState(state);
+    }
+
     /// <summary>設定當日機率（0～1）；Lua: SetPregnancyProbability("角色ID", 0.8)。</summary>
     public void SetPregnancyProbability(string heroineID, double value) => GetModel(heroineID)?.SetPregnancyProbability((float)value);
     public bool TryConceive(string heroineID) => GetModel(heroineID)?.TryConceive() ?? false;
@@ -225,10 +279,14 @@ public class HeroineLuaBridge : MonoBehaviour
     // Awake 與性興味
     // ─────────────────────────────────────────────
 
-    /// <summary>Awake（0～100）；Lua 可傳入小數，範圍由 Model 限制。</summary>
+    /// <summary>Awake（0～120）；Lua 可傳入小數，範圍由 Model 限制。</summary>
     public double GetAwake(string heroineID) => GetModel(heroineID)?.GetAwake() ?? 0f;
     public void SetAwake(string heroineID, double value) => GetModel(heroineID)?.SetAwake((float)value);
     public void AddAwake(string heroineID, double amount) => GetModel(heroineID)?.AddAwake((float)amount);
+
+    /// <summary>回傳睡眠狀態名稱；Lua: GetCurrentSleepState("sister") == "DeepSleep"。找不到角色時回傳空字串。</summary>
+    public string GetCurrentSleepState(string heroineID)
+        => GetModel(heroineID)?.GetCurrentSleepState().ToString() ?? string.Empty;
 
     /// <summary>性興味（0～999）；Lua 數值超出 int 範圍時先截斷，避免轉型溢位。</summary>
     public double GetInterest(string heroineID) => GetModel(heroineID)?.GetInterest() ?? 0;
@@ -344,6 +402,23 @@ public class HeroineLuaBridge : MonoBehaviour
     {
         return GetModel(heroineID)?.HCount ?? 0;
     }
+
+    /// <summary>設定 H 次數；小數截去，下限由 Model 限制。Lua: SetHCount("sister", 3)。</summary>
+    public void SetHCount(string heroineID, double value)
+    {
+        if (double.IsNaN(value)) return;
+        GetModel(heroineID)?.SetHCount(ClampHCountArgument(value));
+    }
+
+    /// <summary>正數增加、負數減少 H 次數。Lua: AddHCount("sister", 1)。</summary>
+    public void AddHCount(string heroineID, double amount)
+    {
+        if (double.IsNaN(amount)) return;
+        GetModel(heroineID)?.AddHCount(ClampHCountArgument(amount));
+    }
+
+    private static int ClampHCountArgument(double value)
+        => (int)System.Math.Max(int.MinValue, System.Math.Min(int.MaxValue, value));
 
     // ─────────────────────────────────────────────
     // 發情

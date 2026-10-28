@@ -15,6 +15,10 @@ namespace NHK.StateTest
         [SerializeField] private TMP_Text affinityText;
         [Tooltip("性欲；只顯示值，不附加名稱。")]
         [SerializeField] private TMP_Text libidoText;
+        [Tooltip("Awake 清醒度（0～120）；保留小數，只顯示值，不附加名稱。")]
+        [SerializeField] private TMP_Text awakeText;
+        [Tooltip("CurrentSleepState；顯示原始狀態名稱，例如 Wake、Dazed、DeepSleep，方便比對 Lua 條件。")]
+        [SerializeField] private TMP_Text currentSleepStateText;
 
         [SerializeField, Tooltip("正式角色 ID；只有一位角色時可留空。") ] private string heroineID;
         public void SetHeroineID(string id) { heroineID = id; RefreshUI(); }
@@ -66,6 +70,8 @@ namespace NHK.StateTest
             SetText(moodText, model != null ? model.Mood.ToString() : "—");
             SetText(affinityText, model != null ? model.Affinity.ToString() : "—");
             SetText(libidoText, model != null ? model.Libido.ToString() : "—");
+            SetText(awakeText, model != null ? model.Awake.ToString(System.Globalization.CultureInfo.InvariantCulture) : "—");
+            SetText(currentSleepStateText, model != null ? model.CurrentSleepState.ToString() : "—");
         }
 
         private static void SetText(TMP_Text target, string value)

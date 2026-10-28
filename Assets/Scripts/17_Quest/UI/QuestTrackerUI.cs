@@ -5,9 +5,13 @@ using UnityEngine;
 
 /// <summary>生成任務追蹤項目；同日保留已顯示名單，換日、讀檔或手動刷新才重新挑選。</summary>
 [DisallowMultipleComponent]
+[DefaultExecutionOrder(-800)]
 [AddComponentMenu("NHK/Quest/Quest Tracker UI")]
 public sealed class QuestTrackerUI : MonoBehaviour
 {
+    /// <summary>共用 UI 的唯一實例；首次啟用前或共用 UI 場景卸載後可能為 null。</summary>
+    public static QuestTrackerUI Instance { get; private set; }
+
     [Header("生成設定")]
     [SerializeField] private QuestTrackerItemUI itemPrefab;
     [Tooltip("建議使用專用的空容器並掛 Vertical Layout Group。只管理本元件生成的項目。")]
@@ -32,10 +36,32 @@ public sealed class QuestTrackerUI : MonoBehaviour
     private bool _refreshRequested = true;
     private bool _renderRequested = true;
     private bool _reportedMissingSetup;
+    private bool _isDuplicate;
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetInstance() => Instance = null;
+
+    private void Awake() => RegisterInstance();
+
+    private bool RegisterInstance()
+    {
+        if (_isDuplicate) return false;
+        if (Instance != null && Instance != this)
+        {
+            _isDuplicate = true;
+            Debug.LogWarning("[QuestTrackerUI] 已有共用任務追蹤 UI，移除重複元件；請只保留一份。", this);
+            enabled = false;
+            // 只移除腳本，避免誤刪共用 Canvas 或其他 UI。
+            Destroy(this);
+            return false;
+        }
+        Instance = this;
+        return true;
+    }
 
     private void OnEnable()
     {
-        if (!Application.isPlaying) return;
+        if (!Application.isPlaying || !RegisterInstance()) return;
         UILocalizationManager.languageChanged += HandleLanguageChanged;
         EnsureBinding();
         _renderRequested = true;
@@ -51,6 +77,7 @@ public sealed class QuestTrackerUI : MonoBehaviour
 
     private void OnDestroy()
     {
+        if (Instance == this) Instance = null;
         UILocalizationManager.languageChanged -= HandleLanguageChanged;
         Unbind();
         ClearItems();
@@ -64,6 +91,7 @@ public sealed class QuestTrackerUI : MonoBehaviour
 
     private void LateUpdate()
     {
+        if (Instance != this) return;
         // 只檢查服務引用；任務內容由事件標記更新，不每幀重建清單。
         EnsureBinding();
         ApplyPendingUpdates();
@@ -73,7 +101,7 @@ public sealed class QuestTrackerUI : MonoBehaviour
     [ContextMenu("重新挑選顯示任務")]
     public void RefreshTasks()
     {
-        if (!Application.isPlaying) return;
+        if (!Application.isPlaying || Instance != this) return;
         EnsureBinding();
         _refreshRequested = true;
         _renderRequested = true;

@@ -100,6 +100,7 @@ public class HeroineScheduleEditorWindow : EditorWindow
     // ==========================================================
     private void OnEnable()
     {
+        Undo.undoRedoPerformed += OnUndoRedo;
         RefreshConfigs();
         TryAutoDetectLocationDB();
         TryAutoDetectTimeConfig();
@@ -111,8 +112,38 @@ public class HeroineScheduleEditorWindow : EditorWindow
 
     private void OnDisable()
     {
+        Undo.undoRedoPerformed -= OnUndoRedo;
         EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
         TryUnsubscribeRuntimeEvents();
+    }
+
+    private void OnUndoRedo()
+    {
+        // Undo 可能重建序列化子物件，重新取得目前資產內的編輯目標。
+        if (_editTarget != null)
+        {
+            var target = _editTarget;
+            if (target.config == null) _editTarget = null;
+            else if (target.IsFallback)
+            {
+                target.scheduleBlock = target.config.schedule?.FirstOrDefault(b => b != null
+                    && b.phaseIndex == target.phaseIndex && b.slotIndex == target.slotIndex
+                    && b.dayType == target.fallbackDayType);
+            }
+            else
+            {
+                var chain = target.config.dailyChains?.FirstOrDefault(c => c != null
+                    && (c == target.chain || c.chainName == target.chain.chainName));
+                if (chain == null) _editTarget = null;
+                else
+                {
+                    target.chain = chain;
+                    target.chainBlock = chain.blocks?.FirstOrDefault(b => b != null
+                        && b.phaseIndex == target.phaseIndex && b.slotIndex == target.slotIndex);
+                }
+            }
+        }
+        Repaint();
     }
 
     private void OnFocus()
@@ -956,17 +987,19 @@ public class HeroineScheduleEditorWindow : EditorWindow
         y += lineH + 2;
 
         // 第5行:Flag 提示
-        if (chain.requiredFlag != null || chain.forbiddenFlag != null)
+        int flagCount = (chain.requiredFlag != null ? 1 : 0) + (chain.forbiddenFlag != null ? 1 : 0)
+            + (chain.additionalFlagConditions?.Count(c => c != null && c.flag != null) ?? 0);
+        if (flagCount > 0)
         {
             var flagStyle = new GUIStyle(EditorStyles.miniLabel)
             {
                 fontSize = 9,
                 normal = { textColor = new Color(1f, 0.75f, 0.3f) }
             };
-            string flagText = "Flag:";
-            if (chain.requiredFlag != null) flagText += "✓";
-            if (chain.forbiddenFlag != null) flagText += "✗";
-            GUI.Label(new Rect(rect.x, y, rect.width, lineH), flagText, flagStyle);
+            string mode = chain.flagMatchMode == ScheduleFlagMatchMode.Or ? "OR" : "AND";
+            string flagText = $"Flag: {mode} ×{flagCount}";
+            GUI.Label(new Rect(rect.x, y, rect.width, lineH),
+                new GUIContent(flagText, ScheduleFlagConditionEditor.Describe(chain)), flagStyle);
         }
     }
 
@@ -1310,6 +1343,8 @@ public class HeroineScheduleEditorWindow : EditorWindow
             {
                 onLeftClick?.Invoke();
                 e.Use();
+                // 新格子的情境數量可能不同，交給下一輪 Layout 重建面板。
+                GUIUtility.ExitGUI();
             }
             else if (e.button == 1)
             {
@@ -1445,16 +1480,14 @@ public class HeroineScheduleEditorWindow : EditorWindow
             sc.activityState = DrawActivityField(sc.activityState, 180, i);
             EditorGUILayout.EndHorizontal();
 
-            // 第2行:權重 + flag
+            // 第2行:權重；Flag 條件另列，與 Tool Button Group 的顯示條件一致。
             EditorGUILayout.BeginHorizontal();
             GUILayout.Label("權重", GUILayout.Width(40));
             sc.probabilityWeight = EditorGUILayout.IntField(sc.probabilityWeight, GUILayout.Width(50));
 
-            GUILayout.Space(10);
-            GUILayout.Label("需要 Flag", GUILayout.Width(60));
-            sc.requiredFlag = (ProgressFlagDefinition)EditorGUILayout.ObjectField(
-                sc.requiredFlag, typeof(ProgressFlagDefinition), false, GUILayout.Width(200));
             EditorGUILayout.EndHorizontal();
+
+            ScheduleFlagConditionEditor.Draw(_editTarget.config, sc);
 
             EditorGUILayout.EndVertical();
 
@@ -1601,7 +1634,10 @@ public class HeroineScheduleEditorWindow : EditorWindow
             locationID = s.locationID,
             activityState = s.activityState,
             probabilityWeight = s.probabilityWeight,
-            requiredFlag = s.requiredFlag
+            requiredFlag = s.requiredFlag,
+            invertRequiredFlag = s.invertRequiredFlag,
+            flagMatchMode = s.flagMatchMode,
+            additionalFlagConditions = ScheduleFlagConditionEditor.CopyConditions(s.additionalFlagConditions)
         };
     }
 
@@ -1815,6 +1851,10 @@ public class HeroineScheduleEditorWindow : EditorWindow
                 probabilityWeight = chain.probabilityWeight,
                 requiredFlag = chain.requiredFlag,
                 forbiddenFlag = chain.forbiddenFlag,
+                invertRequiredFlag = chain.invertRequiredFlag,
+                forbiddenFlagIsPositive = chain.forbiddenFlagIsPositive,
+                flagMatchMode = chain.flagMatchMode,
+                additionalFlagConditions = ScheduleFlagConditionEditor.CopyConditions(chain.additionalFlagConditions),
                 blocks = new List<ChainBlock>()
             };
             if (chain.blocks != null)
@@ -1955,7 +1995,7 @@ public class HeroineScheduleEditorWindow : EditorWindow
     // ==========================================================
     private void OpenChainEditor(HeroineScheduleConfig cfg, DailyChain chain, int phase, int slot, ChainBlock block)
     {
-        _editTarget = new BlockEditTarget
+        SetEditTarget(new BlockEditTarget
         {
             config = cfg,
             chain = chain,
@@ -1963,12 +2003,12 @@ public class HeroineScheduleEditorWindow : EditorWindow
             scheduleBlock = null,
             phaseIndex = phase,
             slotIndex = slot
-        };
+        });
     }
 
     private void OpenFallbackEditor(HeroineScheduleConfig cfg, int phase, int slot, ScheduleBlock block, ScheduleDayType dayType)
     {
-        _editTarget = new BlockEditTarget
+        SetEditTarget(new BlockEditTarget
         {
             config = cfg,
             chain = null,
@@ -1977,7 +2017,17 @@ public class HeroineScheduleEditorWindow : EditorWindow
             phaseIndex = phase,
             slotIndex = slot,
             fallbackDayType = dayType
-        };
+        });
+    }
+
+    private void SetEditTarget(BlockEditTarget target)
+    {
+        // 先結束舊欄位的編輯，避免共用控制項 ID 時沿用上一格的文字快取。
+        GUI.FocusControl(null);
+        EditorGUIUtility.editingTextField = false;
+        _editTarget = target;
+        _editPanelScroll = Vector2.zero;
+        Repaint();
     }
 
     private void CreateChainBlockForTarget()
@@ -2046,37 +2096,153 @@ public class ChainFlagPopup : EditorWindow
 {
     private HeroineScheduleConfig _cfg;
     private DailyChain _chain;
+    private Vector2 _scroll;
+
+    private void OnEnable() => Undo.undoRedoPerformed += OnUndoRedo;
+    private void OnDisable() => Undo.undoRedoPerformed -= OnUndoRedo;
+
+    private void OnUndoRedo()
+    {
+        if (_cfg == null || _chain == null) { Close(); return; }
+        _chain = _cfg.dailyChains?.FirstOrDefault(c => c != null
+            && (c == _chain || c.chainName == _chain.chainName));
+        if (_chain == null) { Close(); return; }
+        Repaint();
+    }
 
     public static void Show(HeroineScheduleConfig cfg, DailyChain chain)
     {
         var w = GetWindow<ChainFlagPopup>(true, "鍊的 Flag 條件", true);
         w._cfg = cfg;
         w._chain = chain;
-        w.minSize = new Vector2(360, 170);
-        w.maxSize = new Vector2(360, 170);
+        w.minSize = new Vector2(460, 260);
+        w.maxSize = new Vector2(1200, 1000);
         w.ShowUtility();
     }
 
     private void OnGUI()
     {
-        if (_chain == null) { Close(); return; }
+        if (_cfg == null || _chain == null || _cfg.dailyChains == null || !_cfg.dailyChains.Contains(_chain))
+        { Close(); return; }
 
         EditorGUILayout.LabelField($"鍊「{_chain.chainName}」", EditorStyles.boldLabel);
         EditorGUILayout.Space();
+        _scroll = EditorGUILayout.BeginScrollView(_scroll);
+        ScheduleFlagConditionEditor.Draw(_cfg, _chain);
+        EditorGUILayout.EndScrollView();
+    }
+}
 
+/// <summary>鍊與情境共用的條件編輯介面；在實際修改前記錄 Undo。</summary>
+internal static class ScheduleFlagConditionEditor
+{
+    public static void Draw(HeroineScheduleConfig config, ScheduleScenario scenario)
+    {
+        DrawHeader(config, ref scenario.flagMatchMode);
+        DrawRow(config, 1, ref scenario.requiredFlag, ref scenario.invertRequiredFlag, true);
+        DrawAdditional(config, ref scenario.additionalFlagConditions, 2);
+        DrawHelp("第一項保留原有設定，可清除。");
+    }
+
+    public static void Draw(HeroineScheduleConfig config, DailyChain chain)
+    {
+        DrawHeader(config, ref chain.flagMatchMode);
+        DrawRow(config, 1, ref chain.requiredFlag, ref chain.invertRequiredFlag, true);
+        // 儲存正向布林，讓舊資產缺少此欄位時仍保有原本的禁止語意。
+        bool secondInvert = !chain.forbiddenFlagIsPositive;
+        DrawRow(config, 2, ref chain.forbiddenFlag, ref secondInvert, true, true);
+        chain.forbiddenFlagIsPositive = !secondInvert;
+        DrawAdditional(config, ref chain.additionalFlagConditions, 3);
+        DrawHelp("前兩項保留原有的需要／禁止 Flag，可清除；第二項預設反轉。");
+    }
+
+    private static void DrawHeader(HeroineScheduleConfig config, ref ScheduleFlagMatchMode mode)
+    {
+        EditorGUILayout.LabelField("Flag 條件", EditorStyles.boldLabel);
         EditorGUI.BeginChangeCheck();
-        _chain.requiredFlag = (ProgressFlagDefinition)EditorGUILayout.ObjectField(
-            "必要 Flag(空=不限)", _chain.requiredFlag, typeof(ProgressFlagDefinition), false);
-        _chain.forbiddenFlag = (ProgressFlagDefinition)EditorGUILayout.ObjectField(
-            "禁止 Flag(空=不限)", _chain.forbiddenFlag, typeof(ProgressFlagDefinition), false);
+        var next = (ScheduleFlagMatchMode)EditorGUILayout.EnumPopup("判斷方式", mode);
         if (EditorGUI.EndChangeCheck())
-            EditorUtility.SetDirty(_cfg);
+        {
+            Undo.RecordObject(config, "修改日程 Flag 判斷方式");
+            mode = next;
+            EditorUtility.SetDirty(config);
+        }
+    }
 
-        EditorGUILayout.Space();
-        EditorGUILayout.HelpBox(
-            "必要 Flag:此 flag 啟用時鍊才有資格被抽到(空=不限制)\n" +
-            "禁止 Flag:此 flag 啟用時鍊不能被抽到(空=不限制)",
-            MessageType.Info);
+    private static bool DrawRow(HeroineScheduleConfig config, int number,
+        ref ProgressFlagDefinition flag, ref bool invert, bool fixedRow, bool clearInvert = false)
+    {
+        using (new EditorGUILayout.HorizontalScope())
+        {
+            GUILayout.Label("條件 " + number, GUILayout.Width(48));
+            EditorGUI.BeginChangeCheck();
+            var nextFlag = (ProgressFlagDefinition)EditorGUILayout.ObjectField(flag, typeof(ProgressFlagDefinition), false);
+            bool nextInvert = EditorGUILayout.ToggleLeft("反轉", invert, GUILayout.Width(55));
+            bool fieldsChanged = EditorGUI.EndChangeCheck();
+            bool remove = GUILayout.Button(fixedRow ? "清除" : "刪除", GUILayout.Width(45));
+            if (remove && !fixedRow) return true;
+            if (fieldsChanged || remove)
+            {
+                Undo.RecordObject(config, "修改日程 Flag 條件");
+                flag = remove ? null : nextFlag;
+                invert = remove ? clearInvert : nextInvert;
+                EditorUtility.SetDirty(config);
+            }
+            return false;
+        }
+    }
+
+    private static void DrawAdditional(HeroineScheduleConfig config,
+        ref List<ScheduleFlagCondition> conditions, int startNumber)
+    {
+        if (conditions != null)
+        {
+            for (int i = 0; i < conditions.Count; i++)
+            {
+                var condition = conditions[i];
+                // 不在 Repaint 時補寫舊資料；空項目由使用者編輯後才建立。
+                var flag = condition?.flag;
+                bool invert = condition != null && condition.invert;
+                if (DrawRow(config, startNumber + i, ref flag, ref invert, false))
+                {
+                    Undo.RecordObject(config, "刪除日程 Flag 條件");
+                    conditions.RemoveAt(i--);
+                    EditorUtility.SetDirty(config);
+                }
+                else if (condition == null ? flag != null || invert : condition.flag != flag || condition.invert != invert)
+                {
+                    // DrawRow 已在寫入前記錄 Undo。
+                    conditions[i] = new ScheduleFlagCondition { flag = flag, invert = invert };
+                }
+            }
+        }
+        if (GUILayout.Button("＋ 新增 Flag 條件"))
+        {
+            Undo.RecordObject(config, "新增日程 Flag 條件");
+            if (conditions == null) conditions = new List<ScheduleFlagCondition>();
+            conditions.Add(new ScheduleFlagCondition());
+            EditorUtility.SetDirty(config);
+        }
+    }
+
+    private static void DrawHelp(string legacyHelp)
+        => EditorGUILayout.HelpBox("反轉：Flag 不成立時才符合。未指定 Flag 的項目略過；所有項目都未指定時不限制。" + legacyHelp,
+            MessageType.None);
+
+    public static List<ScheduleFlagCondition> CopyConditions(List<ScheduleFlagCondition> conditions)
+        => conditions?.Select(c => c == null ? null : new ScheduleFlagCondition { flag = c.flag, invert = c.invert }).ToList();
+
+    public static string Describe(DailyChain chain)
+    {
+        var rows = new List<string>();
+        if (chain.requiredFlag != null)
+            rows.Add((chain.invertRequiredFlag ? "NOT " : "") + chain.requiredFlag.name);
+        if (chain.forbiddenFlag != null)
+            rows.Add((chain.forbiddenFlagIsPositive ? "" : "NOT ") + chain.forbiddenFlag.name);
+        if (chain.additionalFlagConditions != null)
+            foreach (var c in chain.additionalFlagConditions)
+                if (c != null && c.flag != null) rows.Add((c.invert ? "NOT " : "") + c.flag.name);
+        return string.Join(chain.flagMatchMode == ScheduleFlagMatchMode.Or ? " OR " : " AND ", rows);
     }
 }
 #endif

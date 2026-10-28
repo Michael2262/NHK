@@ -19,16 +19,12 @@ public class ProtagonistLuaBridge : MonoBehaviour
 
     void OnEnable()
     {
-        Lua.RegisterFunction("RedeemPendingStickers", this, SymbolExtensions.GetMethodInfo(() => RedeemPendingStickers()));
         Lua.RegisterFunction("ForceAddStamina", this, SymbolExtensions.GetMethodInfo(() => ForceAddStamina((double)0)));
         Lua.RegisterFunction("ForceAddShootTimes", this, SymbolExtensions.GetMethodInfo(() => ForceAddShootTimes((double)0)));
         Lua.RegisterFunction("SetShootTimes", this, SymbolExtensions.GetMethodInfo(() => SetShootTimes((double)0)));
         Lua.RegisterFunction("AddRoomMessLevel", this, SymbolExtensions.GetMethodInfo(() => AddRoomMessLevel((double)0)));
         Lua.RegisterFunction("SetRoomMessLevel", this, SymbolExtensions.GetMethodInfo(() => SetRoomMessLevel((double)0)));
         Lua.RegisterFunction("GetRoomMessLevel", this, SymbolExtensions.GetMethodInfo(() => GetRoomMessLevel()));
-        Lua.RegisterFunction("AddPendingStickerCount", this, SymbolExtensions.GetMethodInfo(() => AddPendingStickerCount((double)0)));
-        Lua.RegisterFunction("SetPendingStickerCount", this, SymbolExtensions.GetMethodInfo(() => SetPendingStickerCount((double)0)));
-        Lua.RegisterFunction("GetPendingStickerCount", this, SymbolExtensions.GetMethodInfo(() => GetPendingStickerCount()));
         Lua.RegisterFunction("AddStickerCount", this, SymbolExtensions.GetMethodInfo(() => AddStickerCount((double)0)));
         Lua.RegisterFunction("SetStickerCount", this, SymbolExtensions.GetMethodInfo(() => SetStickerCount((double)0)));
         Lua.RegisterFunction("GetStickerCount", this, SymbolExtensions.GetMethodInfo(() => GetStickerCount()));
@@ -71,16 +67,12 @@ public class ProtagonistLuaBridge : MonoBehaviour
 
     void OnDisable()
     {
-        Lua.UnregisterFunction("RedeemPendingStickers");
         Lua.UnregisterFunction("ForceAddStamina");
         Lua.UnregisterFunction("ForceAddShootTimes");
         Lua.UnregisterFunction("SetShootTimes");
         Lua.UnregisterFunction("AddRoomMessLevel");
         Lua.UnregisterFunction("SetRoomMessLevel");
         Lua.UnregisterFunction("GetRoomMessLevel");
-        Lua.UnregisterFunction("AddPendingStickerCount");
-        Lua.UnregisterFunction("SetPendingStickerCount");
-        Lua.UnregisterFunction("GetPendingStickerCount");
         Lua.UnregisterFunction("AddStickerCount");
         Lua.UnregisterFunction("SetStickerCount");
         Lua.UnregisterFunction("GetStickerCount");
@@ -176,14 +168,10 @@ public class ProtagonistLuaBridge : MonoBehaviour
     public double GetStickerCount() => GetModel()?.StickerCount ?? 0;
     public void SetStickerCount(double value) => GetModel()?.SetStickerCount((int)value);
     public void AddStickerCount(double value) => GetModel()?.AddStickerCount((int)value);
-    public double GetPendingStickerCount() => GetModel()?.PendingStickerCount ?? 0;
-    public void SetPendingStickerCount(double value) => GetModel()?.SetPendingStickerCount((int)value);
-    public void AddPendingStickerCount(double value) => GetModel()?.AddPendingStickerCount((int)value);
     public double GetRoomMessLevel() => GetModel()?.RoomMessLevel ?? 0;
     public void SetRoomMessLevel(double value) => GetModel()?.SetRoomMessLevel((int)value);
     public void AddRoomMessLevel(double value) => GetModel()?.AddRoomMessLevel((int)value);
     public void SetShootTimes(double value) => GetModel()?.SetShootTimes((int)value);
     public void ForceAddShootTimes(double value) => GetModel()?.ForceAddShootTimes((int)value);
     public void ForceAddStamina(double value) => GetModel()?.ForceAddStamina((int)value);
-    public bool RedeemPendingStickers() => GetModel()?.RedeemPendingStickers() ?? false;
 }

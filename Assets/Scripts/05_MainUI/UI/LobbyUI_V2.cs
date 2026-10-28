@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using PixelCrushers;
 
-/// <summary>主角現役數值與時間顯示。退役的四維與清潔百分比欄位請在 Editor 移除。</summary>
+/// <summary>顯示主角體力、精力、邪念、所持金與時間；數值變動與女主角共用預覽佇列。</summary>
 public class LobbyUI_V2 : MonoBehaviour
 {
     // 體力條顯示設定：Max 25 對應 80；Max 100 對應 176，之後不再伸長。
@@ -30,12 +30,10 @@ public class LobbyUI_V2 : MonoBehaviour
     [SerializeField] private TextMeshProUGUI textStamina;
     [SerializeField] private TextMeshProUGUI textShootTimes;
     [SerializeField] private TextMeshProUGUI textLust;
-    [SerializeField] private TextMeshProUGUI textStickerCount;
-    [SerializeField] private TextMeshProUGUI textPendingStickerCount;
-    [SerializeField] private TextMeshProUGUI textSkillPoints;
-    [SerializeField] private TextMeshProUGUI textSemen;
-    [UnityEngine.Serialization.FormerlySerializedAs("textRoomCleanLevel")]
-    [SerializeField] private TextMeshProUGUI textRoomMessLevel;
+    [Header("數值變動預覽（依序播放；欄位可留空）")]
+    [SerializeField] private TextMeshProUGUI textMoneyPreview;
+    [SerializeField] private TextMeshProUGUI textLustPreview;
+    [SerializeField] private TextMeshProUGUI textShootTimesPreview;
 
     [Header("體力條（欄位可留空）")]
     [Tooltip("體力條外框。請將水平錨點固定於左側、Pivot X 設為 0，避免 Layout Group 控制寬度。")]
@@ -46,6 +44,9 @@ public class LobbyUI_V2 : MonoBehaviour
     private GameStatusService _service;
     private ProtagonistStatusModel _protagonistModel;
     private TimeSystemModel _timeModel;
+    // 快取最近收到的 Model 值，與尚在佇列中的畫面值分開，避免重複計算差值。
+    private int _cachedMoney, _cachedLust, _cachedShootTimes, _cachedShootTimesMax;
+    private int _cachedStamina, _cachedStaminaMax;
     private bool _staminaBarInitialized;
     private float _staminaStartWidth;
     private float _staminaTargetWidth;
@@ -73,6 +74,7 @@ public class LobbyUI_V2 : MonoBehaviour
     }
     private void OnDisable()
     {
+        CancelPreviews();
         UILocalizationManager.languageChanged -= HandleLanguageChanged;
         _staminaBarInitialized = false;
         _staminaTransitionElapsed = StaminaBarTransitionSeconds;
@@ -82,6 +84,7 @@ public class LobbyUI_V2 : MonoBehaviour
 
     private void BindAndRefresh()
     {
+        CancelPreviews();
         // 初始化、重開 UI 與讀檔直接對齊；一般遊玩中的數值變化才播放過渡。
         _staminaBarInitialized = false;
         Unbind();
@@ -91,7 +94,7 @@ public class LobbyUI_V2 : MonoBehaviour
         if (_service != null) _service.OnGameStatusLoaded += BindAndRefresh;
         if (_protagonistModel != null)
         {
-            _protagonistModel.OnChanged += UpdateStatusUI;
+            _protagonistModel.OnChanged += HandleStatusChanged;
         }
         if (_timeModel != null)
         {
@@ -108,7 +111,7 @@ public class LobbyUI_V2 : MonoBehaviour
         if (!ReferenceEquals(_service, null)) _service.OnGameStatusLoaded -= BindAndRefresh;
         if (_protagonistModel != null)
         {
-            _protagonistModel.OnChanged -= UpdateStatusUI;
+            _protagonistModel.OnChanged -= HandleStatusChanged;
         }
         if (_timeModel != null)
         {
@@ -128,18 +131,79 @@ public class LobbyUI_V2 : MonoBehaviour
         SetResourceText(textStamina, p?.Stamina, p?.StaminaMax);
         SetResourceText(textShootTimes, p?.ShootTimes, p?.ShootTimesMax);
         SetText(textLust, p != null ? $"{p.Lust}%" : "—");
-        SetText(textStickerCount, p != null ? p.StickerCount.ToString() : "—");
-        SetText(textPendingStickerCount, p != null ? p.PendingStickerCount.ToString() : "—");
-        SetText(textSkillPoints, p != null ? p.SkillPoints.ToString() : "—");
-        SetText(textSemen, p != null ? p.Semen.ToString() : "—");
-        SetText(textRoomMessLevel, p != null ? p.RoomMessLevel.ToString() : "—");
-        UpdateStaminaBar();
+        _cachedMoney = p?.Money ?? 0;
+        _cachedLust = p?.Lust ?? 0;
+        _cachedShootTimes = p?.ShootTimes ?? 0;
+        _cachedShootTimesMax = p?.ShootTimesMax ?? 0;
+        _cachedStamina = p?.Stamina ?? 0;
+        _cachedStaminaMax = p?.StaminaMax ?? 0;
+        UpdateStaminaBar(_cachedStamina, _cachedStaminaMax);
     }
 
-    private void UpdateStaminaBar()
+    private void HandleStatusChanged()
     {
-        int maximum = _protagonistModel?.StaminaMax ?? 0;
-        int current = _protagonistModel?.Stamina ?? 0;
+        var p = _protagonistModel;
+        if (p == null) return;
+
+        // 捕捉本次數值；播放回呼不可再讀 Model，否則連續變動會直接跳到最後一筆。
+        int money = p.Money, lust = p.Lust, shoot = p.ShootTimes, shootMax = p.ShootTimesMax;
+        int stamina = p.Stamina, staminaMax = p.StaminaMax;
+        long moneyDelta = (long)money - _cachedMoney;
+        long lustDelta = (long)lust - _cachedLust;
+        long shootDelta = (long)shoot - _cachedShootTimes;
+        bool shootChanged = shoot != _cachedShootTimes || shootMax != _cachedShootTimesMax;
+        bool staminaChanged = stamina != _cachedStamina || staminaMax != _cachedStaminaMax;
+
+        _cachedMoney = money;
+        _cachedLust = lust;
+        _cachedShootTimes = shoot;
+        _cachedShootTimesMax = shootMax;
+        _cachedStamina = stamina;
+        _cachedStaminaMax = staminaMax;
+
+        if (moneyDelta != 0)
+            QueuePreview(StatusPreviewSequencer.OrderMoney, textMoneyPreview, moneyDelta,
+                () => SetText(textMoney, $"{money}G"));
+        if (lustDelta != 0)
+            QueuePreview(StatusPreviewSequencer.OrderLust, textLustPreview, lustDelta,
+                () => SetText(textLust, $"{lust}%"));
+        // 上限單獨變更時仍排入更新，但不顯示當前值的增減箭頭。
+        if (shootChanged)
+            QueuePreview(StatusPreviewSequencer.OrderShootTimes, textShootTimesPreview, shootDelta,
+                () => SetResourceText(textShootTimes, shoot, shootMax));
+        if (staminaChanged)
+            StatusPreviewSequencer.Instance.EnqueueAction(StatusPreviewSequencer.OrderStamina, () =>
+            {
+                SetResourceText(textStamina, stamina, staminaMax);
+                UpdateStaminaBar(stamina, staminaMax);
+            }, this, StaminaBarTransitionSeconds);
+    }
+
+    private void QueuePreview(int order, TextMeshProUGUI preview, long delta, Action applyValue)
+    {
+        StatusPreviewSequencer.Instance.EnqueueText(order, preview,
+            StatusPreviewSequencer.GetPreviewArrowText(delta), applyValue, this);
+    }
+
+    private void CancelPreviews()
+    {
+        StatusPreviewSequencer.CancelOwnerIfExists(this);
+        HidePreview(textMoneyPreview);
+        HidePreview(textLustPreview);
+        HidePreview(textShootTimesPreview);
+    }
+
+    private static void HidePreview(TextMeshProUGUI target)
+    {
+        if (target == null) return;
+        target.text = "";
+        var color = target.color;
+        color.a = 0f;
+        target.color = color;
+    }
+
+    private void UpdateStaminaBar(int current, int maximum)
+    {
         // 低於 25 時由 0～80 線性縮放；25～100 改以 80～176 線性增長。
         float width = maximum <= StaminaZoneBaseMax
             ? StaminaZoneBaseWidth * Mathf.Clamp01((float)maximum / StaminaZoneBaseMax)

@@ -45,11 +45,21 @@ public class DailyChain
     [Tooltip("此鍊在哪種日期生效")]
     public ScheduleDayType dayType = ScheduleDayType.EveryDay;
 
-    [Tooltip("可選：必須啟用此 Flag，鍊才有資格被抽中 (空=不限)")]
+    [Tooltip("第一項 Flag 條件；保留舊設定。空值略過，反轉時須未持有此 Flag。")]
     public ProgressFlagDefinition requiredFlag;
+    public bool invertRequiredFlag;
 
-    [Tooltip("可選：此 Flag 啟用時，鍊不能被抽中 (空=不限)")]
+    [Tooltip("第二項 Flag 條件；保留舊禁止 Flag，預設為反向。")]
     public ProgressFlagDefinition forbiddenFlag;
+    [Tooltip("勾選表示將舊禁止 Flag 改為正向；預設 false 以相容舊資產。日程編輯器會以反轉勾選顯示。")]
+    public bool forbiddenFlagIsPositive;
+
+    public ScheduleFlagMatchMode flagMatchMode = ScheduleFlagMatchMode.And;
+    public List<ScheduleFlagCondition> additionalFlagConditions = new List<ScheduleFlagCondition>();
+
+    public bool MatchesFlags(ProgressFlagModel flags)
+        => ScheduleFlagCondition.Matches(flags, flagMatchMode, requiredFlag, invertRequiredFlag,
+            additionalFlagConditions, forbiddenFlag, !forbiddenFlagIsPositive);
 
     [Header("CHANCE: 鍊之間的加權抽籤")]
     [Tooltip("鍊被抽中的權重。系統會在所有「符合條件」的鍊中，依此權重加權抽一條。\n" +
@@ -129,6 +139,59 @@ public class ScheduleScenario
     [Tooltip("此情境被抽中的「權重」，可實現隨機")]
     public int probabilityWeight = 100;
 
-    [Tooltip("可選：必須啟用此 Flag，這個情境才可能發生")]
+    [Tooltip("第一項 Flag 條件；保留舊設定。空值略過，反轉時須未持有此 Flag。")]
     public ProgressFlagDefinition requiredFlag;
+    public bool invertRequiredFlag;
+    public ScheduleFlagMatchMode flagMatchMode = ScheduleFlagMatchMode.And;
+    public List<ScheduleFlagCondition> additionalFlagConditions = new List<ScheduleFlagCondition>();
+
+    public bool MatchesFlags(ProgressFlagModel flags)
+        => ScheduleFlagCondition.Matches(flags, flagMatchMode, requiredFlag, invertRequiredFlag,
+            additionalFlagConditions);
+}
+
+public enum ScheduleFlagMatchMode
+{
+    [InspectorName("AND（全部成立）")] And = 0,
+    [InspectorName("OR（任一成立）")] Or = 1
+}
+
+/// <summary>日程共用 Flag 條件；反轉逐項套用，再依 AND／OR 合併。</summary>
+[System.Serializable]
+public class ScheduleFlagCondition
+{
+    public ProgressFlagDefinition flag;
+    public bool invert;
+
+    public static bool Matches(ProgressFlagModel flags, ScheduleFlagMatchMode mode,
+        ProgressFlagDefinition firstFlag, bool firstInvert, List<ScheduleFlagCondition> additional,
+        ProgressFlagDefinition secondFlag = null, bool secondInvert = true)
+    {
+        bool matchAny = mode == ScheduleFlagMatchMode.Or;
+        bool hasCondition = false;
+        if (firstFlag != null)
+        {
+            hasCondition = true;
+            if (Evaluate(flags, firstFlag, firstInvert) == matchAny) return matchAny;
+        }
+        if (secondFlag != null)
+        {
+            hasCondition = true;
+            if (Evaluate(flags, secondFlag, secondInvert) == matchAny) return matchAny;
+        }
+        if (additional != null)
+        {
+            foreach (var condition in additional)
+            {
+                if (condition == null || condition.flag == null) continue;
+                hasCondition = true;
+                if (Evaluate(flags, condition.flag, condition.invert) == matchAny) return matchAny;
+            }
+        }
+        // 與 Tool Button Group 相同：空列略過；全部留空表示不限制。
+        return !hasCondition || !matchAny;
+    }
+
+    private static bool Evaluate(ProgressFlagModel flags, ProgressFlagDefinition flag, bool invert)
+        => flags != null && (flags.Contains(flag.FlagID) != invert);
 }

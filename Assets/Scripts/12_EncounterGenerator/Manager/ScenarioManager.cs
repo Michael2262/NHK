@@ -202,15 +202,7 @@ public class ScenarioManager : MonoBehaviour
             case ScheduleDayType.EveryDay: break;
         }
 
-        // requiredFlag 過濾
-        if (chain.requiredFlag != null && !_flags.Contains(chain.requiredFlag.FlagID))
-            return false;
-
-        // forbiddenFlag 過濾
-        if (chain.forbiddenFlag != null && _flags.Contains(chain.forbiddenFlag.FlagID))
-            return false;
-
-        return true;
+        return chain.MatchesFlags(_flags);
     }
 
     /// <summary>
@@ -442,7 +434,7 @@ public class ScenarioManager : MonoBehaviour
 
         // 檢查 Flag 限制
         List<ScheduleScenario> validScenarios = scenarios
-            .Where(s => s.requiredFlag == null || _flags.Contains(s.requiredFlag.FlagID))
+            .Where(s => s != null && s.MatchesFlags(_flags))
             .ToList();
 
         if (validScenarios.Count == 0) return null;

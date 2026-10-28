@@ -22,6 +22,11 @@ using DG.Tweening;
 public class StatusPreviewSequencer : MonoBehaviour
 {
     // ===== 優先序常數（數字越小越先播） =====
+    public const int OrderMoney = 0;
+    public const int OrderLust = 1;
+    public const int OrderShootTimes = 2;
+    public const int OrderStamina = 3;
+    // 保留舊呼叫端使用的常數。
     public const int OrderStress = 0;
     public const int OrderLifePower = 1;
     public const int OrderSociality = 2;
@@ -54,12 +59,18 @@ public class StatusPreviewSequencer : MonoBehaviour
         public TextMeshProUGUI floaty;   // 飄字目標
         public string floatyText;        // 要顯示的字；null = 不改字（純開關模式，保留原文字）
         public bool hasFloaty;           // 是否要播放飄字（false = 只跳本體）
+        public object owner;            // 所屬面板；取消時不影響其他面板
+        public long sequence;           // 同順位保留入列順序
+        public float minimumSeconds;    // 條狀動畫完成前不播放下一步
     }
 
     private readonly List<Req> _pending = new List<Req>();   // 本幀收集中
     private readonly Queue<Req> _queue = new Queue<Req>();    // 待播放
     private readonly Dictionary<TextMeshProUGUI, Tween> _tweens = new Dictionary<TextMeshProUGUI, Tween>();
+    private readonly Dictionary<TextMeshProUGUI, object> _tweenOwners = new Dictionary<TextMeshProUGUI, object>();
+    private long _nextSequence;
     private bool _flushScheduled;
+    private Coroutine _flush;
     private Coroutine _worker;
 
     private static StatusPreviewSequencer _instance;
@@ -88,6 +99,7 @@ public class StatusPreviewSequencer : MonoBehaviour
 
     private void OnDestroy()
     {
+        CancelAll();
         if (_instance == this) _instance = null;
     }
 
@@ -108,14 +120,28 @@ public class StatusPreviewSequencer : MonoBehaviour
     }
 
     /// <summary>自訂文字飄字（例如情緒名稱 + ↑）。</summary>
-    public void EnqueueText(int order, TextMeshProUGUI floaty, string text, Action applyValue = null)
+    public void EnqueueText(int order, TextMeshProUGUI floaty, string text, Action applyValue = null, object owner = null)
     {
         if (floaty == null || string.IsNullOrEmpty(text))
         {
-            if (applyValue != null) EnqueueCore(order, applyValue, null, null, false);
+            if (applyValue != null) EnqueueCore(order, applyValue, null, null, false, owner);
             return;
         }
-        EnqueueCore(order, applyValue, floaty, text, true);
+        EnqueueCore(order, applyValue, floaty, text, true, owner);
+    }
+
+    /// <summary>純視覺更新入列，例如體力條；至少等指定秒數才開始下一步。</summary>
+    public void EnqueueAction(int order, Action applyValue, object owner, float minimumSeconds = 0f)
+    {
+        if (applyValue != null) EnqueueCore(order, applyValue, null, null, false, owner, minimumSeconds);
+    }
+
+    /// <summary>以箭頭表示變化量；差值使用 long，避免 ForceAdd 跨越 int 範圍時溢位。</summary>
+    public static string GetPreviewArrowText(long delta)
+    {
+        if (delta == 0) return "";
+        int count = delta > 10 || delta < -10 ? 3 : delta > 5 || delta < -5 ? 2 : 1;
+        return new string(delta > 0 ? '↑' : '↓', count);
     }
 
     /// <summary>純開關飄字：不改字、只閃一下（例如 CurrentEmotion 變化）。floatyText 傳 null 即保留原文字。</summary>
@@ -129,7 +155,8 @@ public class StatusPreviewSequencer : MonoBehaviour
         EnqueueCore(order, applyValue, floaty, null, true);
     }
 
-    private void EnqueueCore(int order, Action applyValue, TextMeshProUGUI floaty, string floatyText, bool hasFloaty)
+    private void EnqueueCore(int order, Action applyValue, TextMeshProUGUI floaty, string floatyText, bool hasFloaty,
+        object owner = null, float minimumSeconds = 0f)
     {
         _pending.Add(new Req
         {
@@ -137,17 +164,52 @@ public class StatusPreviewSequencer : MonoBehaviour
             applyValue = applyValue,
             floaty = floaty,
             floatyText = floatyText,
-            hasFloaty = hasFloaty
+            hasFloaty = hasFloaty,
+            owner = owner,
+            sequence = _nextSequence++,
+            minimumSeconds = minimumSeconds
         });
 
         if (!_flushScheduled)
         {
             _flushScheduled = true;
-            StartCoroutine(FlushNextFrame());
+            _flush = StartCoroutine(FlushNextFrame());
         }
     }
 
-    /// <summary>停止所有播放、清空 queue 並 kill 所有 tween。場景卸載 / 面板關閉時呼叫。</summary>
+    /// <summary>只取消指定面板的待播更新與飄字，不建立新的播放器。</summary>
+    public static void CancelOwnerIfExists(object owner)
+    {
+        if (_instance != null && owner != null) _instance.CancelOwner(owner);
+    }
+
+    private void CancelOwner(object owner)
+    {
+        _pending.RemoveAll(r => ReferenceEquals(r.owner, owner));
+        int count = _queue.Count;
+        for (int i = 0; i < count; i++)
+        {
+            var request = _queue.Dequeue();
+            if (!ReferenceEquals(request.owner, owner)) _queue.Enqueue(request);
+        }
+
+        var targets = new List<TextMeshProUGUI>();
+        foreach (var pair in _tweenOwners)
+            if (ReferenceEquals(pair.Value, owner)) targets.Add(pair.Key);
+        foreach (var target in targets)
+        {
+            if (_tweens.TryGetValue(target, out var tween)) tween?.Kill();
+            _tweens.Remove(target);
+            _tweenOwners.Remove(target);
+            if (target == null) continue;
+            target.text = "";
+            var color = target.color;
+            color.a = 0f;
+            target.color = color;
+        }
+    }
+
+    /// <summary>停止全部播放。單一面板關閉請改用 CancelOwnerIfExists。</summary>
     public static void CancelAllIfExists()
     {
         if (_instance != null) _instance.CancelAll();
@@ -158,6 +220,11 @@ public class StatusPreviewSequencer : MonoBehaviour
         _pending.Clear();
         _queue.Clear();
         _flushScheduled = false;
+        if (_flush != null)
+        {
+            StopCoroutine(_flush);
+            _flush = null;
+        }
 
         if (_worker != null)
         {
@@ -167,26 +234,30 @@ public class StatusPreviewSequencer : MonoBehaviour
 
         foreach (var kv in _tweens) kv.Value?.Kill();
         _tweens.Clear();
+        _tweenOwners.Clear();
     }
 
     private IEnumerator FlushNextFrame()
     {
         yield return null; // 等一幀，把同幀的變動全收齊
         _flushScheduled = false;
+        _flush = null;
 
-        _pending.Sort((a, b) => a.order.CompareTo(b.order));
+        _pending.Sort((a, b) => a.order != b.order
+            ? a.order.CompareTo(b.order) : a.sequence.CompareTo(b.sequence));
         foreach (var r in _pending) _queue.Enqueue(r);
         _pending.Clear();
 
-        if (_worker == null) _worker = StartCoroutine(PlayQueue());
+        if (_worker == null && _queue.Count > 0) _worker = StartCoroutine(PlayQueue());
     }
 
     private IEnumerator PlayQueue()
     {
         while (_queue.Count > 0)
         {
-            PlayStep(_queue.Dequeue());
-            yield return new WaitForSeconds(stepInterval);
+            var request = _queue.Dequeue();
+            PlayStep(request);
+            yield return new WaitForSecondsRealtime(Mathf.Max(stepInterval, request.minimumSeconds));
         }
         _worker = null;
     }
@@ -194,11 +265,11 @@ public class StatusPreviewSequencer : MonoBehaviour
     private void PlayStep(Req r)
     {
         r.applyValue?.Invoke();              // 本體（數字 / 標籤）在此刻跳
-        if (r.hasFloaty) PlayFloaty(r.floaty, r.floatyText);
+        if (r.hasFloaty) PlayFloaty(r.floaty, r.floatyText, r.owner);
     }
 
     // floatyText 為 null = 不改字（純開關，保留 Inspector 設定的固定文字）；非 null = 設定該字。
-    private void PlayFloaty(TextMeshProUGUI target, string floatyText)
+    private void PlayFloaty(TextMeshProUGUI target, string floatyText, object owner)
     {
         if (target == null) return;
 
@@ -215,10 +286,18 @@ public class StatusPreviewSequencer : MonoBehaviour
         target.gameObject.SetActive(true);
 
         Tween tween = DOTween.Sequence()
+            .SetUpdate(true)
             .AppendInterval(holdSeconds)
             .Append(target.DOFade(0f, fadeSeconds))
-            .OnComplete(() => { if (target != null && floatyText != null) target.text = ""; });
+            .OnComplete(() =>
+            {
+                if (target != null && floatyText != null) target.text = "";
+                // 完成後釋放參照，避免保留已自動回收的 Tween 或已關閉面板。
+                _tweens.Remove(target);
+                _tweenOwners.Remove(target);
+            });
 
         _tweens[target] = tween;
+        _tweenOwners[target] = owner;
     }
 }

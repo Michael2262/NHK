@@ -10,7 +10,6 @@ public class ProtagonistSaveData
     public int ShootTimes = ProtagonistStatusModel.InitialShootTimesMax;
     public int Lust = ProtagonistStatusModel.InitialLust;
     public int StickerCount = ProtagonistStatusModel.InitialStickerCount;
-    public int PendingStickerCount = ProtagonistStatusModel.InitialPendingStickerCount;
     public int Money = ProtagonistStatusModel.InitialMoney;
     public int SkillPoints = ProtagonistStatusModel.InitialSkillPoints;
     public int Semen = ProtagonistStatusModel.InitialSemen;

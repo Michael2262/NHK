@@ -15,8 +15,6 @@ namespace NHK.StateTest
         [SerializeField] private TMP_Text lustText;
         [Tooltip("貼紙數量；只顯示值，不附加名稱。")]
         [SerializeField] private TMP_Text stickerCountText;
-        [Tooltip("達標未領貼紙數量；只顯示值，不附加名稱。")]
-        [SerializeField] private TMP_Text pendingStickerCountText;
         [Tooltip("金錢；只顯示值，不附加名稱。")]
         [SerializeField] private TMP_Text moneyText;
 
@@ -67,7 +65,6 @@ namespace NHK.StateTest
             SetText(shootTimesText, model != null ? $"{model.ShootTimes}/{model.ShootTimesMax}" : "—");
             SetText(lustText, model != null ? model.Lust.ToString() : "—");
             SetText(stickerCountText, model != null ? model.StickerCount.ToString() : "—");
-            SetText(pendingStickerCountText, model != null ? model.PendingStickerCount.ToString() : "—");
             SetText(moneyText, model != null ? model.Money.ToString() : "—");
         }
 

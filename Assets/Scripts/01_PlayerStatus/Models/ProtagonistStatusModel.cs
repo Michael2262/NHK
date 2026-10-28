@@ -28,13 +28,8 @@ public class ProtagonistStatusModel
 
     // ───── 貼紙 ─────
     public const int StickerCountMin = 0;
-    public const int StickerCountMax = 999;          // 待領貼紙兌換也使用此持有上限
+    public const int StickerCountMax = 999;
     public const int InitialStickerCount = 0;
-
-    // ───── 達標未領貼紙 ─────
-    public const int PendingStickerCountMin = 0;    // 維持 0，代表沒有待領貼紙
-    public const int PendingStickerCountMax = 999;
-    public const int InitialPendingStickerCount = 0;
 
     // ───── 金錢 ─────
     public const int InitialMoney = 1000;              // 開局金錢；有效範圍 0～999999
@@ -63,7 +58,6 @@ public class ProtagonistStatusModel
     public int ShootTimes { get; private set; } = InitialShootTimesMax;
     public int Lust { get; private set; } = InitialLust;
     public int StickerCount { get; private set; } = InitialStickerCount;
-    public int PendingStickerCount { get; private set; } = InitialPendingStickerCount;
     public int Money { get; private set; } = ClampMoney(InitialMoney);
 
     public int SkillPoints { get; private set; } = InitialSkillPoints;
@@ -181,31 +175,6 @@ public class ProtagonistStatusModel
     public void AddStickerCount(int amount)
         => SetStickerCount(Clamp((long)StickerCount + amount, StickerCountMin, StickerCountMax));
 
-    public void SetPendingStickerCount(int value)
-    {
-        int previous = PendingStickerCount;
-        PendingStickerCount = Clamp(value, PendingStickerCountMin, PendingStickerCountMax);
-        NotifyIfChanged(previous, PendingStickerCount);
-    }
-
-    public void AddPendingStickerCount(int amount)
-        => SetPendingStickerCount(Clamp((long)PendingStickerCount + amount,
-            PendingStickerCountMin, PendingStickerCountMax));
-
-    /// <summary>盡量將待領貼紙轉入持有量；放不下的保留待領，沒有轉入時回傳 false。</summary>
-    public bool RedeemPendingStickers()
-    {
-        int availableSpace = Math.Max(0, StickerCountMax - StickerCount);
-        int redeemed = Math.Min(PendingStickerCount, availableSpace);
-        if (redeemed <= 0) return false;
-
-        // 兩個數值都完成更新後才通知，避免 UI 看到只更新一半的資料。
-        StickerCount += redeemed;
-        PendingStickerCount -= redeemed;
-        OnChanged?.Invoke();
-        return true;
-    }
-
     // 金錢上下限固定於此，不列入頂部的可調設定區。
     private static int ClampMoney(long value) => Clamp(value, 0, 999999);
 
@@ -308,7 +277,6 @@ public class ProtagonistStatusModel
         ShootTimes = ShootTimesMax;
         Lust = Clamp(InitialLust, LustMin, LustMax);
         StickerCount = Clamp(InitialStickerCount, StickerCountMin, StickerCountMax);
-        PendingStickerCount = Clamp(InitialPendingStickerCount, PendingStickerCountMin, PendingStickerCountMax);
         Money = ClampMoney(InitialMoney);
         SkillPoints = Math.Max(0, InitialSkillPoints);
         Semen = Clamp(InitialSemen, SemenMin, SemenLimit);
@@ -328,7 +296,7 @@ public class ProtagonistStatusModel
     {
         StaminaMax = StaminaMax, Stamina = Stamina,
         ShootTimesMax = ShootTimesMax, ShootTimes = ShootTimes,
-        Lust = Lust, StickerCount = StickerCount, PendingStickerCount = PendingStickerCount,
+        Lust = Lust, StickerCount = StickerCount,
         Money = Money, SkillPoints = SkillPoints, Semen = Semen, RoomMessLevel = RoomMessLevel
     };
 
@@ -343,7 +311,6 @@ public class ProtagonistStatusModel
         ShootTimes = data.ShootTimes;
         Lust = Clamp(data.Lust, LustMin, LustMax);
         StickerCount = Clamp(data.StickerCount, StickerCountMin, StickerCountMax);
-        PendingStickerCount = Clamp(data.PendingStickerCount, PendingStickerCountMin, PendingStickerCountMax);
         Money = ClampMoney(data.Money);
         SkillPoints = Math.Max(0, data.SkillPoints);
         Semen = Clamp(data.Semen, SemenMin, SemenLimit);

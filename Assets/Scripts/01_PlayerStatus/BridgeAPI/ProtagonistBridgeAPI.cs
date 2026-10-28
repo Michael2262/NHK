@@ -38,12 +38,6 @@ public class ProtagonistBridgeAPI : MonoBehaviour
     public void SetStickerCount(int value) => P?.SetStickerCount(value);
     public void AddStickerCount(int amount) => P?.AddStickerCount(amount);
 
-    // ───── 待領貼紙 ─────
-    public int GetPendingStickerCount() => P?.PendingStickerCount ?? 0;
-    public void SetPendingStickerCount(int value) => P?.SetPendingStickerCount(value);
-    public void AddPendingStickerCount(int amount) => P?.AddPendingStickerCount(amount);
-    public void RedeemPendingStickers() => P?.RedeemPendingStickers();
-
     // ───── 金錢 ─────
     public int GetMoney() => P?.Money ?? 0;
     public void SetMoney(int value) => P?.SetMoney(value);
