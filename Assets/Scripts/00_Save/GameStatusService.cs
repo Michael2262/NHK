@@ -352,6 +352,8 @@ public class GameStatusService : MonoBehaviour
         DialogueManager.ResetDatabase(DatabaseResetOptions.KeepAllLoaded); // 重置當前的對話資料庫
 
         // 重置所有 Model 的數值
+        // 重設時間會發出初始跨日通知；先停用舊規則，等所有資料就緒後統一重建刷新。
+        ProgressUnlockManager?.UnsubscribeAll();
         Protagonist.NewGame(notify: false);
         Skills.NewGame();
         Inventory.NewGame();
@@ -655,8 +657,8 @@ public class GameStatusService : MonoBehaviour
         // 解除舊的事件訂閱，避免記憶體洩漏或重複觸發
         ProgressUnlockManager?.UnsubscribeAll();
 
-        // 重新建立，對新的 Heroines 實例與主角訂閱
-        ProgressUnlockManager = new ProgressUnlockManager(ProgressFlags, Heroines, Protagonist, progressUnlockConfigs);
+        // 重新建立，對新的 Heroines 實例、主角與時間訂閱。
+        ProgressUnlockManager = new ProgressUnlockManager(ProgressFlags, Heroines, Protagonist, Time, progressUnlockConfigs);
     }
     // ==========================================================
     // 開啟初始flag、value設定

@@ -58,6 +58,7 @@ public class RequirementUnavailable : MonoBehaviour
     public bool AutoRefresh = true;
 
     private bool _subscribed;
+    private TimeSystemModel _subscribedTime;
 
     private void Awake()
     {
@@ -109,7 +110,7 @@ public class RequirementUnavailable : MonoBehaviour
             if (!string.IsNullOrEmpty(RuleAsset.heroineID) && svc.Heroines != null)
                 svc.Heroines.TryGetValue(RuleAsset.heroineID, out heroine);
 
-            return RuleAsset.IsConditionMet(heroine, svc.Protagonist);
+            return RuleAsset.IsConditionMet(heroine, svc.Protagonist, svc.Time);
         }
 
         // Conditions 路徑
@@ -199,7 +200,7 @@ public class RequirementUnavailable : MonoBehaviour
                         h.OnHCountChanged += OnAnyChanged;
                     }
                 }
-                else if (!protagonistSubscribed && svc.Protagonist != null)
+                else if (c.IsProtagonistStat && !protagonistSubscribed && svc.Protagonist != null)
                 {
                     svc.Protagonist.OnRoomMessLevelChanged += OnAnyChanged;
                     protagonistSubscribed = true;
@@ -207,6 +208,17 @@ public class RequirementUnavailable : MonoBehaviour
             }
         }
 
+        bool hasTimeCondition = RuleAsset != null
+            ? RuleAsset.HasTimeCondition
+            : Conditions != null && Conditions.Exists(c => c != null && c.IsTimeStat);
+        if (hasTimeCondition && svc.Time != null)
+        {
+            _subscribedTime = svc.Time;
+            _subscribedTime.OnDayPassed += Refresh;
+        }
+
+        // 讀檔不發跨日事件，等全部 Model 還原後再刷新條件。
+        svc.OnGameStatusLoaded += Refresh;
         if (svc.ProgressFlags != null)
             svc.ProgressFlags.OnFlagChanged += OnFlagChanged;
 
@@ -216,6 +228,9 @@ public class RequirementUnavailable : MonoBehaviour
     private void UnsubscribeEvents()
     {
         if (!_subscribed) return;
+        if (_subscribedTime != null)
+            _subscribedTime.OnDayPassed -= Refresh;
+        _subscribedTime = null;
         var svc = GameStatusService.Instance;
         if (svc == null) { _subscribed = false; return; }
 
@@ -252,7 +267,7 @@ public class RequirementUnavailable : MonoBehaviour
                         h.OnHCountChanged -= OnAnyChanged;
                     }
                 }
-                else if (!protagonistUnsubscribed && svc.Protagonist != null)
+                else if (c.IsProtagonistStat && !protagonistUnsubscribed && svc.Protagonist != null)
                 {
                     svc.Protagonist.OnRoomMessLevelChanged -= OnAnyChanged;
                     protagonistUnsubscribed = true;
@@ -260,6 +275,7 @@ public class RequirementUnavailable : MonoBehaviour
             }
         }
 
+        svc.OnGameStatusLoaded -= Refresh;
         if (svc.ProgressFlags != null)
             svc.ProgressFlags.OnFlagChanged -= OnFlagChanged;
 

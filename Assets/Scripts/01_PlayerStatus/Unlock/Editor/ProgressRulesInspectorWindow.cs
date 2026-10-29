@@ -82,11 +82,10 @@ public class ProgressRulesInspectorWindow : EditorWindow
                 if (entries.arraySize == 0)
                     EditorGUILayout.HelpBox("按「新增一列」，填入條件並拖入目標 Flag。每列可加入多個條件。", MessageType.Info);
 
-                _showMirrors = EditorGUILayout.Foldout(_showMirrors, "數值與布林映射（同一份設定表）", true);
+                _showMirrors = EditorGUILayout.Foldout(_showMirrors, "數值映射（同一份設定表）", true);
                 if (_showMirrors)
                 {
                     EditorGUILayout.PropertyField(_serializedConfig.FindProperty("mirrors"), new GUIContent("數值映射"), true);
-                    EditorGUILayout.PropertyField(_serializedConfig.FindProperty("flagMirrors"), new GUIContent("布林 Flag 映射"), true);
                 }
             }
             // SerializedProperty 在寫入前註冊 Undo，並將修改標記到所屬 Config。
@@ -144,7 +143,7 @@ public class ProgressRulesInspectorWindow : EditorWindow
                 if (GUILayout.Button("刪除", GUILayout.Width(45))) deleteIndex = index;
             }
             if (!entry.isExpanded) return;
-            EditorGUILayout.PropertyField(entry.FindPropertyRelative("heroineID"), new GUIContent("女主角 ID（主角條件可留空）"));
+            EditorGUILayout.PropertyField(entry.FindPropertyRelative("heroineID"), new GUIContent("女主角 ID（主角或天數條件可留空）"));
             EditorGUILayout.LabelField("條件：全部成立才執行", EditorStyles.boldLabel);
             var conditions = entry.FindPropertyRelative("conditions");
             int removeCondition = -1;

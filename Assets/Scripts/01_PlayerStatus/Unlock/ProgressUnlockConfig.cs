@@ -3,7 +3,7 @@ using UnityEngine;
 
 /// <summary>
 /// 解鎖設定表。每列規則直接存在此 Config，不需建立獨立 Rule 資產。
-/// 規則、數值映射與布林映射可集中在同一份設定表，由 GameStatusService 交給 Manager。
+/// 規則與數值映射集中在同一份設定表，由 GameStatusService 交給 Manager。
 /// </summary>
 [CreateAssetMenu(
     menuName = "Game/Progress/Progress Unlock Config",
@@ -17,18 +17,10 @@ public class ProgressUnlockConfig : ScriptableObject
     [Header("數值映射 (Sync / 鏡像)")]
     [Tooltip(
         "把某個數值忠實同步到 Progress Value 變數 (數值一變就跟著變)。\n" +
-        "女主角數值 (Libido / Trust / HCount) 需填 heroineID；主角數值留空。\n" +
+        "女主角數值需填 heroineID；RoomMessLevel 與 DayIndex（天數）留空。\n" +
         "與門檻規則不同：這裡不判斷大小，只是讓 Value 永遠等於來源的當下值。"
     )]
     public List<StatMirror> mirrors = new List<StatMirror>();
-
-    [Header("布林 Flag 映射 (Sync / 鏡像)")]
-    [Tooltip(
-        "把主角布林狀態忠實同步到 Progress Flag（狀態一變就跟著開關）。\n" +
-        "來源支援 BadHealthy / BadDependency；true 時加入 Persistent Flag，false 時移除 Flag。\n" +
-        "此映射為單向：修改 Progress Flag 不會反向修改主角狀態。"
-    )]
-    public List<BoolFlagMirror> flagMirrors = new List<BoolFlagMirror>();
 
 }
 
@@ -47,9 +39,10 @@ public class ProgressUnlockRule
     public string unlockAlertKey;
 
     public bool HasHeroineCondition => conditions != null && conditions.Exists(c => c != null && c.IsHeroineStat);
-    public bool HasProtagonistCondition => conditions != null && conditions.Exists(c => c != null && !c.IsHeroineStat);
+    public bool HasProtagonistCondition => conditions != null && conditions.Exists(c => c != null && c.IsProtagonistStat);
+    public bool HasTimeCondition => conditions != null && conditions.Exists(c => c != null && c.IsTimeStat);
 
-    public bool IsConditionMet(HeroineStatusModel heroine, ProtagonistStatusModel protagonist)
+    public bool IsConditionMet(HeroineStatusModel heroine, ProtagonistStatusModel protagonist, TimeSystemModel time = null)
     {
         if (conditions == null) return false;
         bool hasCondition = false;
@@ -57,7 +50,7 @@ public class ProgressUnlockRule
         {
             if (condition == null) continue;
             hasCondition = true;
-            if (!condition.IsMet(heroine, protagonist)) return false;
+            if (!condition.IsMet(heroine, protagonist, time)) return false;
         }
         return hasCondition;
     }

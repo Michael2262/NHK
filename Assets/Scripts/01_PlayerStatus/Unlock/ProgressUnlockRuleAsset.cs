@@ -6,12 +6,11 @@ using UnityEngine;
 /// 單條進度解鎖規則 (獨立 ScriptableObject)。
 /// 每條規則建立一個 .asset，例如 Rule_Sister_UnlockFootJob.asset。
 ///
-/// 條件可混搭女主角數值 (Libido / Trust / HCount，需填 heroineID)
-/// 與主角數值 (Stress / LifePower / Sociality / Dependency)，
+/// 條件可混搭女主角數值 (Libido / Trust / HCount / Affinity / Mood，需填 heroineID)、
+/// 主角數值 (RoomMessLevel) 與遊戲天數 (DayIndex)，
 /// 全部達成 (All) 才算符合。
 ///
-/// 設計原則：Rule 是「自足」的 — 任何引用它的地方 (ProgressUnlockConfig、
-/// RequirementBlocker、甚至未來新系統) 都不需要額外上下文就能完整評估條件。
+/// 引用規則的系統傳入對應的女主角、主角與時間 Model，即可評估條件。
 ///
 /// 建議在 Project 視窗 Create → Game → Progress → Progress Unlock Rule 建立，
 /// 並依角色分資料夾管理 (例如 Assets/.../UnlockRules/Sister/)。
@@ -29,15 +28,15 @@ public class ProgressUnlockRuleAsset : ScriptableObject
     [Header("條件")]
     [Tooltip(
         "要檢查哪一位女主角 (HeroineID，需與 HeroineStatusConfig 中的 ID 一致)。\n" +
-        "條件中含女主角數值 (Libido / Trust / HCount) 時必填；\n" +
-        "純主角數值的規則可留空。"
+        "條件中含女主角數值 (Libido / Trust / HCount / Affinity / Mood) 時必填；\n" +
+        "純主角或天數條件的規則可留空。"
     )]
     public string heroineID;
 
     [Tooltip(
         "解鎖條件列表，全部達成 (All) 才算符合。\n" +
-        "Libido / Trust / HCount 查上方 heroineID 指定的女主角；\n" +
-        "Stress / LifePower / Sociality / Dependency 查主角。"
+        "Libido / Trust / HCount / Affinity / Mood 查上方 heroineID 指定的女主角；\n" +
+        "RoomMessLevel 查主角，DayIndex 查目前遊戲天數。"
     )]
     public List<UnlockStatCondition> conditions = new List<UnlockStatCondition>();
 
@@ -83,7 +82,7 @@ public class ProgressUnlockRuleAsset : ScriptableObject
     [Header("UI 提示 (供 RequirementBlocker 顯示時使用)")]
     [Tooltip(
         "類型文字的 localization key，Blocker 會顯示在「類型名稱」位置。\n" +
-        "留空則自動用第一個條件的數值名稱 (Libido / Trust / Stress …)。"
+        "留空則自動用第一個條件的數值名稱 (Libido / Trust / DayIndex …)。"
     )]
     public string uiHintTypeKeyOverride;
 
@@ -97,7 +96,7 @@ public class ProgressUnlockRuleAsset : ScriptableObject
     // 條件組成查詢 (給 Manager / Blocker 決定訂閱對象)
     // ==========================================================
 
-    /// <summary> 是否含有女主角數值條件 (Libido / Trust / HCount) </summary>
+    /// <summary> 是否含有女主角數值條件 </summary>
     public bool HasHeroineCondition
     {
         get
@@ -109,17 +108,20 @@ public class ProgressUnlockRuleAsset : ScriptableObject
         }
     }
 
-    /// <summary> 是否含有主角數值條件 (Stress / LifePower / Sociality / Dependency) </summary>
+    /// <summary> 是否含有主角數值條件 (RoomMessLevel) </summary>
     public bool HasProtagonistCondition
     {
         get
         {
             if (conditions == null) return false;
             foreach (var c in conditions)
-                if (c != null && !c.IsHeroineStat) return true;
+                if (c != null && c.IsProtagonistStat) return true;
             return false;
         }
     }
+
+    /// <summary> 是否含有遊戲天數條件 </summary>
+    public bool HasTimeCondition => conditions != null && conditions.Exists(c => c != null && c.IsTimeStat);
 
     // ==========================================================
     // 輔助方法 (給 RequirementBlocker / Manager 共用)
@@ -160,22 +162,22 @@ public class ProgressUnlockRuleAsset : ScriptableObject
     /// <summary>
     /// 檢查是否達成此規則的所有條件 (All 邏輯)。
     /// 沒有任何條件時視為「不達成」(空規則多半是設定遺漏)。
-    /// heroine 可為 null (純主角條件的規則)；含女主角條件而 heroine 為 null 時不達成。
+    /// 不需要的 Model 可為 null；條件所需的 Model 缺少時不達成。
     /// </summary>
-    public bool IsConditionMet(HeroineStatusModel heroine, ProtagonistStatusModel protagonist)
+    public bool IsConditionMet(HeroineStatusModel heroine, ProtagonistStatusModel protagonist, TimeSystemModel time = null)
     {
         if (conditions == null || conditions.Count == 0) return false;
 
         foreach (var c in conditions)
         {
             if (c == null) continue;
-            if (!c.IsMet(heroine, protagonist)) return false;
+            if (!c.IsMet(heroine, protagonist, time)) return false;
         }
         return true;
     }
 
     /// <summary>
-    /// 所有條件的文字摘要，例如 "Libido≥3 & Stress<50" (Editor 視窗與 Debug 用)
+    /// 所有條件的文字摘要，例如 "Libido≥3 & DayIndex≥5" (Editor 視窗與 Debug 用)
     /// </summary>
     public string GetConditionsSummary()
     {

@@ -17679,7 +17679,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8080184298108176136, guid: 7918a59efb35c8a428909e1e9a993c20, type: 3}
       propertyPath: m_Name
-      value: Hub_Button_Main
+      value: Hub_Button_Sticker
       objectReference: {fileID: 0}
     - target: {fileID: 8080184298108176136, guid: 7918a59efb35c8a428909e1e9a993c20, type: 3}
       propertyPath: m_IsActive
@@ -24173,11 +24173,11 @@ MonoBehaviour:
     Logic: 0
     Conditions: []
     ToActivate:
-    - {fileID: 1377841995}
+    - {fileID: 2616087971483486367}
     - {fileID: 1745311312}
     ToDeactivate:
     - {fileID: 1019188885}
-    - {fileID: 2616087971483486367}
+    - {fileID: 1377841995}
     - {fileID: 236891002}
     - {fileID: 1305287846}
     - {fileID: 42885445}
@@ -24191,18 +24191,6 @@ MonoBehaviour:
     - {fileID: 1214348841}
     - {fileID: 753010545}
     - {fileID: 1870348263}
-  - StateName: "\u958B\u5834\u6232\u72C0\u614B2"
-    Priority: 2
-    Logic: 0
-    Conditions:
-    - Definition: {fileID: 11400000, guid: 2a114569c8f0fb34ea9213b7e75120cd, type: 2}
-      RequiredState: 0
-      Comparison: 0
-      TargetValue: 2
-    ToActivate:
-    - {fileID: 1019188885}
-    ToDeactivate:
-    - {fileID: 1377841995}
   - StateName: RoomMessLevel>=1
     Priority: 1
     Logic: 0
@@ -24347,6 +24335,18 @@ MonoBehaviour:
     ToActivate:
     - {fileID: 71923890}
     ToDeactivate: []
+  - StateName: "\u958B\u5834\u6232\u72C0\u614B2"
+    Priority: 2
+    Logic: 0
+    Conditions:
+    - Definition: {fileID: 11400000, guid: 2a114569c8f0fb34ea9213b7e75120cd, type: 2}
+      RequiredState: 0
+      Comparison: 0
+      TargetValue: 2
+    ToActivate:
+    - {fileID: 1019188885}
+    ToDeactivate:
+    - {fileID: 2616087971483486367}
 --- !u!1 &1805022242
 GameObject:
   m_ObjectHideFlags: 0
@@ -26873,7 +26873,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8080184298108176136, guid: 7918a59efb35c8a428909e1e9a993c20, type: 3}
       propertyPath: m_Name
-      value: Hub_Button_Sticker
+      value: Hub_Button_Main
+      objectReference: {fileID: 0}
+    - target: {fileID: 8080184298108176136, guid: 7918a59efb35c8a428909e1e9a993c20, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 9053114303275004252, guid: 7918a59efb35c8a428909e1e9a993c20, type: 3}
       propertyPath: onDefault.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_StringArgument

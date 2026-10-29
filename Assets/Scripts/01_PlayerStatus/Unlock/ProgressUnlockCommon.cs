@@ -26,7 +26,7 @@ public enum ProgressActionType
 }
 
 /// <summary>
-/// 比較運算子 (Stress 這類要判斷「低於閾值才達成」的場合特別需要)
+/// 比較運算子。
 /// </summary>
 public enum ComparisonOp
 {
@@ -44,27 +44,20 @@ public enum ComparisonOp
 
 /// <summary>
 /// 解鎖條件要檢查的數值類型。
-/// Libido / Trust / HCount / Affinity 屬於女主角 (HeroineStatusModel，需搭配 Rule 上的 heroineID)；
-/// Stress / LifePower / Sociality / Dependency / RoomMessLevel / BodyDirtyLevel 屬於主角 (ProtagonistStatusModel)，與 heroineID 無關。
+/// Libido / Trust / HCount / Affinity / Mood 屬於女主角，需搭配 heroineID；
+/// RoomMessLevel 屬於主角，DayIndex 屬於時間系統，兩者都不需要 heroineID。
 /// </summary>
 public enum UnlockStatType
 {
-    // ───── 女主角數值 ─────
-    Libido,
-    Trust,
-    HCount,
-
-    // ───── 主角數值 ─────
-    [UnityEngine.InspectorName("已退役：Stress")] Stress,
-    [UnityEngine.InspectorName("已退役：LifePower")] LifePower,
-    [UnityEngine.InspectorName("已退役：Sociality")] Sociality,
-    [UnityEngine.InspectorName("已退役：Dependency")] Dependency,
-    RoomMessLevel,
-    // 追加，放最後以免打亂既有 Rule / Mirror .asset 的列舉索引
-    [UnityEngine.InspectorName("已退役：BodyDirtyLevel")] BodyDirtyLevel,
-    // 女主角數值（追加，放最後以免打亂既有 Rule / Mirror .asset 的列舉索引）
-    Affinity,
-    Mood // 追加，維持既有規則的索引
+    // 保留現役項目的序列化編號；退役的 3～6、8 不再使用，避免舊資料被誤認。
+    Libido = 0,
+    Trust = 1,
+    HCount = 2,
+    RoomMessLevel = 7,
+    Affinity = 9,
+    Mood = 10,
+    [InspectorName("DayIndex（天數 / Day X）")]
+    DayIndex = 11
 }
 
 /// <summary>
@@ -76,12 +69,12 @@ public class UnlockStatCondition
 {
     [Tooltip(
         "要檢查的數值。\n" +
-        "Libido / Trust / HCount / Affinity 查 Rule 指定的女主角；\n" +
-        "Stress / LifePower / Sociality / Dependency 查主角。"
+        "Libido / Trust / HCount / Affinity / Mood 查 Rule 指定的女主角；\n" +
+        "RoomMessLevel 查主角，DayIndex 查目前遊戲天數（Day X）。"
     )]
     public UnlockStatType stat = UnlockStatType.Libido;
 
-    [Tooltip("比較運算子。例如 Stress 想要「低於門檻才解鎖」就選 Less / LessOrEqual。")]
+    [Tooltip("比較運算子。例如 DayIndex 想要「到第 X 天才解鎖」就選 GreaterOrEqual。")]
     public ComparisonOp op = ComparisonOp.GreaterOrEqual;
 
     [Tooltip("閾值")]
@@ -90,12 +83,15 @@ public class UnlockStatCondition
     /// <summary> 此條件是否屬於女主角數值 (需要 Rule 上有 heroineID) </summary>
     public bool IsHeroineStat => ProgressUnlockUtility.IsHeroineStat(stat);
 
+    public bool IsProtagonistStat => ProgressUnlockUtility.IsProtagonistStat(stat);
+    public bool IsTimeStat => ProgressUnlockUtility.IsTimeStat(stat);
+
     /// <summary>
-    /// 評估條件。需要的 Model 為 null 時 (女主角條件缺 heroine、主角條件缺 protagonist) 視為不達成。
+    /// 評估條件。所需的女主角、主角或時間 Model 為 null 時視為不達成。
     /// </summary>
-    public bool IsMet(HeroineStatusModel heroine, ProtagonistStatusModel protagonist)
+    public bool IsMet(HeroineStatusModel heroine, ProtagonistStatusModel protagonist, TimeSystemModel time = null)
     {
-        if (!ProgressUnlockUtility.TryGetStatValue(stat, heroine, protagonist, out int value))
+        if (!ProgressUnlockUtility.TryGetStatValue(stat, heroine, protagonist, out int value, time))
             return false;
         return ProgressUnlockUtility.Compare(value, op, threshold);
     }
@@ -109,16 +105,16 @@ public class UnlockStatCondition
 /// 數值映射 (Sync / 鏡像)：讓某個 Progress Value 變數「永遠等於」某個數值的當下值。
 /// 與門檻規則不同 —— 不判斷大小、不寫固定值，數值一變就把當前值忠實寫入 target。
 ///
-/// 來源數值是女主角 (Libido / Trust / HCount / Affinity) 時需填 heroineID；
-/// 來源是主角數值 (Stress / LifePower / …) 時 heroineID 留空。
+/// 來源數值是女主角 (Libido / Trust / HCount / Affinity / Mood) 時需填 heroineID；
+/// 來源是主角或時間數值時 heroineID 留空。
 /// </summary>
 [Serializable]
 public class StatMirror
 {
-    [Tooltip("來源數值。女主角數值需搭配下方 heroineID；主角數值則忽略 heroineID。")]
+    [Tooltip("來源數值。女主角數值需搭配下方 heroineID；RoomMessLevel 與 DayIndex 忽略 heroineID。")]
     public UnlockStatType stat = UnlockStatType.Libido;
 
-    [Tooltip("來源為女主角數值 (Libido / Trust / HCount) 時必填；主角數值留空。")]
+    [Tooltip("來源為女主角數值 (Libido / Trust / HCount / Affinity / Mood) 時必填；主角或時間數值留空。")]
     public string heroineID;
 
     [Tooltip("要忠實寫入當前值的 Progress Value 變數。")]
@@ -133,38 +129,13 @@ public class StatMirror
 }
 
 /// <summary>
-/// 可映射到 Progress Flag 的主角布林狀態。
-/// 新項目一律追加在最後，避免打亂既有 Config .asset 的列舉索引。
-/// </summary>
-public enum ProtagonistBoolState
-{
-    [UnityEngine.InspectorName("已退役：BadHealthy")] BadHealthy,
-    [UnityEngine.InspectorName("已退役：BadDependency")] BadDependency
-}
-
-/// <summary>
-/// 布林 Flag 映射 (Sync / 鏡像)：讓 Progress Flag 永遠等於主角布林狀態。
-/// 來源為 true 時加入 Persistent Flag，false 時移除 Flag。
-/// </summary>
-[Serializable]
-public class BoolFlagMirror
-{
-    [Tooltip("要映射的主角布林狀態。")]
-    public ProtagonistBoolState state = ProtagonistBoolState.BadHealthy;
-
-    [Tooltip("要忠實同步開關狀態的 Progress Flag。")]
-    public ProgressFlagDefinition target;
-
-    /// <summary>映射的文字摘要，例如 "BadHealthy → Flag_BadHealthy"。</summary>
-    public string ToSummary()
-        => $"{state} → {(target != null ? target.FlagID : "(未設定)")}";
-}
-
-/// <summary>
 /// 解鎖系統的共用小工具：數值取得 / 比較 / 顯示符號
 /// </summary>
 public static class ProgressUnlockUtility
 {
+    public static bool IsProtagonistStat(UnlockStatType stat) => stat == UnlockStatType.RoomMessLevel;
+    public static bool IsTimeStat(UnlockStatType stat) => stat == UnlockStatType.DayIndex;
+
     /// <summary> 此數值類型是否屬於女主角 (HeroineStatusModel) </summary>
     public static bool IsHeroineStat(UnlockStatType stat)
     {
@@ -182,7 +153,8 @@ public static class ProgressUnlockUtility
         UnlockStatType stat,
         HeroineStatusModel heroine,
         ProtagonistStatusModel protagonist,
-        out int value)
+        out int value,
+        TimeSystemModel time = null)
     {
         value = 0;
 
@@ -209,35 +181,18 @@ public static class ProgressUnlockUtility
                 value = heroine.HCount;
                 return true;
 
-            case UnlockStatType.Stress:
-                return false; // 舊數值已退役。
-            case UnlockStatType.LifePower:
-                return false; // 舊數值已退役。
-            case UnlockStatType.Sociality:
-                return false; // 舊數值已退役。
-            case UnlockStatType.Dependency:
-                return false; // 舊數值已退役。
             case UnlockStatType.RoomMessLevel:
                 if (protagonist == null) return false;
                 value = protagonist.RoomMessLevel;
                 return true;
-            case UnlockStatType.BodyDirtyLevel:
-                return false; // 舊數值已退役。
+            case UnlockStatType.DayIndex:
+                if (time == null) return false;
+                value = time.DayIndex;
+                return true;
 
             default:
                 return false;
         }
-    }
-
-    /// <summary>取出指定主角布林狀態。Model 為 null 或類型不支援時回傳 false。</summary>
-    public static bool TryGetProtagonistBoolState(
-        ProtagonistBoolState state,
-        ProtagonistStatusModel protagonist,
-        out bool value)
-    {
-        value = false;
-        // 舊負面狀態已退役，不再同步其旗標。
-        return false;
     }
 
     /// <summary> 依運算子比較 value 與 threshold </summary>

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// 監聽女主角與主角的數值變化，依照設定表內的規則
+/// 監聽女主角、主角與遊戲天數的變化，依照設定表內的規則
 /// 對 ProgressFlagModel 做對應的開關 / 附值操作。
 ///
 /// 使用方式：在 GameStatusService 中傳入一個 List&lt;ProgressUnlockConfig&gt;，
@@ -13,13 +13,14 @@ using UnityEngine;
 /// - Config 直接保存各列條件與動作
 /// - Rule 上的 heroineID 與 conditions 才是真正的權威
 /// - 同一份 Config 重複掛載時，Manager 只讀取一次
-/// - 一個 Rule 可以同時含女主角與主角條件，任一來源變化都會觸發重評
+/// - 一個 Rule 可以混合女主角、主角與天數條件，任一來源變化都會觸發重評
 /// </summary>
 public class ProgressUnlockManager
 {
     private readonly ProgressFlagModel _progress;
     private readonly Dictionary<string, HeroineStatusModel> _heroines;
     private readonly ProtagonistStatusModel _protagonist;
+    private readonly TimeSystemModel _time;
 
     // 以 heroineID 為 key，value 是含該女主角條件的所有 Rule (去重後)
     private readonly Dictionary<string, List<ProgressUnlockRule>> _rulesByHeroine
@@ -28,22 +29,23 @@ public class ProgressUnlockManager
     // 含主角條件的所有 Rule (去重後)
     private readonly List<ProgressUnlockRule> _protagonistRules
         = new List<ProgressUnlockRule>();
+    private readonly List<ProgressUnlockRule> _timeRules
+        = new List<ProgressUnlockRule>();
 
-    // 數值映射 (Sync)：女主角數值映射依 heroineID 分組，主角數值映射另存一份
+    // 數值映射 (Sync)：女主角依 heroineID 分組，主角與時間分別儲存。
     private readonly Dictionary<string, List<StatMirror>> _mirrorsByHeroine
         = new Dictionary<string, List<StatMirror>>();
     private readonly List<StatMirror> _protagonistMirrors
         = new List<StatMirror>();
 
-    // 主角布林狀態映射：BadHealthy / BadDependency → Progress Flag
-    private readonly List<BoolFlagMirror> _protagonistFlagMirrors
-        = new List<BoolFlagMirror>();
+    private readonly List<StatMirror> _timeMirrors
+        = new List<StatMirror>();
 
     // 紀錄每條 Rule「目前是否已套用」(以表內資料實例為 key，不依賴列名稱或排序)
     private readonly Dictionary<ProgressUnlockRule, bool> _ruleApplied
         = new Dictionary<ProgressUnlockRule, bool>();
 
-    // 每位女主角共用一個 handler，掛在 Libido / Trust / HCount / Affinity (方便解除訂閱)
+    // 每位女主角共用一個 handler，掛在 Libido / Trust / HCount / Affinity / Mood。
     private readonly Dictionary<string, Action<int>> _heroineHandlers
         = new Dictionary<string, Action<int>>();
 
@@ -57,11 +59,13 @@ public class ProgressUnlockManager
         ProgressFlagModel progress,
         Dictionary<string, HeroineStatusModel> heroines,
         ProtagonistStatusModel protagonist,
+        TimeSystemModel time,
         List<ProgressUnlockConfig> configs)
     {
         _progress = progress;
         _heroines = heroines;
         _protagonist = protagonist;
+        _time = time;
 
         if (configs == null || configs.Count == 0)
         {
@@ -78,7 +82,6 @@ public class ProgressUnlockManager
             if (cfg == null || !seenConfigs.Add(cfg)) continue;
 
             CollectMirrors(cfg);
-            CollectFlagMirrors(cfg);
 
             if (cfg.entries == null) continue;
             foreach (var rule in cfg.entries)
@@ -120,6 +123,12 @@ public class ProgressUnlockManager
                     indexed = true;
                 }
 
+                if (rule.HasTimeCondition)
+                {
+                    _timeRules.Add(rule);
+                    indexed = true;
+                }
+
                 if (indexed)
                     _ruleApplied[rule] = false;
             }
@@ -129,7 +138,7 @@ public class ProgressUnlockManager
     }
 
     /// <summary>
-    /// 收集一個 Config 內的數值映射，依來源 (女主角 / 主角) 分流索引。
+    /// 收集一個 Config 內的數值映射，依來源 (女主角 / 主角 / 時間) 分流索引。
     /// </summary>
     private void CollectMirrors(ProgressUnlockConfig cfg)
     {
@@ -165,31 +174,14 @@ public class ProgressUnlockManager
                 }
                 list.Add(mirror);
             }
-            else
+            else if (ProgressUnlockUtility.IsProtagonistStat(mirror.stat))
             {
                 _protagonistMirrors.Add(mirror);
             }
-        }
-    }
-
-    /// <summary>收集一個 Config 內的主角布林狀態 → Progress Flag 映射。</summary>
-    private void CollectFlagMirrors(ProgressUnlockConfig cfg)
-    {
-        if (cfg.flagMirrors == null) return;
-
-        foreach (var mirror in cfg.flagMirrors)
-        {
-            if (mirror == null) continue;
-
-            if (mirror.target == null)
+            else if (ProgressUnlockUtility.IsTimeStat(mirror.stat))
             {
-                Debug.LogWarning(
-                    $"[ProgressUnlockManager] Config '{cfg.name}' 有一筆布林 Flag 映射未設定 target，已跳過。"
-                );
-                continue;
+                _timeMirrors.Add(mirror);
             }
-
-            _protagonistFlagMirrors.Add(mirror);
         }
     }
 
@@ -198,7 +190,7 @@ public class ProgressUnlockManager
     // ==========================================================
     private void SubscribeAll()
     {
-        // ── 女主角：Libido / Trust / HCount ──
+        // ── 女主角：Libido / Trust / HCount / Affinity / Mood ──
         foreach (var kv in _heroines)
         {
             string id = kv.Key;
@@ -234,6 +226,15 @@ public class ProgressUnlockManager
             _protagonist.OnRoomMessLevelChanged += _protagonistHandler;
         }
 
+        if (_time != null && (_timeRules.Count > 0 || _timeMirrors.Count > 0))
+            _time.OnDayPassed += HandleDayPassed;
+    }
+
+    private void HandleDayPassed()
+    {
+        ApplyTimeMirrors();
+        foreach (var rule in _timeRules)
+            EvaluateRule(rule);
     }
 
     /// <summary>
@@ -259,6 +260,8 @@ public class ProgressUnlockManager
         }
         _protagonistHandler = null;
 
+        if (_time != null)
+            _time.OnDayPassed -= HandleDayPassed;
     }
 
     // ==========================================================
@@ -298,7 +301,7 @@ public class ProgressUnlockManager
             ApplyMirrorsForHeroine(id);
 
         ApplyProtagonistMirrors();
-        ApplyProtagonistFlagMirrors();
+        ApplyTimeMirrors();
     }
 
     // ==========================================================
@@ -344,35 +347,14 @@ public class ProgressUnlockManager
     {
         if (mirror == null || mirror.target == null) return;
 
-        if (ProgressUnlockUtility.TryGetStatValue(mirror.stat, heroine, _protagonist, out int value))
+        if (ProgressUnlockUtility.TryGetStatValue(mirror.stat, heroine, _protagonist, out int value, _time))
             _progress.SetValue(mirror.target.FlagID, value);
     }
 
-    private void ApplyProtagonistFlagMirrors()
+    private void ApplyTimeMirrors()
     {
-        foreach (var mirror in _protagonistFlagMirrors)
-            ApplyFlagMirror(mirror);
-    }
-
-    private void ApplyFlagMirror(BoolFlagMirror mirror)
-    {
-        if (mirror == null || mirror.target == null) return;
-
-        // 舊負面狀態來源已移除，也解除它曾經同步到的旗標，避免舊存檔殘留。
-        if (mirror.state == ProtagonistBoolState.BadHealthy || mirror.state == ProtagonistBoolState.BadDependency)
-        {
-            _progress.RemoveFlag(mirror.target.FlagID);
-            return;
-        }
-
-        if (!ProgressUnlockUtility.TryGetProtagonistBoolState(
-                mirror.state, _protagonist, out bool isActive))
-            return;
-
-        if (isActive)
-            _progress.AddPersistentFlag(mirror.target.FlagID);
-        else
-            _progress.RemoveFlag(mirror.target.FlagID);
+        foreach (var mirror in _timeMirrors)
+            ApplyMirror(mirror, null);
     }
 
     private void EvaluateRule(ProgressUnlockRule rule)
@@ -398,7 +380,7 @@ public class ProgressUnlockManager
             return;
         }
 
-        bool meetsCondition = rule.IsConditionMet(heroine, _protagonist);
+        bool meetsCondition = rule.IsConditionMet(heroine, _protagonist, _time);
         _ruleApplied.TryGetValue(rule, out bool isApplied);
 
         if (meetsCondition && !isApplied)

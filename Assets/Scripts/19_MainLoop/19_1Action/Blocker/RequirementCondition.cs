@@ -19,8 +19,8 @@ public enum RequirementType
 /// <summary>
 /// 單一阻擋條件。數值類型沿用 ProgressUnlockCommon 的 UnlockStatType / ComparisonOp，
 /// 與 ProgressUnlockRuleAsset 的條件系統同一份數值來源：
-///   女主角數值 (Libido / Trust / HCount) 需填 HeroineID；
-///   主角數值 (Stress / LifePower / Sociality / Dependency / RoomMessLevel) 忽略 HeroineID。
+///   女主角數值 (Libido / Trust / HCount / Affinity / Mood) 需填 HeroineID；
+///   主角數值 (RoomMessLevel) 與天數 (DayIndex) 忽略 HeroineID。
 /// </summary>
 [Serializable]
 public class RequirementCondition
@@ -30,15 +30,15 @@ public class RequirementCondition
 
     [Tooltip(
         "要檢查的數值（僅 Stat 類型生效）。\n" +
-        "Libido / Trust / HCount 查下方 HeroineID 指定的女主角；\n" +
-        "Stress / LifePower / Sociality / Dependency / RoomMessLevel 查主角。"
+        "Libido / Trust / HCount / Affinity / Mood 查下方 HeroineID 指定的女主角；\n" +
+        "RoomMessLevel 查主角，DayIndex 查目前遊戲天數。"
     )]
     public UnlockStatType Stat = UnlockStatType.Libido;
 
-    [Tooltip("比較運算子（僅 Stat 類型生效）。例如 Stress 想要「低於門檻才解鎖」就選 Less / LessOrEqual。")]
+    [Tooltip("比較運算子（僅 Stat 類型生效）。例如 DayIndex 想要「到第 X 天才解鎖」就選 GreaterOrEqual。")]
     public ComparisonOp Op = ComparisonOp.GreaterOrEqual;
 
-    [Tooltip("女主角 ID（僅 Stat 類型且數值為 Libido / Trust / HCount 時需要）")]
+    [Tooltip("女主角 ID（僅 Stat 類型且來源為女主角數值時需要）")]
     public string HeroineID;
 
     [Tooltip("閾值（僅 Stat 類型需要）")]
@@ -63,7 +63,7 @@ public class RequirementCondition
                     svc.Heroines.TryGetValue(HeroineID, out heroine);
                 }
 
-                if (!ProgressUnlockUtility.TryGetStatValue(Stat, heroine, svc.Protagonist, out int value))
+                if (!ProgressUnlockUtility.TryGetStatValue(Stat, heroine, svc.Protagonist, out int value, svc.Time))
                     return false;
                 return ProgressUnlockUtility.Compare(value, Op, RequiredLevel);
 
@@ -83,12 +83,15 @@ public class RequirementCondition
     public bool IsHeroineStat => IsStatType && ProgressUnlockUtility.IsHeroineStat(Stat);
 
     /// <summary> 此條件是否為主角數值（Blocker 據此訂閱主角事件）</summary>
-    public bool IsProtagonistStat => IsStatType && !ProgressUnlockUtility.IsHeroineStat(Stat);
+    public bool IsProtagonistStat => IsStatType && ProgressUnlockUtility.IsProtagonistStat(Stat);
+
+    /// <summary> 此條件是否為遊戲天數（Blocker 據此訂閱跨日事件）</summary>
+    public bool IsTimeStat => IsStatType && ProgressUnlockUtility.IsTimeStat(Stat);
 
     /// <summary>
     /// 取得此條件對應的 textTable field key（用於顯示類型名稱）。
     /// 與 ProgressUnlockRuleAsset.GetUIDisplayTypeKey 一致，直接用數值名稱當 key
-    /// （Libido / Trust / HCount / Stress / …）。Flag 類型回傳 null，代表不需要改變類型文字。
+    /// （Libido / Trust / HCount / DayIndex / …）。Flag 類型回傳 null，代表不需要改變類型文字。
     /// </summary>
     public string GetTypeTextKey()
         => IsStatType ? Stat.ToString() : null;

@@ -42,7 +42,7 @@ public class RequirementBlocker : MonoBehaviour
     [Tooltip("顯示所需 LV 的 TextMeshPro（等級類條件才會寫入）")]
     public TMP_Text LevelText;
 
-    [Tooltip("顯示條件類型名稱的 TextMeshPro（Libido / Trust / Stress … 等數值名稱；Flag 類型不變動）")]
+    [Tooltip("顯示條件類型名稱的 TextMeshPro（Libido / Trust / DayIndex … 等數值名稱；Flag 類型不變動）")]
     public TMP_Text TypeText;
 
     [Header("顯示設定")]
@@ -53,6 +53,7 @@ public class RequirementBlocker : MonoBehaviour
     public bool AutoRefresh = true;
 
     private bool _subscribed;
+    private TimeSystemModel _subscribedTime;
     private bool _blockerSanityChecked;
 
     private void Awake()
@@ -142,7 +143,7 @@ public class RequirementBlocker : MonoBehaviour
         if (!string.IsNullOrEmpty(RuleAsset.heroineID) && svc.Heroines != null)
             svc.Heroines.TryGetValue(RuleAsset.heroineID, out heroine);
 
-        bool passed = RuleAsset.IsConditionMet(heroine, svc.Protagonist);
+        bool passed = RuleAsset.IsConditionMet(heroine, svc.Protagonist, svc.Time);
 
         if (BlockerObject != null)
             BlockerObject.SetActive(!passed);
@@ -297,7 +298,7 @@ public class RequirementBlocker : MonoBehaviour
                         h.OnHCountChanged += OnAnyChanged;
                     }
                 }
-                else if (!protagonistSubscribed && svc.Protagonist != null)
+                else if (c.IsProtagonistStat && !protagonistSubscribed && svc.Protagonist != null)
                 {
                     svc.Protagonist.OnRoomMessLevelChanged += OnAnyChanged;
                     protagonistSubscribed = true;
@@ -305,6 +306,17 @@ public class RequirementBlocker : MonoBehaviour
             }
         }
 
+        bool hasTimeCondition = RuleAsset != null
+            ? RuleAsset.HasTimeCondition
+            : Conditions != null && Conditions.Exists(c => c != null && c.IsTimeStat);
+        if (hasTimeCondition && svc.Time != null)
+        {
+            _subscribedTime = svc.Time;
+            _subscribedTime.OnDayPassed += Refresh;
+        }
+
+        // 讀檔不發跨日事件，等全部 Model 還原後再刷新條件。
+        svc.OnGameStatusLoaded += Refresh;
         if (svc.ProgressFlags != null)
             svc.ProgressFlags.OnFlagChanged += OnFlagChanged;
 
@@ -314,6 +326,9 @@ public class RequirementBlocker : MonoBehaviour
     private void UnsubscribeEvents()
     {
         if (!_subscribed) return;
+        if (_subscribedTime != null)
+            _subscribedTime.OnDayPassed -= Refresh;
+        _subscribedTime = null;
         var svc = GameStatusService.Instance;
         if (svc == null) { _subscribed = false; return; }
 
@@ -350,7 +365,7 @@ public class RequirementBlocker : MonoBehaviour
                         h.OnHCountChanged -= OnAnyChanged;
                     }
                 }
-                else if (!protagonistUnsubscribed && svc.Protagonist != null)
+                else if (c.IsProtagonistStat && !protagonistUnsubscribed && svc.Protagonist != null)
                 {
                     svc.Protagonist.OnRoomMessLevelChanged -= OnAnyChanged;
                     protagonistUnsubscribed = true;
@@ -358,6 +373,7 @@ public class RequirementBlocker : MonoBehaviour
             }
         }
 
+        svc.OnGameStatusLoaded -= Refresh;
         if (svc.ProgressFlags != null)
             svc.ProgressFlags.OnFlagChanged -= OnFlagChanged;
 
