@@ -6,7 +6,7 @@ public class ProtagonistStatusModel
     // ==========================================================
     // 數值設定區：同類數值放在一起，修改後重新開始遊戲套用。
     // 初始值須位於上下限內；上限與每日恢復量請使用非負數。
-    // ForceAdd 仍忽略遊戲上下限；int 的儲存限制不是平衡參數。
+    // 體力與射精次數的 ForceAdd 忽略遊戲上下限；Hardness 的 ForceAdd 僅略過次數限制。
     // ==========================================================
 
     // ───── 體力 ─────
@@ -57,6 +57,9 @@ public class ProtagonistStatusModel
     public int ShootTimesMax { get; private set; } = InitialShootTimesMax;
     public int ShootTimes { get; private set; } = InitialShootTimesMax;
     public int Lust { get; private set; } = InitialLust;
+    /// <summary>勃起度，固定初始為 0，範圍 0～100。</summary>
+    public int Hardness { get; private set; }
+    public bool HardnessIncreasedThisSlot { get; private set; }
     public int StickerCount { get; private set; } = InitialStickerCount;
     public int Money { get; private set; } = ClampMoney(InitialMoney);
 
@@ -165,6 +168,37 @@ public class ProtagonistStatusModel
 
     public void AddLust(int amount) => SetLust(Clamp((long)Lust + amount, LustMin, LustMax));
 
+    public int GetHardness() => Hardness;
+
+    /// <summary>只有裁切後實際提高才記錄增加；減少或設為相同值不清除本格紀錄。</summary>
+    public void SetHardness(int value)
+    {
+        int previous = Hardness;
+        Hardness = Clamp(value, 0, 100);
+        if (Hardness > previous) HardnessIncreasedThisSlot = true;
+        NotifyIfChanged(previous, Hardness);
+    }
+
+    /// <summary>射精次數耗盡（含負值）時不接受正向增加，負數仍可扣減。</summary>
+    public void AddHardness(int amount)
+    {
+        if (amount > 0 && IsOverShoot) return;
+        ForceAddHardness(amount);
+    }
+
+    /// <summary>略過射精次數限制增減勃起度，仍限制於 0～100；實際提高才記錄本格增加。</summary>
+    public void ForceAddHardness(int amount) => SetHardness(Clamp((long)Hardness + amount, 0, 100));
+
+    /// <summary>每實際消耗一格結算一次：本格未增加則下降 5，之後重新記錄下一格。</summary>
+    public void ApplyHardnessSlotDecay()
+    {
+        int previous = Hardness;
+        if (!HardnessIncreasedThisSlot) Hardness = Math.Max(0, Hardness - 5);
+        // 先清除再通知；事件中新增的增加應屬於下一格，不可被本次結算覆蓋。
+        HardnessIncreasedThisSlot = false;
+        NotifyIfChanged(previous, Hardness);
+    }
+
     public void SetStickerCount(int value)
     {
         int previous = StickerCount;
@@ -250,6 +284,8 @@ public class ProtagonistStatusModel
 
     public void OnDayStart()
     {
+        // 睡覺／直接跳日不補扣勃起度，但不能把昨日的增加紀錄帶到今天。
+        HardnessIncreasedThisSlot = false;
         int previousStamina = Stamina;
         int previousShootTimes = ShootTimes;
         int previousSemen = Semen;
@@ -276,6 +312,8 @@ public class ProtagonistStatusModel
         ShootTimesMax = Math.Max(ShootTimesMin, InitialShootTimesMax);
         ShootTimes = ShootTimesMax;
         Lust = Clamp(InitialLust, LustMin, LustMax);
+        Hardness = 0;
+        HardnessIncreasedThisSlot = false;
         StickerCount = Clamp(InitialStickerCount, StickerCountMin, StickerCountMax);
         Money = ClampMoney(InitialMoney);
         SkillPoints = Math.Max(0, InitialSkillPoints);
@@ -297,6 +335,7 @@ public class ProtagonistStatusModel
         StaminaMax = StaminaMax, Stamina = Stamina,
         ShootTimesMax = ShootTimesMax, ShootTimes = ShootTimes,
         Lust = Lust, StickerCount = StickerCount,
+        Hardness = Hardness, HardnessIncreasedThisSlot = HardnessIncreasedThisSlot,
         Money = Money, SkillPoints = SkillPoints, Semen = Semen, RoomMessLevel = RoomMessLevel
     };
 
@@ -310,6 +349,8 @@ public class ProtagonistStatusModel
         Stamina = data.Stamina;
         ShootTimes = data.ShootTimes;
         Lust = Clamp(data.Lust, LustMin, LustMax);
+        Hardness = Clamp(data.Hardness, 0, 100);
+        HardnessIncreasedThisSlot = data.HardnessIncreasedThisSlot;
         StickerCount = Clamp(data.StickerCount, StickerCountMin, StickerCountMax);
         Money = ClampMoney(data.Money);
         SkillPoints = Math.Max(0, data.SkillPoints);

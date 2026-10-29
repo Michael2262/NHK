@@ -31,6 +31,10 @@ public class ProtagonistLuaBridge : MonoBehaviour
         Lua.RegisterFunction("AddLust", this, SymbolExtensions.GetMethodInfo(() => AddLust((double)0)));
         Lua.RegisterFunction("SetLust", this, SymbolExtensions.GetMethodInfo(() => SetLust((double)0)));
         Lua.RegisterFunction("GetLust", this, SymbolExtensions.GetMethodInfo(() => GetLust()));
+        Lua.RegisterFunction("GetHardness", this, SymbolExtensions.GetMethodInfo(() => GetHardness()));
+        Lua.RegisterFunction("SetHardness", this, SymbolExtensions.GetMethodInfo(() => SetHardness((double)0)));
+        Lua.RegisterFunction("AddHardness", this, SymbolExtensions.GetMethodInfo(() => AddHardness((double)0)));
+        Lua.RegisterFunction("ForceAddHardness", this, SymbolExtensions.GetMethodInfo(() => ForceAddHardness((double)0)));
         Lua.RegisterFunction("AddShootTimesMax", this, SymbolExtensions.GetMethodInfo(() => AddShootTimesMax((double)0)));
         Lua.RegisterFunction("SetShootTimesMax", this, SymbolExtensions.GetMethodInfo(() => SetShootTimesMax((double)0)));
         Lua.RegisterFunction("GetShootTimesMax", this, SymbolExtensions.GetMethodInfo(() => GetShootTimesMax()));
@@ -79,6 +83,10 @@ public class ProtagonistLuaBridge : MonoBehaviour
         Lua.UnregisterFunction("AddLust");
         Lua.UnregisterFunction("SetLust");
         Lua.UnregisterFunction("GetLust");
+        Lua.UnregisterFunction("GetHardness");
+        Lua.UnregisterFunction("SetHardness");
+        Lua.UnregisterFunction("AddHardness");
+        Lua.UnregisterFunction("ForceAddHardness");
         Lua.UnregisterFunction("AddShootTimesMax");
         Lua.UnregisterFunction("SetShootTimesMax");
         Lua.UnregisterFunction("GetShootTimesMax");
@@ -165,6 +173,30 @@ public class ProtagonistLuaBridge : MonoBehaviour
     public double GetLust() => GetModel()?.Lust ?? 0;
     public void SetLust(double value) => GetModel()?.SetLust((int)value);
     public void AddLust(double value) => GetModel()?.AddLust((int)value);
+
+    /// <summary>條件式：GetHardness() &gt;= 50。</summary>
+    public double GetHardness() => GetModel()?.GetHardness() ?? 0;
+    /// <summary>Script：SetHardness(80)。小數截去，實際範圍交由 Model 限制。</summary>
+    public void SetHardness(double value)
+    {
+        if (double.IsNaN(value)) return;
+        GetModel()?.SetHardness(ClampHardnessArgument(value));
+    }
+    /// <summary>Script：AddHardness(20)／AddHardness(-10)。射精次數耗盡時正數無效。</summary>
+    public void AddHardness(double amount)
+    {
+        if (double.IsNaN(amount)) return;
+        GetModel()?.AddHardness(ClampHardnessArgument(amount));
+    }
+    /// <summary>Script：ForceAddHardness(20)。略過射精次數限制，數值仍為 0～100。</summary>
+    public void ForceAddHardness(double amount)
+    {
+        if (double.IsNaN(amount)) return;
+        GetModel()?.ForceAddHardness(ClampHardnessArgument(amount));
+    }
+    private static int ClampHardnessArgument(double value)
+        => (int)System.Math.Max(int.MinValue, System.Math.Min(int.MaxValue, value));
+
     public double GetStickerCount() => GetModel()?.StickerCount ?? 0;
     public void SetStickerCount(double value) => GetModel()?.SetStickerCount((int)value);
     public void AddStickerCount(double value) => GetModel()?.AddStickerCount((int)value);

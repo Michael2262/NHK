@@ -86,6 +86,71 @@ public class TimeSystemModel
     public bool CanAdvanceMinisWithinDay(int minis)
         => minis >= 0 && minis <= GetRemainingMinisInDay();
 
+    /// <summary>計算到往後第 slots 個 Slot 起點的 Mini 數，允許跨日。</summary>
+    public bool TryGetMinisForSlotAdvance(int slots, out int minis)
+        => TryGetMinisForBoundaryAdvance(slots, PlaybackBoundary.Slot, out minis);
+
+    /// <summary>計算到往後第 phases 個 Phase 起點的 Mini 數，允許跨日。</summary>
+    public bool TryGetMinisForPhaseAdvance(int phases, out int minis)
+        => TryGetMinisForBoundaryAdvance(phases, PlaybackBoundary.Phase, out minis);
+
+    /// <summary>計算到往後第 days 天起點的 Mini 數。</summary>
+    public bool TryGetMinisForDayAdvance(int days, out int minis)
+        => TryGetMinisForBoundaryAdvance(days, PlaybackBoundary.Day, out minis);
+
+    private enum PlaybackBoundary { Slot, Phase, Day }
+
+    private bool TryGetMinisForBoundaryAdvance(int count, PlaybackBoundary unit, out int minis)
+    {
+        minis = 0;
+        if (count < 0) return false;
+        if (count == 0) return true;
+        if (_cfg.PhaseNames == null || _cfg.PhaseNames.Count == 0 || _cfg.SlotsPerPhase == null)
+            return false;
+
+        // 建立一天內各落點的 Mini 座標，只掃描一天設定，避免大數量參數造成長時間迴圈。
+        var boundaries = new List<long> { 0L };
+        long dayMinis = 0;
+        long currentOffset = -1;
+        int currentBoundary = 0;
+        for (int phase = 0; phase < _cfg.PhaseNames.Count; phase++)
+        {
+            int slots = _cfg.GetTotalSlots(phase);
+            if (slots <= 0) return false;
+            for (int slot = 1; slot <= slots; slot++)
+            {
+                int slotMinis = _cfg.GetMinisInSlot(phase, slot);
+                if (phase == CurrentPhaseIndex && slot == CurrentSlotInPhase)
+                {
+                    if (CurrentMiniInSlot < 0 || CurrentMiniInSlot >= slotMinis) return false;
+                    currentOffset = dayMinis + CurrentMiniInSlot;
+                    currentBoundary = boundaries.Count - 1;
+                }
+                dayMinis += slotMinis;
+                if (unit == PlaybackBoundary.Slot) boundaries.Add(dayMinis);
+            }
+            if (unit == PlaybackBoundary.Phase) boundaries.Add(dayMinis);
+        }
+        if (unit == PlaybackBoundary.Day) boundaries.Add(dayMinis);
+        if (currentOffset < 0) return false;
+
+        long targetBoundary = (long)currentBoundary + count;
+        int boundariesPerDay = boundaries.Count - 1;
+        try
+        {
+            long distance = checked((targetBoundary / boundariesPerDay) * dayMinis +
+                boundaries[(int)(targetBoundary % boundariesPerDay)] - currentOffset);
+            // 播放排程以 int 計數；超出範圍拒絕播放，不能截短而停在錯誤落點。
+            if (distance < 0 || distance > int.MaxValue) return false;
+            minis = (int)distance;
+            return true;
+        }
+        catch (OverflowException)
+        {
+            return false;
+        }
+    }
+
     /// <summary>依 Config 即時取得一小段時間的 Mini 數量；沿用 AdvanceMinis 的跨日規則。</summary>
     public void AdvanceShortTime() => AdvanceMinis(Math.Max(1, _cfg.ShortTimeMinis));
 

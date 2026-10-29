@@ -104,7 +104,9 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
             // 與 ContinueButtonLock(on) 使用相同 API；即使每格秒數為 0，仍鎖到逐幀播放結束。
             heldContinueButtonLock = true;
             NhkUISubtitlePanel.PushContinueButtonLock();
-            long playedMinis = Math.Min((long)playback.RemainingMinis, minisUntilNextDay);
+            long playedMinis = playback.StopsAtNextDay
+                ? Math.Min((long)playback.RemainingMinis, minisUntilNextDay)
+                : playback.RemainingMinis;
             float seconds = playedMinis * miniSeconds;
             if (float.IsNaN(seconds) || float.IsInfinity(seconds) || seconds <= 0f) return;
 
@@ -233,6 +235,30 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
     {
         public void Awake() => Play(0, preset: (playback, done) => playback.PlayAdvanceLongTime(done),
             mode: GetPlaybackMode(0));
+    }
+
+    /// <summary>PlaySlot([數量=1], [模式=auto])：逐 Mini 播到往後第 N 個 Slot 起點，允許跨日、不轉場。</summary>
+    public class SequencerCommandPlaySlot : SequencerCommandTimePlaybackBase
+    {
+        public void Awake() => Play(0,
+            preset: (playback, done) => playback.PlaySlot(GetParameterAsInt(0, 1), done),
+            mode: GetPlaybackMode(1));
+    }
+
+    /// <summary>PlayPhase([數量=1], [模式=auto])：逐 Mini 播到往後第 N 個 Phase 起點，允許跨日、不轉場。</summary>
+    public class SequencerCommandPlayPhase : SequencerCommandTimePlaybackBase
+    {
+        public void Awake() => Play(0,
+            preset: (playback, done) => playback.PlayPhase(GetParameterAsInt(0, 1), done),
+            mode: GetPlaybackMode(1));
+    }
+
+    /// <summary>PlayDay([數量=1], [模式=auto])：逐 Mini 播到 N 天後的起點，不轉場。</summary>
+    public class SequencerCommandPlayDay : SequencerCommandTimePlaybackBase
+    {
+        public void Awake() => Play(0,
+            preset: (playback, done) => playback.PlayDay(GetParameterAsInt(0, 1), done),
+            mode: GetPlaybackMode(1));
     }
 
     /// <summary>AdvanceMinis([數量=1])：直接推進 Mini，跨日後停在隔天起點。</summary>

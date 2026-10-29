@@ -50,7 +50,61 @@ public class ScenarioManagerBridge : MonoBehaviour
         if (ScenarioManager.Instance == null) return;
 
         Debug.Log("[Bridge] 強制重算世界狀態 (Reroll)...");
-        ScenarioManager.Instance.RecalculateWorldState();
+        ScenarioManager.Instance.RerollWorldState();
+    }
+
+    /// <summary>只依 Flag 還原女主角行程，不影響家人。</summary>
+    public void RefreshHeroineSchedules() => GameStatusService.Instance?.HeroineFlagSchedule?.Refresh();
+    // 保留第一版的 UnityEvent 入口；依 Flag 確定行程後，僅重新抽選該行程的活動。
+    public void RerollHeroineSchedules() => RefreshHeroineSchedules();
+    public void BeginHeroineScheduleBatch() => GameStatusService.Instance?.HeroineFlagSchedule?.BeginBatch();
+    public void EndHeroineScheduleBatch() => GameStatusService.Instance?.HeroineFlagSchedule?.EndBatch();
+
+    public void ActivateHeroineSchedule(string heroineID, string activityID)
+    {
+        var model = GameStatusService.Instance?.HeroineFlagSchedule;
+        if (model == null) { Debug.LogWarning("[ScenarioManagerBridge] 未啟用 Flag 行程模式。"); return; }
+        model.TryActivateActivity(heroineID, activityID);
+    }
+
+    /// <summary>Button 用：sister,Cook_B。指定活動並自動切換其所屬行程的 Flag。</summary>
+    public void ActivateHeroineScheduleUI(string command)
+    {
+        var parts = command?.Split(',');
+        if (parts == null || parts.Length != 2)
+        {
+            Debug.LogWarning("[ScenarioManagerBridge] 行程切換格式：女主角ID,活動ID。");
+            return;
+        }
+        ActivateHeroineSchedule(parts[0].Trim(), parts[1].Trim());
+    }
+
+    /// <summary>指定行程 Flag，排他啟用後抽選一次活動。</summary>
+    public void ActivateHeroineScheduleByFlag(string heroineID, string flagID)
+    {
+        var model = GameStatusService.Instance?.HeroineFlagSchedule;
+        if (model == null) { Debug.LogWarning("[ScenarioManagerBridge] 未啟用 Flag 行程模式。"); return; }
+        model.TryActivateFlag(heroineID, flagID);
+    }
+
+    /// <summary>Button 用：sister,Flag_Scenario_Cook。</summary>
+    public void ActivateHeroineScheduleByFlagUI(string command)
+    {
+        var parts = command?.Split(',');
+        if (parts == null || parts.Length != 2)
+        {
+            Debug.LogWarning("[ScenarioManagerBridge] Flag 行程切換格式：女主角ID,狀態FlagID。");
+            return;
+        }
+        ActivateHeroineScheduleByFlag(parts[0].Trim(), parts[1].Trim());
+    }
+
+    /// <summary>Button 可直接填女主角 ID：關閉其行程 Flag 並立即離場。</summary>
+    public void DeactivateHeroineSchedule(string heroineID)
+    {
+        var model = GameStatusService.Instance?.HeroineFlagSchedule;
+        if (model == null) { Debug.LogWarning("[ScenarioManagerBridge] 未啟用 Flag 行程模式。"); return; }
+        model.TryDeactivate(heroineID);
     }
 
     /// <summary>

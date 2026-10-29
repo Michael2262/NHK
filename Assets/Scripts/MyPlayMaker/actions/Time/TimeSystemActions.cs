@@ -5,6 +5,100 @@ using Tooltip = HutongGames.PlayMaker.TooltipAttribute;
 
 namespace MyGame.Actions
 {
+    [ActionCategory("Time")]
+    [Tooltip("比較今天的遊戲天數（Day X）與指定天數，送出 true/false 事件。不比較日曆日期，也不推進時間。")]
+    public class CheckDate : FsmStateAction
+    {
+        public enum CompareType
+        {
+            Equal,
+            NotEqual,
+            GreaterThan,
+            GreaterOrEqual,
+            LessThan,
+            LessOrEqual
+        }
+
+        [RequiredField]
+        [Tooltip("要比較的遊戲天數，例如 3 表示 Day 3。")]
+        public FsmInt targetDay;
+
+        [Tooltip("比較方式：目前 Day 與目標 Day 比較，預設為相等。")]
+        public CompareType compareType = CompareType.Equal;
+
+        [Tooltip("條件成立時發送。")]
+        public FsmEvent trueEvent;
+
+        [Tooltip("條件不成立、時間系統未就緒或未指定目標天數時發送。")]
+        public FsmEvent falseEvent;
+
+        [UIHint(UIHint.Variable)]
+        [Tooltip("儲存目前遊戲天數（選填）；時間系統未就緒時寫入 0。")]
+        public FsmInt storeCurrentDay;
+
+        [UIHint(UIHint.Variable)]
+        [Tooltip("儲存比較結果（選填）。")]
+        public FsmBool storeResult;
+
+        [Tooltip("每幀重新判斷；關閉時只在進入 State 時判斷一次。")]
+        public bool everyFrame;
+
+        public override void Reset()
+        {
+            targetDay = 1;
+            compareType = CompareType.Equal;
+            trueEvent = null;
+            falseEvent = null;
+            storeCurrentDay = new FsmInt { UseVariable = true };
+            storeResult = new FsmBool { UseVariable = true };
+            everyFrame = false;
+        }
+
+        public override void OnEnter()
+        {
+            DoCheck();
+            if (!everyFrame) Finish();
+        }
+
+        public override void OnUpdate()
+        {
+            if (everyFrame) DoCheck();
+        }
+
+        private void DoCheck()
+        {
+            var model = GameStatusService.Instance?.Time;
+            if (storeCurrentDay != null && !storeCurrentDay.IsNone)
+                storeCurrentDay.Value = model != null ? model.DayIndex : 0;
+
+            bool result = false;
+            if (model == null || targetDay == null || targetDay.IsNone)
+            {
+                Debug.LogWarning("[CheckDate] 時間系統尚未初始化或未指定目標天數。");
+            }
+            else
+            {
+                int currentDay = model.DayIndex;
+                int target = targetDay.Value;
+                result = compareType switch
+                {
+                    CompareType.Equal => currentDay == target,
+                    CompareType.NotEqual => currentDay != target,
+                    CompareType.GreaterThan => currentDay > target,
+                    CompareType.GreaterOrEqual => currentDay >= target,
+                    CompareType.LessThan => currentDay < target,
+                    CompareType.LessOrEqual => currentDay <= target,
+                    _ => false
+                };
+            }
+
+            if (storeResult != null && !storeResult.IsNone)
+                storeResult.Value = result;
+
+            Fsm.Event(result ? trueEvent : falseEvent);
+        }
+    }
+
     /// <summary>共用等待與回呼處理，離開 State 後忽略舊回呼；全域播放會持續到結束或明確取消。</summary>
     public abstract class TimePlaybackActionBase : FsmStateAction
     {

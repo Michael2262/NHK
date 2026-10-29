@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -57,6 +57,8 @@ public class ScenarioManager : MonoBehaviour
     private LocationDatabase _locationDB;
     private RiskDatabase _riskDB;
     private HeroineStatusConfig _heroineConfig;
+    private bool UsesFlagSchedules => _service != null
+        && _service.ActiveHeroineScheduleMode == HeroineScheduleMode.FlagRules;
 
     [Header("--- 優先劇本 (例外前提) ---")]
     [Tooltip("定義特定 Flag 達成時，必須發生的固定劇本。這會攔截並取代常規排程。")]
@@ -84,10 +86,6 @@ public class ScenarioManager : MonoBehaviour
         _service.TimeManager.OnTimeSlotAdvanced += HandleSlotAdvanced;
         // 【NEW】訂閱每日事件，用來重抽當日鍊
         _service.TimeManager.OnDayPassed += HandleDayPassed;
-
-        _service.OnGameStatusLoaded += () => {
-            Debug.Log("[ScenarioManager] 遊戲存檔載入，保持當前地圖狀態。");
-        };
 
         // 【NEW】遊戲開始時，若存檔裡沒有今日鍊(新遊戲第一天)，先抽一次
         TryRollDailyChainsIfEmpty();
@@ -135,6 +133,7 @@ public class ScenarioManager : MonoBehaviour
     /// </summary>
     public void RollDailyChainsForAllHeroines()
     {
+        if (UsesFlagSchedules) return;
         if (_heroineConfig?.AllSchedules == null) return;
 
         _service.Scenario.ClearTodaysChains();
@@ -143,6 +142,7 @@ public class ScenarioManager : MonoBehaviour
 
         foreach (var scheduleConfig in _heroineConfig.AllSchedules)
         {
+            if (scheduleConfig == null) continue;
             string hID = scheduleConfig.heroineID;
             string chosenChainName = RollChainFor(scheduleConfig, isWeekend);
             _service.Scenario.AssignTodaysChain(hID, chosenChainName);
@@ -211,9 +211,13 @@ public class ScenarioManager : MonoBehaviour
     [ContextMenu("Debug/Reroll Today's Chains")]
     public void DebugRerollTodaysChains()
     {
+        if (UsesFlagSchedules)
+        {
+            _service.HeroineFlagSchedule.Refresh(); // 新模式依 Flag 決定行程，重新抽選該行程的活動。
+            return;
+        }
         RollDailyChainsForAllHeroines();
         RecalculateWorldState();
-        _service.Scenario.NotifyScenarioRecalculated();
     }
 
     // ==========================================================
@@ -225,9 +229,33 @@ public class ScenarioManager : MonoBehaviour
     /// 根據當前時間與 Flag，決定「所有人」的位置。
     /// </summary>
     public void RecalculateWorldState()
+        => RecalculateWorldStateInternal();
+
+    public void RerollWorldState()
+        => RecalculateWorldStateInternal();
+
+    private void RecalculateWorldStateInternal(bool refreshFlagSchedules = true)
     {
+        if (_service == null)
+        {
+            _service = GameStatusService.Instance;
+            if (_service == null) return;
+            _time = _service.Time;
+            _flags = _service.ProgressFlags;
+            _locationDB = _service.LocationDB;
+            _riskDB = _service.RiskDB;
+            _heroineConfig = _service.HeroineConfig;
+        }
+        // 批次期間保留當前女主角快照；載入期間不做全域重算。
+        if (UsesFlagSchedules && _service.HeroineFlagSchedule.IsRestoring) return;
         // 1. 清空地圖狀態，準備重新填入
-        _service.Scenario.ClearAllStates();
+        if (UsesFlagSchedules)
+        {
+            _service.Scenario.ClearRiskStates();
+            if (refreshFlagSchedules)
+                _service.HeroineFlagSchedule.Refresh(notify: false);
+        }
+        else _service.Scenario.ClearAllStates();
 
         int phase = _time.CurrentPhaseIndex;
         int slot = _time.CurrentSlotInPhase;
@@ -244,7 +272,7 @@ public class ScenarioManager : MonoBehaviour
         // 階段 A：處理【優先劇本 (Priority Rules)】
         // ----------------------------------------------------------
         // --- 女主角的優先劇本 ---
-        if (priorityScripts != null)
+        if (!UsesFlagSchedules && priorityScripts != null)
         {
             foreach (var script in priorityScripts)
             {
@@ -292,8 +320,10 @@ public class ScenarioManager : MonoBehaviour
         // 階段 B：處理【常規日程表 (Regular Schedule)】
         // 【v4 改動】優先查「今日鍊」,找不到再 fallback 到舊的 schedule
         // ----------------------------------------------------------
+        if (!UsesFlagSchedules && _heroineConfig?.AllSchedules != null)
         foreach (var scheduleConfig in _heroineConfig.AllSchedules)
         {
+            if (scheduleConfig == null) continue;
             string hID = scheduleConfig.heroineID;
 
             // 如果該角色已經被階段 A 攔截，則跳過隨機排程
@@ -317,6 +347,7 @@ public class ScenarioManager : MonoBehaviour
         // ----------------------------------------------------------
         // 階段 C：處理【風險/家人 (Risk Agents)】
         // ----------------------------------------------------------
+        if (_riskDB?.allAgents != null)
         foreach (var agentData in _riskDB.allAgents)
         {
             string aID = agentData.agentID;
@@ -356,6 +387,7 @@ public class ScenarioManager : MonoBehaviour
                 }
             }
         }
+        _service.Scenario.NotifyScenarioRecalculated();
     }
 
     /// <summary>
@@ -404,8 +436,8 @@ public class ScenarioManager : MonoBehaviour
 
     private void HandleSlotAdvanced(int slots)
     {
-        RecalculateWorldState();
-        _service.Scenario.NotifyScenarioRecalculated();//資料確認更新後，廣播通知
+        // TimeManager 的通知可能早於清除 Slot Flag；女主角交給幀尾合併更新，避免先用舊 Flag 抽一次。
+        RecalculateWorldStateInternal(refreshFlagSchedules: false);
     }
 
     // ==========================================================

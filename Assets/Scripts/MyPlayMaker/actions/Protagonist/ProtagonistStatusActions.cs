@@ -37,6 +37,87 @@ internal static class ProtagonistPlayMakerUtil
 }
 
 // ==========================================================
+// 勃起度
+// ==========================================================
+namespace MyGame.Actions
+{
+    [ActionCategory("Protagonist Status")]
+    [Tooltip("讀取主角勃起度 Hardness（0～100）。")]
+    public class GetHardness : FsmStateAction
+    {
+        [RequiredField, UIHint(UIHint.Variable)] public FsmInt storeHardness;
+
+        public override void Reset() { storeHardness = null; }
+        public override void OnEnter()
+        {
+            var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(GetHardness));
+            if (p != null) ProtagonistPlayMakerUtil.StoreInt(storeHardness, p.Hardness);
+            Finish();
+        }
+    }
+
+    [ActionCategory("Protagonist Status")]
+    [Tooltip("增減主角勃起度（0～100）；射精次數 <= 0 時正數無效，負數仍可扣減。實際增加時，本 Slot 結束免衰減。")]
+    public class AddHardness : FsmStateAction
+    {
+        [RequiredField] public FsmInt amount;
+        [UIHint(UIHint.Variable)] public FsmInt storeHardness;
+
+        public override void Reset() { amount = 0; storeHardness = null; }
+        public override void OnEnter()
+        {
+            var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(AddHardness));
+            if (p != null)
+            {
+                p.AddHardness(amount.Value);
+                ProtagonistPlayMakerUtil.StoreInt(storeHardness, p.Hardness);
+            }
+            Finish();
+        }
+    }
+
+    [ActionCategory("Protagonist Status")]
+    [Tooltip("略過射精次數限制增減主角勃起度，仍維持 0～100。實際增加時，本 Slot 結束免衰減。")]
+    public class ForceAddHardness : FsmStateAction
+    {
+        [RequiredField] public FsmInt amount;
+        [UIHint(UIHint.Variable)] public FsmInt storeHardness;
+
+        public override void Reset() { amount = 0; storeHardness = null; }
+        public override void OnEnter()
+        {
+            var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(ForceAddHardness));
+            if (p != null)
+            {
+                p.ForceAddHardness(amount.Value);
+                ProtagonistPlayMakerUtil.StoreInt(storeHardness, p.Hardness);
+            }
+            Finish();
+        }
+    }
+
+    [ActionCategory("Protagonist Status")]
+    [Tooltip("設定主角勃起度（0～100）。實際提高時，本 Slot 結束免衰減。")]
+    public class SetHardness : FsmStateAction
+    {
+        [RequiredField] public FsmInt value;
+        [UIHint(UIHint.Variable)] public FsmInt storeHardness;
+
+        public override void Reset() { value = 0; storeHardness = null; }
+        public override void OnEnter()
+        {
+            var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(SetHardness));
+            if (p != null)
+            {
+                p.SetHardness(value.Value);
+                ProtagonistPlayMakerUtil.StoreInt(storeHardness, p.Hardness);
+            }
+            Finish();
+        }
+    }
+}
+
+// ==========================================================
 // Money / SkillPoints
 // ==========================================================
 [ActionCategory("Protagonist Status")]

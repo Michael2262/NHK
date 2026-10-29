@@ -9,7 +9,7 @@ using UnityEngine;
 // 職責：
 //   1. 依 ID 從 StatChangePackageDatabase 取出套組。
 //   2. 逐條把數值變化套到 GameStatusService.Instance 上的
-//      Protagonist（RoomMessLevel / Lust）
+//      Protagonist（RoomMessLevel / Lust / Hardness）
 //      與指定的 Heroine（Libido / Trust / Affinity / Mood / Interest）。
 //      舊資產中的退役或無效數值項目會略過。
 //   3. 收集每筆「實際發生的 delta」成 ValueChangeRecord 回傳，
@@ -197,6 +197,9 @@ public class StatChangeService
             case StatKind.Lust:
                 if (op.op == StatOp.Set) p.SetLust(op.amount); else p.AddLust(op.amount);
                 break;
+            case StatKind.Hardness:
+                if (op.op == StatOp.Set) p.SetHardness(op.amount); else p.AddHardness(op.amount);
+                break;
             case StatKind.RoomMessLevel:
                 if (op.op == StatOp.Set) p.SetRoomMessLevel(op.amount); else p.AddRoomMessLevel(op.amount);
                 break;
@@ -243,6 +246,7 @@ public class StatChangeService
         switch (kind)
         {
             case StatKind.Lust: return p.Lust;
+            case StatKind.Hardness: return p.Hardness;
             case StatKind.RoomMessLevel: return p.RoomMessLevel;
             default: return 0;
         }

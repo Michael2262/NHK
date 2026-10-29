@@ -1,0 +1,71 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6ea52fd0e41d63843900bbb44fa67291, type: 3}
+  m_Name: sister Heroine Flag Schedule Config
+  m_EditorClassIdentifier: Assembly-CSharp::HeroineFlagScheduleConfig
+  heroineID: sister
+  defaultRuleID: 4060881d981c4384be3cd40a7103067d
+  rules:
+  - ruleID: f7e0ef0e60d547f9aa74f11a00238aea
+    ruleName: "\u505A\u83DC\u4E2D"
+    stateFlag: {fileID: 11400000, guid: c8eb9dd0bdd5d704ead6a441c570cda2, type: 2}
+    locationID: Room
+    activityIDs:
+    - Sister_Cook
+    activityState: 
+    enabled: 1
+    priority: 3
+    weight: 100
+    flagMatchMode: 0
+    conditions:
+    - flag: {fileID: 11400000, guid: c8eb9dd0bdd5d704ead6a441c570cda2, type: 2}
+      invert: 0
+  - ruleID: c5531ff5612e41a2b9bd7c0d73be268b
+    ruleName: "\u7761\u89BA\u4E2D"
+    stateFlag: {fileID: 11400000, guid: c9e037ca46473cb48b46939c8712fb3b, type: 2}
+    locationID: Room
+    activityIDs:
+    - Sister_Sleep
+    activityState: 
+    enabled: 1
+    priority: 3
+    weight: 100
+    flagMatchMode: 0
+    conditions:
+    - flag: {fileID: 11400000, guid: c9e037ca46473cb48b46939c8712fb3b, type: 2}
+      invert: 0
+  - ruleID: 3e7618f39def40c7acd9bdd70e7558fd
+    ruleName: "\u5E73\u5E38"
+    stateFlag: {fileID: 11400000, guid: 7083646a3541c364b8c08a8c66eab849, type: 2}
+    locationID: Room
+    activityIDs:
+    - Sister_Sitting
+    - Sister_Clothing
+    - Sister_Homework
+    activityState: 
+    enabled: 1
+    priority: 3
+    weight: 100
+    flagMatchMode: 0
+    conditions: []
+  - ruleID: 4060881d981c4384be3cd40a7103067d
+    ruleName: "\u7AD9\u5728\u9580\u53E3"
+    stateFlag: {fileID: 11400000, guid: fe756c28d4c6afb4cae3b3bd9a1078c1, type: 2}
+    locationID: Room
+    activityIDs:
+    - Sister_Standing
+    activityState: 
+    enabled: 1
+    priority: 3
+    weight: 100
+    flagMatchMode: 0
+    conditions: []

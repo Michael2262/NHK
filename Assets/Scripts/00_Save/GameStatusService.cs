@@ -75,6 +75,8 @@ public class GameStatusService : MonoBehaviour
         = new Dictionary<string, RiskAgentModel>();
     public ProtagonistStatusEffectModel StatusEffectModel { get; private set; }
     public CurrentScenarioModel Scenario { get; private set; } // 當前情境 Model
+    public HeroineScheduleMode ActiveHeroineScheduleMode { get; private set; }
+    public HeroineFlagScheduleModel HeroineFlagSchedule { get; private set; }
     public GlobalProgressModel GlobalProgress { get; private set; } // 全域進度（跨存檔）
     public VisualModeModel VisualMode { get; private set; } // 視覺 mode（Tachie body mode + 全域 BG/CG mode）
 
@@ -187,6 +189,10 @@ public class GameStatusService : MonoBehaviour
         InitializeRiskAgentModels();
 
         Scenario = new CurrentScenarioModel(); // 實例化情境 Model
+        ActiveHeroineScheduleMode = heroineConfig != null ? heroineConfig.ScheduleMode : HeroineScheduleMode.Legacy;
+        if (ActiveHeroineScheduleMode == HeroineScheduleMode.FlagRules)
+            HeroineFlagSchedule = new HeroineFlagScheduleModel(ProgressFlags, Scenario, Heroines.Keys,
+                heroineConfig.FlagSchedules, message => Debug.LogWarning(message));
 
         // --- 實例化 Manager/Service (邏輯層) ---
         // TimeSystemManager: 注入 Time Model 和 Time Config
@@ -260,6 +266,7 @@ public class GameStatusService : MonoBehaviour
         // (正式流程 StartNewGame / LoadGame 之後仍會再經 OnGameStatusLoaded 刷新一次，idempotent)
         ProgressUnlockManager.RefreshAllRules();
 
+        HeroineFlagSchedule?.InitializeNewGame();
         Debug.Log("GameStatusService: All core systems initialized.");
 
     }
@@ -275,6 +282,7 @@ public class GameStatusService : MonoBehaviour
         // 按每格消耗前的 Phase 結算，批次跨階段也不會漏扣或誤扣。
         Time.OnTimeSlotConsumed += (consumedPhaseIndex) =>
         {
+            Protagonist.ApplyHardnessSlotDecay();
             foreach (var heroine in Heroines.Values)
                 heroine.ApplyAwakeSlotDecay(consumedPhaseIndex);
         };
@@ -338,6 +346,7 @@ public class GameStatusService : MonoBehaviour
     /// </summary>
     public void StartNewGame()
     {
+        HeroineFlagSchedule?.BeginRestore();
         // ★★★ 重置 Dialogue System 的變數和狀態 ★★★
         SaveSystem.ResetGameState(); // 清除所有槽位的記憶
         DialogueManager.ResetDatabase(DatabaseResetOptions.KeepAllLoaded); // 重置當前的對話資料庫
@@ -370,6 +379,7 @@ public class GameStatusService : MonoBehaviour
         InitializeRiskAgentModels();// 也呼叫獨立方法來重置家人
 
         Scenario.NewGame();// 重設情境 Model
+        HeroineFlagSchedule?.InitializeNewGame();
 
         VisualMode.NewGame();// 視覺 mode 回歸預設
         SpineSkins.NewGame(); // 清除外觀選擇，接收器回到各自預設
@@ -462,7 +472,15 @@ public class GameStatusService : MonoBehaviour
     /// 公共接口：用於觸發 OnGameStatusLoaded 事件 (由 Service 內部呼叫)。
     public void NotifyGameStatusLoaded()
     {
+        // 載入完成的訂閱者應先看到 Flag 對應的正式行程，而非存檔中的臨時演出位置。
+        HeroineFlagSchedule?.CompleteRestore(notify: false);
         OnGameStatusLoaded?.Invoke();
+        if (HeroineFlagSchedule != null)
+        {
+            // 進度映射可能再調整 Flag；整批處理完後才統一刷新畫面。
+            HeroineFlagSchedule.FlushPending(notify: false);
+            Scenario.NotifyScenarioRecalculated();
+        }
     }
 
     public void ApplyDataAfterSceneLoad()
@@ -553,8 +571,11 @@ public class GameStatusService : MonoBehaviour
 
     private void OnDisable() => TimePlayback?.Cancel();
 
+    private void LateUpdate() => HeroineFlagSchedule?.FlushPending();
+
     private void OnDestroy()
     {
+        HeroineFlagSchedule?.Dispose();
         TimePlayback?.Cancel();
         SceneController.OnSceneChanged -= HandleSceneChanged;
 

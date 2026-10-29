@@ -116,7 +116,56 @@ public class ProgressFlagModel
         return false;
     }
 
+    /// <summary>專用狀態需要永久桶，避免場景 Flag 或數值變數造成存檔後失去行程。</summary>
+    public bool IsPersistentFlag(string flag)
+        => !string.IsNullOrEmpty(flag) && _buckets[FlagLifetime.Persistent].Contains(flag);
+
     // ───── 語法糖 ─────
+
+    /// <summary>
+    /// 專用狀態 Flag 的互斥切換：先完成整組寫入，再廣播。
+    /// 清除同名數值、時效桶與隔日預約，確保只有目標 Flag 永久啟用。
+    /// 呼叫端須保證這些 Flag 為此群組專用；無效目標不改動任何資料。
+    /// </summary>
+    public bool SetExclusivePersistentFlag(IEnumerable<string> group, string activeFlag)
+    {
+        if (string.IsNullOrWhiteSpace(activeFlag)) return false;
+        return SetExclusiveFlagState(group, activeFlag);
+    }
+
+    /// <summary>關閉整組專用 Flag，連同數值與隔日預約一併清除，全部完成後才廣播。</summary>
+    public bool ClearExclusiveFlags(IEnumerable<string> group) => SetExclusiveFlagState(group, null);
+
+    private bool SetExclusiveFlagState(IEnumerable<string> group, string activeFlag)
+    {
+        if (group == null) return false;
+        var ids = new HashSet<string>();
+        foreach (string id in group)
+        {
+            if (string.IsNullOrWhiteSpace(id)) return false;
+            ids.Add(id);
+        }
+        if (ids.Count == 0 || (activeFlag != null && !ids.Contains(activeFlag))) return false;
+        var before = new Dictionary<string, bool>();
+        var removedVariables = new HashSet<string>();
+        foreach (string id in ids)
+        {
+            before[id] = Contains(id);
+            foreach (var bucket in _buckets.Values) bucket.Remove(id);
+            _nextDayAddFlags.Remove(id);
+            _nextDayOnlyFlags.Remove(id);
+            if (_variables.Remove(id)) removedVariables.Add(id);
+        }
+        if (activeFlag != null) _buckets[FlagLifetime.Persistent].Add(activeFlag);
+        foreach (string id in ids)
+        {
+            // 訂閱者可能再修改 Flag；通知當下的實際值，不散播已過期的狀態。
+            bool current = Contains(id);
+            if (before[id] != current) OnFlagChanged?.Invoke(id, current);
+            if (removedVariables.Contains(id)) OnVariableChanged?.Invoke(id, GetValue(id));
+        }
+        return true;
+    }
     public void AddPersistentFlag(string flag) => AddFlag(flag, FlagLifetime.Persistent);
     public void AddSceneFlag(string flag) => AddFlag(flag, FlagLifetime.Scene);
     public void AddSlotFlag(string flag) => AddFlag(flag, FlagLifetime.UntilNextSlot);

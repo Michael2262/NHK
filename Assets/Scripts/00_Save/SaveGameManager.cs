@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.IO;
 using System;
 using System.Collections.Generic;
@@ -202,6 +202,8 @@ public class SaveGameManager
             return;
         }
 
+        _gameStatusService.HeroineFlagSchedule?.BeginRestore();
+
         // --- 核心數據 ---
         _gameStatusService.Protagonist.LoadFromSaveData(data.ProtagonistData);
         _gameStatusService.Time.LoadFromSaveData(data.TimeData);
@@ -268,6 +270,7 @@ public class SaveGameManager
 
     private GameSaveData CollectSaveData()
     {
+        _gameStatusService.HeroineFlagSchedule?.PrepareForSave();
         GameSaveData data = new GameSaveData();
 
         data.ProtagonistData = _gameStatusService.Protagonist.ToSaveData();

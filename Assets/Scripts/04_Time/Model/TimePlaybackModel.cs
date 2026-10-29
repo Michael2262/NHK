@@ -16,6 +16,7 @@ public sealed class TimePlaybackModel
 
     public bool IsTimeFlowing { get; private set; }
     public int RemainingMinis => remaining;
+    public bool StopsAtNextDay { get; private set; } = true;
     public event Action OnTimeFlowStarted;
     // 取消也通知結束，以解除阻擋；只有正常完成才會發 OnTimeFlowCompleted。
     public event Action<bool> OnTimeFlowEnded;
@@ -28,7 +29,8 @@ public sealed class TimePlaybackModel
     }
 
     /// <summary>拒絕重疊播放。回傳是否接受；callback 在完成／取消時分別收到 true／false。</summary>
-    public bool PlayAdvanceMinis(int minis, Action<bool> onFinished = null, bool withinDay = false)
+    public bool PlayAdvanceMinis(int minis, Action<bool> onFinished = null, bool withinDay = false,
+        bool stopAtNextDay = true)
     {
         if (IsTimeFlowing || ending || minis < 0 ||
             (withinDay && !time.CanAdvanceMinisWithinDay(minis))) return false;
@@ -40,6 +42,7 @@ public sealed class TimePlaybackModel
         float seconds = config.MiniPlaybackSeconds;
         if (float.IsNaN(seconds) || float.IsInfinity(seconds) || seconds < 0) return false;
         remaining = minis;
+        StopsAtNextDay = stopAtNextDay;
         startingDay = time.DayIndex;
         interval = seconds;
         elapsed = seconds; // 下一個 Update 推進第一個 Mini，之後每格停留指定秒數。
@@ -58,6 +61,21 @@ public sealed class TimePlaybackModel
 
     public bool PlayAdvanceLongTime(Action<bool> onFinished = null)
         => PlayAdvanceMinis(Math.Max(1, config.LongTimeMinis), onFinished);
+
+    /// <summary>逐 Mini 播到往後第 slots 個 Slot 起點，不播放轉場。</summary>
+    public bool PlaySlot(int slots = 1, Action<bool> onFinished = null)
+        => time.TryGetMinisForSlotAdvance(slots, out int minis) &&
+            PlayAdvanceMinis(minis, onFinished, stopAtNextDay: false);
+
+    /// <summary>逐 Mini 播到往後第 phases 個 Phase 起點，不播放轉場。</summary>
+    public bool PlayPhase(int phases = 1, Action<bool> onFinished = null)
+        => time.TryGetMinisForPhaseAdvance(phases, out int minis) &&
+            PlayAdvanceMinis(minis, onFinished, stopAtNextDay: false);
+
+    /// <summary>逐 Mini 播到往後第 days 天起點，每次跨日照常結算，不播放轉場。</summary>
+    public bool PlayDay(int days = 1, Action<bool> onFinished = null)
+        => time.TryGetMinisForDayAdvance(days, out int minis) &&
+            PlayAdvanceMinis(minis, onFinished, stopAtNextDay: false);
 
     /// <summary>一個畫面最多推進一格，不在卡頓時把多格一起跳過；最後一格也停留完整間隔。</summary>
     public void Tick(float unscaledDeltaTime)
@@ -85,7 +103,8 @@ public sealed class TimePlaybackModel
         // 時間事件可能導致讀檔或取消，舊排程不能再改動新排程。
         if (!IsTimeFlowing || generation != version) return;
         remaining--;
-        if (time.DayIndex != startingDay) remaining = 0; // 沿用跨日停在隔天起點的規則。
+        // 舊 PlayAdvance 系列跨日即停；指定 Slot／Phase／Day 落點的播放繼續到目標。
+        if (StopsAtNextDay && time.DayIndex != startingDay) remaining = 0;
     }
 
     /// <summary>停在已到達的位置，不回復時間，也不觸發到達事件。</summary>

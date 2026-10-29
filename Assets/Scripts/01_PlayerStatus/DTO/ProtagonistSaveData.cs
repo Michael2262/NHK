@@ -9,6 +9,9 @@ public class ProtagonistSaveData
     public int ShootTimesMax = ProtagonistStatusModel.InitialShootTimesMax;
     public int ShootTimes = ProtagonistStatusModel.InitialShootTimesMax;
     public int Lust = ProtagonistStatusModel.InitialLust;
+    // 舊存檔缺少欄位時為 0／false；讀檔還原不視為正向增加。
+    public int Hardness;
+    public bool HardnessIncreasedThisSlot;
     public int StickerCount = ProtagonistStatusModel.InitialStickerCount;
     public int Money = ProtagonistStatusModel.InitialMoney;
     public int SkillPoints = ProtagonistStatusModel.InitialSkillPoints;

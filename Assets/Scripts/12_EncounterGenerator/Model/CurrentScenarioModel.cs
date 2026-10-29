@@ -22,6 +22,34 @@ public class CurrentScenarioModel
     // ==========================================================
     public Dictionary<string, string> TodaysChainByHeroine { get; private set; }
 
+    /// <summary>只更新指定女主角，保留其他角色、家人與玩家位置；呼叫端整批完成後通知。</summary>
+    public bool ReplaceHeroineState(string heroineID, string locationID, string activity)
+    {
+        if (string.IsNullOrEmpty(heroineID)) return false;
+        int matches = 0;
+        bool unchanged = false;
+        foreach (var pair in AllLocationStates)
+        {
+            if (pair.Value?.Heroines == null) continue;
+            foreach (var heroine in pair.Value.Heroines)
+            {
+                if (heroine == null || !string.Equals(heroine.HeroineID, heroineID, StringComparison.OrdinalIgnoreCase)) continue;
+                matches++;
+                unchanged = pair.Key == locationID && heroine.Activity == activity;
+            }
+        }
+        if ((matches == 1 && unchanged) || (matches == 0 && string.IsNullOrEmpty(locationID))) return false;
+        foreach (var state in AllLocationStates.Values)
+            state?.Heroines?.RemoveAll(h => h != null && string.Equals(h.HeroineID, heroineID, StringComparison.OrdinalIgnoreCase));
+        if (!string.IsNullOrEmpty(locationID)) AddHeroineToLocation(locationID, heroineID, activity);
+        return true;
+    }
+
+    public void ClearRiskStates()
+    {
+        foreach (var state in AllLocationStates.Values) state?.Risks?.Clear();
+    }
+
     // 事件定義
     // 參數: (HeroineID, OldLocationID, NewLocationID, NewActivity)
     public event Action<string, string, string, string> OnHeroineMoved;
@@ -262,5 +290,6 @@ public class CurrentScenarioModel
         AllLocationStates = data.AllLocationStates ?? new Dictionary<string, LocationState>();
         // 【NEW】還原今日鍊指派
         TodaysChainByHeroine = data.TodaysChainByHeroine ?? new Dictionary<string, string>();
+        // 舊 Flag 抽選紀錄刻意忽略；載入完成後由行程 Model 依 Flag 重建。
     }
 }

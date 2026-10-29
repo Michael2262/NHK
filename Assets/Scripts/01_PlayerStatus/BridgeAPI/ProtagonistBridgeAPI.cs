@@ -33,6 +33,12 @@ public class ProtagonistBridgeAPI : MonoBehaviour
     public void SetLust(int value) => P?.SetLust(value);
     public void AddLust(int amount) => P?.AddLust(amount);
 
+    // ───── 勃起度 ─────
+    public int GetHardness() => P?.GetHardness() ?? 0;
+    public void SetHardness(int value) => P?.SetHardness(value);
+    public void AddHardness(int amount) => P?.AddHardness(amount);
+    public void ForceAddHardness(int amount) => P?.ForceAddHardness(amount);
+
     // ───── 持有貼紙 ─────
     public int GetStickerCount() => P?.StickerCount ?? 0;
     public void SetStickerCount(int value) => P?.SetStickerCount(value);

@@ -26,6 +26,25 @@ public class CurrentScenarioSaveData
     // 存檔時紀錄，讀檔後可還原「今天這個女主角正在跑哪條鍊」
     // ==========================================================
     public Dictionary<string, string> TodaysChainByHeroine;
+
+    // 第一版 Flag 抽選存檔的相容欄位；新版不寫入、不採用，唯一依據是 ProgressFlagSaveData。
+    [Newtonsoft.Json.JsonProperty(NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public List<string> FlagScheduleHeroineIDs;
+    [Newtonsoft.Json.JsonProperty(NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+    public List<HeroineFlagScheduleSelection> FlagScheduleSelections;
+}
+
+[Serializable]
+public class HeroineFlagScheduleSelection
+{
+    public string RuleID;
+    public string CandidateSignature;
+
+    public HeroineFlagScheduleSelection Copy() => new HeroineFlagScheduleSelection
+    {
+        RuleID = RuleID,
+        CandidateSignature = CandidateSignature
+    };
 }
 
 // ==========================================================

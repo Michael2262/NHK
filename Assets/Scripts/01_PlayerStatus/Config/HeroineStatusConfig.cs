@@ -43,6 +43,12 @@ public class HeroineStatusConfig : ScriptableObject
     [Min(0f)] public float BigDrawDuration = 2.0f;
 
     [Header("角色日程表 (保留多女主角架構用)")]
+    [Tooltip("僅供開發設定；遊戲初始化後固定，存檔不會切換此模式。")]
+    public HeroineScheduleMode ScheduleMode = HeroineScheduleMode.Legacy;
+
+    [Tooltip("Flag 模式使用的獨立規則表；不需要提供任何傳統時程表。")]
+    public List<HeroineFlagScheduleConfig> FlagSchedules = new List<HeroineFlagScheduleConfig>();
+
     [Tooltip("若仍使用日程表系統，可把 HeroineScheduleConfig.asset 拖到這裡。NHK 原型可留空。")]
     public List<HeroineScheduleConfig> AllSchedules;
 
@@ -58,4 +64,10 @@ public class HeroineStatusConfig : ScriptableObject
         return HeroineStats.Find(s => s != null && s.ID == heroineID);
     }
 
+}
+
+public enum HeroineScheduleMode
+{
+    [InspectorName("傳統時程表")] Legacy = 0,
+    [InspectorName("Flag 規則")] FlagRules = 1
 }

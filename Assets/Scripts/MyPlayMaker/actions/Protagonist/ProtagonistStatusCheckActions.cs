@@ -108,6 +108,17 @@ public abstract class ProtagonistIntCheckActionBase : FsmStateAction
     }
 }
 
+namespace MyGame.Actions
+{
+    [ActionCategory("Protagonist Status")]
+    [Tooltip("比較主角勃起度 Hardness 與門檻，可儲存目前值並依結果發送事件。")]
+    public class CheckHardness : ProtagonistIntCheckActionBase
+    {
+        protected override string DebugName => nameof(CheckHardness);
+        protected override int GetCurrentValue(ProtagonistStatusModel protagonist) => protagonist.Hardness;
+    }
+}
+
 [ActionCategory("Protagonist Status")]
 [Tooltip("比較主角壓力 Stress 與指定閾值。")]
 public class CheckStress : ProtagonistIntCheckActionBase

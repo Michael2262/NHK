@@ -18,7 +18,7 @@ using UnityEngine;
 
 /// <summary>
 /// 可被套組變更的數值種類。
-/// RoomMessLevel / Lust 屬主角，其餘屬女主角。
+/// RoomMessLevel / Lust / Hardness 屬主角，其餘屬女主角。
 /// 列舉名稱會直接當成 ValueChangeReporter 的 resourceTypeKey 使用，請勿隨意更名。
 /// </summary>
 public enum StatKind
@@ -33,7 +33,8 @@ public enum StatKind
     Mood = 9,
     [UnityEngine.InspectorName("性興味 (Interest)")] Interest = 10,
     // ── 主角（新增編號） ──
-    [UnityEngine.InspectorName("邪念 (Lust)")] Lust = 11
+    [UnityEngine.InspectorName("邪念 (Lust)")] Lust = 11,
+    [UnityEngine.InspectorName("勃起度 (Hardness)")] Hardness = 12
 }
 
 /// <summary>
@@ -53,7 +54,7 @@ public enum StatOp
 [Serializable]
 public class StatChangeOp
 {
-    [Tooltip("RoomMessLevel / Lust 屬主角；Libido / Trust / Affinity / Mood / Interest 屬女主角，需在調用時提供 heroineID。")]
+    [Tooltip("RoomMessLevel / Lust / Hardness 屬主角；Libido / Trust / Affinity / Mood / Interest 屬女主角，需在調用時提供 heroineID。")]
     public StatKind kind = StatKind.RoomMessLevel;
 
     [Tooltip("操作方式：Add 增減（帶正負號）/ Set 直接設定。")]
