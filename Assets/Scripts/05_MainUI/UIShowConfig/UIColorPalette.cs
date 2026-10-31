@@ -11,6 +11,7 @@ public static class UIColorPalette
     public const string HEX_WHITE = "FFFFFF";
     public const string HEX_RED   = "FF1C1C";
     public const string HEX_GREEN = "12B980";
+    public const string HEX_ORANGE = "FF8E2B";
     public const string HEX_GRAY  = "434343";
     public const string HEX_PINK  = "FF6666";
     public const string HEX_BLUE  = "2832FF";
@@ -20,6 +21,7 @@ public static class UIColorPalette
     public static readonly Color White = FromHex(HEX_WHITE);
     public static readonly Color Red   = FromHex(HEX_RED);
     public static readonly Color Green = FromHex(HEX_GREEN);
+    public static readonly Color Orange = FromHex(HEX_ORANGE);
     public static readonly Color Gray  = FromHex(HEX_GRAY);
     public static readonly Color Pink  = FromHex(HEX_PINK);
     public static readonly Color Blue  = FromHex(HEX_BLUE);

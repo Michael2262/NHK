@@ -16,14 +16,15 @@ public sealed class QuestTrackerItemUI : MonoBehaviour
     [SerializeField] private TMP_Text progressTMP;
 
     [Header("任務狀態文字")]
-    [Tooltip("顯示未完成／今日未完成／今日已完成／已完成。請使用常駐的 TMP 物件。")]
+    [Tooltip("顯示明日開始／未完成／今日未完成／今日已完成／已完成。請使用常駐的 TMP 物件。")]
     [SerializeField] private TMP_Text statusTMP;
 
     private TMP_Text _progressColorTarget;
     private Color _normalProgressColor;
 
     public void Render(QuestTrackerItemState item, string completedTextKey = null,
-        string completedTodayTextKey = null, string incompleteTextKey = null, string incompleteTodayTextKey = null)
+        string completedTodayTextKey = null, string incompleteTextKey = null, string incompleteTodayTextKey = null,
+        bool showTomorrow = false, string tomorrowTextKey = "Quest.Tomorrow")
     {
         if (item == null) return;
         if (stickerCountTMP != null)
@@ -36,11 +37,14 @@ public sealed class QuestTrackerItemUI : MonoBehaviour
         bool completedToday = item.ShowDailyProgress && item.PerformedToday;
         if (statusTMP != null)
         {
-            string key = item.IsCompleted ? completedTextKey
+            string key = showTomorrow ? tomorrowTextKey
+                : item.IsCompleted ? completedTextKey
                 : !item.ShowDailyProgress ? incompleteTextKey
                 : completedToday ? completedTodayTextKey : incompleteTodayTextKey;
             statusTMP.text = Localize(key);
-            statusTMP.color = item.IsCompleted || completedToday ? UIColorPalette.Green : UIColorPalette.Gray;
+            statusTMP.color = showTomorrow ? UIColorPalette.Gray
+                : item.IsCompleted ? UIColorPalette.Green
+                : completedToday ? UIColorPalette.Orange : UIColorPalette.Gray;
         }
         if (progressTMP != null)
         {

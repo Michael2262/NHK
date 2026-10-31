@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-/// <summary>依 QuestDatabase 順序領取一筆固定獎勵；不依賴場景元件，不自行迴圈領完。</summary>
+/// <summary>依 QuestDatabase 順序或指定 ID 領取一筆固定獎勵；不依賴場景元件，不自行迴圈領完。</summary>
 public sealed class QuestRewardService
 {
     private readonly QuestModel _quests;
@@ -40,15 +40,28 @@ public sealed class QuestRewardService
         if (_quests.ConfigurationError != null) return QuestResult.InvalidConfiguration;
         string nextID = _quests.GetNextUnclaimedQuestID();
         if (nextID == null) return QuestResult.NoUnclaimedReward;
-        var reward = _quests.GetDefinition(nextID).Rewards;
+        var result = ClaimReward(nextID, deactivateQuest);
+        if (result == QuestResult.Success) questID = nextID;
+        return result;
+    }
+
+    /// <summary>只領指定的已完成、未領取任務，不限制啟動狀態；失敗不改領其他任務。</summary>
+    public QuestResult ClaimReward(string questID, bool deactivateQuest = true)
+    {
+        if (_quests == null) return QuestResult.NotConfigured;
+        if (_quests.IsBusy) return QuestResult.Busy;
+        LastError = null;
+        var eligibility = _quests.CanMarkRewarded(questID);
+        if (eligibility != QuestResult.Success) return eligibility;
+        var reward = _quests.GetDefinition(questID).Rewards;
         if (!TryPrepare(reward, out var actions))
         {
-            _reportWarning?.Invoke($"[QuestRewardService] 任務「{nextID}」尚未領取：{LastError}");
+            _reportWarning?.Invoke($"[QuestRewardService] 任務「{questID}」尚未領取：{LastError}");
             return QuestResult.InvalidReward;
         }
 
         var errors = new List<Exception>();
-        var result = _quests.ClaimReward(nextID, () =>
+        var result = _quests.ClaimReward(questID, () =>
         {
             foreach (var apply in actions)
             {
@@ -57,9 +70,8 @@ public sealed class QuestRewardService
                 catch (Exception exception) { errors.Add(exception); }
             }
         }, deactivateQuest);
-        if (result == QuestResult.Success) questID = nextID;
         foreach (var error in errors)
-            _reportWarning?.Invoke($"[QuestRewardService] 任務「{nextID}」已領取，但數值通知發生錯誤：{error}");
+            _reportWarning?.Invoke($"[QuestRewardService] 任務「{questID}」已領取，但數值通知發生錯誤：{error}");
         return result;
     }
 

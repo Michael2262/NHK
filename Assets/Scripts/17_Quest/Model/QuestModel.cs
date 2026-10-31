@@ -235,7 +235,8 @@ public sealed class QuestModel
 
     /// <summary>
     /// 靜默載入；第一版只沿用進度及啟用清單，舊門檻領獎無法對應每筆任務，不推測為已發獎。
-    /// 無效資料保留原進度並阻擋操作，避免部分載入後覆寫存檔。
+    /// 缺少定義的舊任務保留於存檔，不加入可操作進度；新增 ID 套用初始狀態。
+    /// 其餘無效資料保留原進度並阻擋操作，避免部分載入後覆寫存檔。
     /// </summary>
     public void LoadFromSaveData(QuestSaveData data)
     {
@@ -264,9 +265,18 @@ public sealed class QuestModel
         candidate.LegacyActiveQuestIDs = null;
         _state = candidate;
         _progress.Clear();
+        var missingIDs = new List<string>();
         for (int i = 0; i < _state.QuestIDs.Count; i++)
-            _progress.Add(_state.QuestIDs[i], _state.QuestDataList[i]);
+        {
+            string id = _state.QuestIDs[i];
+            if (_catalog.ContainsKey(id))
+                _progress.Add(id, _state.QuestDataList[i]);
+            else
+                missingIDs.Add(id);
+        }
         AddMissingDefaults();
+        if (missingIDs.Count > 0)
+            _reportWarning?.Invoke($"[QuestModel] 下列舊任務找不到定義，已保留存檔紀錄並略過使用，不影響其他任務：{string.Join(", ", missingIDs)}。");
     }
 
     private string ValidateSaveData(QuestSaveData data)
@@ -284,13 +294,16 @@ public sealed class QuestModel
             string id = data.QuestIDs[i];
             var info = GetDefinition(id);
             var record = data.QuestDataList[i];
-            if (info == null) return $"找不到任務定義：{id}。";
+            if (string.IsNullOrWhiteSpace(id)) return "任務紀錄 ID 不可為空。";
             if (!ids.Add(id)) return $"任務紀錄 ID 重複：{id}。";
-            if (record == null || record.CurrentCount < 0 || record.CurrentCount > info.RequiredCount
-                || record.IsCompleted != (record.CurrentCount == info.RequiredCount)
+            if (record == null || record.CurrentCount < 0
                 || record.LastPerformedDay < -1 || (record.CurrentCount > 0 && record.LastPerformedDay < 0)
                 // 曾發獎後可以扣回次數，因此已發獎不代表目前仍達標；仍須有成功計次日期。
                 || (data.Version >= 2 && record.IsRewarded && record.LastPerformedDay < 0))
+                return $"任務 {id} 的紀錄與目前設定不一致。";
+            // 舊定義已移除時無法核對目標次數，保留紀錄；仍驗證 ID 與通用資料完整性。
+            if (info != null && (record.CurrentCount > info.RequiredCount
+                || record.IsCompleted != (record.CurrentCount == info.RequiredCount)))
                 return $"任務 {id} 的紀錄與目前設定不一致。";
         }
 

@@ -32,7 +32,7 @@ public class ProtagonistStatusModel
     public const int InitialStickerCount = 0;
 
     // ───── 金錢 ─────
-    public const int InitialMoney = 1000;              // 開局金錢；有效範圍 0～999999
+    public const int InitialMoney = 10000;             // 開局金錢；有效範圍 0～999999
 
     // ───── 技能點 ─────
     public const int InitialSkillPoints = 0;

@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using UnityEditor;
 using UnityEngine;
 
@@ -11,6 +12,7 @@ public class HeroineFlagScheduleEditorWindow : EditorWindow
     private Editor _editor;
     private Vector2 _scroll;
     private HeroineFlagScheduleConfig[] _configs = Array.Empty<HeroineFlagScheduleConfig>();
+    private string[] _configLabels = { "選擇規則表…" };
 
     [MenuItem("Tools/Heroine Flag Schedule Editor")]
     public static void Open()
@@ -20,25 +22,39 @@ public class HeroineFlagScheduleEditorWindow : EditorWindow
         window.Show();
     }
 
-    private void OnEnable() => Scan();
-    private void OnFocus() => Scan();
-    private void OnDisable() { if (_editor != null) DestroyImmediate(_editor); }
-    private void OnInspectorUpdate() { if (Application.isPlaying) Repaint(); }
+    private void OnEnable()
+    {
+        Scan();
+        EditorApplication.playModeStateChanged += HandlePlayModeChanged;
+    }
+
+    private void OnDisable()
+    {
+        EditorApplication.playModeStateChanged -= HandlePlayModeChanged;
+        if (_editor != null) DestroyImmediate(_editor);
+    }
+
+    private void HandlePlayModeChanged(PlayModeStateChange state)
+    {
+        _scroll = Vector2.zero;
+        Repaint();
+    }
 
     private void Scan()
     {
         _configs = AssetDatabase.FindAssets("t:HeroineFlagScheduleConfig")
             .Select(g => AssetDatabase.LoadAssetAtPath<HeroineFlagScheduleConfig>(AssetDatabase.GUIDToAssetPath(g)))
             .Where(c => c != null).OrderBy(c => c.heroineID).ToArray();
+        _configLabels = new[] { "選擇規則表…" }
+            .Concat(_configs.Select(c => $"{c.heroineID} — {c.name}")).ToArray();
     }
 
     private void OnGUI()
     {
         using (new EditorGUILayout.HorizontalScope(EditorStyles.toolbar))
         {
-            string[] labels = new[] { "選擇規則表…" }.Concat(_configs.Select(c => $"{c.heroineID} — {c.name}")).ToArray();
             int current = Array.IndexOf(_configs, _config) + 1;
-            int next = EditorGUILayout.Popup(current, labels, EditorStyles.toolbarPopup);
+            int next = EditorGUILayout.Popup(current, _configLabels, EditorStyles.toolbarPopup);
             if (next != current) SelectConfig(next > 0 ? _configs[next - 1] : null);
             if (GUILayout.Button("重新掃描", EditorStyles.toolbarButton, GUILayout.Width(75))) Scan();
         }
@@ -70,18 +86,39 @@ public class HeroineFlagScheduleEditorWindow : EditorWindow
 public class HeroineFlagScheduleConfigEditor : Editor
 {
     private HeroineStatusConfig[] _statusConfigs;
+    private string _runtimeSummary;
+    private MessageType _runtimeMessageType;
+    private bool _showRuntimeActions;
+    private bool _showRulesDuringPlay;
 
     private void OnEnable()
     {
         _statusConfigs = AssetDatabase.FindAssets("t:HeroineStatusConfig")
             .Select(g => AssetDatabase.LoadAssetAtPath<HeroineStatusConfig>(AssetDatabase.GUIDToAssetPath(g)))
             .Where(c => c != null).ToArray();
+        EditorApplication.playModeStateChanged += HandlePlayModeChanged;
+    }
+
+    private void OnDisable() => EditorApplication.playModeStateChanged -= HandlePlayModeChanged;
+
+    private void HandlePlayModeChanged(PlayModeStateChange state)
+    {
+        _runtimeSummary = null;
+        _showRuntimeActions = false;
+        _showRulesDuringPlay = false;
+        Repaint();
     }
 
     public override void OnInspectorGUI()
     {
-        serializedObject.Update();
         var config = (HeroineFlagScheduleConfig)target;
+        if (Application.isPlaying)
+        {
+            DrawRuntime(config);
+            _showRulesDuringPlay = EditorGUILayout.Foldout(_showRulesDuringPlay, "檢視完整規則與診斷（唯讀）", true);
+            if (!_showRulesDuringPlay) return;
+        }
+        serializedObject.Update();
         using (new EditorGUI.DisabledScope(EditorApplication.isPlayingOrWillChangePlaymode))
         {
             EditorGUILayout.PropertyField(serializedObject.FindProperty("heroineID"), new GUIContent("女主角 ID"));
@@ -156,7 +193,6 @@ public class HeroineFlagScheduleConfigEditor : Editor
         }
         serializedObject.ApplyModifiedProperties();
         DrawDiagnostics(config);
-        DrawRuntime(config);
     }
 
     private static void DrawActivities(SerializedProperty rule)
@@ -219,26 +255,52 @@ public class HeroineFlagScheduleConfigEditor : Editor
         }
     }
 
-    private static void DrawRuntime(HeroineFlagScheduleConfig config)
+    // 只在使用者按下按鈕時讀取 Model；一般 Layout／Repaint 使用上次快照。
+    private void CaptureRuntimeSummary(HeroineFlagScheduleConfig config)
     {
-        if (!Application.isPlaying) return;
+        _runtimeMessageType = MessageType.Info;
         var service = GameStatusService.Instance;
-        if (service?.HeroineFlagSchedule == null)
+        if (service == null || service.HeroineFlagSchedule == null)
         {
-            EditorGUILayout.HelpBox("目前未啟用 Flag 行程模式。", MessageType.Info);
+            _runtimeSummary = "目前未啟用 Flag 行程模式。";
             return;
         }
-        if (service.HeroineConfig.FlagSchedules == null || !service.HeroineConfig.FlagSchedules.Contains(config))
+        if (service.HeroineConfig == null || service.HeroineConfig.FlagSchedules == null
+            || !service.HeroineConfig.FlagSchedules.Contains(config))
         {
-            EditorGUILayout.HelpBox("這份行程表未加入目前的 Heroine Status Config。", MessageType.Warning);
+            _runtimeSummary = "這份行程表未加入目前的 Heroine Status Config。";
+            _runtimeMessageType = MessageType.Warning;
             return;
         }
-        EditorGUILayout.HelpBox(service.HeroineFlagSchedule.Describe(config.heroineID), MessageType.Info);
-        foreach (var pair in service.Scenario.AllLocationStates)
+        var summary = new StringBuilder(service.HeroineFlagSchedule.Describe(config.heroineID));
+        if (service.Scenario?.AllLocationStates != null)
         {
-            var heroine = pair.Value?.Heroines?.FirstOrDefault(h => h != null
-                && string.Equals(h.HeroineID, config.heroineID, StringComparison.OrdinalIgnoreCase));
-            if (heroine != null) EditorGUILayout.LabelField("實際位置／活動", $"{pair.Key} / {heroine.Activity}");
+            foreach (var pair in service.Scenario.AllLocationStates)
+            {
+                var heroine = pair.Value?.Heroines?.FirstOrDefault(h => h != null
+                    && string.Equals(h.HeroineID, config.heroineID, StringComparison.OrdinalIgnoreCase));
+                if (heroine != null) summary.AppendLine().Append($"實際位置／活動：{pair.Key} / {heroine.Activity}");
+            }
+        }
+        _runtimeSummary = summary.ToString();
+    }
+
+    private void DrawRuntime(HeroineFlagScheduleConfig config)
+    {
+        EditorGUILayout.LabelField("執行狀態（手動刷新）", EditorStyles.boldLabel);
+        if (GUILayout.Button("刷新狀態")) CaptureRuntimeSummary(config);
+        EditorGUILayout.HelpBox(_runtimeSummary ?? "尚未讀取狀態，請按「刷新狀態」。",
+            _runtimeSummary == null ? MessageType.Info : _runtimeMessageType);
+        EditorGUILayout.LabelField("狀態為上次手動刷新結果；切換行程或讀檔後請再次刷新。", EditorStyles.wordWrappedLabel);
+        _showRuntimeActions = EditorGUILayout.Foldout(_showRuntimeActions, "測試操作（會改變遊戲狀態）", true);
+        if (!_showRuntimeActions) return;
+
+        var service = GameStatusService.Instance;
+        if (service == null || service.HeroineFlagSchedule == null || service.HeroineConfig == null
+            || service.HeroineConfig.FlagSchedules == null || !service.HeroineConfig.FlagSchedules.Contains(config))
+        {
+            EditorGUILayout.HelpBox("目前無法操作這份行程表，請確認服務與規則表設定。", MessageType.Warning);
+            return;
         }
         foreach (var rule in config.rules ?? new List<HeroineFlagScheduleRule>())
         {

@@ -21,6 +21,10 @@ public sealed class QuestLuaBridge : MonoBehaviour
         }
         Lua.RegisterFunction(nameof(QuestIsActive), this,
             SymbolExtensions.GetMethodInfo(() => QuestIsActive(string.Empty)));
+        Lua.RegisterFunction(nameof(QuestIsCompleted), this,
+            SymbolExtensions.GetMethodInfo(() => QuestIsCompleted(string.Empty)));
+        Lua.RegisterFunction(nameof(QuestCanClaim), this,
+            SymbolExtensions.GetMethodInfo(() => QuestCanClaim(string.Empty)));
         Lua.RegisterFunction(nameof(QuestHasIncomplete), this,
             SymbolExtensions.GetMethodInfo(() => QuestHasIncomplete()));
         Lua.RegisterFunction(nameof(QuestHasUnclaimedRewards), this,
@@ -31,6 +35,8 @@ public sealed class QuestLuaBridge : MonoBehaviour
             SymbolExtensions.GetMethodInfo(() => QuestIncreaseSuccessCount(string.Empty)));
         Lua.RegisterFunction(nameof(QuestClaimNextReward), this,
             SymbolExtensions.GetMethodInfo(() => QuestClaimNextReward()));
+        Lua.RegisterFunction(nameof(QuestClaimReward), this,
+            SymbolExtensions.GetMethodInfo(() => QuestClaimReward(string.Empty)));
         _registeredBridge = this;
     }
 
@@ -39,11 +45,14 @@ public sealed class QuestLuaBridge : MonoBehaviour
         // 未取得註冊權的重複場景物件，不得解除常駐 Bridge 的函式。
         if (_registeredBridge != this) return;
         Lua.UnregisterFunction(nameof(QuestIsActive));
+        Lua.UnregisterFunction(nameof(QuestIsCompleted));
+        Lua.UnregisterFunction(nameof(QuestCanClaim));
         Lua.UnregisterFunction(nameof(QuestHasIncomplete));
         Lua.UnregisterFunction(nameof(QuestHasUnclaimedRewards));
         Lua.UnregisterFunction(nameof(QuestSetActive));
         Lua.UnregisterFunction(nameof(QuestIncreaseSuccessCount));
         Lua.UnregisterFunction(nameof(QuestClaimNextReward));
+        Lua.UnregisterFunction(nameof(QuestClaimReward));
         _registeredBridge = null;
     }
 
@@ -52,6 +61,26 @@ public sealed class QuestLuaBridge : MonoBehaviour
     {
         var model = GameStatusService.Instance?.Quests;
         return !string.IsNullOrWhiteSpace(questID) && model?.GetProgress(questID)?.IsActive == true;
+    }
+
+    /// <summary>
+    /// Condition：QuestIsCompleted("Quest_ID")。查目前是否全部完成，不限制啟動或領獎狀態。
+    /// 空白／未知 ID、尚未初始化或進度無效時回傳 false。
+    /// </summary>
+    public bool QuestIsCompleted(string questID)
+    {
+        var model = GameStatusService.Instance?.Quests;
+        return !string.IsNullOrWhiteSpace(questID) && model?.GetProgress(questID)?.IsCompleted == true;
+    }
+
+    /// <summary>
+    /// Condition：QuestCanClaim("Quest_ID")。指定任務已完成且未領獎時為 true，不限制啟動狀態。
+    /// 沿用 Model 的領獎資格檢查，不發放獎勵；空白／未知 ID、尚未初始化、資料無效或忙碌時為 false。
+    /// </summary>
+    public bool QuestCanClaim(string questID)
+    {
+        var model = GameStatusService.Instance?.Quests;
+        return !string.IsNullOrWhiteSpace(questID) && model?.CanMarkRewarded(questID) == QuestResult.Success;
     }
 
     /// <summary>Condition：QuestHasIncomplete()。只查已啟動且未完成的任務。</summary>
@@ -89,6 +118,23 @@ public sealed class QuestLuaBridge : MonoBehaviour
         var result = model.TryRecordAction(questID);
         if (result == QuestResult.Success) return true;
         Debug.LogWarning($"[QuestLuaBridge] 任務「{questID}」成功次數加一未執行：{result}。", this);
+        return false;
+    }
+
+    /// <summary>Script：QuestClaimReward("Quest_ID")。只領指定任務，成功後標記已領取並停用任務。</summary>
+    public bool QuestClaimReward(string questID)
+    {
+        var rewards = GameStatusService.Instance?.QuestRewards;
+        if (rewards == null)
+        {
+            Debug.LogWarning("[QuestLuaBridge] Quest 獎勵服務尚未初始化，無法領獎。", this);
+            return false;
+        }
+        var result = rewards.ClaimReward(questID);
+        if (result == QuestResult.Success) return true;
+        // 獎勵設定錯誤已由服務輸出明確原因。
+        if (result != QuestResult.InvalidReward)
+            Debug.LogWarning($"[QuestLuaBridge] 任務「{questID}」未領取獎勵：{result}。", this);
         return false;
     }
 

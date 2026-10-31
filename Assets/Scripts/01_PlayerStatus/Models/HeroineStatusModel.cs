@@ -34,7 +34,7 @@ public class HeroineStatusModel
     // ───── 信賴 ─────
     public const int TrustMin = 0;
     public const int TrustMax = 999;
-    public const int InitialTrust = 0;
+    public const int InitialTrust = 20;
 
     // ───── 好感 ─────
     public const int AffinityMin = 0;

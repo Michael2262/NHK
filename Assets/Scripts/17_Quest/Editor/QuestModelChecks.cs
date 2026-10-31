@@ -16,14 +16,16 @@ public static class QuestModelChecks
         Check("第一版進度轉換與第二版存檔格式", CheckMigration, ref failed);
         Check("無效資料保護與事件重入", CheckInvalidData, ref failed);
         Check("SO 名稱識別與資產引用操作", CheckAssetReferences, ref failed);
+        Check("缺少定義的舊任務保留、隔離與存檔往返", CheckMissingDefinitions, ref failed);
         Check("扣回次數、每日限制與已發獎紀錄保存", CheckDecrease, ref failed);
         Check("固定獎勵順序、實際數值、重入與讀檔", CheckRewards, ref failed);
+        Check("指定領獎、停用任務、重複領取與失敗隔離", CheckSpecifiedReward, ref failed);
         Check("無效獎勵不部分發放也不跳過", CheckInvalidRewards, ref failed);
         Check("Flag 獎勵存活週期與關閉行為", CheckFlagRewardLifetimes, ref failed);
         Check("已啟動未完成查詢與無效資料", CheckActiveIncomplete, ref failed);
         Check("追蹤名單排序、同日保留、撤下不補位與刷新", CheckTrackerSelection, ref failed);
         Check("追蹤項目貼紙、每日勾選與完成顯示資料", CheckTrackerPresentation, ref failed);
-        if (failed == 0) Debug.Log("[Quest 自我檢查] 12 組全部通過；未修改遊戲中的 Model 或任何資產。");
+        if (failed == 0) Debug.Log("[Quest 自我檢查] 14 組全部通過；未修改遊戲中的 Model 或任何資產。");
         else Debug.LogError($"[Quest 自我檢查] {failed} 組失敗，請查看前面的錯誤。");
     }
 
@@ -162,8 +164,74 @@ public static class QuestModelChecks
             Expect(renamed.GetDefinition("A") == null && renamed.GetDefinition("A_Renamed") != null,
                 "新建 Model 應使用改名後的 ID。");
             renamed.LoadFromSaveData(saved);
-            Expect(renamed.LoadError != null && renamed.ToSaveData().QuestIDs.Contains("A"),
-                "舊名稱無法對應時應保留資料並回報，不可默默清除或猜測新 ID。");
+            Expect(renamed.LoadError == null && renamed.ToSaveData().QuestIDs.Contains("A") && renamed.GetProgress("A") == null,
+                "舊名稱無法對應時應保留存檔但略過使用，不可阻擋其他任務。");
+            var initial = renamed.GetProgress("A_Renamed");
+            Expect(!initial.IsActive && initial.CurrentCount == 0 && !initial.IsCompleted && !initial.IsRewarded
+                && initial.LastPerformedDay == -1, "改名後的新 ID 不可繼承舊進度，應套用初始設定。");
+            Expect(renamed.SetActive("A_Renamed", true) == QuestResult.Success
+                && renamed.TryRecordAction("A_Renamed") == QuestResult.Success, "改名後的新任務應可啟動與計次。");
+        }
+    }
+
+    private static void CheckMissingDefinitions()
+    {
+        using (var f = new Fixture())
+        {
+            f.Model.SetActive("A", true);
+            f.Model.TryRecordAction("A");
+            var saved = f.Model.ToSaveData();
+            saved.QuestIDs.Add("Removed");
+            saved.QuestDataList.Add(new QuestProgressSaveData
+            {
+                IsActive = true, CurrentCount = 8, IsCompleted = true, IsRewarded = false, LastPerformedDay = 1
+            });
+            string originalRecord = JsonConvert.SerializeObject(saved.QuestDataList[2]);
+            int changes = 0;
+            f.Model.OnChanged += () => changes++;
+            f.Model.LoadFromSaveData(saved);
+            Expect(f.Model.LoadError == null && changes == 0, "缺少定義不可阻擋讀檔，也不可逐筆通知。");
+            Expect(f.Model.GetProgress("A").CurrentCount == 1 && f.Model.CanRecordAction("A") == QuestResult.DailyLimit,
+                "有效任務的進度及每日限制應保留。");
+            Expect(f.Model.GetProgress("Removed") == null && f.Model.SetActive("Removed", true) == QuestResult.UnknownQuest,
+                "缺少定義的任務不可透過查詢或啟停繼續使用。");
+            Expect(string.Join(",", f.Model.GetActiveQuestIDs()) == "A,B" && !f.Model.HasUnclaimedRewards,
+                "舊任務不可混入啟動清單或待領獎勵。");
+            var tracker = new QuestTrackerModel(f.Model);
+            tracker.RefreshTasks(f.Day, 3);
+            Expect(TrackerIDs(tracker) == "A,B", "追蹤 UI 應略過舊任務。");
+            Expect(f.Model.TryRecordAction("B") == QuestResult.Success, "其他任務應可繼續計次。");
+            var roundTrip = JsonConvert.DeserializeObject<QuestSaveData>(JsonConvert.SerializeObject(f.Model.ToSaveData()));
+            Expect(JsonConvert.SerializeObject(roundTrip.QuestDataList[roundTrip.QuestIDs.IndexOf("Removed")]) == originalRecord,
+                "再次存檔必須完整保留舊任務紀錄。");
+            f.Model.LoadFromSaveData(roundTrip);
+            Expect(f.Model.LoadError == null && f.Model.GetProgress("B").CurrentCount == 1,
+                "包含舊任務的存檔再次載入後，有效進度仍應可用。");
+
+            var broken = roundTrip.Copy();
+            broken.QuestIDs.Add("Removed");
+            broken.QuestDataList.Add(broken.QuestDataList[2].Copy());
+            f.Model.LoadFromSaveData(broken);
+            Expect(f.Model.LoadError != null, "缺少定義也不可放行重複 ID。");
+            broken = roundTrip.Copy();
+            broken.QuestIDs[2] = null;
+            f.Model.LoadFromSaveData(broken);
+            Expect(f.Model.LoadError != null, "缺少定義也不可放行空 ID。");
+            broken = roundTrip.Copy();
+            broken.QuestDataList[2] = null;
+            f.Model.LoadFromSaveData(broken);
+            Expect(f.Model.LoadError != null, "缺少定義也不可放行空紀錄。");
+
+            const string legacy = "{'Version':1,'ActiveQuestIDs':['Removed'],'QuestIDs':['Removed'],'QuestDataList':[{'CurrentCount':8,'IsCompleted':true,'LastPerformedDay':1}]}";
+            f.Model.LoadFromSaveData(JsonConvert.DeserializeObject<QuestSaveData>(legacy));
+            var migrated = f.Model.ToSaveData();
+            Expect(f.Model.LoadError == null && migrated.Version == 2 && migrated.QuestDataList[0].IsActive
+                && !migrated.QuestDataList[0].IsRewarded && f.Model.GetProgress("Removed") == null,
+                "第一版缺少定義的任務仍須轉換啟動紀錄並隔離使用。");
+            Expect(f.Model.GetProgress("B").IsActive && f.Model.SetActive("A", true) == QuestResult.Success,
+                "舊存檔未包含的任務應套用初始狀態且可啟動。");
+            f.Model.LoadFromSaveData(JsonConvert.DeserializeObject<QuestSaveData>(JsonConvert.SerializeObject(migrated)));
+            Expect(f.Model.LoadError == null, "轉換後含舊任務的第二版存檔應可再次載入。");
         }
     }
 
@@ -266,6 +334,63 @@ public static class QuestModelChecks
             }
         }
         finally { UnityEngine.Object.DestroyImmediate(flag); }
+    }
+
+    private static void CheckSpecifiedReward()
+    {
+        using (var f = new Fixture((a, b) =>
+        {
+            a.RequiredCount = b.RequiredCount = 1;
+            a.InitiallyActive = true;
+            a.Rewards.StickerDelta = 5;
+            b.Rewards.StickerDelta = 8;
+        }))
+        {
+            var protagonist = new ProtagonistStatusModel();
+            var service = new QuestRewardService(f.Model, protagonist, null, new ProgressFlagModel());
+            f.Model.TryRecordAction("A");
+            Expect(service.ClaimReward("B") == QuestResult.NotCompleted, "指定未完成任務不可改領已完成的 A。");
+            foreach (string id in new[] { null, "", " ", "Missing" })
+                Expect(service.ClaimReward(id) == QuestResult.UnknownQuest, "空白或未知 ID 不可改領其他任務。");
+            Expect(protagonist.StickerCount == 0 && !f.Model.GetProgress("A").IsRewarded,
+                "指定領獎失敗不能影響其他待領任務。");
+
+            f.Model.TryRecordAction("B");
+            f.Model.SetActive("B", false);
+            QuestResult nested = QuestResult.Success;
+            protagonist.OnChanged += () => nested = service.ClaimReward("A");
+            Expect(service.ClaimReward("B") == QuestResult.Success && protagonist.StickerCount == 8,
+                "可指定清單後方已停用、已完成的 B，不受 A 排序影響。");
+            Expect(f.Model.GetProgress("B").IsRewarded && !f.Model.GetProgress("B").IsActive
+                && !f.Model.GetProgress("A").IsRewarded && nested == QuestResult.Busy,
+                "成功需標記已領取並停用，事件重入不可領取 A。");
+            Expect(service.ClaimReward("B") == QuestResult.AlreadyRewarded && protagonist.StickerCount == 8,
+                "重複指定不得再次發獎或改領 A。");
+            Expect(service.TryClaimNextReward(out string claimed) == QuestResult.Success && claimed == "A"
+                && protagonist.StickerCount == 13 && !f.Model.GetProgress("A").IsActive,
+                "指定領獎後，依序領獎仍應領取剩餘第一筆並停用。");
+        }
+        using (var f = new Fixture((a, b) =>
+        {
+            a.RequiredCount = b.RequiredCount = 1;
+            a.InitiallyActive = true;
+            a.Rewards.StickerDelta = 5;
+            b.Rewards.StickerDelta = 8;
+            b.Rewards.Heroines.Add(new QuestHeroineReward { HeroineID = "Missing", Trust = 3 });
+        }))
+        {
+            var protagonist = new ProtagonistStatusModel();
+            var service = new QuestRewardService(f.Model, protagonist, null, new ProgressFlagModel());
+            f.Model.TryRecordAction("A");
+            f.Model.TryRecordAction("B");
+            Expect(service.ClaimReward("B") == QuestResult.InvalidReward && service.LastError != null
+                && protagonist.StickerCount == 0 && !f.Model.GetProgress("B").IsRewarded
+                && f.Model.GetProgress("B").IsActive && !f.Model.GetProgress("A").IsRewarded,
+                "指定獎勵設定無效時不可部分發獎、標記、停用或改領 A。");
+            Expect(service.ClaimReward("A", false) == QuestResult.Success && service.LastError == null
+                && protagonist.StickerCount == 5 && f.Model.GetProgress("A").IsActive,
+                "另一筆仍可獨立領取，並支援保留啟動狀態。");
+        }
     }
 
     private static void CheckInvalidRewards()
