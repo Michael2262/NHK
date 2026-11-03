@@ -3,7 +3,7 @@ using UnityEngine.Events;
 using UnityEngine.UI;
 
 /// <summary>
-/// 已退役的不滿值 UI；只保留序列化欄位供手動搬移與清除。
+/// 指定女主角的不滿值填色 UI；平滑追蹤數值，顯示抵達門檻時通知。
 /// 掛在獨立的填色 Image 上，外框與背景由其他 UI 物件提供。
 /// </summary>
 [DisallowMultipleComponent]
@@ -27,28 +27,216 @@ public class FrustrationSliderVisualizer : MonoBehaviour
     [Tooltip("填色向上抵達或跨過 75% 時觸發一次；數值降到門檻以下後可再次觸發。啟用、換角或讀檔時不補發。")]
     [SerializeField] private UnityEvent onReachedThreeQuarters = new UnityEvent();
 
-    [Header("滿格通知")]
+    [Header("快要不滿通知（上限 − 2）")]
+    [Tooltip("填色到達 Model 的快要不滿門檻時觸發一次，固定為上限減 2（最低 0）。降到門檻以下後可再次觸發；啟用、換角或讀檔時不補發。")]
+    [SerializeField] private UnityEvent onReachedNearFull = new UnityEvent();
+
+    [Header("滿格通知（不滿）")]
     [Tooltip("填色抵達滿格時觸發一次；維持滿格不重複觸發，不自動歸零。啟用、換角或讀檔時不補發。")]
     [SerializeField] private UnityEvent onReachedMax = new UnityEvent();
 
     public UnityEvent OnReachedQuarter => onReachedQuarter;
     public UnityEvent OnReachedHalf => onReachedHalf;
     public UnityEvent OnReachedThreeQuarters => onReachedThreeQuarters;
+    public UnityEvent OnReachedNearFull => onReachedNearFull;
     public UnityEvent OnReachedMax => onReachedMax;
-    public float DisplayedValue => 0f;
+    public float DisplayedValue => displayedFill * maximum;
+
+    private Image fillImage;
+    private GameStatusService service;
+    private HeroineStatusModel model;
+    private int maximum = HeroineStatusModel.DefaultFrustrationMax;
+    private int nearFullThreshold;
+    // 使用比例插值，上限變更時從目前填色位置平滑追上。
+    private float displayedFill;
+    private float targetFill;
+    private float transitionStart;
+    private float transitionElapsed;
+    private int targetValue;
+    private bool fullArmed;
+    private bool nearFullArmed;
+    private bool quarterArmed;
+    private bool halfArmed;
+    private bool threeQuartersArmed;
+    // 事件回呼若改值、換角、停用或讀檔，停止派送本次更新的後續通知。
+    private int notificationVersion;
+
+    private void Awake()
+    {
+        fillImage = GetComponent<Image>();
+        fillImage.type = Image.Type.Filled;
+        fillImage.fillMethod = Image.FillMethod.Horizontal;
+        fillImage.fillOrigin = (int)Image.OriginHorizontal.Left;
+        fillImage.raycastTarget = false;
+    }
 
     private void OnEnable()
     {
-        var image = GetComponent<Image>();
-        if (image != null) image.enabled = false;
-        WarnRetired();
-        enabled = false;
+        RefreshBinding();
+        SynchronizeImmediately();
     }
 
-    // 只保留舊場景的型別與綁定，不觸發原本的門檻事件。
-    public void SetHeroineID(string id) { heroineID = id; }
-    public void SetFrustration(int value) { WarnRetired(); }
-    public void AddFrustration(int amount) { WarnRetired(); }
-    public void SetFrustrationMax(int value) { WarnRetired(); }
-    private void WarnRetired() => Debug.LogWarning("[FrustrationSliderVisualizer] 不滿值已退役，請移除此 UI 與相關事件綁定。", this);
+    private void OnDisable()
+    {
+        DetachModel();
+        if (service != null) service.OnGameStatusLoaded -= HandleGameStatusLoaded;
+        service = null;
+        fullArmed = nearFullArmed = false;
+        quarterArmed = halfArmed = threeQuartersArmed = false;
+        notificationVersion++;
+    }
+
+    /// <summary>切換角色時立即同步，不補發門檻通知。</summary>
+    public void SetHeroineID(string id)
+    {
+        heroineID = id;
+        if (isActiveAndEnabled) RefreshBinding();
+    }
+
+    /// <summary>轉交 Model 設值；UI 平滑追上。</summary>
+    public void SetFrustration(int value)
+    {
+        if (TryGetModel()) model.SetFrustration(value);
+    }
+
+    public void AddFrustration(int amount)
+    {
+        if (TryGetModel()) model.AddFrustration(amount);
+    }
+
+    public void SetFrustrationMax(int value)
+    {
+        if (TryGetModel()) model.SetFrustrationMax(value);
+    }
+
+    private bool TryGetModel()
+    {
+        if (!isActiveAndEnabled) return false;
+        RefreshBinding();
+        if (model != null) return true;
+        Debug.LogWarning($"[FrustrationSliderVisualizer] 尚未找到女主角：{heroineID}", this);
+        return false;
+    }
+
+    private void RefreshBinding()
+    {
+        var currentService = GameStatusService.Instance;
+        if (service != currentService)
+        {
+            if (service != null) service.OnGameStatusLoaded -= HandleGameStatusLoaded;
+            service = currentService;
+            if (service != null) service.OnGameStatusLoaded += HandleGameStatusLoaded;
+        }
+
+        HeroineStatusModel next = null;
+        if (service != null && service.Heroines != null && !string.IsNullOrEmpty(heroineID))
+            service.Heroines.TryGetValue(heroineID, out next);
+        if (ReferenceEquals(model, next)) return;
+
+        DetachModel();
+        model = next;
+        if (model != null)
+        {
+            model.OnFrustrationChanged += HandleFrustrationChanged;
+            model.OnFrustrationMaxChanged += HandleFrustrationChanged;
+        }
+        SynchronizeImmediately();
+    }
+
+    private void DetachModel()
+    {
+        if (model != null)
+        {
+            model.OnFrustrationChanged -= HandleFrustrationChanged;
+            model.OnFrustrationMaxChanged -= HandleFrustrationChanged;
+        }
+        model = null;
+    }
+
+    private void HandleGameStatusLoaded()
+    {
+        RefreshBinding();
+        SynchronizeImmediately();
+    }
+
+    private void SynchronizeImmediately()
+    {
+        notificationVersion++;
+        maximum = model != null ? model.FrustrationMax : HeroineStatusModel.DefaultFrustrationMax;
+        nearFullThreshold = model != null ? model.FrustrationNearFullThreshold : 0;
+        targetValue = model != null ? model.Frustration : 0;
+        displayedFill = targetFill = Mathf.Clamp01((float)targetValue / maximum);
+        transitionStart = displayedFill;
+        transitionElapsed = 0f;
+        fullArmed = targetValue < maximum;
+        nearFullArmed = targetValue < nearFullThreshold;
+        quarterArmed = targetFill < 0.25f;
+        halfArmed = targetFill < 0.5f;
+        threeQuartersArmed = targetFill < 0.75f;
+        RenderVisual();
+    }
+
+    private void HandleFrustrationChanged(int unused)
+    {
+        if (model == null) return;
+        int nextMaximum = model.FrustrationMax;
+        int nextValue = model.Frustration;
+        // 調整上限可能連續發出上限與數值事件，避免重啟同一次動畫。
+        if (maximum == nextMaximum && targetValue == nextValue) return;
+        notificationVersion++;
+        maximum = nextMaximum;
+        nearFullThreshold = model.FrustrationNearFullThreshold;
+        targetValue = nextValue;
+        targetFill = Mathf.Clamp01((float)targetValue / maximum);
+        transitionStart = displayedFill;
+        transitionElapsed = 0f;
+        // 即使同一幀先降低再集滿，也能開始下一輪通知。
+        if (targetValue < maximum) fullArmed = true;
+        if (targetValue < nearFullThreshold) nearFullArmed = true;
+        if (targetFill < 0.25f) quarterArmed = true;
+        if (targetFill < 0.5f) halfArmed = true;
+        if (targetFill < 0.75f) threeQuartersArmed = true;
+    }
+
+    private void Update()
+    {
+        RefreshBinding();
+        if (model == null) return;
+
+        transitionElapsed += useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
+        float t = Mathf.Clamp01(transitionElapsed / Mathf.Max(0.01f, transitionDuration));
+        displayedFill = t >= 1f ? targetFill : Mathf.Lerp(transitionStart, targetFill, t * t * (3f - 2f * t));
+        RenderVisual();
+        int version = notificationVersion;
+        NotifyThreshold(0.25f, ref quarterArmed, onReachedQuarter);
+        if (version != notificationVersion) return;
+        NotifyThreshold(0.5f, ref halfArmed, onReachedHalf);
+        if (version != notificationVersion) return;
+        NotifyThreshold(0.75f, ref threeQuartersArmed, onReachedThreeQuarters);
+        if (version != notificationVersion) return;
+        // 業務門檻由 Model 提供；這裡只等待畫面抵達，且先於滿格通知。
+        // 先以整數確認實際數值，避免極大上限時浮點比例捨入而提早通知。
+        if (targetValue >= nearFullThreshold)
+            NotifyThreshold((float)nearFullThreshold / maximum, ref nearFullArmed, onReachedNearFull);
+        if (version != notificationVersion) return;
+        if (fullArmed && targetValue >= maximum && t >= 1f)
+        {
+            fullArmed = false;
+            onReachedMax.Invoke();
+        }
+    }
+
+    private void NotifyThreshold(float threshold, ref bool armed, UnityEvent notification)
+    {
+        if (!armed || targetFill < threshold || displayedFill < threshold) return;
+        armed = false;
+        notification.Invoke();
+    }
+
+    private void RenderVisual()
+    {
+        if (fillImage == null) return;
+        fillImage.color = fillColor;
+        fillImage.fillAmount = displayedFill;
+    }
 }

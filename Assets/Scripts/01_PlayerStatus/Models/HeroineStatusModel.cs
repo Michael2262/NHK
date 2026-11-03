@@ -68,9 +68,16 @@ public class HeroineStatusModel
     public const int OrgasmLimit = 100;
     public const int InitialOrgasm = 0;
 
+    // ───── 不滿（獨立整數值；換日歸零，上限可於遊戲中調整）─────
+    public const int FrustrationMin = 0;
+    public const int InitialFrustration = 0;
+    public const int DefaultFrustrationMax = 5;
+    private const int FrustrationNearFullOffset = 2;
+
     // ───── 次數與狀態 ─────
     public const int InitialHCount = 0;
     public const bool InitialIsInHeat = false;
+    public const bool InitialIsInPout = false;
     public const HeroineEmotionCardType InitialEmotion = HeroineEmotionCardType.Angry;
 
     // ───── 生理週期（遊戲規則）─────
@@ -96,6 +103,8 @@ public class HeroineStatusModel
     public string Name { get; }
     public HeroineEmotionCardType CurrentEmotion { get; private set; } = InitialEmotion;
     public bool IsInHeat { get; private set; } = InitialIsInHeat;
+    /// <summary>獨立 Pout 狀態；由 SetInPout 明確切換，換日不自動清除。</summary>
+    public bool IsInPout { get; private set; } = InitialIsInPout;
     public int HCount { get; private set; } = InitialHCount;
     public int OrgasmMax => OrgasmLimit;
     /// <summary>每位角色獨立記錄，存檔保留；讀檔不算數值增加。</summary>
@@ -104,6 +113,7 @@ public class HeroineStatusModel
     public event Action OnChanged;
     public event Action<HeroineEmotionCardType> OnCurrentEmotionChanged;
     public event Action<bool> OnInHeatChanged;
+    public event Action<bool> OnInPoutChanged;
     public event Action<int> OnHCountChanged;
     public event Action<HeroineEmotionCardType> OnEmotionChanged
     {
@@ -130,6 +140,18 @@ public class HeroineStatusModel
     public event Action<int> OnExcitementValueChanged;
     public int Orgasm { get; private set; } = InitialOrgasm;
     public event Action<int> OnOrgasmChanged;
+
+    public int Frustration { get; private set; } = InitialFrustration;
+    public int FrustrationMax { get; private set; } = DefaultFrustrationMax;
+    /// <summary>快要不滿的門檻固定為上限減 2，最低為 0；不另存檔。</summary>
+    public int FrustrationNearFullThreshold => Math.Max(FrustrationMin, FrustrationMax - FrustrationNearFullOffset);
+    public event Action<int> OnFrustrationChanged;
+    public event Action<int> OnFrustrationMaxChanged;
+    /// <summary>由門檻下方進入快要不滿區間時通知；維持在區間內不重複觸發。</summary>
+    public event Action OnFrustrationNearFull;
+    /// <summary>由未滿變成滿值時通知；不自動歸零，也不改變心情或情緒。</summary>
+    public event Action OnFrustrationFull;
+    private int frustrationRevision;
 
     public HeroineStatusModel(HeroineStat stat, HeroineStatusConfig config)
     {
@@ -264,6 +286,42 @@ public class HeroineStatusModel
 
     public void ReduceOrgasm(int amount) => SetOrgasm(Clamp((long)Orgasm - amount, OrgasmMin, OrgasmMax));
     public void ResetOrgasm() => SetOrgasm(0);
+
+    // ───── 不滿值：邊界判斷集中在 Model，Bridge 與 UI 僅轉接 ─────
+    public int GetFrustration() => Frustration;
+    public void SetFrustration(int value) => ApplyFrustration(value, FrustrationMax);
+    public void AddFrustration(int amount)
+        => SetFrustration(Clamp((long)Frustration + amount, FrustrationMin, FrustrationMax));
+    /// <summary>上限最低為 1；降低上限也可能跨過快要不滿或滿值門檻。</summary>
+    public void SetFrustrationMax(int value) => ApplyFrustration(Frustration, Math.Max(1, value));
+
+    private void ApplyFrustration(int value, int maximum)
+    {
+        value = Clamp(value, FrustrationMin, maximum);
+        bool valueChanged = Frustration != value;
+        bool maxChanged = FrustrationMax != maximum;
+        if (!valueChanged && !maxChanged) return;
+
+        bool wasNearFull = Frustration >= FrustrationNearFullThreshold;
+        bool reachedFull = Frustration < FrustrationMax && value == maximum;
+        Frustration = value;
+        FrustrationMax = maximum;
+        bool reachedNearFull = !wasNearFull && value >= FrustrationNearFullThreshold;
+        int revision = unchecked(++frustrationRevision);
+
+        // 先同步數值；回呼若改值或讀檔，停止派送本次已過期的門檻通知。
+        if (maxChanged) OnFrustrationMaxChanged?.Invoke(maximum);
+        if (revision != frustrationRevision) return;
+        if (valueChanged) OnFrustrationChanged?.Invoke(value);
+        if (revision != frustrationRevision) return;
+        OnChanged?.Invoke();
+        if (revision != frustrationRevision) return;
+        // 一次跨過兩個門檻時，先通知快要不滿，再通知滿值。
+        if (reachedNearFull) OnFrustrationNearFull?.Invoke();
+        if (revision != frustrationRevision) return;
+        if (reachedFull) OnFrustrationFull?.Invoke();
+    }
+
     public void AddHCount(int amount = 1) => SetHCount(Clamp((long)HCount + amount, 0, int.MaxValue));
     public void SetHCount(int value)
     {
@@ -291,6 +349,14 @@ public class HeroineStatusModel
         OnChanged?.Invoke();
     }
 
+    public void SetInPout(bool value)
+    {
+        if (IsInPout == value) return;
+        IsInPout = value;
+        OnInPoutChanged?.Invoke(value);
+        OnChanged?.Invoke();
+    }
+
     /// <summary>每實際消耗一格結算一次；使用消耗前的 Phase，包含離開該 Phase 的最後一格。</summary>
     public void ApplyAwakeSlotDecay(int consumedPhaseIndex)
     {
@@ -312,6 +378,8 @@ public class HeroineStatusModel
     public void ApplyExcitementDailyReset()
         => SetExcitement(IsInHeat ? Math.Min(Excitement, ExcitementInHeatDailyRetentionMax) : 0);
     public void ApplyOrgasmDailyReset() => SetOrgasm(0);
+    /// <summary>換日一律歸零，不依情緒保留不滿值。</summary>
+    public void ApplyFrustrationDailyReset() => SetFrustration(0);
 
     // ───── 存讀檔：還原時不逐項通知，由 Service 統一刷新 ─────
     public HeroineSaveData ToSaveData() => new HeroineSaveData
@@ -321,7 +389,9 @@ public class HeroineStatusModel
         Trust = Trust, Affinity = Affinity, Mood = Mood, Interest = Interest, Libido = Libido,
         LibidoIncreasedToday = LibidoIncreasedToday,
         Excitement = Excitement, Orgasm = Orgasm, HCount = HCount,
+        Frustration = Frustration, FrustrationMax = FrustrationMax,
         IsInHeat = IsInHeat, StatisticsData = Statistics.ToSaveData(),
+        IsInPout = IsInPout,
         CycleData = new HeroineCycleSaveData
         {
             CurrentCycleDay = CurrentCycleDay,
@@ -346,8 +416,13 @@ public class HeroineStatusModel
         LibidoIncreasedToday = data.LibidoIncreasedToday;
         Excitement = Clamp(data.Excitement, ExcitementMin, ExcitementMax);
         Orgasm = Clamp(data.Orgasm, OrgasmMin, OrgasmMax);
+        // 舊檔缺少欄位時使用 DTO 預設值；還原期間不補發門檻事件。
+        FrustrationMax = Math.Max(1, data.FrustrationMax);
+        Frustration = Clamp(data.Frustration, FrustrationMin, FrustrationMax);
+        unchecked { frustrationRevision++; }
         HCount = Math.Max(0, data.HCount);
         IsInHeat = data.IsInHeat;
+        IsInPout = data.IsInPout;
         Statistics = new HeroineStatisticsModel();
         if (data.StatisticsData != null) Statistics.LoadFromSaveData(data.StatisticsData);
         LoadCycle(data.CycleData);

@@ -319,13 +319,14 @@ public class GameStatusService : MonoBehaviour
             if (_suppressDaySettlement) return;
 
             ValueTriggerManager.OnValueChanged("Phase", Time.CurrentPhaseIndex);
-            // 換日：每位女主角獨立重設 Awake 並結算性欲、興奮與高潮。
+            // 換日：每位女主角獨立重設 Awake 並結算性欲、興奮、高潮與不滿。
             foreach (var heroine in Heroines.Values)
             {
                 heroine.ApplyAwakeDailyReset();
                 heroine.ApplyLibidoDecay();
                 heroine.ApplyExcitementDailyReset();
                 heroine.ApplyOrgasmDailyReset();
+                heroine.ApplyFrustrationDailyReset();
                 heroine.AdvanceCycleDay(); // 推進排卵週期計數器
             }
         };

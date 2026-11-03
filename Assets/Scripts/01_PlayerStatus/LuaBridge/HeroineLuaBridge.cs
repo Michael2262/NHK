@@ -61,6 +61,18 @@ public class HeroineLuaBridge : MonoBehaviour
         Lua.RegisterFunction("AddOrgasm", this,
             SymbolExtensions.GetMethodInfo(() => AddOrgasm(string.Empty, (double)0)));
 
+        // 獨立不滿值與上限
+        Lua.RegisterFunction("GetFrustration", this,
+            SymbolExtensions.GetMethodInfo(() => GetFrustration(string.Empty)));
+        Lua.RegisterFunction("GetFrustrationMax", this,
+            SymbolExtensions.GetMethodInfo(() => GetFrustrationMax(string.Empty)));
+        Lua.RegisterFunction("SetFrustration", this,
+            SymbolExtensions.GetMethodInfo(() => SetFrustration(string.Empty, (double)0)));
+        Lua.RegisterFunction("AddFrustration", this,
+            SymbolExtensions.GetMethodInfo(() => AddFrustration(string.Empty, (double)0)));
+        Lua.RegisterFunction("SetFrustrationMax", this,
+            SymbolExtensions.GetMethodInfo(() => SetFrustrationMax(string.Empty, (double)0)));
+
         // 獨立興奮度
         Lua.RegisterFunction("GetExcitement", this,
             SymbolExtensions.GetMethodInfo(() => GetExcitement(string.Empty)));
@@ -132,6 +144,12 @@ public class HeroineLuaBridge : MonoBehaviour
             SymbolExtensions.GetMethodInfo(() => IsInHeat(string.Empty)));
         Lua.RegisterFunction("SetInHeat", this,
             SymbolExtensions.GetMethodInfo(() => SetInHeat(string.Empty, false)));
+
+        // ── Pout 狀態 ──
+        Lua.RegisterFunction("IsInPout", this,
+            SymbolExtensions.GetMethodInfo(() => IsInPout(string.Empty)));
+        Lua.RegisterFunction("SetInPout", this,
+            SymbolExtensions.GetMethodInfo(() => SetInPout(string.Empty, false)));
     }
 
     void OnDisable()
@@ -158,6 +176,12 @@ public class HeroineLuaBridge : MonoBehaviour
         Lua.UnregisterFunction("GetOrgasm");
         Lua.UnregisterFunction("SetOrgasm");
         Lua.UnregisterFunction("AddOrgasm");
+
+        Lua.UnregisterFunction("GetFrustration");
+        Lua.UnregisterFunction("GetFrustrationMax");
+        Lua.UnregisterFunction("SetFrustration");
+        Lua.UnregisterFunction("AddFrustration");
+        Lua.UnregisterFunction("SetFrustrationMax");
 
         Lua.UnregisterFunction("GetExcitement");
         Lua.UnregisterFunction("SetExcitement");
@@ -194,6 +218,8 @@ public class HeroineLuaBridge : MonoBehaviour
 
         Lua.UnregisterFunction("IsInHeat");
         Lua.UnregisterFunction("SetInHeat");
+        Lua.UnregisterFunction("IsInPout");
+        Lua.UnregisterFunction("SetInPout");
     }
 
     // ─────────────────────────────────────────────
@@ -322,6 +348,12 @@ public class HeroineLuaBridge : MonoBehaviour
     public void SetOrgasm(string heroineID, double value) => GetModel(heroineID)?.SetOrgasm((int)value);
     public void AddOrgasm(string heroineID, double amount) => GetModel(heroineID)?.AddOrgasm((int)amount);
 
+    public double GetFrustration(string heroineID) => GetModel(heroineID)?.GetFrustration() ?? 0;
+    public double GetFrustrationMax(string heroineID) => GetModel(heroineID)?.FrustrationMax ?? HeroineStatusModel.DefaultFrustrationMax;
+    public void SetFrustration(string heroineID, double value) => GetModel(heroineID)?.SetFrustration((int)value);
+    public void AddFrustration(string heroineID, double amount) => GetModel(heroineID)?.AddFrustration((int)amount);
+    public void SetFrustrationMax(string heroineID, double value) => GetModel(heroineID)?.SetFrustrationMax((int)value);
+
     public void SetLibido(string heroineID, double value)
     {
         GetModel(heroineID)?.SetLibido((int)value);
@@ -438,6 +470,16 @@ public class HeroineLuaBridge : MonoBehaviour
     {
         GetModel(heroineID)?.SetInHeat(value);
     }
+
+    /// <summary>查詢 Pout 狀態；Lua: IsInPout("sister")。找不到角色時回傳 false。</summary>
+    public bool IsInPout(string heroineID) => GetModel(heroineID)?.IsInPout ?? false;
+
+    /// <summary>設定 Pout 開關；Lua: SetInPout("sister", true) / SetInPout("sister", false)。</summary>
+    public void SetInPout(string heroineID, bool value)
+    {
+        GetModel(heroineID)?.SetInPout(value);
+    }
+
     public double GetMood(string heroineID) => GetModel(heroineID)?.Mood ?? 0;
     public void SetMood(string heroineID, double value) => GetModel(heroineID)?.SetMood((int)value);
     public void AddMood(string heroineID, double amount) => GetModel(heroineID)?.AddMood((int)amount);

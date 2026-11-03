@@ -130,14 +130,38 @@ public List<HeroineSaveData> HeroineSaveDataList; // value（與 IDs 同 index �
 | `08_StatusEffect` | 狀態效果 | |
 | `09_Progress` | 進度旗標系統 | `ProgressFlagModel`（Flag + 數值 Variable）、觸發器、解鎖條件 |
 | `10_GlobalProgress` | 全域進度 | 跨存檔 `GlobalProgressModel` |
-| `11_MiniGame` | 小遊戲 | |
+| `11_MiniGame` | 小遊戲元件 / 工具 | 部分仍在使用；舊 MinigameManager 架構已移除，勿整包視為退役 |
 | `12_EncounterGenerator` | 遭遇 / 事件生成 | |
 | `13_Risk` | 風險代理人（家人） | `RiskAgentModel` |
 | `14_Hub` | Hub 場景控制 | `HubController` 等 ReadyHandler |
 | `15_Tachie` | 立繪 | |
 | `19_MainLoop` | 主迴圈 | |
+| `20_NhkMiniGame` | NHK 小遊戲 | 各遊戲獨立 Model / Controller，例如 `20_1Adventure` |
 | 工具庫 | `MyDialogueSystem` `MyPlayMaker` | 自製 Dialogue System / PlayMaker 工具 —— 見下方「兩個工具庫」專節 |
 | 其他 | `Enum` `Router` `SO` `Spine` `Tool` `ImgChange` `Collider` `Cursor` `ParticleAndEffect` | 共用工具 / 第三方整合 |
+
+---
+
+## 小遊戲架構與舊流程退役（2026-11-02）
+
+- **MinigameManager 舊架構已從程式碼移除，不再維護舊流程相容性。**
+  `IMinigameController`、`MinigameContext`、`MinigameResult`、舊 Adapter / Mocker / Stub、
+  舊結果計分與演出，以及 `ContinueToNextMinigameAction` / `OverrideReturnScene` 均已移除。
+- **新增或修改小遊戲，不得要求依循 MinigameManager、實作舊介面或恢復舊 Context 注入流程。**
+  各遊戲依需求建立純 C# Model 與場景端 Controller / Bridge；
+  共用遊戲資料從 `GameStatusService.Instance` 取得，轉場仍走 `SceneController` 正規管線。
+  場景內單次遊玩的 Model 可由該遊戲 Controller 持有（參考 `AdventureController`）；
+  需要跨場景共用的狀態才由 `GameStatusService` 管理。
+- 時間推進、結束結算與返回場景由個別遊戲流程明確安排，不再由舊 Manager 自動處理。
+- `SceneActionQueueModel` 與 Queue 工具仍是現用的共用轉場功能。
+  已移除舊串關專用的 `Suspend` / `Resume`；命令在下一場景的
+  `Task_ExecuteSceneActionQueue` 執行（包含進入小遊戲），不等待小遊戲結束。
+  若要在返回場景執行，應在離開小遊戲前才登記命令。既有執行順序與過期清除機制保留。
+- `11_MiniGame` 與 `MyPlayMaker/actions/Minigame` 仍包含現用 UI 和共用工具，
+  不可僅依資料夾名稱刪除或重新接回舊架構。
+- 舊場景 / Prefab / FSM / ScriptableObject 及 `.meta` 的清理由使用者在 Unity Editor 完成。
+  殘留參照應移除，不可為消除 Missing Script 而重建退役類別。
+  本次變更清單與資產清理位置見 `Docs/MinigameManager-retirement.txt`。
 
 ---
 
@@ -224,7 +248,11 @@ public List<HeroineSaveData> HeroineSaveDataList; // value（與 IDs 同 index �
      Bridge / Lua 的 `WeightedAddExcitement` 舊名稱只作為 `AddExcitement` 別名。
    - `Orgasm`：0～100，跨日歸零，不自動增加 `HCount`。
    - 情緒只保留 `CurrentEmotion`（初始 Angry），與 `Mood` 互相獨立。
-   - 情緒卡池、Frustration、PersonalSuspicion、舊能力／等級／經驗／鎖定與女主角 StatusEffectModel 已退役。
+   - `Frustration`：獨立整數不滿值，初始 0、預設上限 5，上限可調但最低 1；換日一律歸零。
+     從門檻下方進入「上限 − 2」（最低 0）時發出 `OnFrustrationNearFull`，未滿轉滿時發出 `OnFrustrationFull`。
+     一次跨過兩者先通知快要不滿再通知滿值；不自動改變 Mood／CurrentEmotion。數值與上限皆存檔，缺欄位時用 0／5。
+     `FrustrationSliderVisualizer` 的 `OnReachedNearFull` 在畫面填色到達該門檻時通知，保留原有比例與滿格事件；啟用、換角與讀檔不補發。
+   - 情緒卡池、PersonalSuspicion、舊能力／等級／經驗／鎖定與女主角 StatusEffectModel 已退役。
      舊序列化工具可保留型別供搬移，但不得把舊門檻自動解讀為新數值。
    - 處女／週期／懷孕僅保留預留接口；可調數值集中在 Model 頂部。
 

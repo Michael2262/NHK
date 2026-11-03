@@ -13,6 +13,9 @@ public class ProtagonistSaveData
     public int Hardness;
     public bool HardnessIncreasedThisSlot;
     public int StickerCount = ProtagonistStatusModel.InitialStickerCount;
+    // 沿用舊 JSON 鍵名，改名後仍可還原既有獎勵進度。
+    [Newtonsoft.Json.JsonProperty("StickerRewardThreshold")]
+    public int RewardLevel = ProtagonistStatusModel.InitialRewardLevel;
     public int Money = ProtagonistStatusModel.InitialMoney;
     public int SkillPoints = ProtagonistStatusModel.InitialSkillPoints;
     public int Semen = ProtagonistStatusModel.InitialSemen;

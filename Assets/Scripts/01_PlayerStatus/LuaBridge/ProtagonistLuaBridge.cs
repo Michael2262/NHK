@@ -28,6 +28,9 @@ public class ProtagonistLuaBridge : MonoBehaviour
         Lua.RegisterFunction("AddStickerCount", this, SymbolExtensions.GetMethodInfo(() => AddStickerCount((double)0)));
         Lua.RegisterFunction("SetStickerCount", this, SymbolExtensions.GetMethodInfo(() => SetStickerCount((double)0)));
         Lua.RegisterFunction("GetStickerCount", this, SymbolExtensions.GetMethodInfo(() => GetStickerCount()));
+        Lua.RegisterFunction("AddRewardLevel", this, SymbolExtensions.GetMethodInfo(() => AddRewardLevel((double)0)));
+        Lua.RegisterFunction("SetRewardLevel", this, SymbolExtensions.GetMethodInfo(() => SetRewardLevel((double)0)));
+        Lua.RegisterFunction("GetRewardLevel", this, SymbolExtensions.GetMethodInfo(() => GetRewardLevel()));
         Lua.RegisterFunction("AddLust", this, SymbolExtensions.GetMethodInfo(() => AddLust((double)0)));
         Lua.RegisterFunction("SetLust", this, SymbolExtensions.GetMethodInfo(() => SetLust((double)0)));
         Lua.RegisterFunction("GetLust", this, SymbolExtensions.GetMethodInfo(() => GetLust()));
@@ -80,6 +83,9 @@ public class ProtagonistLuaBridge : MonoBehaviour
         Lua.UnregisterFunction("AddStickerCount");
         Lua.UnregisterFunction("SetStickerCount");
         Lua.UnregisterFunction("GetStickerCount");
+        Lua.UnregisterFunction("AddRewardLevel");
+        Lua.UnregisterFunction("SetRewardLevel");
+        Lua.UnregisterFunction("GetRewardLevel");
         Lua.UnregisterFunction("AddLust");
         Lua.UnregisterFunction("SetLust");
         Lua.UnregisterFunction("GetLust");
@@ -180,26 +186,40 @@ public class ProtagonistLuaBridge : MonoBehaviour
     public void SetHardness(double value)
     {
         if (double.IsNaN(value)) return;
-        GetModel()?.SetHardness(ClampHardnessArgument(value));
+        GetModel()?.SetHardness(ClampIntArgument(value));
     }
     /// <summary>Script：AddHardness(20)／AddHardness(-10)。射精次數耗盡時正數無效。</summary>
     public void AddHardness(double amount)
     {
         if (double.IsNaN(amount)) return;
-        GetModel()?.AddHardness(ClampHardnessArgument(amount));
+        GetModel()?.AddHardness(ClampIntArgument(amount));
     }
     /// <summary>Script：ForceAddHardness(20)。略過射精次數限制，數值仍為 0～100。</summary>
     public void ForceAddHardness(double amount)
     {
         if (double.IsNaN(amount)) return;
-        GetModel()?.ForceAddHardness(ClampHardnessArgument(amount));
+        GetModel()?.ForceAddHardness(ClampIntArgument(amount));
     }
-    private static int ClampHardnessArgument(double value)
+    private static int ClampIntArgument(double value)
         => (int)System.Math.Max(int.MinValue, System.Math.Min(int.MaxValue, value));
 
     public double GetStickerCount() => GetModel()?.StickerCount ?? 0;
     public void SetStickerCount(double value) => GetModel()?.SetStickerCount((int)value);
     public void AddStickerCount(double value) => GetModel()?.AddStickerCount((int)value);
+
+    // ───── 獎勵階段：小數截去，超出整數範圍時先裁切，避免轉型溢位 ─────
+    public double GetRewardLevel() => GetModel()?.RewardLevel ?? 0;
+    public void SetRewardLevel(double value)
+    {
+        if (double.IsNaN(value)) return;
+        GetModel()?.SetRewardLevel(ClampIntArgument(value));
+    }
+    public void AddRewardLevel(double amount)
+    {
+        if (double.IsNaN(amount)) return;
+        GetModel()?.AddRewardLevel(ClampIntArgument(amount));
+    }
+
     public double GetRoomMessLevel() => GetModel()?.RoomMessLevel ?? 0;
     public void SetRoomMessLevel(double value) => GetModel()?.SetRoomMessLevel((int)value);
     public void AddRoomMessLevel(double value) => GetModel()?.AddRoomMessLevel((int)value);

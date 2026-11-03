@@ -31,6 +31,11 @@ public class ProtagonistStatusModel
     public const int StickerCountMax = 999;
     public const int InitialStickerCount = 0;
 
+    // ───── 獎勵階段 ─────
+    public const int RewardLevelMin = 0;
+    public const int RewardLevelMax = 999;
+    public const int InitialRewardLevel = 0;
+
     // ───── 金錢 ─────
     public const int InitialMoney = 10000;             // 開局金錢；有效範圍 0～999999
 
@@ -61,6 +66,8 @@ public class ProtagonistStatusModel
     public int Hardness { get; private set; }
     public bool HardnessIncreasedThisSlot { get; private set; }
     public int StickerCount { get; private set; } = InitialStickerCount;
+    /// <summary>目前達到的獎勵階段，供事件條件判斷。</summary>
+    public int RewardLevel { get; private set; } = InitialRewardLevel;
     public int Money { get; private set; } = ClampMoney(InitialMoney);
 
     public int SkillPoints { get; private set; } = InitialSkillPoints;
@@ -209,6 +216,17 @@ public class ProtagonistStatusModel
     public void AddStickerCount(int amount)
         => SetStickerCount(Clamp((long)StickerCount + amount, StickerCountMin, StickerCountMax));
 
+    public void SetRewardLevel(int value)
+    {
+        int previous = RewardLevel;
+        RewardLevel = Clamp(value, RewardLevelMin, RewardLevelMax);
+        NotifyIfChanged(previous, RewardLevel);
+    }
+
+    /// <summary>正數提高、負數降低獎勵階段，限制於 0～999。</summary>
+    public void AddRewardLevel(int amount)
+        => SetRewardLevel(Clamp((long)RewardLevel + amount, RewardLevelMin, RewardLevelMax));
+
     // 金錢上下限固定於此，不列入頂部的可調設定區。
     private static int ClampMoney(long value) => Clamp(value, 0, 999999);
 
@@ -315,6 +333,7 @@ public class ProtagonistStatusModel
         Hardness = 0;
         HardnessIncreasedThisSlot = false;
         StickerCount = Clamp(InitialStickerCount, StickerCountMin, StickerCountMax);
+        RewardLevel = Clamp(InitialRewardLevel, RewardLevelMin, RewardLevelMax);
         Money = ClampMoney(InitialMoney);
         SkillPoints = Math.Max(0, InitialSkillPoints);
         Semen = Clamp(InitialSemen, SemenMin, SemenLimit);
@@ -335,6 +354,7 @@ public class ProtagonistStatusModel
         StaminaMax = StaminaMax, Stamina = Stamina,
         ShootTimesMax = ShootTimesMax, ShootTimes = ShootTimes,
         Lust = Lust, StickerCount = StickerCount,
+        RewardLevel = RewardLevel,
         Hardness = Hardness, HardnessIncreasedThisSlot = HardnessIncreasedThisSlot,
         Money = Money, SkillPoints = SkillPoints, Semen = Semen, RoomMessLevel = RoomMessLevel
     };
@@ -352,6 +372,7 @@ public class ProtagonistStatusModel
         Hardness = Clamp(data.Hardness, 0, 100);
         HardnessIncreasedThisSlot = data.HardnessIncreasedThisSlot;
         StickerCount = Clamp(data.StickerCount, StickerCountMin, StickerCountMax);
+        RewardLevel = Clamp(data.RewardLevel, RewardLevelMin, RewardLevelMax);
         Money = ClampMoney(data.Money);
         SkillPoints = Math.Max(0, data.SkillPoints);
         Semen = Clamp(data.Semen, SemenMin, SemenLimit);

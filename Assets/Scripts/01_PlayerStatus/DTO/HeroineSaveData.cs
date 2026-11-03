@@ -17,8 +17,13 @@ public class HeroineSaveData
     public bool LibidoIncreasedToday;
     public int Excitement;
     public int Orgasm;
+    // 獨立不滿值與可調上限；舊存檔缺少欄位時使用 0／5。
+    public int Frustration = HeroineStatusModel.InitialFrustration;
+    public int FrustrationMax = HeroineStatusModel.DefaultFrustrationMax;
     public int HCount;
     public bool IsInHeat;
+    // 舊存檔缺少 Pout 狀態時使用初始值 false。
+    public bool IsInPout = HeroineStatusModel.InitialIsInPout;
     public HeroineStatisticsSaveData StatisticsData;
     // null 表示舊存檔尚無週期資料，依各角色的初始週期設定建立。
     public HeroineCycleSaveData CycleData;

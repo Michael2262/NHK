@@ -44,6 +44,11 @@ public class ProtagonistBridgeAPI : MonoBehaviour
     public void SetStickerCount(int value) => P?.SetStickerCount(value);
     public void AddStickerCount(int amount) => P?.AddStickerCount(amount);
 
+    // ───── 獎勵階段 ─────
+    public int GetRewardLevel() => P?.RewardLevel ?? 0;
+    public void SetRewardLevel(int value) => P?.SetRewardLevel(value);
+    public void AddRewardLevel(int amount) => P?.AddRewardLevel(amount);
+
     // ───── 金錢 ─────
     public int GetMoney() => P?.Money ?? 0;
     public void SetMoney(int value) => P?.SetMoney(value);

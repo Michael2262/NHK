@@ -7,7 +7,7 @@ using System.Collections;
 /// 【時機】場景載入後、淡入前（壓幕期間），時間推進等變化不會被玩家看到過程。
 /// 【建議】放在 Coordinator 任務列表的前段，讓後續任務（如 Task_InitProgressState）
 ///         看到的是命令執行後的世界狀態。
-/// 【注意】小遊戲串關期間佇列處於暫停狀態，本任務會自動跳過。
+/// 【注意】所有場景（包含小遊戲）都會執行待處理命令；不等待小遊戲結束。
 /// </summary>
 public class Task_ExecuteSceneActionQueue : SceneReadyTaskBase
 {

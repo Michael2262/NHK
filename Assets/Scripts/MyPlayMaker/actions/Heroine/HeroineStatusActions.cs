@@ -573,6 +573,44 @@ public class HeroineEmotionDraw : FsmStateAction
 }
 
 // ############################################################
+//  清醒度（Awake）
+// ############################################################
+
+[ActionCategory("Heroine Status")]
+[Tooltip("設定女主角的 Awake（0～120），支援小數；數值限制與睡眠階段更新由正式 Model 處理。")]
+public class SetAwakeAction : FsmStateAction
+{
+    [RequiredField] public FsmString heroineID;
+    [RequiredField] public FsmFloat value;
+
+    public override void Reset() { heroineID = null; value = 0f; }
+
+    public override void OnEnter()
+    {
+        if (HeroineActionHelper.TryGetHeroine(heroineID.Value, out var h, "SetAwakeAction"))
+            h.SetAwake(value.Value);
+        Finish();
+    }
+}
+
+[ActionCategory("Heroine Status")]
+[Tooltip("增減女主角的 Awake，支援小數。正值增加，負值減少；結果由正式 Model 限制在 0～120。")]
+public class AddAwakeAction : FsmStateAction
+{
+    [RequiredField] public FsmString heroineID;
+    [RequiredField] public FsmFloat amount;
+
+    public override void Reset() { heroineID = null; amount = 0f; }
+
+    public override void OnEnter()
+    {
+        if (HeroineActionHelper.TryGetHeroine(heroineID.Value, out var h, "AddAwakeAction"))
+            h.AddAwake(amount.Value);
+        Finish();
+    }
+}
+
+// ############################################################
 //  性興味（Interest）
 // ############################################################
 
@@ -1155,6 +1193,7 @@ public class CheckInHeat : FsmStateAction
     {
         if (!HeroineActionHelper.TryGetHeroine(heroineID.Value, out var h, "CheckInHeat"))
         {
+            if (storeValue != null && !storeValue.IsNone) storeValue.Value = false;
             Fsm.Event(notInHeatEvent);
             Finish();
             return;
@@ -1164,6 +1203,72 @@ public class CheckInHeat : FsmStateAction
         if (storeValue != null && !storeValue.IsNone) storeValue.Value = inHeat;
 
         Fsm.Event(inHeat ? inHeatEvent : notInHeatEvent);
+        Finish();
+    }
+}
+
+// ############################################################
+//  Pout 狀態（InPout）
+// ############################################################
+
+[ActionCategory("Heroine Status")]
+[Tooltip("設定女主角的 Pout 開關（獨立狀態，會存檔）。")]
+public class SetInPoutAction : FsmStateAction
+{
+    [RequiredField] public FsmString heroineID;
+
+    [RequiredField]
+    [Tooltip("true = 進入 Pout；false = 解除 Pout。")]
+    public FsmBool value;
+
+    public override void Reset() { heroineID = null; value = false; }
+
+    public override void OnEnter()
+    {
+        if (HeroineActionHelper.TryGetHeroine(heroineID.Value, out var h, "SetInPoutAction"))
+            h.SetInPout(value.Value);
+        Finish();
+    }
+}
+
+[ActionCategory("Heroine Status")]
+[Tooltip("進入 State 時檢查女主角是否處於 Pout，依結果送出 inPout / notInPout 事件。")]
+public class CheckInPout : FsmStateAction
+{
+    [RequiredField] public FsmString heroineID;
+
+    [UIHint(UIHint.Variable)]
+    [Tooltip("（選填）把目前 Pout 狀態存進這個 FSM Bool 變數；找不到女主角時設為 false。")]
+    public FsmBool storeValue;
+
+    [Tooltip("Pout 中送出的 Event。")]
+    public FsmEvent inPoutEvent;
+
+    [Tooltip("非 Pout 送出的 Event；找不到該女主角時也走這裡。")]
+    public FsmEvent notInPoutEvent;
+
+    public override void Reset()
+    {
+        heroineID = null;
+        storeValue = null;
+        inPoutEvent = null;
+        notInPoutEvent = null;
+    }
+
+    public override void OnEnter()
+    {
+        if (!HeroineActionHelper.TryGetHeroine(heroineID.Value, out var h, "CheckInPout"))
+        {
+            if (storeValue != null && !storeValue.IsNone) storeValue.Value = false;
+            Fsm.Event(notInPoutEvent);
+            Finish();
+            return;
+        }
+
+        bool inPout = h.IsInPout;
+        if (storeValue != null && !storeValue.IsNone) storeValue.Value = inPout;
+
+        Fsm.Event(inPout ? inPoutEvent : notInPoutEvent);
         Finish();
     }
 }

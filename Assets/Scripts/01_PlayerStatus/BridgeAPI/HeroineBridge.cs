@@ -12,6 +12,7 @@ using UnityEngine;
 /// - Interest 性興味 / Libido 性欲值
 /// - Excitement 獨立興奮度（無性欲加成）
 /// - Orgasm 獨立高潮度
+/// - Frustration 獨立不滿值與可調上限
 /// - Trust 信賴值 / Affinity 好感度
 /// - IsInHeat 發情開關
 /// - HCount H 次數
@@ -125,6 +126,16 @@ public class HeroineBridge : MonoBehaviour
     /// <summary>依輸入的絕對值減少高潮度。</summary>
     public void ReduceOrgasm(int amount) => H?.AddOrgasm(ToReductionDelta(amount));
     public void SetOrgasmZero() => SetOrgasm(0);
+
+    // 獨立不滿值：門檻與數值限制由 Model 處理。
+    public int GetFrustration() => H?.GetFrustration() ?? 0;
+    public int GetFrustrationMax() => H?.FrustrationMax ?? HeroineStatusModel.DefaultFrustrationMax;
+    public void SetFrustration(int value) => H?.SetFrustration(value);
+    public void AddFrustration(int amount) => H?.AddFrustration(amount);
+    /// <summary>依輸入的絕對值減少不滿值。</summary>
+    public void ReduceFrustration(int amount) => H?.AddFrustration(ToReductionDelta(amount));
+    public void SetFrustrationZero() => SetFrustration(0);
+    public void SetFrustrationMax(int value) => H?.SetFrustrationMax(value);
 
     // ==========================================================
     // 信賴 / 好感度：範圍限制由 Model 處理。

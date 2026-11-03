@@ -1,0 +1,94 @@
+MinigameManager 退役與 Unity Editor 清理清單
+日期：2026-11-02
+專案：D:/Dev/NHKProject
+
+目前狀態
+程式碼退役已完成；Unity 資產清理與編譯 / Play Mode 驗證仍由使用者執行。
+舊流程不再保留相容實作，也不會再自動進行註冊、資料注入、時間推進、串關與返回場景。
+後續新增小遊戲依個別需求建立 Model / Controller；共用資料由 GameStatusService 取得，
+轉場走 SceneController。不得為殘留資產參照重新建立退役類別。
+
+已刪除的程式檔（15 個；各自 .meta 未修改或刪除）
+- Assets/Scripts/11_MiniGame/Manager/MinigameManager.cs
+- Assets/Scripts/11_MiniGame/Controller/IMinigameController.cs
+- Assets/Scripts/11_MiniGame/Context/MinigameContext.cs
+- Assets/Scripts/11_MiniGame/Result/MinigameResult.cs
+- Assets/Scripts/11_MiniGame/Mocker/MinigameDebugMocker.cs
+- Assets/Scripts/11_MiniGame/11-2TouchGame/Adapter/PlayMakerMinigameAdapter_Multi2.cs
+- Assets/Scripts/11_MiniGame/11-2TouchGame/Adapter/Editor/PlayMakerMinigameAdapter_Multi2Editor.cs
+- Assets/Scripts/11_MiniGame/11-2TouchGame/Result/MinigameResultHandler.cs
+- Assets/Scripts/11_MiniGame/11-2TouchGame/Config/MinigameEndReasonConfig.cs
+- Assets/Scripts/11_MiniGame/11-3_Stub/Controller/StubMinigameController.cs
+- Assets/Scripts/11_MiniGame/11-3_Stub/UI/StubMinigameUI.cs
+- Assets/Scripts/11_MiniGame/11-2TouchGame/UI/LewdnessBreakdown.cs
+- Assets/Scripts/11_MiniGame/11-2TouchGame/UI/LewdnessSliderPerformance.cs
+- Assets/Scripts/MyPlayMaker/actions/Minigame/ContinueToNextMinigameAction.cs
+- Assets/Scripts/MyPlayMaker/actions/Minigame/OverrideReturnScene.cs
+Adapter 內的 MinigameEndReason / FsmReportData 亦隨舊流程移除。
+
+已修改的檔案（6 個）
+- Assets/Scripts/07_ScenceChangeTask/QueueModel/SceneActionQueueModel.cs
+- Assets/Scripts/07_ScenceChangeTask/Initializer/Task/Task_ExecuteSceneActionQueue.cs
+- Assets/Scripts/MyPlayMaker/actions/Minigame/QueueFlagChange.cs
+- Assets/Scripts/MyPlayMaker/actions/Minigame/QueueHeroineMove.cs
+- Assets/Scripts/MyPlayMaker/actions/Minigame/QueueRiskMove.cs
+- CLAUDE.md
+另新增本清單：Docs/MinigameManager-retirement.txt
+
+行為差異
+- SceneActionQueueModel 移除舊串關專用 Suspend / Resume / IsSuspended。
+- 命令在下一場景的 Task_ExecuteSceneActionQueue 執行，包含小遊戲場景。
+- 想在返回場景執行的命令，請於離開小遊戲前才登記。
+- 時間推進 → 女主角移動 → 風險移動 → Flag → FSM 事件的順序保留。
+- 缺少執行任務時，原有過期清除機制保留；新遊戲 / 讀檔仍清除待處理命令。
+- QueueFlagChange / QueueHeroineMove / QueueRiskMove 與 Task 的提示同步更新。
+- CLAUDE.md 已記錄退役規則，並補上 20_NhkMiniGame 模組。
+- 現用 UI、Adventure、共用工具與本次之前的未提交程式修改均保留。
+
+Unity Editor 清理順序（目前尚未執行）
+1. 開啟 Assets/Resources/CoreManager.prefab。
+   移除原 MinigameManager 元件（刪除程式後可能顯示 Missing Script）。
+   只移除該元件，保留 CoreManager 物件及其他核心元件。
+   BootstrapSceneLoader 仍需載入 CoreManager，因此不修改載入器。
+2. 下列舊場景 / Prefab 若不再使用，可在 Editor 刪除。
+   若仍保留某個資產，移除退役元件與對應 FSM Action、Call Method、
+   Object / Enum 型別變數、UnityEvent 呼叫及等待舊完成事件的步驟。
+   包括 ContinueToNextMinigameAction / OverrideReturnScene，以及
+   MinigameEndReason、PlayMakerMinigameAdapter_Multi2、舊結算與 Slider 演出。
+   確認 Build Settings 與仍使用的場景不再指向這些舊資產。
+3. 刪除 Assets/Resources/Minigame/MinigameEndReasonNormal.asset。
+   它是已移除 MinigameEndReasonConfig 的專用舊設定。
+4. 由 Unity 處理刪除腳本留下的 .meta，並檢查版本控制中的相應變更。
+   本次未手動改動任何 .meta、場景、Prefab、ScriptableObject 或 FSM。
+   未清理的舊資產可能出現 Missing Script / 失效型別，應移除殘留參照。
+
+靜態掃描找到的直接資產參照（14 個，包含舊場景與 Recovery）
+- Assets/_Recovery/0 (6).unity
+- Assets/MyScenes/MiniGame/old/Common_Close_Missionary.unity
+- Assets/MyScenes/MiniGame/old/Common_Close_Sit.unity
+- Assets/MyScenes/MiniGame/old/LivingRoom_Long_Touch.unity
+- Assets/MyScenes/MiniGame/old/sample/MischiefGameScene_Muti.unity
+- Assets/MyScenes/MiniGame/old/sample/MischiefGameScene_Single.unity
+- Assets/MyScenes/MiniGame/old/StubMinigame.unity
+- Assets/MyScenes/MiniGame/old/test/LivingRoom_Long_Touch_Old.unity
+- Assets/Prefabs/MiniGame/MiniGame_TouchGame/MainFSM/G1_MainFSM_TouchGame.prefab
+- Assets/Prefabs/MiniGame/MiniGame_TouchGame/MainFSM/work/G1_MainFSM_TouchGame_old.prefab
+- Assets/Prefabs/MiniGame/MiniGame_TouchGame/Result/#ResultUIFSM-Canvas(world space).prefab
+- Assets/Prefabs/UI_Common/Test_Fsm_Button.prefab
+- Assets/Resources/CoreManager.prefab
+- Assets/Resources/Minigame/MinigameEndReasonNormal.asset
+以上依退役類別名稱及腳本 GUID 掃描；不代表所有執行期呼叫都已驗證。
+上述四個舊 Prefab 的直接引用，以及舊計分設定資產的引用，
+本次掃描只落在上述舊場景 / Recovery 中。CoreManager 的啟動載入另見步驟 1。
+
+驗證結果與 Editor 驗收項目
+- 靜態 C# 搜尋：退役類別及其專用資料型別沒有剩餘引用。
+- diff 空白檢查通過；未執行 Unity 編譯或 Play Mode。
+- [ ] Unity 重新編譯無 C# 錯誤。
+- [ ] CoreManager 不再有 MinigameManager / 對應 Missing Script。
+- [ ] 從標題進入遊戲、直接播放現用場景，以及跨場景切換正常。
+- [ ] 大冒險及目前使用的小遊戲能啟動、結束；時間與返回地點由現用流程處理。
+- [ ] Queue 登記後在下一場景 Ready 執行一次（含小遊戲），Flag / 移動 / FSM 事件正常。
+- [ ] 未配置 Task 的場景仍按原有世代規則丟棄過期命令。
+- [ ] 新遊戲與讀檔不帶入上一局待處理命令。
+- [ ] 現用場景與 Prefab 沒有 Missing Script、退役 Action、Enum 或等待舊事件的 FSM。

@@ -57,6 +57,16 @@ public sealed class SceneTimerController : MonoBehaviour
         model.StartTimer(behaviorID);
     }
 
+    /// <summary>
+    /// 切換指定行為的計時開關：執行中暫停、暫停中繼續，尚未啟動則依 StartMode 啟動。
+    /// 參數是 Behavior ID；一般行為暫停所屬 Timer，Parallel 只暫停自身。
+    /// </summary>
+    public void ToggleTimer(string behaviorID)
+    {
+        if (!isActiveAndEnabled || !ValidateID(behaviorID)) return;
+        model.ToggleTimer(behaviorID);
+    }
+
     public bool CheckTimer() { return CheckTimer(TimerId.Main); }
     public bool CheckTimer(int timerNumber) { return CheckTimer((TimerId)timerNumber); }
     public bool CheckTimer(string timerName)

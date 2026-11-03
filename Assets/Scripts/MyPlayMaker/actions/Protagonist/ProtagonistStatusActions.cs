@@ -118,6 +118,67 @@ namespace MyGame.Actions
 }
 
 // ==========================================================
+// 獎勵階段
+// ==========================================================
+namespace MyGame.Actions
+{
+    [ActionCategory("Protagonist Status")]
+    [Tooltip("讀取主角獎勵階段 RewardLevel（0～999）。")]
+    public class GetRewardLevel : FsmStateAction
+    {
+        [RequiredField, UIHint(UIHint.Variable)] public FsmInt storeRewardLevel;
+
+        public override void Reset() { storeRewardLevel = null; }
+        public override void OnEnter()
+        {
+            var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(GetRewardLevel));
+            if (p != null) ProtagonistPlayMakerUtil.StoreInt(storeRewardLevel, p.RewardLevel);
+            Finish();
+        }
+    }
+
+    [ActionCategory("Protagonist Status")]
+    [Tooltip("設定主角獎勵階段（0～999），可儲存設定後的值。")]
+    public class SetRewardLevel : FsmStateAction
+    {
+        [RequiredField] public FsmInt value;
+        [UIHint(UIHint.Variable)] public FsmInt storeRewardLevel;
+
+        public override void Reset() { value = 0; storeRewardLevel = null; }
+        public override void OnEnter()
+        {
+            var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(SetRewardLevel));
+            if (p != null)
+            {
+                p.SetRewardLevel(value.Value);
+                ProtagonistPlayMakerUtil.StoreInt(storeRewardLevel, p.RewardLevel);
+            }
+            Finish();
+        }
+    }
+
+    [ActionCategory("Protagonist Status")]
+    [Tooltip("增減主角獎勵階段（0～999）；正數提高、負數降低，可儲存變更後的值。")]
+    public class AddRewardLevel : FsmStateAction
+    {
+        [RequiredField] public FsmInt amount;
+        [UIHint(UIHint.Variable)] public FsmInt storeRewardLevel;
+
+        public override void Reset() { amount = 0; storeRewardLevel = null; }
+        public override void OnEnter()
+        {
+            var p = ProtagonistPlayMakerUtil.GetProtagonist(nameof(AddRewardLevel));
+            if (p != null)
+            {
+                p.AddRewardLevel(amount.Value);
+                ProtagonistPlayMakerUtil.StoreInt(storeRewardLevel, p.RewardLevel);
+            }
+            Finish();
+        }
+    }
+}
+
+// ==========================================================
 // Money / SkillPoints
 // ==========================================================
 [ActionCategory("Protagonist Status")]

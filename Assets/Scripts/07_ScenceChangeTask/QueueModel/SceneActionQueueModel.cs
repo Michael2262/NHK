@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -14,18 +13,11 @@ using UnityEngine;
 /// - 方案 A（簡單版）：佇列一律在「下一個場景 Ready」時全部執行，登記後請馬上切場景。
 /// - 過期保險：命令若撐過一次完整轉場仍未被消費（該場景 Coordinator 沒掛 Task），
 ///   會在下下次轉場時被丟棄並印警告，避免殘留命令在之後某個場景誤發。
-/// - Suspend/Resume：小遊戲串關期間由 MinigameManager 暫停消費與過期計時，
-///   確保佇列命令等到小遊戲結束、時間推進後，才由返回場景執行（保留舊語意）。
-/// - 執行順序固定為：時間推進 → 女主角移動 → 風險移動 → Flag 變更。
+/// - 所有場景（包含小遊戲）使用相同時機，不暫停消費或等待小遊戲結束。
+///   若要在返回場景執行，應在離開小遊戲前才登記命令。
+/// - 執行順序固定為：時間推進 → 女主角移動 → 風險移動 → Flag 變更 → FSM 事件。
 ///   時間推進會觸發世界狀態重算，必須先做，否則強制移動會被覆蓋。
 /// - 佇列為一次性轉場資料，不存檔；新遊戲 / 讀檔時由 GameStatusService 清空。
-///
-/// TODO（2026-09-24）：使用者已將 MinigameManager 虛位化，未來需重新檢查舊 Queue 流程。
-/// QueueHeroineMove、QueueFlagChange 等工具所描述的「小遊戲結束後才執行」，
-/// 依賴舊 MinigameManager 配對呼叫 Suspend/Resume；新流程不一定仍符合此假設。
-/// 後續需確認暫停／恢復的負責者，以及各場景是否執行 Task_ExecuteSceneActionQueue，
-/// 再決定如何支援「下一場景（包含進入小遊戲）就執行」，避免命令提早執行、持續暫停或過期。
-/// 本次僅標記待修正事項，未變更既有 Queue 的執行行為。
 /// </summary>
 public class SceneActionQueueModel
 {
@@ -64,9 +56,6 @@ public class SceneActionQueueModel
 
     // 轉場世代計數：每次場景切換 +1，用於過期保險
     private int _generation;
-    private int _suspendCount;
-
-    public bool IsSuspended => _suspendCount > 0;
     public bool HasAnyAction => _queue.Count > 0;
 
     public SceneActionQueueModel(TimeSystemModel time, TimeConfig timeConfig, ProgressFlagModel progressFlags)
@@ -158,7 +147,7 @@ public class SceneActionQueueModel
     }
 
     /// <summary>
-    /// 清除所有待執行命令（不影響暫停狀態——小遊戲中途取消佇列時，串關暫停必須維持）。
+    /// 清除所有待執行命令。
     /// </summary>
     public void Clear()
     {
@@ -168,31 +157,12 @@ public class SceneActionQueueModel
     }
 
     /// <summary>
-    /// 整組重置：清除所有命令 + 重置暫停狀態。
+    /// 清除上一局的所有待執行命令。
     /// 僅供新遊戲 / 讀檔時由 GameStatusService 呼叫。
     /// </summary>
     public void ResetForNewSession()
     {
         Clear();
-        _suspendCount = 0;
-    }
-
-    // ==========================================================
-    // 暫停 / 恢復（小遊戲串關用）
-    // ==========================================================
-
-    /// <summary>暫停消費：Task 會跳過執行，過期保險也不計時。</summary>
-    public void Suspend()
-    {
-        _suspendCount++;
-        Debug.Log($"[SceneActionQueue] 佇列消費已暫停 (層數: {_suspendCount})");
-    }
-
-    /// <summary>恢復消費：下一次場景 Ready 時佇列會被執行。</summary>
-    public void Resume()
-    {
-        _suspendCount = Math.Max(0, _suspendCount - 1);
-        Debug.Log($"[SceneActionQueue] 佇列消費已恢復 (層數: {_suspendCount})");
     }
 
     // ==========================================================
@@ -205,8 +175,6 @@ public class SceneActionQueueModel
     /// </summary>
     public void HandleSceneChanged()
     {
-        if (IsSuspended) return;
-
         _generation++;
         int removed = _queue.RemoveAll(a => _generation - a.EnqueueGeneration >= 2);
         if (removed > 0)
@@ -221,12 +189,6 @@ public class SceneActionQueueModel
     /// </summary>
     public void ExecuteAll()
     {
-        if (IsSuspended)
-        {
-            Debug.Log("[SceneActionQueue] 佇列處於暫停狀態（小遊戲進行中），本次跳過執行。");
-            return;
-        }
-
         if (_queue.Count == 0) return;
 
         Debug.Log($"[SceneActionQueue] 開始執行 {_queue.Count} 筆命令...");

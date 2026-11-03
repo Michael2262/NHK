@@ -74,6 +74,8 @@ public sealed class SceneTimerModel
     {
         public readonly Behavior Behavior;
         public double Remaining;
+        // Parallel 使用自身暫停狀態；一般工作由所屬 Timer 控制。
+        public bool Paused;
         public Run(Behavior behavior) { Behavior = behavior; Remaining = behavior.Duration; }
     }
 
@@ -89,13 +91,13 @@ public sealed class SceneTimerModel
     private readonly Dictionary<string, Run> parallelRuns = new Dictionary<string, Run>(StringComparer.Ordinal);
     private bool ticking;
 
-    /// <summary>只回傳正在執行的獨立倒數；完成或取消後便不存在。</summary>
+    /// <summary>回傳執行中或暫停中的獨立倒數；完成或取消後便不存在。</summary>
     public bool TryGetParallelSnapshot(string id, out TimerSnapshot snapshot)
     {
         snapshot = null;
         Run run;
         if (id == null || !parallelRuns.TryGetValue(id, out run)) return false;
-        snapshot = new TimerSnapshot(id, run.Remaining, run.Behavior.Duration, false, new string[0]);
+        snapshot = new TimerSnapshot(id, run.Remaining, run.Behavior.Duration, run.Paused, new string[0]);
         return true;
     }
 
@@ -136,7 +138,8 @@ public sealed class SceneTimerModel
         if (id == null || !behaviors.TryGetValue(id, out behavior)) return;
         if (behavior.Mode == TimerStartMode.Parallel)
         {
-            if (!parallelRuns.ContainsKey(id)) parallelRuns.Add(id, new Run(behavior));
+            if (parallelRuns.TryGetValue(id, out var run)) run.Paused = false;
+            else parallelRuns.Add(id, new Run(behavior));
             return;
         }
         Timer timer = timers[behavior.Timer];
@@ -153,6 +156,26 @@ public sealed class SceneTimerModel
                 case TimerStartMode.Skip: break;
             }
         }
+    }
+
+    /// <summary>
+    /// 指定行為已執行或排隊時切換暫停；未啟動時沿用既有啟動規則。
+    /// 暫停保留剩餘時間與佇列；一般行為控制整個所屬 Timer，Parallel 僅控制自身。
+    /// </summary>
+    public void ToggleTimer(string id)
+    {
+        Behavior behavior;
+        if (id == null || !behaviors.TryGetValue(id, out behavior)) return;
+        if (behavior.Mode == TimerStartMode.Parallel)
+        {
+            if (parallelRuns.TryGetValue(id, out var run)) run.Paused = !run.Paused;
+            else StartTimer(id);
+            return;
+        }
+
+        Timer timer = timers[behavior.Timer];
+        if (CheckID(id) && !timer.Paused) PauseTimer(behavior.Timer);
+        else StartTimer(id);
     }
 
     public void PauseTimer(TimerId id = TimerId.Main)
@@ -206,6 +229,7 @@ public sealed class SceneTimerModel
             var parallelDue = new List<Run>();
             foreach (Run run in parallelRuns.Values)
             {
+                if (run.Paused) continue;
                 run.Remaining -= deltaTime;
                 if (run.Remaining <= 0d) parallelDue.Add(run);
             }
@@ -230,7 +254,7 @@ public sealed class SceneTimerModel
             {
                 Run current;
                 // 前面的事件可能取消並重啟同一 ID，舊工作不可觸發新工作的完成事件。
-                if (!parallelRuns.TryGetValue(run.Behavior.Id, out current) || current != run) continue;
+                if (!parallelRuns.TryGetValue(run.Behavior.Id, out current) || current != run || run.Paused) continue;
                 parallelRuns.Remove(run.Behavior.Id);
                 run.Behavior.Completed?.Invoke();
             }
