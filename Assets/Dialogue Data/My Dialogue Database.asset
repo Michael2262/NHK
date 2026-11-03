@@ -620476,7 +620476,7 @@ MonoBehaviour:
         destinationDialogueID: 44
         isConnector: 0
         priority: 2
-      conditionsString: GetTrust("sister") < 60
+      conditionsString: 
       userScript: 
       onExecute:
         m_PersistentCalls:
@@ -622720,7 +622720,7 @@ MonoBehaviour:
         destinationConversationID: 299
         destinationDialogueID: 73
         isConnector: 0
-        priority: 2
+        priority: 3
       conditionsString: Value("Value_TodayTouchTimes") < 4
       userScript: 
       onExecute:
@@ -622728,8 +622728,8 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 203
-        y: 152
+        x: 204
+        y: 154
         width: 160
         height: 30
     - id: 64
@@ -623753,7 +623753,7 @@ MonoBehaviour:
         destinationDialogueID: 74
         isConnector: 0
         priority: 2
-      conditionsString: GetTrust("sister") >= 60
+      conditionsString: GetTrust("sister") >= 60 and GetMood("sister") >= 7
       userScript: 
       onExecute:
         m_PersistentCalls:
