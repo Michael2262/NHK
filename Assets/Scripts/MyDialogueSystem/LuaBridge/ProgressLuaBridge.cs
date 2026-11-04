@@ -25,6 +25,7 @@ public class ProgressLuaBridge : MonoBehaviour
     {
         // Flag 相關
         Lua.RegisterFunction("Flag", this, typeof(ProgressLuaBridge).GetMethod("GetFlag"));
+        Lua.RegisterFunction(nameof(BundleHasAnyFlag), this, SymbolExtensions.GetMethodInfo(() => BundleHasAnyFlag(string.Empty)));
         Lua.RegisterFunction("SetFlag", this, typeof(ProgressLuaBridge).GetMethod("SetFlag"));
         Lua.RegisterFunction("SetFlagWithLifetime", this, typeof(ProgressLuaBridge).GetMethod("SetFlagWithLifetime"));
         Lua.RegisterFunction("RemoveFlag", this, typeof(ProgressLuaBridge).GetMethod("RemoveFlag"));
@@ -40,6 +41,7 @@ public class ProgressLuaBridge : MonoBehaviour
     private void UnregisterLuaFunctions()
     {
         Lua.UnregisterFunction("Flag");
+        Lua.UnregisterFunction(nameof(BundleHasAnyFlag));
         Lua.UnregisterFunction("SetFlag");
         Lua.UnregisterFunction("SetFlagWithLifetime");
         Lua.UnregisterFunction("RemoveFlag");
@@ -66,6 +68,33 @@ public class ProgressLuaBridge : MonoBehaviour
             return false;
         }
         return GameStatusService.Instance.ProgressFlags.Contains(flagName);
+    }
+
+    /// <summary>檢查旗標組合包是否有任一旗標開啟。用法：BundleHasAnyFlag("FlagBundle_SpecialTopics")。</summary>
+    public bool BundleHasAnyFlag(string bundleName)
+    {
+        if (string.IsNullOrWhiteSpace(bundleName))
+        {
+            Debug.LogWarning("[BundleHasAnyFlag] 請填入旗標組合包名稱。");
+            return false;
+        }
+
+        string path = "Progress/FlagBundle/" + bundleName.Trim();
+        var bundle = Resources.Load<FlagBundle>(path);
+        if (bundle == null)
+        {
+            Debug.LogWarning($"[BundleHasAnyFlag] 找不到 Resources/{path} 的 FlagBundle。");
+            return false;
+        }
+
+        var flags = GameStatusService.Instance?.ProgressFlags;
+        if (flags == null) return false;
+
+        foreach (var definition in bundle.Flags)
+        {
+            if (definition != null && flags.Contains(definition.FlagID)) return true;
+        }
+        return false;
     }
 
     /// <summary>
