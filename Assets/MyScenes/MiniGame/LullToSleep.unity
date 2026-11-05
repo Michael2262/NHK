@@ -202,8 +202,8 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
-  m_Sprite: {fileID: 21300000, guid: eb4ece8def7c6374d977d7d827e29774, type: 3}
+  m_SortingOrder: 2
+  m_Sprite: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -211,7 +211,7 @@ SpriteRenderer:
   m_Size: {x: 5.46, y: 6.28}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
-  m_WasSpriteAssigned: 1
+  m_WasSpriteAssigned: 0
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
 --- !u!4 &17884042
@@ -222,13 +222,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 17884039}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: 0.01182908, w: 0.99993}
-  m_LocalPosition: {x: 0.1, y: -4.18, z: 0}
-  m_LocalScale: {x: 0.54216635, y: 0.544971, z: 0.9221564}
+  m_LocalRotation: {x: -0, y: -0, z: 0.0006064258, w: 0.9999999}
+  m_LocalPosition: {x: 7.6, y: -1.86, z: 0}
+  m_LocalScale: {x: 0.68713564, y: 0.6675958, z: 1.0071793}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 1.356}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0.069}
 --- !u!114 &21682033 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 5309834142479765757, guid: 1b05c314449679144bcc6b14358301b5, type: 3}
@@ -4868,7 +4868,7 @@ GameObject:
   - component: {fileID: 314923496}
   - component: {fileID: 314923494}
   - component: {fileID: 314923499}
-  - component: {fileID: 314923498}
+  - component: {fileID: 314923500}
   m_Layer: 5
   m_Name: StopButton
   m_TagString: Untagged
@@ -4897,7 +4897,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 834, y: -312}
+  m_AnchoredPosition: {x: 834, y: -511}
   m_SizeDelta: {x: -1701.1111, y: -1081.8192}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &314923494
@@ -4956,75 +4956,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 314923492}
   m_CullTransparentMesh: 1
---- !u!114 &314923498
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 314923492}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2c916c6ec37c52041ba4485c5da39a87, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ButtonHoldTrigger
-  holdDuration: 1
-  useUnscaledTime: 1
-  progressImage: {fileID: 351829789}
-  onPressed:
-    m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 200591385}
-        m_TargetAssemblyTypeName: SceneTimerController, Assembly-CSharp
-        m_MethodName: StartTimer
-        m_Mode: 5
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: AwakeLoop
-          m_BoolArgument: 0
-        m_CallState: 2
-      - m_Target: {fileID: 17884040}
-        m_TargetAssemblyTypeName: SpriteActor, Assembly-CSharp
-        m_MethodName: ChangeSprite
-        m_Mode: 5
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: restart
-          m_BoolArgument: 0
-        m_CallState: 2
-  onHoldCompleted:
-    m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 200591385}
-        m_TargetAssemblyTypeName: SceneTimerController, Assembly-CSharp
-        m_MethodName: PauseTimer
-        m_Mode: 5
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: Main
-          m_BoolArgument: 0
-        m_CallState: 2
-      - m_Target: {fileID: 17884040}
-        m_TargetAssemblyTypeName: SpriteActor, Assembly-CSharp
-        m_MethodName: ChangeSprite
-        m_Mode: 5
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: pause
-          m_BoolArgument: 0
-        m_CallState: 2
 --- !u!114 &314923499
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5042,8 +4973,8 @@ MonoBehaviour:
     callback:
       m_PersistentCalls:
         m_Calls:
-        - m_Target: {fileID: 314923498}
-          m_TargetAssemblyTypeName: ButtonHoldTrigger, Assembly-CSharp
+        - m_Target: {fileID: 314923500}
+          m_TargetAssemblyTypeName: MultiModeButtonHoldTrigger, Assembly-CSharp
           m_MethodName: HandlePointerDown
           m_Mode: 0
           m_Arguments:
@@ -5058,8 +4989,8 @@ MonoBehaviour:
     callback:
       m_PersistentCalls:
         m_Calls:
-        - m_Target: {fileID: 314923498}
-          m_TargetAssemblyTypeName: ButtonHoldTrigger, Assembly-CSharp
+        - m_Target: {fileID: 314923500}
+          m_TargetAssemblyTypeName: MultiModeButtonHoldTrigger, Assembly-CSharp
           m_MethodName: HandlePointerUp
           m_Mode: 0
           m_Arguments:
@@ -5074,8 +5005,8 @@ MonoBehaviour:
     callback:
       m_PersistentCalls:
         m_Calls:
-        - m_Target: {fileID: 314923498}
-          m_TargetAssemblyTypeName: ButtonHoldTrigger, Assembly-CSharp
+        - m_Target: {fileID: 314923500}
+          m_TargetAssemblyTypeName: MultiModeButtonHoldTrigger, Assembly-CSharp
           m_MethodName: HandlePointerExit
           m_Mode: 0
           m_Arguments:
@@ -5086,6 +5017,132 @@ MonoBehaviour:
             m_StringArgument: 
             m_BoolArgument: 0
           m_CallState: 2
+--- !u!114 &314923500
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 314923492}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e9291cfb88ebd8a41a641e71e03440b2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MultiModeButtonHoldTrigger
+  buttonID: Main
+  modes:
+  - modeID: Start
+    textTableKey: Button.StartSlang
+    holdDuration: 0.01
+    onPressed:
+      m_PersistentCalls:
+        m_Calls: []
+    onHoldCompleted:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 200591385}
+          m_TargetAssemblyTypeName: SceneTimerController, Assembly-CSharp
+          m_MethodName: StartTimer
+          m_Mode: 5
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: AwakeLoop
+            m_BoolArgument: 0
+          m_CallState: 2
+        - m_Target: {fileID: 17884040}
+          m_TargetAssemblyTypeName: SpriteActor, Assembly-CSharp
+          m_MethodName: ChangeSprite
+          m_Mode: 5
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: restart
+            m_BoolArgument: 0
+          m_CallState: 2
+        - m_Target: {fileID: 314923492}
+          m_TargetAssemblyTypeName: SpriteActor, Assembly-CSharp
+          m_MethodName: 
+          m_Mode: 5
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: restart
+            m_BoolArgument: 0
+          m_CallState: 2
+        - m_Target: {fileID: 314923500}
+          m_TargetAssemblyTypeName: MultiModeButtonHoldTrigger, Assembly-CSharp
+          m_MethodName: SetModeByID
+          m_Mode: 5
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: Stop
+            m_BoolArgument: 0
+          m_CallState: 2
+    showCompletionFeedback: 1
+    completionTextKey: 
+  - modeID: Stop
+    textTableKey: Button.Stop
+    holdDuration: 2
+    onPressed:
+      m_PersistentCalls:
+        m_Calls: []
+    onHoldCompleted:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 200591385}
+          m_TargetAssemblyTypeName: SceneTimerController, Assembly-CSharp
+          m_MethodName: PauseTimer
+          m_Mode: 1
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: 
+            m_BoolArgument: 0
+          m_CallState: 2
+        - m_Target: {fileID: 17884040}
+          m_TargetAssemblyTypeName: SpriteActor, Assembly-CSharp
+          m_MethodName: ChangeSprite
+          m_Mode: 5
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: pause
+            m_BoolArgument: 0
+          m_CallState: 2
+        - m_Target: {fileID: 314923500}
+          m_TargetAssemblyTypeName: MultiModeButtonHoldTrigger, Assembly-CSharp
+          m_MethodName: SetModeByID
+          m_Mode: 5
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: Start
+            m_BoolArgument: 0
+          m_CallState: 2
+    showCompletionFeedback: 1
+    completionTextKey: 
+  useUnscaledTime: 1
+  progressImage: {fileID: 351829789}
+  labelText: {fileID: 1564783943}
+  completionText: {fileID: 1059399223}
+  defaultCompletionTextKey: Result.Success
+  successSoundKey: action_success
 --- !u!1 &318272672
 GameObject:
   m_ObjectHideFlags: 0
@@ -12689,7 +12746,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &765940962
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -19515,12 +19572,12 @@ GameObject:
   - component: {fileID: 1059399224}
   - component: {fileID: 1059399223}
   m_Layer: 5
-  m_Name: ShootTimesText
+  m_Name: SuccessText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &1059399222
 RectTransform:
   m_ObjectHideFlags: 0
@@ -19537,7 +19594,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 87.8, y: 8.22}
+  m_AnchoredPosition: {x: 126.65, y: 18}
   m_SizeDelta: {x: 129.52, y: 100.45}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1059399223
@@ -19560,7 +19617,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: (3/3)
+  m_text: "\u6210\u529F\uFF01"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: f86d8b1a89647a54eb7049575e8b9553, type: 2}
   m_sharedMaterial: {fileID: -4147588894626420378, guid: f86d8b1a89647a54eb7049575e8b9553, type: 2}
@@ -19569,8 +19626,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4278190080
-  m_fontColor: {r: 0, g: 0, b: 0, a: 1}
+    rgba: 4294917376
+  m_fontColor: {r: 0, g: 0.23980546, b: 1, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -30155,10 +30212,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 314923493}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -23.7, y: 8.22}
-  m_SizeDelta: {x: 129.52, y: 100.45}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1564783943
 MonoBehaviour:
@@ -48004,7 +48061,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1600549112276149535, guid: 23fc35d19fc7c434fa1b88278bdeb183, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3209314387050798034, guid: 23fc35d19fc7c434fa1b88278bdeb183, type: 3}
       propertyPath: buttons.Array.data[1].visibilityFlag
@@ -48012,55 +48069,55 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3827285092766346812, guid: 23fc35d19fc7c434fa1b88278bdeb183, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4124567323629293654, guid: 23fc35d19fc7c434fa1b88278bdeb183, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4124567323629293654, guid: 23fc35d19fc7c434fa1b88278bdeb183, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4124567323629293654, guid: 23fc35d19fc7c434fa1b88278bdeb183, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 0
+      value: 53.035004
       objectReference: {fileID: 0}
     - target: {fileID: 4124567323629293654, guid: 23fc35d19fc7c434fa1b88278bdeb183, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0
+      value: -62.045
       objectReference: {fileID: 0}
     - target: {fileID: 4702462928285536293, guid: 23fc35d19fc7c434fa1b88278bdeb183, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4702462928285536293, guid: 23fc35d19fc7c434fa1b88278bdeb183, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4702462928285536293, guid: 23fc35d19fc7c434fa1b88278bdeb183, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 0
+      value: 283.17502
       objectReference: {fileID: 0}
     - target: {fileID: 4702462928285536293, guid: 23fc35d19fc7c434fa1b88278bdeb183, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0
+      value: -62.045
       objectReference: {fileID: 0}
     - target: {fileID: 5804183227895488082, guid: 23fc35d19fc7c434fa1b88278bdeb183, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5804183227895488082, guid: 23fc35d19fc7c434fa1b88278bdeb183, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5804183227895488082, guid: 23fc35d19fc7c434fa1b88278bdeb183, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 0
+      value: 168.10501
       objectReference: {fileID: 0}
     - target: {fileID: 5804183227895488082, guid: 23fc35d19fc7c434fa1b88278bdeb183, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0
+      value: -62.045
       objectReference: {fileID: 0}
     - target: {fileID: 6805200649473172105, guid: 23fc35d19fc7c434fa1b88278bdeb183, type: 3}
       propertyPath: m_IsActive
@@ -53651,7 +53708,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3357405863971057727, guid: 1b05c314449679144bcc6b14358301b5, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -607
+      value: -499
       objectReference: {fileID: 0}
     - target: {fileID: 3575713894984921464, guid: 1b05c314449679144bcc6b14358301b5, type: 3}
       propertyPath: m_Alpha
@@ -54660,31 +54717,31 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 22400914, guid: 141523aa72016bf45bbdfa5634f0d5fc, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 22400914, guid: 141523aa72016bf45bbdfa5634f0d5fc, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 22400914, guid: 141523aa72016bf45bbdfa5634f0d5fc, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 0
+      value: 124.44444
       objectReference: {fileID: 0}
     - target: {fileID: 22400914, guid: 141523aa72016bf45bbdfa5634f0d5fc, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 0
+      value: 107.22222
       objectReference: {fileID: 0}
     - target: {fileID: 22400914, guid: 141523aa72016bf45bbdfa5634f0d5fc, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0
+      value: -107.22222
       objectReference: {fileID: 0}
     - target: {fileID: 22431650, guid: 141523aa72016bf45bbdfa5634f0d5fc, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 0
+      value: 124.44444
       objectReference: {fileID: 0}
     - target: {fileID: 22431650, guid: 141523aa72016bf45bbdfa5634f0d5fc, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 0
+      value: 107.22222
       objectReference: {fileID: 0}
     - target: {fileID: 22431650, guid: 141523aa72016bf45bbdfa5634f0d5fc, type: 3}
       propertyPath: m_AnchoredPosition.x
@@ -54696,27 +54753,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 22451302, guid: 141523aa72016bf45bbdfa5634f0d5fc, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 22451302, guid: 141523aa72016bf45bbdfa5634f0d5fc, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 22451302, guid: 141523aa72016bf45bbdfa5634f0d5fc, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 0
+      value: 44.444443
       objectReference: {fileID: 0}
     - target: {fileID: 22451302, guid: 141523aa72016bf45bbdfa5634f0d5fc, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 0
+      value: 17.222223
       objectReference: {fileID: 0}
     - target: {fileID: 22451302, guid: 141523aa72016bf45bbdfa5634f0d5fc, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 0
+      value: 62.22222
       objectReference: {fileID: 0}
     - target: {fileID: 22451302, guid: 141523aa72016bf45bbdfa5634f0d5fc, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0
+      value: -48.61111
       objectReference: {fileID: 0}
     - target: {fileID: 22465722, guid: 141523aa72016bf45bbdfa5634f0d5fc, type: 3}
       propertyPath: m_Pivot.x

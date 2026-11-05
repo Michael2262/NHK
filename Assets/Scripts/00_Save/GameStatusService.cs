@@ -103,6 +103,8 @@ public class GameStatusService : MonoBehaviour
     // ==========================================================
     public TimeSystemManager TimeManager { get; private set; }
     public TimePlaybackModel TimePlayback { get; private set; }
+    public BulletTimeModel BulletTime { get; private set; }
+    public BulletTimeBridge BulletTimeControls { get; internal set; }
     public SkillSystemManager SkillManager { get; private set; }
     public ShopService ShopService { get; private set; } // ShopService 的實例
     public ItemUseService ItemUseService { get; private set; }
@@ -175,6 +177,8 @@ public class GameStatusService : MonoBehaviour
             Debug.LogWarning($"[GameStatusService] Quest 設定無效：{Quests.ConfigurationError}");
         TimePlayback = new TimePlaybackModel(Time, timeConfig);
         OnGameStatusLoaded += TimePlayback.Cancel;
+        BulletTime = new BulletTimeModel(Time, timeConfig, TimePlayback);
+        OnGameStatusLoaded += BulletTime.Cancel;
 
         // 場景動作佇列：跨轉場暫存「時間推進 / 強制移動 / Flag 變更」，
         // 由下個場景 SceneReadyCoordinator 的 Task_ExecuteSceneActionQueue 消費

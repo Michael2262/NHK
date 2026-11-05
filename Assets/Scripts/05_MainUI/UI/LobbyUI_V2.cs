@@ -24,6 +24,7 @@ public class LobbyUI_V2 : MonoBehaviour
     [SerializeField] private TextMeshProUGUI textTimeOfDay;
     [SerializeField] private TextMeshProUGUI textDebugDayPhaseSlot;
     [SerializeField] private TimeMappingSO timeMapping;
+    public TimeMappingSO TimeMapping => timeMapping;
 
     [Header("主角數值（只顯示值；欄位可留空）")]
     [SerializeField] private TextMeshProUGUI textMoney;
@@ -92,6 +93,7 @@ public class LobbyUI_V2 : MonoBehaviour
         _protagonistModel = _service?.Protagonist;
         _timeModel = _service?.Time;
         if (_service != null) _service.OnGameStatusLoaded += BindAndRefresh;
+        if (_service?.BulletTime != null) _service.BulletTime.DisplayChanged += RefreshTime;
         if (_protagonistModel != null)
         {
             _protagonistModel.OnChanged += HandleStatusChanged;
@@ -109,6 +111,7 @@ public class LobbyUI_V2 : MonoBehaviour
     private void Unbind()
     {
         if (!ReferenceEquals(_service, null)) _service.OnGameStatusLoaded -= BindAndRefresh;
+        if (_service?.BulletTime != null) _service.BulletTime.DisplayChanged -= RefreshTime;
         if (_protagonistModel != null)
         {
             _protagonistModel.OnChanged -= HandleStatusChanged;
@@ -292,11 +295,24 @@ public class LobbyUI_V2 : MonoBehaviour
     {
         if (_timeModel == null) return;
 
-        int displayDay = _timeModel.DayIndex;
-
-        if (timeMapping != null && timeMapping.ShouldShowNextDay(_timeModel.CurrentPhaseIndex, _timeModel.CurrentSlotInPhase))
+        int displayDay;
+        string miniTime;
+        var clock = _service?.BulletTime;
+        if (clock != null && clock.IsActive)
         {
-            displayDay += 1;
+            displayDay = clock.DisplayDay;
+            int minute = clock.MinuteOfDay;
+            miniTime = $"{minute / 60:D2}:{minute % 60:D2}";
+        }
+        else
+        {
+            int phase = _timeModel.CurrentPhaseIndex;
+            int slot = _timeModel.CurrentSlotInPhase;
+            displayDay = _timeModel.DayIndex;
+            if (timeMapping != null && timeMapping.ShouldShowNextDay(phase, slot)) displayDay++;
+            miniTime = timeMapping != null
+                ? timeMapping.GetTimeDisplay(phase, slot, _timeModel.CurrentMiniInSlot)
+                : "--:--";
         }
 
         if (textDayNumber != null)
@@ -308,9 +324,6 @@ public class LobbyUI_V2 : MonoBehaviour
         if (textDebugDayPhaseSlot != null)
             textDebugDayPhaseSlot.text = $"D: {_timeModel.DayIndex} / P: {_timeModel.CurrentPhaseIndex} / S: {_timeModel.CurrentSlotInPhase} / M: {_timeModel.CurrentMiniInSlot}/{_timeModel.MinisInCurrentSlot}";
 
-        string miniTime = timeMapping != null
-            ? timeMapping.GetTimeDisplay(_timeModel.CurrentPhaseIndex, _timeModel.CurrentSlotInPhase, _timeModel.CurrentMiniInSlot)
-            : "--:--";
         SetText(textMiniName, miniTime);
         SetText(textTimeOfDay, miniTime);
     }

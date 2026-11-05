@@ -23,6 +23,7 @@ public class TimeSystemModel
     public int CurrentSlotInPhase { get; private set; } = 1; // 目前時段是當前階段的第幾格 (從 1 開始)
     public int CurrentMiniInSlot { get; private set; } // 已推進數量：0 ～ 該 Slot 的 Mini 數量 - 1。
     public int MinisInCurrentSlot => _cfg.GetMinisInSlot(CurrentPhaseIndex, CurrentSlotInPhase);
+    internal bool BulletTimeActive { get; set; }
 
     /// <summary>每實際推進 1 Mini 通知一次；跨 Slot 時先完成 Slot／Phase／Day 通知。</summary>
     public event Action<int> OnMiniAdvanced;
@@ -65,7 +66,7 @@ public class TimeSystemModel
     /// </summary>
     public bool CanAdvanceWithinDay(int slots)
     {
-        if (slots < 0) return false;
+        if (slots < 0 || BulletTimeActive) return false;
         if (slots == 0) return true;
         return slots <= GetRemainingSlotsInDay();
     }
@@ -84,7 +85,7 @@ public class TimeSystemModel
     }
 
     public bool CanAdvanceMinisWithinDay(int minis)
-        => minis >= 0 && minis <= GetRemainingMinisInDay();
+        => !BulletTimeActive && minis >= 0 && minis <= GetRemainingMinisInDay();
 
     /// <summary>計算到往後第 slots 個 Slot 起點的 Mini 數，允許跨日。</summary>
     public bool TryGetMinisForSlotAdvance(int slots, out int minis)
@@ -174,18 +175,23 @@ public class TimeSystemModel
     /// </summary>
     public void AdvanceMinis(int minis)
     {
-        if (minis <= 0) return;
+        if (minis <= 0 || BulletTimeActive) return;
         int startingDay = DayIndex;
         for (int i = 0; i < minis; i++)
         {
-            if (CurrentMiniInSlot >= MinisInCurrentSlot - 1)
-                AdvanceTime(1);
-            else
-                CurrentMiniInSlot++;
-
-            OnMiniAdvanced?.Invoke(1);
-            if (DayIndex != startingDay) break;
+            AdvanceOneMiniCore();
+            if (DayIndex != startingDay || BulletTimeActive) break;
         }
+    }
+
+    // 一般推進與 BulletTime 結算共用同一份 Mini／Slot／換日事件順序。
+    internal void AdvanceOneMiniCore()
+    {
+        if (CurrentMiniInSlot >= MinisInCurrentSlot - 1)
+            AdvanceSlotsCore(1);
+        else
+            CurrentMiniInSlot++;
+        OnMiniAdvanced?.Invoke(1);
     }
 
     // ==========================================================
@@ -198,7 +204,7 @@ public class TimeSystemModel
     /// </summary>
     public bool TryAdvanceTime(int slots)
     {
-        if (slots < 0) return false;
+        if (slots < 0 || BulletTimeActive) return false;
         if (slots == 0) return true;
 
         if (slots > GetRemainingSlotsInDay())
@@ -219,7 +225,7 @@ public class TimeSystemModel
     /// </summary>
     public bool TryAdvancePhases(int phases)
     {
-        if (phases < 0) return false;
+        if (phases < 0 || BulletTimeActive) return false;
         if (phases == 0) return true;
 
         int slots = GetSlotsForPhaseAdvance(phases);
@@ -259,6 +265,7 @@ public class TimeSystemModel
     /// </summary>
     public void SkipToNextDay()
     {
+        if (BulletTimeActive) return;
         Debug.Log("[TimeSystem] SkipToNextDay 被呼叫，準備請求隔天演出...");
 
         // 如果有訂閱者（SceneController），則發送事件並等待演出完成
@@ -281,6 +288,7 @@ public class TimeSystemModel
     /// </summary>
     private void ExecuteActualDaySkip()
     {
+        if (BulletTimeActive) return;
         CurrentMiniInSlot = 0;
         CurrentPhaseIndex = 0;       // 回到第一階段 (例如：早上)
         CurrentSlotInPhase = 1;      // 回到第一格
@@ -317,7 +325,7 @@ public class TimeSystemModel
     /// </summary>
     public void AdvanceDays(int days)
     {
-        if (days <= 0) return;
+        if (days <= 0 || BulletTimeActive) return;
         CurrentMiniInSlot = 0;
 
         // 先回到當天的第一階段第一格，再逐日 +1，讓最終停在目標日的開頭。
@@ -382,7 +390,12 @@ public class TimeSystemModel
     /// </summary>
     public void AdvanceTime(int slots)
     {
-        if (slots <= 0) return;
+        if (slots <= 0 || BulletTimeActive) return;
+        AdvanceSlotsCore(slots);
+    }
+
+    private void AdvanceSlotsCore(int slots)
+    {
         // 舊的 Slot 指令仍以 Slot 為單位，落點一律回到目標 Slot 的起點。
         CurrentMiniInSlot = 0;
         int requestedSlots = slots;

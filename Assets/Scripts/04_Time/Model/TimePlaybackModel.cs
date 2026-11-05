@@ -32,7 +32,7 @@ public sealed class TimePlaybackModel
     public bool PlayAdvanceMinis(int minis, Action<bool> onFinished = null, bool withinDay = false,
         bool stopAtNextDay = true)
     {
-        if (IsTimeFlowing || ending || minis < 0 ||
+        if (IsTimeFlowing || ending || time.BulletTimeActive || minis < 0 ||
             (withinDay && !time.CanAdvanceMinisWithinDay(minis))) return false;
         if (minis == 0)
         {

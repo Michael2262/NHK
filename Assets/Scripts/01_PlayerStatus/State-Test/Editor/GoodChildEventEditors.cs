@@ -9,6 +9,7 @@ public abstract class GoodChildEventListEditor : Editor
     private readonly Dictionary<string, FilteredUnityEventDrawer> drawers = new Dictionary<string, FilteredUnityEventDrawer>();
     protected abstract string ListName { get; }
     protected abstract string ItemName { get; }
+    protected virtual string ListTitle => $"{ItemName}清單（依序執行）";
     private bool Locked => EditorApplication.isPlayingOrWillChangePlaymode;
 
     protected virtual void OnEnable() => Undo.undoRedoPerformed += ClearDrawers;
@@ -33,7 +34,7 @@ public abstract class GoodChildEventListEditor : Editor
         {
             DrawSettings();
             var list = serializedObject.FindProperty(ListName);
-            EditorGUILayout.LabelField($"{ItemName}清單（依序執行）", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField(ListTitle, EditorStyles.boldLabel);
             for (int i = 0; i < list.arraySize; i++)
             {
                 var item = list.GetArrayElementAtIndex(i);
