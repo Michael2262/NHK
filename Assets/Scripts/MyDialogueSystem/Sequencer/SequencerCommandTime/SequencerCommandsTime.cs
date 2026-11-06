@@ -87,8 +87,8 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
         protected void OnDestroy() => continueSession?.Dispose();
     }
 
-    /// <summary>PlayAdvanceMinis([數量=1], [模式=auto])，模式接受 auto / true / wait / false，跨日後停在隔天起點。</summary>
-    public class SequencerCommandPlayAdvanceMinis : SequencerCommandTimePlaybackBase
+    /// <summary>PlayMini([數量=1], [模式=auto])，模式接受 auto / true / wait / false，跨日後停在隔天起點。</summary>
+    public class SequencerCommandPlayMini : SequencerCommandTimePlaybackBase
     {
         public void Awake() => Play(GetParameterAsInt(0, 1), mode: GetPlaybackMode(1));
     }
