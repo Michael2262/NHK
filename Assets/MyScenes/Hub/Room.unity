@@ -11339,7 +11339,6 @@ GameObject:
   - component: {fileID: 1004760057}
   - component: {fileID: 1004760056}
   - component: {fileID: 1004760055}
-  - component: {fileID: 1004760054}
   m_Layer: 0
   m_Name: Button
   m_TagString: Untagged
@@ -11367,20 +11366,6 @@ RectTransform:
   m_AnchoredPosition: {x: 80, y: -481.62006}
   m_SizeDelta: {x: 160, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &1004760054
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1004760052}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: cf4ee3b543b6ab34987a8e8ab682466c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::HeroineStatusDebugBridge
-  heroineID: sister
-  defaultEmotion: 1
 --- !u!114 &1004760055
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -11449,10 +11434,10 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1004760055}
-        m_TargetAssemblyTypeName: PlayMakerGameBridge, Assembly-CSharp
-        m_MethodName: AddPlayerDependency
-        m_Mode: 3
+      - m_Target: {fileID: 396629222}
+        m_TargetAssemblyTypeName: HeroineBridge, Assembly-CSharp
+        m_MethodName: EnableInPout
+        m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
@@ -15565,7 +15550,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "\u6027\u885D\u52D5+15"
+  m_text: IsInPout
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: f86d8b1a89647a54eb7049575e8b9553, type: 2}
   m_sharedMaterial: {fileID: -4147588894626420378, guid: f86d8b1a89647a54eb7049575e8b9553, type: 2}

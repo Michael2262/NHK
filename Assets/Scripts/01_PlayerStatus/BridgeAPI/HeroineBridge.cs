@@ -15,6 +15,7 @@ using UnityEngine;
 /// - Frustration 獨立不滿值與可調上限
 /// - Trust 信賴值 / Affinity 好感度
 /// - IsInHeat 發情開關
+/// - IsInPout Pout 狀態開關
 /// - HCount H 次數
 /// - CurrentEmotion 主導情緒
 ///
@@ -164,6 +165,14 @@ public class HeroineBridge : MonoBehaviour
     public void SetInHeat(bool value) => H?.SetInHeat(value);
     public void EnableInHeat() => SetInHeat(true);
     public void DisableInHeat() => SetInHeat(false);
+
+    // ==========================================================
+    // Pout 狀態開關
+    // ==========================================================
+
+    public void SetInPout(bool value) => H?.SetInPout(value);
+    public void EnableInPout() => SetInPout(true);
+    public void DisableInPout() => SetInPout(false);
 
     // 生理週期：日數與機率由正式 Model 管理，設定機率使用 0～1。
     public string GetCyclePhase() => H?.CurrentCyclePhase.ToString() ?? string.Empty;
