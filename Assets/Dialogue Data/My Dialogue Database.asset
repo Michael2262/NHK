@@ -43460,7 +43460,7 @@ MonoBehaviour:
 
           SetActive(Blocker,false)@0.0;
 
-          ContinueButtonLock(off);
+          ContinueButton(on);
 
 
           AddStamina(-5);
@@ -43592,17 +43592,8 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: 'TachieControl(Clear, 0.5);
-
-          SubtitlePanel(hide);
-
-
-          ContinueButtonLock(on);
-
-          SetActive(Blocker,true)@0.0;
-
-
-          Anim(Stop);  '
+        value: "TachieControl(Clear, 0.5);\nSubtitlePanel(hide);\n\nContinueButton(off);
+          \nSetActive(Blocker,true)@0.0;\n\nAnim(Stop);  "
         type: 0
         typeString: CustomFieldType_Text
       - title: zh-TW
@@ -645260,7 +645251,7 @@ MonoBehaviour:
         type: 0
         typeString: CustomFieldType_Text
       - title: Sequence
-        value: "ContinueButtonLock(on);\n\nDelay(3);\nAnim(Think);  \nTachieControl(Eye,
+        value: "ContinueButton(wait, 3); \n\nDelay(3);\nAnim(Think);  \nTachieControl(Eye,
           Sister, Close_Sad);\nTachieControl(Mouth, Sister, Close1);\nTachieControl(Brow,
           Sister, Angry1);"
         type: 0
@@ -645781,7 +645772,7 @@ MonoBehaviour:
           TachieControl(Eye,
           Sister, Close_Sad);
 
-          TachieControl(Body, Sister, Worry1);
+          TachieControl(Body, Sister, Angry1);
 
           TachieControl(Mouth,
           Sister, Small3);'

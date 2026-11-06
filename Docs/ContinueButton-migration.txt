@@ -1,0 +1,89 @@
+ContinueButton 指令與搬移清單（2026-11-06）
+
+新語法
+  ContinueButton(on);       解除一層鎖，請求顯示當句按鈕；其他鎖與 Auto 仍有效。
+  ContinueButton(off);      上鎖並隱藏按鈕。單獨使用不會阻止 Sequence 自然結束。
+  ContinueButton(reset);    清空鎖計數，不主動顯示按鈕。
+  ContinueButton(wait, 3);  隱藏按鈕，3 秒後在同一格顯示，等玩家點擊。
+  ContinueButton(auto, 3);  隱藏按鈕，3 秒後自動完成當句，下一句回到正常按鈕控制。
+
+使用細節
+  - wait / auto 的秒數從該指令開始執行時起算，使用 DialogueTime.time。
+    語法支援小數；0 表示於更新時處理完成，避免解析 Sequence 時重入。
+    缺少秒數、負數、非數字及無限值會警告並結束指令，不取得鎖。
+  - wait / auto 用於當前對話的 Sequence。wait 需要 AbstractDialogueUI。
+  - wait 計時完成後會暫停原本啟用的 Auto，留在當句等點擊；離開當句時恢復。
+    等待點擊期間若玩家重新啟用 Auto，會交還自動播放。
+  - auto 僅負責本次當句前進，不會開啟整段對話的 Auto。
+    沿用時間演出原本的完成方式，直接完成當句，會結束該句其他 Sequence 命令。
+    下一句仍遵守既有 Continue Mode、Auto 與其他有效的鎖。
+  - on / off 仍以計數配對。on 在其他鎖解除後才顯示；遇到 Auto 則交回 Auto。
+    若要保證顯示後等待點擊，請使用 wait，而非單獨依賴 on。
+  - 不需在 wait / auto 外再包 off / on，它們會管理自身的一層鎖。
+  - ContinueButton() 等同 on。true / 1 / unlock 等同 on；false / 0 / lock 等同 off。
+    clear 等同 reset。未知模式會警告並結束，不默認上鎖。
+
+共用方式
+  NhkContinueButtonSession 為純 C# 的當句控制，保存鎖及等待狀態，不計時也不改遊戲時間。
+  呼叫端建立 Session、Lock()，保持指令執行中並逐幀 Tick()。
+  條件完成時呼叫 Complete(false) 留句等點擊，或 Complete(true) 自動前進。
+  取消呼叫 Cancel()；當句結束及銷毀時轉送 OnLineEnd / Dispose。
+  PlayAdvanceShortTime() / PlayAdvanceShortTime(wait) 與其他同基底時間演出已共用此流程。
+  時間演出的 auto / true / wait / false 語法及 Delay 並行機制保留。
+
+檔案
+  Assets/Scripts/MyDialogueSystem/Bridge/NhkContinueButtonSession.cs
+    新增共用控制。
+  Assets/Scripts/MyDialogueSystem/Sequencer/SequencerCommandTime/SequencerCommandsTime.cs
+    移除重複的對話與按鈕控制，改為呼叫共用 Session。
+  Assets/Scripts/MyDialogueSystem/Sequencer/SequencerCommandUI/SequencerCommandContinueButtonLock.cs
+    現在宣告 SequencerCommandContinueButton；舊類別已移除，沒有相容別名。
+    為不修改 .meta，保留原檔名。可在 Unity Project 視窗將檔案改名為
+    SequencerCommandContinueButton.cs，讓 Unity 一併維護 .meta。
+    指令由 Sequencer 依 C# 類別名稱尋找，不依來源檔名。
+
+舊指令搬移（必須在 Dialogue Editor 內操作）
+  舊 ContinueButtonLock(on)     -> 新 ContinueButton(off)
+  舊 ContinueButtonLock(off)    -> 新 ContinueButton(on)
+  舊 ContinueButtonLock(reset)  -> 新 ContinueButton(reset)
+  務必保留原本 @2 等排程後綴及其他 Sequence 命令。
+  注意 on/off 意義反轉，不能只替換指令名稱。
+
+目前正式 My Dialogue Database.asset 共有 18 處：
+  Conversation ID  Entry ID  舊參數  新參數
+  241              1         on      off
+  241              3         off     on
+  240              1         on      off
+  240              3         off     on
+  244              1         on      off
+  244              3         off     on
+  244              7         off     on
+  244              9         off     on
+  96               41        off     on
+  96               43        on      off
+  143              9         on      off
+  143              11        off     on
+  250              1         on      off
+  250              3         off     on
+  250              20        off     on
+  250              22        off     on
+  305              122       on      off
+  305              124       off     on
+  Auto-Backup 資料庫也有相同 18 處；日後若還原備份，需一併確認語法。
+  此次未修改任何資料庫、場景、Prefab 或 .meta。
+
+驗證
+  已以模擬 Dialogue System / Unity 介面的 C# 測試執行 15 項情境，使用實際 Session、
+  ContinueButton 指令與時間指令基底的原始碼，涵蓋計時、留句、跳句、零秒、巢狀鎖、
+  Auto 恢復與後續操作、中斷清理、無效輸入、時間演出完成／取消／拒絕與 false 模式。
+  這不是 Unity 編譯或 Play Mode 測試，不驗證 UI 元件、打字機或真實事件順序。
+
+請在 Unity Editor 驗證
+  1. 編譯成功，Sequence 能找到 ContinueButton，舊名稱已改完。
+  2. ContinueButton(wait, 3)：3 秒內按鈕隱藏、點擊區與快捷鍵不能跳句，完成後同句等點擊。
+     分別在 Always / Optional 模式測試，並確認打字機與空文字節點的實際表現。
+  3. ContinueButton(auto, 3)：3 秒後只前進一次，下一句按鈕依正常設定恢復。
+  4. off / on 多層配對、wait 與其他演出鎖重疊，最後解鎖後按鈕正確顯示。
+  5. Auto 已啟用時執行 wait：完成後留句等點擊，離開當句後恢復 Auto；手動切換仍有效。
+  6. PlayAdvanceShortTime()、PlayAdvanceShortTime(wait)、false 及其他時間演出維持預期。
+  7. 計時中結束對話／切場景，不留下鎖，也不讓舊計時影響下一段對話。

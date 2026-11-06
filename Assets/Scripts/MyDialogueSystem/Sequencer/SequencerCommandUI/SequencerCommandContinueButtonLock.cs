@@ -1,38 +1,46 @@
+using System.Globalization;
 using UnityEngine;
 
 namespace PixelCrushers.DialogueSystem.SequencerCommands
 {
     /// <summary>
-    /// 語法：
-    ///   ContinueButtonLock(on)      → 壓住繼續鈕（玩家無法按繼續前進），與 off 配對。
-    ///   ContinueButtonLock(off)     → 解除一層鎖。
-    ///   ContinueButtonLock(reset)   → 強制清空鎖計數（保底用，擔心沒配對時）。
-    ///   ContinueButtonLock()        → 等同 on。
-    ///   （也接受 true/false、lock/unlock、1/0。）
+    /// ContinueButton(on)      → 解除一層鎖，在當句請求顯示按鈕（仍遵守其他鎖與 Auto）。
+    /// ContinueButton(off)     → 上鎖並隱藏按鈕，與 on 配對；本身不阻止 Sequence 自然結束。
+    /// ContinueButton(reset)   → 清除鎖計數，不主動顯示按鈕。
+    /// ContinueButton(wait, 3) → 隱藏按鈕，3 秒後在同句顯示並等待點擊。
+    /// ContinueButton(auto, 3) → 隱藏按鈕，3 秒後自動前進，下一句交回正常按鈕控制。
+    /// ContinueButton()        → 等同 on。wait / auto 必須提供非負、有限的秒數。
     ///
-    /// 用途：任何「不希望玩家中途按繼續跳過」的演出期間（跑條、動畫過場、等待某事件…），
-    /// 在演出開始的節點 ContinueButtonLock(on)、演出結束（或下一個安全點）ContinueButtonLock(off)。
-    ///
-    /// 實作：直接調用 <see cref="NhkUISubtitlePanel.PushContinueButtonLock"/> /
-    /// <see cref="NhkUISubtitlePanel.PopContinueButtonLock"/>，會攔截所有顯示繼續鈕的路徑，
-    /// 不依賴「當前節點有沒有對白文字」，因此連空對白的演出句也擋得住。
-    ///
-    /// 注意：用計數配對，on / off 必須成對，否則會漏鎖或永久鎖。跨對話若擔心外洩，可在安全處
-    /// ContinueButtonLock(reset)。ActionOverlay 的 blocking 模式已自帶配對，不需再手動包這個命令。
+    /// 舊 ContinueButtonLock 指令已移除，沒有相容別名。暫留原檔名以保留既有 .meta；
+    /// Sequencer 依類別名稱尋找指令，與時間指令集中於同一檔案的做法相同。
     /// </summary>
-    public class SequencerCommandContinueButtonLock : SequencerCommand
+    public class SequencerCommandContinueButton : SequencerCommand
     {
+        private NhkContinueButtonSession session;
+        private double finishTime;
+        private bool timing;
+        private bool autoAdvance;
+
         public void Awake()
         {
             string arg = GetParameter(0, "on").Trim().ToLowerInvariant();
 
             switch (arg)
             {
+                case "on":
+                case "true":
+                case "unlock":
+                case "1":
+                    NhkUISubtitlePanel.PopContinueButtonLock();
+                    session = new NhkContinueButtonSession(sequencer, Stop);
+                    session.RequestShow();
+                    return;
+
                 case "off":
                 case "false":
-                case "unlock":
+                case "lock":
                 case "0":
-                    NhkUISubtitlePanel.PopContinueButtonLock();
+                    NhkUISubtitlePanel.PushContinueButtonLock();
                     break;
 
                 case "reset":
@@ -40,12 +48,56 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
                     NhkUISubtitlePanel.ResetContinueButtonLock();
                     break;
 
-                default: // on / true / lock / 1 / 其他 → 視為上鎖
-                    NhkUISubtitlePanel.PushContinueButtonLock();
+                case "wait":
+                case "auto":
+                    BeginTimedWait(arg == "auto");
+                    return;
+
+                default:
+                    Debug.LogWarning($"[ContinueButton] 未知模式「{arg}」，請使用 on、off、reset、wait 或 auto。", this);
                     break;
             }
 
             Stop();
         }
+
+        private void BeginTimedWait(bool advance)
+        {
+            string value = GetParameter(1, "");
+            if (!float.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out float seconds) ||
+                float.IsNaN(seconds) || float.IsInfinity(seconds) || seconds < 0f)
+            {
+                Debug.LogWarning("[ContinueButton] wait / auto 需要有效的非負秒數，例如 ContinueButton(wait, 3)。", this);
+                Stop();
+                return;
+            }
+
+            session = new NhkContinueButtonSession(sequencer, Stop);
+            if (!session.IsCurrentLine || (!advance && !session.CanShowButton))
+            {
+                Debug.LogWarning("[ContinueButton] wait / auto 必須用於目前對話的 Sequence；wait 另需支援繼續按鈕的對話 UI。", this);
+                session.Cancel();
+                return;
+            }
+
+            autoAdvance = advance;
+            finishTime = (double)DialogueTime.time + seconds;
+            timing = true;
+            session.Lock();
+        }
+
+        public void Update()
+        {
+            if (!isPlaying) return;
+            // 先檢查當句是否仍有效，避免舊計時影響下一句。
+            session?.Tick();
+            if (!isPlaying || !timing || DialogueTime.time < finishTime) return;
+            timing = false;
+            session.Complete(autoAdvance);
+        }
+
+        public void OnConversationLineEnd(Subtitle subtitle) => session?.OnLineEnd(subtitle);
+
+        public void OnDestroy() => session?.Dispose();
     }
 }
