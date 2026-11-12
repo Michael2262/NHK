@@ -139,6 +139,11 @@ namespace PixelCrushers.DialogueSystem
             base.OnDisable();
         }
 
+        protected virtual void OnDestroy()
+        {
+            ForgetHiddenPanel(this);
+        }
+
         private void PrepareSlowTypewriter(Subtitle subtitle)
         {
             RestoreTypewriterSpeed();
@@ -245,10 +250,8 @@ namespace PixelCrushers.DialogueSystem
 
         public override void Open()
         {
-            // 只要有字幕板被對話系統自然開啟，就代表畫面已經進入新狀態；
-            // 先前 SubtitlePanel(hide) 記住的面板快照不再可用，避免未來 show 又叫回舊面板。
-            // SubtitlePanel(show) 會在呼叫 Open 前先取出快照並清空清單，所以正常還原不受影響。
-            s_commandHiddenPanels.Clear();
+            // 下一句自然開啟時只清掉自己的記錄，不影響其他仍隱藏的角色／共用框。
+            ForgetHiddenPanel(this);
 
             base.Open();
             ApplyNameVisibility();
@@ -391,49 +394,142 @@ namespace PixelCrushers.DialogueSystem
             base.ShowContinueButtonNow();
         }
 
-        // ===================== 整個字幕面板 隱藏 / 還原（給 Sequencer 命令用）=====================
-        //
-        // 用途：演出期間想把「整個對話框」暫時收起來（例如秀立繪 / 過場），演完再叫回來。
-        //   Hide → 對當下開著的所有 NhkUISubtitlePanel 呼叫 Close()（會播 Hide 動畫），並記住它們。
-        //   Show → 對剛剛記住的面板呼叫 Open()（會播 Show 動畫）還原。
-        //   Reset → 只清掉記錄、不還原（保底用）。
-        //
-        // 注意：走面板原生的 Open()/Close()，動畫、敘述框收合、繼續鈕鎖等都照常。
-        //   面板若勾了 Clear Text On Close，Hide 後文字會被清掉，Show 回來是空框（下一句才會填字）。
-        private static readonly List<NhkUISubtitlePanel> s_commandHiddenPanels = new List<NhkUISubtitlePanel>();
-
-        /// <summary>隱藏當下開著的所有字幕面板（播 Hide 動畫），並記住以便 <see cref="ShowHiddenPanels"/> 還原。</summary>
-        public static void HideOpenPanels()
+        // ===================== 字幕面板 隱藏 / 還原（給 Sequencer 命令用）=====================
+        // 以實際面板記錄隱藏當下的分類與角色名稱，show 不會重新挑選另一個面板。
+        // 不鎖住後續台詞；自然 Open 時只清除該面板的記錄。
+        // Clear Text On Close 與敘述框清除仍走原生 Close，不重播舊台詞或打字效果。
+        private sealed class HiddenPanelRecord
         {
-            var panels = FindObjectsByType<NhkUISubtitlePanel>(FindObjectsSortMode.None);
-            for (int i = 0; i < panels.Length; i++)
+            public NhkUISubtitlePanel panel;
+            public bool shared;
+            public HashSet<string> actorNames;
+
+            public bool Matches(string target)
             {
-                var p = panels[i];
-                if (p == null || !p.isOpen) continue;
-                if (!s_commandHiddenPanels.Contains(p)) s_commandHiddenPanels.Add(p);
-                p.Close(); // 播 Hide 動畫
+                if (string.IsNullOrEmpty(target)) return true;
+                if (string.Equals(target, "shared", System.StringComparison.OrdinalIgnoreCase)) return shared;
+                if (string.Equals(target, "actor", System.StringComparison.OrdinalIgnoreCase)) return actorNames != null;
+                return actorNames != null && actorNames.Contains(target);
             }
         }
 
-        /// <summary>還原先前被 <see cref="HideOpenPanels"/> 隱藏的面板（播 Show 動畫），並清空記錄。</summary>
-        public static void ShowHiddenPanels()
-        {
-            // 先取出快照並清空原清單，再逐一 Open。
-            // 如此 Open() 內的「自然開啟會清過期記錄」不會干擾這次明確的 show 還原。
-            var panelsToShow = s_commandHiddenPanels.ToArray();
-            s_commandHiddenPanels.Clear();
+        private static readonly List<HiddenPanelRecord> s_commandHiddenPanels = new List<HiddenPanelRecord>();
 
-            for (int i = 0; i < panelsToShow.Length; i++)
+        private static void ForgetHiddenPanel(NhkUISubtitlePanel panel)
+        {
+            s_commandHiddenPanels.RemoveAll(record => record.panel == null || record.panel == panel);
+        }
+
+        private static Dictionary<StandardUISubtitlePanel, HashSet<string>> CollectActorPanels()
+        {
+            var panels = new Dictionary<StandardUISubtitlePanel, HashSet<string>>();
+            // Actor 或面板隱藏後可能 inactive；Prefab 資產本體則絕不能當場景實例操作。
+            var actors = FindObjectsByType<DialogueActor>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            foreach (var actor in actors)
             {
-                var p = panelsToShow[i];
-                if (p != null) p.Open(); // 播 Show 動畫
+                var panel = actor.standardDialogueUISettings.customSubtitlePanel;
+                if (panel == null || !panel.gameObject.scene.IsValid()) continue;
+                if (!panels.TryGetValue(panel, out var names))
+                {
+                    names = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase);
+                    panels.Add(panel, names);
+                }
+                names.Add((actor.actor ?? string.Empty).Trim());
+            }
+            return panels;
+        }
+
+        /// <summary>隱藏目標中開著的 NHK 面板。空目標 = 全部；shared / actor / 角色名 = 個別範圍。</summary>
+        public static void HideOpenPanels(string target = "")
+        {
+            target = (target ?? string.Empty).Trim();
+            var actorPanels = CollectActorPanels();
+            var ui = DialogueManager.dialogueUI as StandardDialogueUI;
+            var sharedPanels = NhkDialogueUI.GetSharedSubtitlePanels(ui, actorPanels.Keys);
+            var panels = new HashSet<StandardUISubtitlePanel>();
+
+            if (string.IsNullOrEmpty(target))
+            {
+                foreach (var panel in FindObjectsByType<NhkUISubtitlePanel>(FindObjectsSortMode.None)) panels.Add(panel);
+            }
+            else if (string.Equals(target, "shared", System.StringComparison.OrdinalIgnoreCase))
+            {
+                if (ui == null || sharedPanels.Count == 0)
+                {
+                    Debug.LogWarning("[SubtitlePanel] 目前 Dialogue UI 沒有可辨識的主／共用字幕面板。");
+                    return;
+                }
+                panels.UnionWith(sharedPanels);
+            }
+            else if (string.Equals(target, "actor", System.StringComparison.OrdinalIgnoreCase))
+            {
+                panels.UnionWith(actorPanels.Keys);
+            }
+            else
+            {
+                foreach (var pair in actorPanels)
+                {
+                    if (pair.Value.Contains(target)) panels.Add(pair.Key);
+                }
+                if (panels.Count != 1)
+                {
+                    Debug.LogWarning($"[SubtitlePanel] 角色「{target}」對應到 {panels.Count} 個場景自訂字幕面板，需要唯一面板才能操作。");
+                    return;
+                }
+            }
+
+            ForgetHiddenPanel(null);
+            foreach (var candidate in panels)
+            {
+                if (candidate == null || !candidate.gameObject.activeInHierarchy || !candidate.isOpen) continue;
+                if (!(candidate is NhkUISubtitlePanel panel))
+                {
+                    Debug.LogWarning($"[SubtitlePanel] 面板「{candidate.name}」需要使用 NhkUISubtitlePanel 才能記錄與還原。", candidate);
+                    continue;
+                }
+                if (s_commandHiddenPanels.Exists(record => record.panel == panel)) continue;
+                actorPanels.TryGetValue(panel, out var names);
+                s_commandHiddenPanels.Add(new HiddenPanelRecord
+                {
+                    panel = panel,
+                    shared = sharedPanels.Contains(panel),
+                    actorNames = names
+                });
+                panel.StopShowSubtitleCoroutines();
+                panel.Close();
             }
         }
 
-        /// <summary>只清空「被命令隱藏」的記錄，不還原（保底用，擔心 Hide/Show 沒配對時）。</summary>
-        public static void ResetHiddenPanels()
+        /// <summary>只還原目標中仍有記錄的面板；沒有記錄就不強制開空框。</summary>
+        public static void ShowHiddenPanels(string target = "")
         {
-            s_commandHiddenPanels.Clear();
+            target = (target ?? string.Empty).Trim();
+            ForgetHiddenPanel(null);
+            var records = s_commandHiddenPanels.ToArray();
+            foreach (var record in records)
+            {
+                if (!record.Matches(target) || !s_commandHiddenPanels.Remove(record)) continue;
+                var panel = record.panel;
+                if (panel == null) continue;
+                // 原生 OnHidden 也會停用字幕子物件，不能只 Open 外層而留下不可見的內容。
+                panel.ActivateUIElements();
+                panel.Open();
+                // 只有當句使用的面板才重刷繼續鈕，依目前模式與鎖判定，不還原過期的按鈕狀態。
+                var subtitle = DialogueManager.currentConversationState?.subtitle;
+                var ui = DialogueManager.dialogueUI as StandardDialogueUI;
+                if (subtitle != null && ui != null &&
+                    ui.conversationUIElements.standardSubtitleControls.GetPanel(subtitle, out _) == panel)
+                {
+                    DialogueManager.conversationView?.SetupContinueButton();
+                }
+            }
+        }
+
+        /// <summary>只清掉指定範圍的隱藏記錄，不還原。對話生命週期以空目標清除全部。</summary>
+        public static void ResetHiddenPanels(string target = "")
+        {
+            target = (target ?? string.Empty).Trim();
+            s_commandHiddenPanels.RemoveAll(record => record.panel == null || record.Matches(target));
         }
     }
 }

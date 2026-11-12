@@ -12,7 +12,7 @@ using UnityEngine;
 /// - Interest 性興味 / Libido 性欲值
 /// - Excitement 獨立興奮度（無性欲加成）
 /// - Orgasm 獨立高潮度
-/// - Frustration 獨立不滿值與可調上限
+/// - Frustration 不滿值（0～100，支援小數）
 /// - Trust 信賴值 / Affinity 好感度
 /// - IsInHeat 發情開關
 /// - IsInPout Pout 狀態開關
@@ -111,14 +111,21 @@ public class HeroineBridge : MonoBehaviour
     public void SetLibidoMax() => SetLibido(HeroineStatusModel.LibidoMax);
 
     // 獨立興奮度：範圍由 Model 處理。
-    public int GetExcitement() => H?.GetExcitement() ?? 0;
-    public void SetExcitement(int value) => H?.SetExcitement(value);
-    public void AddExcitement(int amount) => H?.AddExcitement(amount);
+    public float GetExcitementFloat() => H?.GetExcitement() ?? 0f;
+    public void SetExcitement(float value) => H?.SetExcitement(value);
+    public void AddExcitement(float amount) => H?.AddExcitement(amount);
     /// <summary>依輸入的絕對值減少興奮度，不套用性欲倍率。</summary>
-    public void ReduceExcitement(int amount) => H?.AddExcitement(ToReductionDelta(amount));
+    public void ReduceExcitement(float amount) => AddExcitement(-Mathf.Abs(amount));
     public void SetExcitementZero() => SetExcitement(0);
     /// <summary>舊綁定相容入口，已移除性欲加成，等同 AddExcitement。</summary>
-    public void WeightedAddExcitement(int amount) => H?.AddExcitement(amount);
+    public void WeightedAddExcitement(float amount) => AddExcitement(amount);
+
+    // 保留整數綁定。舊的整數讀取只回傳整數部分。
+    public int GetExcitement() => (int)GetExcitementFloat();
+    public void SetExcitement(int value) => SetExcitement((float)value);
+    public void AddExcitement(int amount) => AddExcitement((float)amount);
+    public void ReduceExcitement(int amount) => ReduceExcitement((float)amount);
+    public void WeightedAddExcitement(int amount) => AddExcitement((float)amount);
 
     // 獨立高潮度
     public int GetOrgasm() => H?.GetOrgasm() ?? 0;
@@ -129,14 +136,19 @@ public class HeroineBridge : MonoBehaviour
     public void SetOrgasmZero() => SetOrgasm(0);
 
     // 獨立不滿值：門檻與數值限制由 Model 處理。
-    public int GetFrustration() => H?.GetFrustration() ?? 0;
-    public int GetFrustrationMax() => H?.FrustrationMax ?? HeroineStatusModel.DefaultFrustrationMax;
-    public void SetFrustration(int value) => H?.SetFrustration(value);
-    public void AddFrustration(int amount) => H?.AddFrustration(amount);
+    public float GetFrustration() => H?.GetFrustration() ?? 0f;
+    public bool GetNotFollowMood() => H?.NotFollowMood ?? false;
+    public void SetNotFollowMood(bool value) => H?.SetNotFollowMood(value);
+    public float GetFrustrationMax() => HeroineStatusModel.FrustrationMax;
+    public void SetFrustration(float value) => H?.SetFrustration(value);
+    public void AddFrustration(float amount) => H?.AddFrustration(amount);
     /// <summary>依輸入的絕對值減少不滿值。</summary>
-    public void ReduceFrustration(int amount) => H?.AddFrustration(ToReductionDelta(amount));
-    public void SetFrustrationZero() => SetFrustration(0);
-    public void SetFrustrationMax(int value) => H?.SetFrustrationMax(value);
+    public void ReduceFrustration(float amount) => AddFrustration(-Mathf.Abs(amount));
+    public void SetFrustrationZero() => SetFrustration(0f);
+    // 保留 UnityEvent 已序列化的整數簽章。
+    public void SetFrustration(int value) => SetFrustration((float)value);
+    public void AddFrustration(int amount) => AddFrustration((float)amount);
+    public void ReduceFrustration(int amount) => ReduceFrustration((float)amount);
 
     // ==========================================================
     // 信賴 / 好感度：範圍限制由 Model 處理。

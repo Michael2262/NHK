@@ -78,6 +78,7 @@ namespace PixelCrushers.DialogueSystem
 
         public override void Open()
         {
+            NhkUISubtitlePanel.ResetHiddenPanels();
             // 新對話進入 Open 就代表上一次交接已成功。
             // 放在 StartConversation 的 UI.Open 階段清除，可正確處理「啟動後立即結束」的極短對話：
             // 若它後面還有一段 Queue，隨後的 Close 會再正確留下新的抑止記號。
@@ -87,6 +88,8 @@ namespace PixelCrushers.DialogueSystem
 
         public override void Close()
         {
+            // 即使 Queue 交接保留畫面，也不能把上一段的還原記錄帶進下一段。
+            NhkUISubtitlePanel.ResetHiddenPanels();
             // 在 Queue 的下一段啟動前清除兩種等待模式，即使這次 Close 被無縫交接吞掉。
             NhkAutoDialogueBridge.Find()?.DisableWaitModes();
             if (_suppressNextCloseForQueuedHandoff)
@@ -110,8 +113,30 @@ namespace PixelCrushers.DialogueSystem
 
         public override void CloseImmediately()
         {
+            NhkUISubtitlePanel.ResetHiddenPanels();
             NhkAutoDialogueBridge.Find()?.DisableWaitModes();
             base.CloseImmediately();
+        }
+
+        /// <summary>
+        /// 依 UI 設定取得主／共用字幕面板，不依目前說話者或節點是否有台詞。
+        /// 排除 Dialogue Actor 指定的自訂框；同一面板出現在多個欄位時只保留一次。
+        /// </summary>
+        internal static HashSet<StandardUISubtitlePanel> GetSharedSubtitlePanels(
+            StandardDialogueUI ui, ICollection<StandardUISubtitlePanel> actorPanels)
+        {
+            var panels = new HashSet<StandardUISubtitlePanel>();
+            if (ui == null || ui.conversationUIElements == null) return panels;
+
+            var elements = ui.conversationUIElements;
+            panels.Add(elements.defaultNPCSubtitlePanel);
+            panels.Add(elements.defaultPCSubtitlePanel);
+            if (elements.subtitlePanels != null)
+            {
+                foreach (var panel in elements.subtitlePanels) panels.Add(panel);
+            }
+            panels.RemoveWhere(panel => panel == null || !panel.gameObject.scene.IsValid() || actorPanels.Contains(panel));
+            return panels;
         }
 
         /// <summary>

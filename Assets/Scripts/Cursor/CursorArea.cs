@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 // 實作 EventSystem 的 Pointer 介面。
 // 這兩個介面 UI 與世界物件通用：
@@ -33,7 +34,10 @@ public class CursorArea : MonoBehaviour, IPointerEnterHandler, IPointerExitHandl
     public GameObject hoverTarget;
 
     // 目前正在「管」游標的 CursorArea（全域唯一）。用來在冒泡/交棒時判斷誰該生效。
+    // 按鈕失效時仍保留區域歸屬，讓停留期間恢復可互動時能重新套用效果。
     private static CursorArea _activeArea;
+    private Button _button;
+    private bool _cursorApplied;
 
     // 掛到 hoverTarget 上的 EventTrigger 與我們加入的兩個項目（用於離開時移除）
     private EventTrigger _boundTrigger;
@@ -42,12 +46,28 @@ public class CursorArea : MonoBehaviour, IPointerEnterHandler, IPointerExitHandl
 
     private void OnEnable()
     {
+        // 只檢查同一物件上的 Button；沒有 Button 的一般區域維持原本行為。
+        _button = GetComponent<Button>();
+        _cursorApplied = false;
         BindHoverTarget();
+    }
+
+    private void Update()
+    {
+        // 滑鼠停留時也同步 Button 與父層 CanvasGroup 的可互動狀態。
+        if (_activeArea == this && _cursorApplied != CanReact())
+            Activate();
+    }
+
+    private bool CanReact()
+    {
+        return _button == null || (_button.IsActive() && _button.IsInteractable());
     }
 
     private void OnDisable()
     {
         UnbindHoverTarget();
+        _cursorApplied = false;
 
         // 若「還被 hover 著」就被關掉（例如按鈕按下立刻觸發對話並關閉自己），
         // Unity 不會發 OnPointerExit，這裡補做一次收回，避免游標卡在此區域圖案。
@@ -98,8 +118,18 @@ public class CursorArea : MonoBehaviour, IPointerEnterHandler, IPointerExitHandl
 
     private void Activate()
     {
+        if (!isActiveAndEnabled) return;
         if (GlobalCursorManager.Instance == null) return;
         _activeArea = this;
+        _cursorApplied = CanReact();
+
+        if (!_cursorApplied)
+        {
+            // 不可互動時收回區域效果，避免顯示可操作的游標提示。
+            GlobalCursorManager.Instance.ResetToDefaultCursor();
+            GlobalCursorManager.Instance.ClearHoverScale(hoverDuration);
+            return;
+        }
 
         // 只換圖案；hotspot 沿用預設游標的設定
         GlobalCursorManager.Instance.SetCursorArea(normalTexture, clickTexture);
@@ -113,8 +143,10 @@ public class CursorArea : MonoBehaviour, IPointerEnterHandler, IPointerExitHandl
 
     private void Deactivate()
     {
+        if (_activeArea != this) return;
+        _activeArea = null;
+        _cursorApplied = false;
         if (GlobalCursorManager.Instance == null) return;
-        if (_activeArea == this) _activeArea = null;
 
         // 恢復為「預設」圖案並縮回原大小
         GlobalCursorManager.Instance.ResetToDefaultCursor();

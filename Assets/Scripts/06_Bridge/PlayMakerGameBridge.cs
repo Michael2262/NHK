@@ -74,13 +74,22 @@ public class PlayMakerGameBridge : MonoBehaviour
     { Debug.LogWarning("[PlayMakerGameBridge] 此女主角舊功能已退役，請重新設定 FSM。"); return 0; }
 
     public int GetHeroineExcitement(string heroineId)
-    { return GetHeroine(heroineId)?.GetExcitement() ?? 0; }
+    { return (int)GetHeroineExcitementFloat(heroineId); }
+
+    public float GetHeroineExcitementFloat(string heroineId)
+    { return GetHeroine(heroineId)?.GetExcitement() ?? 0f; }
 
     public int GetHeroineExcitementLv(string heroineId)
     { Debug.LogWarning("[PlayMakerGameBridge] 此女主角舊功能已退役，請重新設定 FSM。"); return 0; }
 
     public void AddHeroineExcitement(string heroineId, int amount)
+    { AddHeroineExcitementFloat(heroineId, amount); }
+
+    public void AddHeroineExcitementFloat(string heroineId, float amount)
     { GetHeroine(heroineId)?.AddExcitement(amount); }
+
+    public void SetHeroineExcitementFloat(string heroineId, float value)
+    { GetHeroine(heroineId)?.SetExcitement(value); }
 
     public void SetHeroineExcitement(string heroineId, int level, int exp)
     { Debug.LogWarning("[PlayMakerGameBridge] 此女主角舊功能已退役，請重新設定 FSM。"); }

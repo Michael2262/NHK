@@ -1,5 +1,8 @@
 using System;
 
+/// <summary>依 Mood 判定的心情階段，名稱供 Lua 對話條件使用。</summary>
+public enum HeroineMoodState { Livid, Unhappy, Normal, Happy, Love }
+
 /// <summary>正式女主角數值；每個實例代表一位角色，由 GameStatusService.Heroines 持有。</summary>
 public class HeroineStatusModel
 {
@@ -45,6 +48,10 @@ public class HeroineStatusModel
     public const int MoodMin = 0;
     public const int MoodMax = 10;
     public const int InitialMood = 5;
+    public const int MoodUnhappyMin = 2;
+    public const int MoodNormalMin = 4;
+    public const int MoodHappyMin = 7;
+    public const int MoodLoveMin = 9;
 
     // ───── 性興味（獨立數值，不做每日衰減）─────
     public const int InterestMin = 0;
@@ -58,21 +65,20 @@ public class HeroineStatusModel
     public const int LibidoDailyDecay = 2; // 當日不曾實際增加才衰減
 
     // ───── 興奮 ─────
-    public const int ExcitementMin = 0;
-    public const int ExcitementMax = 100;
-    public const int InitialExcitement = 0;
-    public const int ExcitementInHeatDailyRetentionMax = 50; // 發情中跨日最多保留值
+    public const float ExcitementMin = 0f;
+    public const float ExcitementMax = 100f;
+    public const float InitialExcitement = 0f;
+    public const float ExcitementInHeatDailyRetentionMax = 50f; // 發情中跨日最多保留值
 
     // ───── 高潮 ─────
     public const int OrgasmMin = 0;
     public const int OrgasmLimit = 100;
     public const int InitialOrgasm = 0;
 
-    // ───── 不滿（獨立整數值；換日歸零，上限可於遊戲中調整）─────
-    public const int FrustrationMin = 0;
-    public const int InitialFrustration = 0;
-    public const int DefaultFrustrationMax = 5;
-    private const int FrustrationNearFullOffset = 2;
+    // ───── 不滿（可手動增減；進入新的心情階段時套用基準值）─────
+    public const float FrustrationMin = 0f;
+    public const float FrustrationMax = 100f;
+    public const float FrustrationNearFullThreshold = FrustrationMax - 2f;
 
     // ───── 次數與狀態 ─────
     public const int InitialHCount = 0;
@@ -131,22 +137,21 @@ public class HeroineStatusModel
     public int Affinity { get; private set; } = InitialAffinity;
     public event Action<int> OnAffinityChanged;
     public int Mood { get; private set; } = InitialMood;
+    public HeroineMoodState CurrentMoodState => ResolveMoodState(Mood);
+    public event Action<HeroineMoodState> OnCurrentMoodStateChanged;
     public event Action<int> OnMoodChanged;
     public int Interest { get; private set; } = InitialInterest;
     public event Action<int> OnInterestChanged;
     public int Libido { get; private set; } = InitialLibido;
     public event Action<int> OnLibidoChanged;
-    public int Excitement { get; private set; } = InitialExcitement;
-    public event Action<int> OnExcitementValueChanged;
+    public float Excitement { get; private set; } = InitialExcitement;
+    public event Action<float> OnExcitementValueChanged;
     public int Orgasm { get; private set; } = InitialOrgasm;
     public event Action<int> OnOrgasmChanged;
 
-    public int Frustration { get; private set; } = InitialFrustration;
-    public int FrustrationMax { get; private set; } = DefaultFrustrationMax;
-    /// <summary>快要不滿的門檻固定為上限減 2，最低為 0；不另存檔。</summary>
-    public int FrustrationNearFullThreshold => Math.Max(FrustrationMin, FrustrationMax - FrustrationNearFullOffset);
-    public event Action<int> OnFrustrationChanged;
-    public event Action<int> OnFrustrationMaxChanged;
+    public float Frustration { get; private set; }
+    public bool NotFollowMood { get; private set; }
+    public event Action<float> OnFrustrationChanged;
     /// <summary>由門檻下方進入快要不滿區間時通知；維持在區間內不重複觸發。</summary>
     public event Action OnFrustrationNearFull;
     /// <summary>由未滿變成滿值時通知；不自動歸零，也不改變心情或情緒。</summary>
@@ -159,6 +164,7 @@ public class HeroineStatusModel
         HeroineID = stat.ID;
         NameTextKey = stat.NameTextKey;
         Name = stat.Name;
+        Frustration = GetFrustrationBaseline(CurrentMoodState);
         initialCycleDay = stat.InitialCycleDay > 0 ? stat.InitialCycleDay : DefaultInitialCycleDay;
         InitializeCycle();
     }
@@ -229,12 +235,35 @@ public class HeroineStatusModel
     }
 
     public int GetMood() => Mood;
+    public HeroineMoodState GetCurrentMoodState() => CurrentMoodState;
+
+    private static HeroineMoodState ResolveMoodState(int mood)
+    {
+        if (mood >= MoodLoveMin) return HeroineMoodState.Love;
+        if (mood >= MoodHappyMin) return HeroineMoodState.Happy;
+        if (mood >= MoodNormalMin) return HeroineMoodState.Normal;
+        if (mood >= MoodUnhappyMin) return HeroineMoodState.Unhappy;
+        return HeroineMoodState.Livid;
+    }
+
     public void AddMood(int amount) => SetMood(Clamp((long)Mood + amount, MoodMin, MoodMax));
     public void SetMood(int value)
     {
         value = Clamp(value, MoodMin, MoodMax);
         if (Mood == value) return;
+        var previousState = CurrentMoodState;
         Mood = value;
+        var newState = CurrentMoodState;
+        if (previousState != newState)
+        {
+            if (!NotFollowMood)
+            {
+                ApplyFrustration(GetFrustrationBaseline(newState), notifyGeneralChange: false);
+                if (CurrentMoodState != newState) return;
+            }
+            OnCurrentMoodStateChanged?.Invoke(newState);
+        }
+        if (Mood != value) return;
         OnMoodChanged?.Invoke(value);
         OnChanged?.Invoke();
     }
@@ -262,11 +291,13 @@ public class HeroineStatusModel
         OnChanged?.Invoke();
     }
 
-    public int GetExcitement() => Excitement;
-    public void AddExcitement(int amount) => SetExcitement(Clamp((long)Excitement + amount, ExcitementMin, ExcitementMax));
-    public void SetExcitement(int value)
+    private static float ClampExcitement(float value) => Math.Max(ExcitementMin, Math.Min(value, ExcitementMax));
+    public float GetExcitement() => Excitement;
+    public void AddExcitement(float amount) => SetExcitement(Excitement + amount);
+    public void SetExcitement(float value)
     {
-        value = Clamp(value, ExcitementMin, ExcitementMax);
+        if (float.IsNaN(value)) return;
+        value = ClampExcitement(value);
         if (Excitement == value) return;
         Excitement = value;
         OnExcitementValueChanged?.Invoke(value);
@@ -288,33 +319,47 @@ public class HeroineStatusModel
     public void ResetOrgasm() => SetOrgasm(0);
 
     // ───── 不滿值：邊界判斷集中在 Model，Bridge 與 UI 僅轉接 ─────
-    public int GetFrustration() => Frustration;
-    public void SetFrustration(int value) => ApplyFrustration(value, FrustrationMax);
-    public void AddFrustration(int amount)
-        => SetFrustration(Clamp((long)Frustration + amount, FrustrationMin, FrustrationMax));
-    /// <summary>上限最低為 1；降低上限也可能跨過快要不滿或滿值門檻。</summary>
-    public void SetFrustrationMax(int value) => ApplyFrustration(Frustration, Math.Max(1, value));
-
-    private void ApplyFrustration(int value, int maximum)
+    private static float GetFrustrationBaseline(HeroineMoodState state)
     {
-        value = Clamp(value, FrustrationMin, maximum);
-        bool valueChanged = Frustration != value;
-        bool maxChanged = FrustrationMax != maximum;
-        if (!valueChanged && !maxChanged) return;
+        switch (state)
+        {
+            case HeroineMoodState.Love: return 0f;
+            case HeroineMoodState.Happy: return 20f;
+            case HeroineMoodState.Normal: return 40f;
+            case HeroineMoodState.Unhappy: return 60f;
+            case HeroineMoodState.Livid: return 80f;
+            default: throw new ArgumentOutOfRangeException(nameof(state));
+        }
+    }
+
+    private static float ClampFrustration(float value) => Math.Max(FrustrationMin, Math.Min(value, FrustrationMax));
+    public float GetFrustration() => Frustration;
+    public void SetFrustration(float value) => ApplyFrustration(value, notifyGeneralChange: true);
+    public void AddFrustration(float amount) => SetFrustration(Frustration + amount);
+
+    public void SetNotFollowMood(bool value)
+    {
+        if (NotFollowMood == value) return;
+        NotFollowMood = value;
+        OnChanged?.Invoke();
+    }
+
+    private void ApplyFrustration(float value, bool notifyGeneralChange)
+    {
+        if (float.IsNaN(value)) return;
+        value = ClampFrustration(value);
+        if (Frustration == value) return;
 
         bool wasNearFull = Frustration >= FrustrationNearFullThreshold;
-        bool reachedFull = Frustration < FrustrationMax && value == maximum;
+        bool reachedFull = value == FrustrationMax;
         Frustration = value;
-        FrustrationMax = maximum;
         bool reachedNearFull = !wasNearFull && value >= FrustrationNearFullThreshold;
         int revision = unchecked(++frustrationRevision);
 
         // 先同步數值；回呼若改值或讀檔，停止派送本次已過期的門檻通知。
-        if (maxChanged) OnFrustrationMaxChanged?.Invoke(maximum);
+        OnFrustrationChanged?.Invoke(value);
         if (revision != frustrationRevision) return;
-        if (valueChanged) OnFrustrationChanged?.Invoke(value);
-        if (revision != frustrationRevision) return;
-        OnChanged?.Invoke();
+        if (notifyGeneralChange) OnChanged?.Invoke();
         if (revision != frustrationRevision) return;
         // 一次跨過兩個門檻時，先通知快要不滿，再通知滿值。
         if (reachedNearFull) OnFrustrationNearFull?.Invoke();
@@ -378,8 +423,6 @@ public class HeroineStatusModel
     public void ApplyExcitementDailyReset()
         => SetExcitement(IsInHeat ? Math.Min(Excitement, ExcitementInHeatDailyRetentionMax) : 0);
     public void ApplyOrgasmDailyReset() => SetOrgasm(0);
-    /// <summary>換日一律歸零，不依情緒保留不滿值。</summary>
-    public void ApplyFrustrationDailyReset() => SetFrustration(0);
 
     // ───── 存讀檔：還原時不逐項通知，由 Service 統一刷新 ─────
     public HeroineSaveData ToSaveData() => new HeroineSaveData
@@ -389,7 +432,8 @@ public class HeroineStatusModel
         Trust = Trust, Affinity = Affinity, Mood = Mood, Interest = Interest, Libido = Libido,
         LibidoIncreasedToday = LibidoIncreasedToday,
         Excitement = Excitement, Orgasm = Orgasm, HCount = HCount,
-        Frustration = Frustration, FrustrationMax = FrustrationMax,
+        Frustration = Frustration,
+        NotFollowMood = NotFollowMood,
         IsInHeat = IsInHeat, StatisticsData = Statistics.ToSaveData(),
         IsInPout = IsInPout,
         CycleData = new HeroineCycleSaveData
@@ -414,12 +458,13 @@ public class HeroineStatusModel
         Interest = Clamp(data.Interest, InterestMin, InterestMax);
         Libido = Clamp(data.Libido, LibidoMin, LibidoMax);
         LibidoIncreasedToday = data.LibidoIncreasedToday;
-        Excitement = Clamp(data.Excitement, ExcitementMin, ExcitementMax);
+        Excitement = float.IsNaN(data.Excitement) ? InitialExcitement : ClampExcitement(data.Excitement);
         Orgasm = Clamp(data.Orgasm, OrgasmMin, OrgasmMax);
-        // 舊檔缺少欄位時使用 DTO 預設值；還原期間不補發門檻事件。
-        FrustrationMax = Math.Max(1, data.FrustrationMax);
-        Frustration = Clamp(data.Frustration, FrustrationMin, FrustrationMax);
+        // 保留手動調整（含 0）；缺值時才取已還原心情的基準。
+        Frustration = data.Frustration.HasValue && !float.IsNaN(data.Frustration.Value)
+            ? ClampFrustration(data.Frustration.Value) : GetFrustrationBaseline(CurrentMoodState);
         unchecked { frustrationRevision++; }
+        NotFollowMood = data.NotFollowMood;
         HCount = Math.Max(0, data.HCount);
         IsInHeat = data.IsInHeat;
         IsInPout = data.IsInPout;

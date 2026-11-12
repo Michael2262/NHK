@@ -67,7 +67,7 @@ public static class HeroineActionHelper
         return true;
     }
 
-    public static bool Compare(int value, int threshold, HeroineCompareOp op)
+    public static bool Compare(double value, double threshold, HeroineCompareOp op)
     {
         switch (op)
         {
@@ -1275,7 +1275,7 @@ public class CheckInPout : FsmStateAction
 
 // 獨立興奮度入口；舊版興奮等級／經驗值不使用這組 Action。
 [ActionCategory("Heroine Status")]
-[Tooltip("取得女主角的獨立興奮度（0~100）。")]
+[Tooltip("將興奮度的整數部分寫入 Int 變數。需要小數時使用 GetExcitementFloat。")]
 public class GetExcitement : FsmStateAction
 {
     [RequiredField] public FsmString heroineID;
@@ -1286,7 +1286,7 @@ public class GetExcitement : FsmStateAction
     public override void OnEnter()
     {
         if (HeroineActionHelper.TryGetHeroine(heroineID.Value, out var h, "GetExcitement"))
-            storeValue.Value = h.GetExcitement();
+            storeValue.Value = (int)h.GetExcitement();
         Finish();
     }
 }
@@ -1337,6 +1337,57 @@ public class WeightedAddExcitementAction : FsmStateAction
     public override void OnEnter()
     {
         if (HeroineActionHelper.TryGetHeroine(heroineID.Value, out var h, "WeightedAddExcitementAction"))
+            h.AddExcitement(amount.Value);
+        Finish();
+    }
+}
+
+[ActionCategory("Heroine Status")]
+[Tooltip("將女主角的興奮度寫入 Float 變數，保留小數。")]
+public class GetExcitementFloat : FsmStateAction
+{
+    [RequiredField] public FsmString heroineID;
+    [RequiredField][UIHint(UIHint.Variable)] public FsmFloat storeValue;
+
+    public override void Reset() { heroineID = null; storeValue = null; }
+
+    public override void OnEnter()
+    {
+        storeValue.Value = HeroineActionHelper.TryGetHeroine(heroineID.Value, out var h, "GetExcitementFloat")
+            ? h.GetExcitement() : 0f;
+        Finish();
+    }
+}
+
+[ActionCategory("Heroine Status")]
+[Tooltip("以浮點數設定女主角的興奮度（0～100）。")]
+public class SetExcitementFloatAction : FsmStateAction
+{
+    [RequiredField] public FsmString heroineID;
+    [RequiredField] public FsmFloat value;
+
+    public override void Reset() { heroineID = null; value = 0f; }
+
+    public override void OnEnter()
+    {
+        if (HeroineActionHelper.TryGetHeroine(heroineID.Value, out var h, "SetExcitementFloatAction"))
+            h.SetExcitement(value.Value);
+        Finish();
+    }
+}
+
+[ActionCategory("Heroine Status")]
+[Tooltip("以浮點數增減女主角的興奮度。")]
+public class AddExcitementFloatAction : FsmStateAction
+{
+    [RequiredField] public FsmString heroineID;
+    [RequiredField] public FsmFloat amount;
+
+    public override void Reset() { heroineID = null; amount = 0f; }
+
+    public override void OnEnter()
+    {
+        if (HeroineActionHelper.TryGetHeroine(heroineID.Value, out var h, "AddExcitementFloatAction"))
             h.AddExcitement(amount.Value);
         Finish();
     }
@@ -1428,8 +1479,8 @@ public class CheckExcitement : FsmStateAction
             return;
         }
 
-        int val = h.Excitement;
-        if (storeValue != null && !storeValue.IsNone) storeValue.Value = val;
+        float val = h.Excitement;
+        if (storeValue != null && !storeValue.IsNone) storeValue.Value = (int)val;
 
         var op = compareOperator != null && compareOperator.Value != null
             ? (HeroineCompareOp)compareOperator.Value

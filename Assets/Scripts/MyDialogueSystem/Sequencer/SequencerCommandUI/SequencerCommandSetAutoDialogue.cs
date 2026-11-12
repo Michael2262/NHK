@@ -23,6 +23,7 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
             {
                 if (bridge != null)
                 {
+                    bridge.DisableActorAutoDialogue();
                     bridge.DisableAutoDialogue();
                     if (bridge.IsDefaultWaitActive)
                         sequencer.PlayCommand("NhkDefaultDialogueWait", false, 0, null, null);
@@ -43,6 +44,8 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
             if (bridge == null)
                 bridge = DialogueManager.instance.gameObject.AddComponent<NhkAutoDialogueBridge>();
             bridge.enabled = true;
+            // 明確指定全域 Auto 時離開 Actor 分流；一般 ContinueButton 暫停 Auto 不經過這裡。
+            bridge.DisableActorAutoDialogue();
             bridge.EnableAutoDialogue();
 
             // 當句的 OnConversationLine 已經結束，直接在同一個 Sequencer 補等待。

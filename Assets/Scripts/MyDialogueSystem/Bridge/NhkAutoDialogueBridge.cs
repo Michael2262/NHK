@@ -3,7 +3,7 @@ using UnityEngine;
 namespace PixelCrushers.DialogueSystem
 {
     /// <summary>
-    /// 對話播放期間的轉接元件，由 SetAutoDialogue / SetDefaultWait 自動掛到 Dialogue Manager。
+    /// 對話播放期間的轉接元件，由 SetAutoDialogue / SetActorAutoDialogue / SetDefaultWait 自動掛到 Dialogue Manager。
     /// 接收逐句通知；不改寫 Dialogue Database，也不攔截其他場景互動。
     /// </summary>
     [DisallowMultipleComponent]
@@ -11,12 +11,14 @@ namespace PixelCrushers.DialogueSystem
     {
         private readonly NhkAutoDialogueSession session = new NhkAutoDialogueSession();
         private readonly NhkDefaultWaitSession defaultWaitSession = new NhkDefaultWaitSession();
+        private readonly NhkActorAutoDialogueSession actorAutoSession = new NhkActorAutoDialogueSession();
         private Subtitle injectedSubtitle;
 
         public bool IsActive => session.IsActive;
         public int Generation => session.Generation;
         public bool IsDefaultWaitActive => defaultWaitSession.IsActive;
         public int DefaultWaitGeneration => defaultWaitSession.Generation;
+        public bool IsActorAutoActive => actorAutoSession.IsActive;
 
         public static NhkAutoDialogueBridge Find()
         {
@@ -35,13 +37,87 @@ namespace PixelCrushers.DialogueSystem
 
         public void SetDefaultWait(bool value)
         {
+            // 明確切回一般等待設定時，先結束分流，避免下一句又覆蓋使用者指定的模式。
+            DisableActorAutoDialogue();
             defaultWaitSession.SetActive(value);
+        }
+
+        public void EnableActorAutoDialogue()
+        {
+            if (!IsActorAutoActive)
+            {
+                actorAutoSession.Enable(IsActive, IsDefaultWaitActive);
+                // 若原本已開全域 Auto，先釋放它，讓共用框能取回原本的手動設定。
+                session.Disable();
+                session.InvalidateCurrentWait();
+                defaultWaitSession.InvalidateCurrentWait();
+                injectedSubtitle = null;
+            }
+            ApplyActorAutoDialogue(DialogueManager.currentConversationState?.subtitle);
+            RefreshContinueButton();
+        }
+
+        public void DisableActorAutoDialogue()
+        {
+            if (!IsActorAutoActive) return;
+            session.Disable();
+            session.InvalidateCurrentWait();
+            defaultWaitSession.InvalidateCurrentWait();
+            defaultWaitSession.SetActive(actorAutoSession.OriginalDefaultWait);
+            bool restoreAuto = actorAutoSession.OriginalAuto;
+            actorAutoSession.Disable();
+            injectedSubtitle = null;
+            if (restoreAuto && DialogueManager.isConversationActive && DialogueManager.conversationView != null)
+                session.Enable(DialogueManager.conversationView.displaySettings);
+            RefreshContinueButton();
+        }
+
+        private void ApplyActorAutoDialogue(Subtitle subtitle)
+        {
+            if (!IsActorAutoActive) return;
+            // Default Wait 保持待命；Auto 生效的句子由 TryBeginDefaultWait 排除。
+            defaultWaitSession.SetActive(true);
+            if (UsesActorCustomPanel(subtitle))
+            {
+                if (!IsActive) defaultWaitSession.InvalidateCurrentWait();
+                session.Enable(DialogueManager.conversationView.displaySettings);
+            }
+            else
+            {
+                // 必須在主框 ShowSubtitle / SetupContinueButton 之前解除上一句的鎖。
+                session.Disable();
+            }
+        }
+
+        private static bool UsesActorCustomPanel(Subtitle subtitle)
+        {
+            if (!ShouldAddDialogueWait(subtitle) || subtitle.speakerInfo == null) return false;
+            var ui = DialogueManager.dialogueUI as StandardDialogueUI;
+            if (ui == null) return false;
+            // 走原生解析，尊重 SetPanel、[panel=#] 等覆寫，不能只看說話者有沒有 DialogueActor。
+            var panel = ui.conversationUIElements.standardSubtitleControls.GetPanel(subtitle, out _);
+            if (panel == null) return false;
+            var actors = FindObjectsByType<DialogueActor>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            foreach (var actor in actors)
+            {
+                if (actor.standardDialogueUISettings.customSubtitlePanel == panel) return true;
+            }
+            return false;
+        }
+
+        private static void RefreshContinueButton()
+        {
+            if (DialogueManager.isConversationActive && DialogueManager.conversationView != null)
+                DialogueManager.conversationView.SetupContinueButton();
         }
 
         public void DisableWaitModes()
         {
-            SetDefaultWait(false);
+            // 對話結束／Queue 交接只做清理，不還原分流前的 Auto 開關到下一段對話。
+            actorAutoSession.Disable();
+            defaultWaitSession.SetActive(false);
             DisableAutoDialogue();
+            session.InvalidateCurrentWait();
             injectedSubtitle = null;
         }
 
@@ -57,6 +133,8 @@ namespace PixelCrushers.DialogueSystem
         // 此通知早於 Sequence 解析。必須修改當次 subtitle，而不是資料庫的 Entry。
         public void OnConversationLine(Subtitle subtitle)
         {
+            // 此時 ConversationView 還記著上一句，這裡只切換設定，不重刷上一句的按鈕。
+            ApplyActorAutoDialogue(subtitle);
             if (!IsActive && !IsDefaultWaitActive) return;
             session.Enforce();
             if (subtitle == null || ReferenceEquals(injectedSubtitle, subtitle)) return;
@@ -82,7 +160,7 @@ namespace PixelCrushers.DialogueSystem
             if (sequence.Length > 0 && !sequence.EndsWith(";")) sequence += ";";
             // 兩個開關可同時保留，等待命令依執行當下的模式決定是否生效。
             // 例如當句先 SetAutoDialogue(false)，後面的 Default Wait 就能接手。
-            if (IsActive) sequence += "\nNhkAutoDialogueWait();";
+            if (IsActive || IsActorAutoActive) sequence += "\nNhkAutoDialogueWait();";
             if (IsDefaultWaitActive) sequence += "\nNhkDefaultDialogueWait();";
             subtitle.sequence = sequence;
         }
@@ -122,6 +200,24 @@ namespace PixelCrushers.DialogueSystem
 
         private void OnDisable() => DisableWaitModes();
         private void OnDestroy() => DisableWaitModes();
+    }
+
+    /// <summary>分流模式的還原快照；重複啟用不覆蓋最初設定，不持有場景物件或存檔資料。</summary>
+    internal sealed class NhkActorAutoDialogueSession
+    {
+        public bool IsActive { get; private set; }
+        public bool OriginalAuto { get; private set; }
+        public bool OriginalDefaultWait { get; private set; }
+
+        public void Enable(bool auto, bool defaultWait)
+        {
+            if (IsActive) return;
+            OriginalAuto = auto;
+            OriginalDefaultWait = defaultWait;
+            IsActive = true;
+        }
+
+        public void Disable() => IsActive = false;
     }
 
     /// <summary>一般對話的預設等待開關；不持有或修改 Continue Mode 與輸入設定。</summary>
@@ -205,6 +301,12 @@ namespace PixelCrushers.DialogueSystem
             if (!IsActive || ReferenceEquals(waitingSubtitle, subtitle)) return false;
             waitingSubtitle = subtitle;
             return true;
+        }
+
+        public void InvalidateCurrentWait()
+        {
+            Generation++;
+            waitingSubtitle = null;
         }
 
         public void Disable()

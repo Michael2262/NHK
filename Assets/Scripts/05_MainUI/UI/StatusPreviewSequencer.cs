@@ -34,6 +34,8 @@ public class StatusPreviewSequencer : MonoBehaviour
     // 主角四項之後、女主角之前；先 Room 再 Body。
     public const int OrderRoomClean = 4;
     public const int OrderBodyClean = 5;
+    public const int OrderSkillPoints = 6;
+    public const int OrderStickerCount = 7;
     public const int OrderHeroineTrust = 10;
     public const int OrderHeroineLibido = 11;
     public const int OrderHeroineAffinity = 12;
@@ -136,7 +138,13 @@ public class StatusPreviewSequencer : MonoBehaviour
         if (applyValue != null) EnqueueCore(order, applyValue, null, null, false, owner, minimumSeconds);
     }
 
-    /// <summary>以箭頭表示變化量；差值使用 long，避免 ForceAdd 跨越 int 範圍時溢位。</summary>
+    /// <summary>箭頭表示方向，數字顯示實際變動量。</summary>
+    public static string GetNumericPreviewText(long delta)
+    {
+        return delta == 0 ? "" : delta.ToString("↑0;↓0");
+    }
+
+    /// <summary>心情依變動幅度顯示一至三個箭頭。</summary>
     public static string GetPreviewArrowText(long delta)
     {
         if (delta == 0) return "";

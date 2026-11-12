@@ -50,6 +50,7 @@ public class HeroineLuaBridge : MonoBehaviour
             SymbolExtensions.GetMethodInfo(() => TryConceive(string.Empty)));
 
         Lua.RegisterFunction("GetMood", this, SymbolExtensions.GetMethodInfo(() => GetMood(string.Empty)));
+        Lua.RegisterFunction("GetCurrentMoodState", this, SymbolExtensions.GetMethodInfo(() => GetCurrentMoodState(string.Empty)));
         Lua.RegisterFunction("SetMood", this, SymbolExtensions.GetMethodInfo(() => SetMood(string.Empty, (double)0)));
         Lua.RegisterFunction("AddMood", this, SymbolExtensions.GetMethodInfo(() => AddMood(string.Empty, (double)0)));
 
@@ -61,7 +62,11 @@ public class HeroineLuaBridge : MonoBehaviour
         Lua.RegisterFunction("AddOrgasm", this,
             SymbolExtensions.GetMethodInfo(() => AddOrgasm(string.Empty, (double)0)));
 
-        // 獨立不滿值與上限
+        // 不滿值（0～100，可帶小數）
+        Lua.RegisterFunction("GetNotFollowMood", this,
+            SymbolExtensions.GetMethodInfo(() => GetNotFollowMood(string.Empty)));
+        Lua.RegisterFunction("SetNotFollowMood", this,
+            SymbolExtensions.GetMethodInfo(() => SetNotFollowMood(string.Empty, false)));
         Lua.RegisterFunction("GetFrustration", this,
             SymbolExtensions.GetMethodInfo(() => GetFrustration(string.Empty)));
         Lua.RegisterFunction("GetFrustrationMax", this,
@@ -70,8 +75,6 @@ public class HeroineLuaBridge : MonoBehaviour
             SymbolExtensions.GetMethodInfo(() => SetFrustration(string.Empty, (double)0)));
         Lua.RegisterFunction("AddFrustration", this,
             SymbolExtensions.GetMethodInfo(() => AddFrustration(string.Empty, (double)0)));
-        Lua.RegisterFunction("SetFrustrationMax", this,
-            SymbolExtensions.GetMethodInfo(() => SetFrustrationMax(string.Empty, (double)0)));
 
         // 獨立興奮度
         Lua.RegisterFunction("GetExcitement", this,
@@ -170,6 +173,7 @@ public class HeroineLuaBridge : MonoBehaviour
         Lua.UnregisterFunction("TryConceive");
 
         Lua.UnregisterFunction("GetMood");
+        Lua.UnregisterFunction("GetCurrentMoodState");
         Lua.UnregisterFunction("SetMood");
         Lua.UnregisterFunction("AddMood");
 
@@ -178,10 +182,11 @@ public class HeroineLuaBridge : MonoBehaviour
         Lua.UnregisterFunction("AddOrgasm");
 
         Lua.UnregisterFunction("GetFrustration");
+        Lua.UnregisterFunction("GetNotFollowMood");
+        Lua.UnregisterFunction("SetNotFollowMood");
         Lua.UnregisterFunction("GetFrustrationMax");
         Lua.UnregisterFunction("SetFrustration");
         Lua.UnregisterFunction("AddFrustration");
-        Lua.UnregisterFunction("SetFrustrationMax");
 
         Lua.UnregisterFunction("GetExcitement");
         Lua.UnregisterFunction("SetExcitement");
@@ -340,19 +345,20 @@ public class HeroineLuaBridge : MonoBehaviour
 
     // Lua 數字轉為整數；Model 處理範圍，Weighted 別名不再套用倍率。
     public double GetExcitement(string heroineID) => GetModel(heroineID)?.GetExcitement() ?? 0;
-    public void SetExcitement(string heroineID, double value) => GetModel(heroineID)?.SetExcitement((int)value);
-    public void AddExcitement(string heroineID, double amount) => GetModel(heroineID)?.AddExcitement((int)amount);
-    public void WeightedAddExcitement(string heroineID, double amount) => GetModel(heroineID)?.AddExcitement((int)amount);
+    public void SetExcitement(string heroineID, double value) => GetModel(heroineID)?.SetExcitement((float)value);
+    public void AddExcitement(string heroineID, double amount) => GetModel(heroineID)?.AddExcitement((float)amount);
+    public void WeightedAddExcitement(string heroineID, double amount) => AddExcitement(heroineID, amount);
 
     public double GetOrgasm(string heroineID) => GetModel(heroineID)?.GetOrgasm() ?? 0;
     public void SetOrgasm(string heroineID, double value) => GetModel(heroineID)?.SetOrgasm((int)value);
     public void AddOrgasm(string heroineID, double amount) => GetModel(heroineID)?.AddOrgasm((int)amount);
 
     public double GetFrustration(string heroineID) => GetModel(heroineID)?.GetFrustration() ?? 0;
-    public double GetFrustrationMax(string heroineID) => GetModel(heroineID)?.FrustrationMax ?? HeroineStatusModel.DefaultFrustrationMax;
-    public void SetFrustration(string heroineID, double value) => GetModel(heroineID)?.SetFrustration((int)value);
-    public void AddFrustration(string heroineID, double amount) => GetModel(heroineID)?.AddFrustration((int)amount);
-    public void SetFrustrationMax(string heroineID, double value) => GetModel(heroineID)?.SetFrustrationMax((int)value);
+    public bool GetNotFollowMood(string heroineID) => GetModel(heroineID)?.NotFollowMood ?? false;
+    public void SetNotFollowMood(string heroineID, bool value) => GetModel(heroineID)?.SetNotFollowMood(value);
+    public double GetFrustrationMax(string heroineID) => HeroineStatusModel.FrustrationMax;
+    public void SetFrustration(string heroineID, double value) => GetModel(heroineID)?.SetFrustration((float)value);
+    public void AddFrustration(string heroineID, double amount) => GetModel(heroineID)?.AddFrustration((float)amount);
 
     public void SetLibido(string heroineID, double value)
     {
@@ -481,6 +487,8 @@ public class HeroineLuaBridge : MonoBehaviour
     }
 
     public double GetMood(string heroineID) => GetModel(heroineID)?.Mood ?? 0;
+    /// <summary>Lua 條件：GetCurrentMoodState("sister") == "Happy"。找不到角色時回傳空字串。</summary>
+    public string GetCurrentMoodState(string heroineID) => GetModel(heroineID)?.CurrentMoodState.ToString() ?? string.Empty;
     public void SetMood(string heroineID, double value) => GetModel(heroineID)?.SetMood((int)value);
     public void AddMood(string heroineID, double amount) => GetModel(heroineID)?.AddMood((int)amount);
 }

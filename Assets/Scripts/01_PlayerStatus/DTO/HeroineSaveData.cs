@@ -15,11 +15,11 @@ public class HeroineSaveData
     public int Interest = HeroineStatusModel.InitialInterest;
     public int Libido;
     public bool LibidoIncreasedToday;
-    public int Excitement;
+    public float Excitement;
     public int Orgasm;
-    // 獨立不滿值與可調上限；舊存檔缺少欄位時使用 0／5。
-    public int Frustration = HeroineStatusModel.InitialFrustration;
-    public int FrustrationMax = HeroineStatusModel.DefaultFrustrationMax;
+    // 舊整數可直接讀為 float。null 表示缺欄位，由已讀入的 Mood 決定基準。
+    public float? Frustration;
+    public bool NotFollowMood;
     public int HCount;
     public bool IsInHeat;
     // 舊存檔缺少 Pout 狀態時使用初始值 false。

@@ -40,19 +40,16 @@ public class FrustrationSliderVisualizer : MonoBehaviour
     public UnityEvent OnReachedThreeQuarters => onReachedThreeQuarters;
     public UnityEvent OnReachedNearFull => onReachedNearFull;
     public UnityEvent OnReachedMax => onReachedMax;
-    public float DisplayedValue => displayedFill * maximum;
+    public float DisplayedValue => displayedFill * HeroineStatusModel.FrustrationMax;
 
     private Image fillImage;
     private GameStatusService service;
     private HeroineStatusModel model;
-    private int maximum = HeroineStatusModel.DefaultFrustrationMax;
-    private int nearFullThreshold;
-    // 使用比例插值，上限變更時從目前填色位置平滑追上。
     private float displayedFill;
     private float targetFill;
     private float transitionStart;
     private float transitionElapsed;
-    private int targetValue;
+    private float targetValue;
     private bool fullArmed;
     private bool nearFullArmed;
     private bool quarterArmed;
@@ -94,20 +91,19 @@ public class FrustrationSliderVisualizer : MonoBehaviour
     }
 
     /// <summary>轉交 Model 設值；UI 平滑追上。</summary>
-    public void SetFrustration(int value)
+    public void SetFrustration(float value)
     {
         if (TryGetModel()) model.SetFrustration(value);
     }
 
-    public void AddFrustration(int amount)
+    public void AddFrustration(float amount)
     {
         if (TryGetModel()) model.AddFrustration(amount);
     }
 
-    public void SetFrustrationMax(int value)
-    {
-        if (TryGetModel()) model.SetFrustrationMax(value);
-    }
+    // 保留既有 UnityEvent 的整數參數。
+    public void SetFrustration(int value) => SetFrustration((float)value);
+    public void AddFrustration(int amount) => AddFrustration((float)amount);
 
     private bool TryGetModel()
     {
@@ -138,7 +134,6 @@ public class FrustrationSliderVisualizer : MonoBehaviour
         if (model != null)
         {
             model.OnFrustrationChanged += HandleFrustrationChanged;
-            model.OnFrustrationMaxChanged += HandleFrustrationChanged;
         }
         SynchronizeImmediately();
     }
@@ -148,7 +143,6 @@ public class FrustrationSliderVisualizer : MonoBehaviour
         if (model != null)
         {
             model.OnFrustrationChanged -= HandleFrustrationChanged;
-            model.OnFrustrationMaxChanged -= HandleFrustrationChanged;
         }
         model = null;
     }
@@ -162,37 +156,29 @@ public class FrustrationSliderVisualizer : MonoBehaviour
     private void SynchronizeImmediately()
     {
         notificationVersion++;
-        maximum = model != null ? model.FrustrationMax : HeroineStatusModel.DefaultFrustrationMax;
-        nearFullThreshold = model != null ? model.FrustrationNearFullThreshold : 0;
-        targetValue = model != null ? model.Frustration : 0;
-        displayedFill = targetFill = Mathf.Clamp01((float)targetValue / maximum);
+        targetValue = model != null ? model.Frustration : 0f;
+        displayedFill = targetFill = targetValue / HeroineStatusModel.FrustrationMax;
         transitionStart = displayedFill;
         transitionElapsed = 0f;
-        fullArmed = targetValue < maximum;
-        nearFullArmed = targetValue < nearFullThreshold;
+        fullArmed = targetValue < HeroineStatusModel.FrustrationMax;
+        nearFullArmed = targetValue < HeroineStatusModel.FrustrationNearFullThreshold;
         quarterArmed = targetFill < 0.25f;
         halfArmed = targetFill < 0.5f;
         threeQuartersArmed = targetFill < 0.75f;
         RenderVisual();
     }
 
-    private void HandleFrustrationChanged(int unused)
+    private void HandleFrustrationChanged(float value)
     {
-        if (model == null) return;
-        int nextMaximum = model.FrustrationMax;
-        int nextValue = model.Frustration;
-        // 調整上限可能連續發出上限與數值事件，避免重啟同一次動畫。
-        if (maximum == nextMaximum && targetValue == nextValue) return;
+        if (model == null || value != model.Frustration || targetValue == value) return;
         notificationVersion++;
-        maximum = nextMaximum;
-        nearFullThreshold = model.FrustrationNearFullThreshold;
-        targetValue = nextValue;
-        targetFill = Mathf.Clamp01((float)targetValue / maximum);
+        targetValue = value;
+        targetFill = value / HeroineStatusModel.FrustrationMax;
         transitionStart = displayedFill;
         transitionElapsed = 0f;
         // 即使同一幀先降低再集滿，也能開始下一輪通知。
-        if (targetValue < maximum) fullArmed = true;
-        if (targetValue < nearFullThreshold) nearFullArmed = true;
+        if (targetValue < HeroineStatusModel.FrustrationMax) fullArmed = true;
+        if (targetValue < HeroineStatusModel.FrustrationNearFullThreshold) nearFullArmed = true;
         if (targetFill < 0.25f) quarterArmed = true;
         if (targetFill < 0.5f) halfArmed = true;
         if (targetFill < 0.75f) threeQuartersArmed = true;
@@ -215,11 +201,10 @@ public class FrustrationSliderVisualizer : MonoBehaviour
         NotifyThreshold(0.75f, ref threeQuartersArmed, onReachedThreeQuarters);
         if (version != notificationVersion) return;
         // 業務門檻由 Model 提供；這裡只等待畫面抵達，且先於滿格通知。
-        // 先以整數確認實際數值，避免極大上限時浮點比例捨入而提早通知。
-        if (targetValue >= nearFullThreshold)
-            NotifyThreshold((float)nearFullThreshold / maximum, ref nearFullArmed, onReachedNearFull);
+        if (targetValue >= HeroineStatusModel.FrustrationNearFullThreshold)
+            NotifyThreshold(HeroineStatusModel.FrustrationNearFullThreshold / HeroineStatusModel.FrustrationMax, ref nearFullArmed, onReachedNearFull);
         if (version != notificationVersion) return;
-        if (fullArmed && targetValue >= maximum && t >= 1f)
+        if (fullArmed && targetValue >= HeroineStatusModel.FrustrationMax && t >= 1f)
         {
             fullArmed = false;
             onReachedMax.Invoke();

@@ -134,24 +134,20 @@ public class HeroineStatusDebugBridge : MonoBehaviour
     // ==========================================================
 
     /// <summary>一般增減興奮度，不套用性欲倍率。</summary>
-    public void AddExcitement(int amount)
+    public void AddExcitement(float amount)
     {
         var m = Model;
         if (m == null) return;
-        int before = m.GetExcitement();
+        float before = m.GetExcitement();
         m.AddExcitement(amount);
         Debug.Log($"[HeroineStatusDebugBridge] ({heroineID}) 興奮度一般增減 {amount}：{before} → {m.GetExcitement()}");
     }
 
     /// <summary>舊方法別名；直接增減興奮度，已取消性欲倍率。</summary>
-    public void WeightedAddExcitement(int amount)
-    {
-        // 保留舊 UnityEvent 方法名，已取消性欲倍率。
-        AddExcitement(amount);
-    }
+    public void WeightedAddExcitement(float amount) => AddExcitement(amount);
 
     /// <summary>直接設定興奮度（0~100），不套用性欲倍率。</summary>
-    public void SetExcitement(int value)
+    public void SetExcitement(float value)
     {
         var m = Model;
         if (m == null) return;
@@ -160,14 +156,20 @@ public class HeroineStatusDebugBridge : MonoBehaviour
     }
 
     /// <summary>取得目前興奮度；無法取得 Model 時回傳 0。</summary>
-    public int GetExcitement() => Model?.GetExcitement() ?? 0;
+    public float GetExcitementFloat() => Model?.GetExcitement() ?? 0f;
+
+    // 保留既有整數綁定。
+    public int GetExcitement() => (int)GetExcitementFloat();
+    public void AddExcitement(int amount) => AddExcitement((float)amount);
+    public void WeightedAddExcitement(int amount) => AddExcitement((float)amount);
+    public void SetExcitement(int value) => SetExcitement((float)value);
 
     /// <summary>手動套用一次興奮度每日結算，不推進遊戲時間。</summary>
     public void ApplyExcitementDailyReset()
     {
         var m = Model;
         if (m == null) return;
-        int before = m.GetExcitement();
+        float before = m.GetExcitement();
         m.ApplyExcitementDailyReset();
         Debug.Log($"[HeroineStatusDebugBridge] ({heroineID}) 興奮度每日結算（發情：{m.IsInHeat}）：{before} → {m.GetExcitement()}");
     }

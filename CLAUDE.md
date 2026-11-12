@@ -244,13 +244,14 @@ public List<HeroineSaveData> HeroineSaveDataList; // value（與 IDs 同 index �
    - `Trust`、`Affinity`：0～999，初始 0；`Mood`：0～10，初始 5。
    - `Libido`：0～250；當日沒有實際增加才跨日衰減 2，滿值時正數 Add 不算增加。
      `LibidoIncreasedToday` 每位角色獨立保存，讀檔不算增加，跨日後重新記錄。
-   - `Excitement`：0～100 的獨立數值，不套用 Libido 倍率；跨日平時歸零、發情中最多保留 50。
+   - `Excitement`：0～100 的獨立浮點數，不套用 Libido 倍率；跨日平時歸零、發情中最多保留 50。
      Bridge / Lua 的 `WeightedAddExcitement` 舊名稱只作為 `AddExcitement` 別名。
    - `Orgasm`：0～100，跨日歸零，不自動增加 `HCount`。
    - 情緒只保留 `CurrentEmotion`（初始 Angry），與 `Mood` 互相獨立。
-   - `Frustration`：獨立整數不滿值，初始 0、預設上限 5，上限可調但最低 1；換日一律歸零。
-     從門檻下方進入「上限 − 2」（最低 0）時發出 `OnFrustrationNearFull`，未滿轉滿時發出 `OnFrustrationFull`。
-     一次跨過兩者先通知快要不滿再通知滿值；不自動改變 Mood／CurrentEmotion。數值與上限皆存檔，缺欄位時用 0／5。
+   - `Frustration`：0～100 的浮點數。開局與 `CurrentMoodState` 跨階時，依 Love／Happy／Normal／Unhappy／Livid 設為 0／20／40／60／80。
+     可手動增減或設定，同階與換日保留實際值。讀檔保留已存數值，缺欄位才依已還原的心情階段補值。
+     每位女主角的 `NotFollowMood` 預設為 false，隨角色存檔。開啟期間暫停跨階更新；換日自動關閉，從下次跨階起再套用基準。
+     從下方跨入 98 時發出 `OnFrustrationNearFull`，達 100 時發出 `OnFrustrationFull`，一次跨過兩者時依此順序通知。
      `FrustrationSliderVisualizer` 的 `OnReachedNearFull` 在畫面填色到達該門檻時通知，保留原有比例與滿格事件；啟用、換角與讀檔不補發。
    - 情緒卡池、PersonalSuspicion、舊能力／等級／經驗／鎖定與女主角 StatusEffectModel 已退役。
      舊序列化工具可保留型別供搬移，但不得把舊門檻自動解讀為新數值。

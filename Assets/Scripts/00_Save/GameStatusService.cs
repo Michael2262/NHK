@@ -323,14 +323,13 @@ public class GameStatusService : MonoBehaviour
             if (_suppressDaySettlement) return;
 
             ValueTriggerManager.OnValueChanged("Phase", Time.CurrentPhaseIndex);
-            // 換日：每位女主角獨立重設 Awake 並結算性欲、興奮、高潮與不滿。
+            // 換日：每位女主角獨立重設 Awake 並結算性欲、興奮與高潮。
             foreach (var heroine in Heroines.Values)
             {
                 heroine.ApplyAwakeDailyReset();
                 heroine.ApplyLibidoDecay();
                 heroine.ApplyExcitementDailyReset();
                 heroine.ApplyOrgasmDailyReset();
-                heroine.ApplyFrustrationDailyReset();
                 heroine.AdvanceCycleDay(); // 推進排卵週期計數器
             }
         };
@@ -530,6 +529,9 @@ public class GameStatusService : MonoBehaviour
         if (_suppressDaySettlement) return;
 
         Debug.Log($"GameStatusService: Starting NextDay Reset for Day {Time.DayIndex}.");
+
+        foreach (var heroine in Heroines.Values)
+            heroine.SetNotFollowMood(false);
 
         // 1. 清除昨日標記，並啟用隔日預約。
         ProgressFlags.HandleDayPassed();

@@ -467,6 +467,7 @@ public class HeroineStatusUI : MonoBehaviour
         if (excitementBar != null)
         {
             excitementBar.minValue = HeroineStatusModel.ExcitementMin;
+            excitementBar.wholeNumbers = false;
             excitementBar.maxValue = HeroineStatusModel.ExcitementMax;
             excitementBar.value = heroine.Excitement;
         }

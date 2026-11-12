@@ -23,7 +23,7 @@
 //     → 心情最多加到 8，並把最終值寫入 LastMood
 //   HeroineStatChange(sister, interest, add, 10)
 //   HeroineStatChange(sister, interest, get, 0, LastInterest)
-//   HeroineStatChange(sister, excitement, add, 10)
+//   HeroineStatChange(sister, excitement, add, 0.5)
 //   HeroineStatChange(sister, excitement, weightedadd, 10)
 //   HeroineStatChange(sister, excitement, set, 50)
 //   HeroineStatChange(sister, excitement, get, 0, LastExcitement)
@@ -58,7 +58,7 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
             string heroineID = GetParameter(0, string.Empty).Trim();
             string statName = GetParameter(1, string.Empty).Trim().ToLowerInvariant();
             string operation = GetParameter(2, "add").Trim().ToLowerInvariant();
-            int amount = GetParameterAsInt(3, 0);
+            bool isExcitement = statName == "excitement" || statName == "興奮度";
             bool isCappedAdd = operation == "cappedadd";
             int moodCap = isCappedAdd ? GetParameterAsInt(4, DefaultMoodAddCap) : DefaultMoodAddCap;
             string resultLuaVariable = GetParameter(isCappedAdd ? 5 : 4, string.Empty).Trim();
@@ -79,7 +79,7 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
             }
 
             // ── 執行操作 ──
-            if (operation == "weightedadd" && statName != "excitement" && statName != "興奮度")
+            if (operation == "weightedadd" && !isExcitement)
             {
                 Debug.LogWarning("[HeroineStatChange] weightedadd 僅支援 excitement / 興奮度。", this);
                 Stop();
@@ -93,7 +93,8 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
                 return;
             }
 
-            int resultValue = 0;
+            int amount = isExcitement ? 0 : GetParameterAsInt(3, 0);
+            object resultValue;
 
             switch (statName)
             {
@@ -131,7 +132,9 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
 
                 case "excitement":
                 case "興奮度":
-                    ApplyOperation(heroine, operation, amount, StatTarget.Excitement);
+                    float excitementAmount = GetParameterAsFloat(3, 0f);
+                    if (IsSetOperation(operation)) heroine.SetExcitement(excitementAmount);
+                    else if (operation != "get") heroine.AddExcitement(excitementAmount);
                     resultValue = heroine.GetExcitement();
                     break;
 
@@ -164,34 +167,15 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
             heroine.SetMood((int)Math.Min((long)heroine.Mood + amount, cap));
         }
 
-        private enum StatTarget { Libido, Trust, Affinity, Excitement, Orgasm, Mood, Interest }
+        private enum StatTarget { Libido, Trust, Affinity, Orgasm, Mood, Interest }
+
+        private static bool IsSetOperation(string operation)
+            => operation == "set" || operation == "設定" || operation == "=";
 
         private static void ApplyOperation(HeroineStatusModel heroine, string operation, int amount, StatTarget target)
         {
             if (operation == "get") return;
-            if (operation == "weightedadd")
-            {
-                if (target == StatTarget.Excitement) heroine.AddExcitement(amount);
-                return;
-            }
-
-            bool isSet;
-            switch (operation)
-            {
-                case "set":
-                case "設定":
-                case "=":
-                    isSet = true;
-                    break;
-
-                case "add":
-                case "增減":
-                case "+":
-                case "-":
-                default:
-                    isSet = false;
-                    break;
-            }
+            bool isSet = IsSetOperation(operation);
 
             switch (target)
             {
@@ -209,9 +193,6 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
                     break;
                 case StatTarget.Affinity:
                     if (isSet) heroine.SetAffinity(amount); else heroine.AddAffinity(amount);
-                    break;
-                case StatTarget.Excitement:
-                    if (isSet) heroine.SetExcitement(amount); else heroine.AddExcitement(amount);
                     break;
                 case StatTarget.Orgasm:
                     if (isSet) heroine.SetOrgasm(amount); else heroine.AddOrgasm(amount);
