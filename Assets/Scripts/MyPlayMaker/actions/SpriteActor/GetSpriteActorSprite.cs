@@ -30,9 +30,10 @@ public class GetSpriteActorSprite : FsmStateAction
         if (!actorID.IsNone && !string.IsNullOrEmpty(actorID.Value))
         {
             var actor = SpriteActor.Find(actorID.Value);
-            if (actor != null && actor.targetRenderer != null && actor.targetRenderer.sprite != null)
+            Sprite sprite = actor != null ? actor.GetCurrentSprite() : null;
+            if (sprite != null)
             {
-                storeSprite.Value = actor.targetRenderer.sprite;
+                storeSprite.Value = sprite;
 
                 if (!storeSpriteName.IsNone)
                 {

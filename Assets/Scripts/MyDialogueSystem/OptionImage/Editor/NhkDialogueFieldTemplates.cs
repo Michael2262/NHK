@@ -215,22 +215,34 @@ public class NhkDialogueFieldTemplates : EditorWindow
         EditorGUILayout.LabelField("NHK 欄位分組", EditorStyles.boldLabel);
         if (GUILayout.Button("管理欄位模板")) OpenFor(source);
         var groups = NhkDialogueFieldTemplateSettings.instance.Find(source);
-        if (groups == null)
-        {
-            EditorGUILayout.HelpBox("先開啟管理視窗，建立此資料庫的分組設定。", MessageType.Info);
-            return;
-        }
         using (new EditorGUI.DisabledScope(EditorApplication.isPlayingOrWillChangePlaymode))
         {
-            DrawEntryGroup(source, entry, "按鈕組", groups.buttons, ref nodeButtonsOpen);
-            DrawEntryGroup(source, entry, "對白組", groups.dialogue, ref nodeDialogueOpen);
+            nodeButtonsOpen = EditorGUILayout.Foldout(nodeButtonsOpen, "按鈕組", true);
+            if (nodeButtonsOpen)
+            {
+                const string name = NhkUIMenuPanel.RightClickSelectField;
+                bool selected = Field.LookupBool(entry.fields, name);
+                bool value = EditorGUILayout.Toggle(new GUIContent(name, "顯示選單時，在畫面任意位置按滑鼠右鍵即可選取此選項。"), selected);
+                if (value != selected)
+                {
+                    Undo.RecordObject(source, "設定右鍵選項");
+                    Field.SetValue(entry.fields, name, value);
+                    EditorUtility.SetDirty(source);
+                }
+                if (groups != null) DrawEntryGroup(source, entry, "按鈕組", groups.buttons);
+            }
+            if (groups == null)
+            {
+                EditorGUILayout.HelpBox("其他分組欄位可在管理視窗建立。", MessageType.Info);
+                return;
+            }
+            nodeDialogueOpen = EditorGUILayout.Foldout(nodeDialogueOpen, "對白組", true);
+            if (nodeDialogueOpen) DrawEntryGroup(source, entry, "對白組", groups.dialogue);
         }
     }
 
-    private static void DrawEntryGroup(DialogueDatabase source, DialogueEntry entry, string title, List<Field> definitions, ref bool expanded)
+    private static void DrawEntryGroup(DialogueDatabase source, DialogueEntry entry, string title, List<Field> definitions)
     {
-        expanded = EditorGUILayout.Foldout(expanded, title, true);
-        if (!expanded) return;
         string error = Validate(definitions);
         if (error != null) EditorGUILayout.HelpBox(error, MessageType.Warning);
         using (new EditorGUI.DisabledScope(error != null || definitions.Count == 0))

@@ -37,6 +37,8 @@ public class SceneController : MonoBehaviour
     [SerializeField] private string globalUISceneName = "GlobalStatusUI";
     private string currentMainScene = string.Empty;
     private bool isTransitioning = false;
+    private bool runningReadyHandlers;
+    private IEnumerator queuedDayReveal;
 
     // ============================================================
     // 單例與初始化
@@ -128,6 +130,48 @@ public class SceneController : MonoBehaviour
         {
             onDaySkipComplete?.Invoke();
         }
+    }
+
+    // 在新場景套用同一批時間、移動、Flag、FSM 事件後，換日 UI 才能存檔。
+    internal IEnumerator PlayQueuedDayTransition(Func<bool> applyBatch)
+    {
+        if (queuedDayReveal != null) yield return FinishQueuedDayTransition();
+
+        var ui = DayTransitionUI.Active;
+        var fader = TransitionFader.Instance;
+        if (ui != null)
+        {
+            yield return ui.CoverForSceneChange();
+            queuedDayReveal = ui.RevealScene();
+        }
+        else if (fader != null)
+        {
+            yield return fader.FadeToColor(Color.black, 0.3f);
+            queuedDayReveal = fader.FadeToClear(0.3f);
+        }
+
+        try
+        {
+            bool daySkipped = applyBatch();
+            if (daySkipped && ui != null) ui.PerformDayTransitionActions();
+        }
+        catch (Exception exception)
+        {
+            // 命令或自動存檔失敗時保留原始錯誤，讓轉場仍能揭幕。
+            Debug.LogException(exception);
+        }
+
+        if (ui == null && fader != null) yield return new WaitForSecondsRealtime(1f);
+        // Editor 手動重跑 Coordinator 時，沒有外層的場景轉場接手揭幕。
+        if (!runningReadyHandlers && queuedDayReveal != null)
+            yield return FinishQueuedDayTransition();
+    }
+
+    private IEnumerator FinishQueuedDayTransition()
+    {
+        var reveal = queuedDayReveal;
+        queuedDayReveal = null;
+        yield return reveal;
     }
 
     // ============================================================
@@ -262,6 +306,7 @@ public class SceneController : MonoBehaviour
         onFullyReady?.Invoke();
 
         // 4. 淡入
+        if (queuedDayReveal != null) yield return FinishQueuedDayTransition();
         if (TransitionFader.Instance != null) yield return TransitionFader.Instance.FadeToClear();
 
         isTransitioning = false;
@@ -306,6 +351,7 @@ public class SceneController : MonoBehaviour
         OnSceneFullyReady?.Invoke();
         onFullyReady?.Invoke();
 
+        if (queuedDayReveal != null) yield return FinishQueuedDayTransition();
         isTransitioning = false;
     }
 
@@ -391,10 +437,11 @@ public class SceneController : MonoBehaviour
         yield return EnsureGlobalUISceneLoaded();
 
         bool transitionComplete = false;
+        Coroutine sceneLoad = null;
 
         Action onMidTransition = () =>
         {
-            StartCoroutine(LoadSceneDuringTransition(newSceneName));
+            sceneLoad = StartCoroutine(LoadSceneDuringTransition(newSceneName));
         };
 
         if (DayTransitionUI.IsAvailable)
@@ -408,6 +455,7 @@ public class SceneController : MonoBehaviour
             {
                 yield return null;
             }
+            if (sceneLoad != null) yield return sceneLoad;
         }
         else
         {
@@ -448,6 +496,7 @@ public class SceneController : MonoBehaviour
 
         // 通知:場景完全就緒
         OnSceneFullyReady?.Invoke();
+        if (queuedDayReveal != null) yield return FinishQueuedDayTransition();
     }
 
     
@@ -483,9 +532,15 @@ public class SceneController : MonoBehaviour
 
         Debug.Log($"[SceneController] 發現 {allHandlers.Count} 個 ISceneReadyHandler,開始執行...");
 
-        foreach (var handler in allHandlers)
+        runningReadyHandlers = true;
+        try
         {
-            yield return handler.OnSceneReady();
+            foreach (var handler in allHandlers)
+                yield return handler.OnSceneReady();
+        }
+        finally
+        {
+            runningReadyHandlers = false;
         }
     }
 

@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.UI;
 using System.Collections.Generic;
 
 /// <summary>
@@ -49,8 +50,11 @@ public class SpriteActor : MonoBehaviour
     [Tooltip("此元件的唯一識別 ID，供外部查找用")]
     public string actorID;
 
-    [Tooltip("目標 SpriteRenderer，未指定則自動抓自身的")]
+    [Tooltip("場景圖片目標。兩種目標都指定時優先使用 SpriteRenderer。")]
     public SpriteRenderer targetRenderer;
+
+    [Tooltip("UI 圖片目標。兩個目標都留空時，依序從自身尋找 SpriteRenderer、Image。")]
+    public Image targetImage;
 
     [Tooltip("名稱與 Sprite 的對應清單")]
     public List<SpriteEntry> spriteList = new List<SpriteEntry>();
@@ -69,9 +73,12 @@ public class SpriteActor : MonoBehaviour
 
     private void Awake()
     {
-        // 自動抓取 SpriteRenderer
-        if (targetRenderer == null)
+        if (targetRenderer == null && targetImage == null)
+        {
             targetRenderer = GetComponent<SpriteRenderer>();
+            if (targetRenderer == null)
+                targetImage = GetComponent<Image>();
+        }
 
         // 建立快查字典
         spriteDict = new Dictionary<string, Sprite>(System.StringComparer.OrdinalIgnoreCase);
@@ -128,29 +135,36 @@ public class SpriteActor : MonoBehaviour
     /// </summary>
     public void ChangeSprite(string spriteName)
     {
-        if (targetRenderer == null)
+        if (targetRenderer == null && targetImage == null)
         {
-            Debug.LogWarning($"[SpriteActor] {actorID} 沒有 SpriteRenderer。");
+            Debug.LogWarning($"[SpriteActor] {actorID} 沒有 SpriteRenderer 或 UI Image。");
             return;
         }
 
-        // 清除圖片
-        if (string.IsNullOrEmpty(spriteName) ||
-            string.Equals(spriteName, "None", System.StringComparison.OrdinalIgnoreCase))
+        bool clear = string.IsNullOrEmpty(spriteName) ||
+                     string.Equals(spriteName, "None", System.StringComparison.OrdinalIgnoreCase);
+        Sprite sprite = null;
+        if (!clear && !spriteDict.TryGetValue(spriteName, out sprite))
         {
-            targetRenderer.sprite = null;
+            Debug.LogWarning($"[SpriteActor] {actorID} 找不到圖片名稱: {spriteName}");
             return;
         }
 
-        // 查找並替換
-        if (spriteDict.TryGetValue(spriteName, out Sprite spr))
+        if (targetRenderer != null)
         {
-            targetRenderer.sprite = spr;
+            targetRenderer.sprite = sprite;
         }
         else
         {
-            Debug.LogWarning($"[SpriteActor] {actorID} 找不到圖片名稱: {spriteName}");
+            targetImage.sprite = sprite;
+            targetImage.enabled = sprite != null;
         }
+    }
+
+    public Sprite GetCurrentSprite()
+    {
+        if (targetRenderer != null) return targetRenderer.sprite;
+        return targetImage != null ? targetImage.sprite : null;
     }
 
     /// <summary>
@@ -158,11 +172,12 @@ public class SpriteActor : MonoBehaviour
     /// </summary>
     public string GetCurrentSpriteName()
     {
-        if (targetRenderer == null || targetRenderer.sprite == null) return null;
+        Sprite currentSprite = GetCurrentSprite();
+        if (currentSprite == null) return null;
 
         foreach (var entry in spriteList)
         {
-            if (entry.sprite == targetRenderer.sprite)
+            if (entry.sprite == currentSprite)
                 return entry.name;
         }
         return null;

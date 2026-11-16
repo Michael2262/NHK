@@ -12,6 +12,9 @@ namespace PixelCrushers.DialogueSystem
     [AddComponentMenu("Pixel Crushers/Dialogue System/UI/Standard UI/Dialogue/Nhk UI Menu Panel")]
     public class NhkUIMenuPanel : StandardUIMenuPanel
     {
+        public const string RightClickSelectField = "Right Click Select";
+        private int responsesAssignedFrame = -1;
+
         [Serializable]
         public class ButtonPrefabStyle
         {
@@ -47,6 +50,7 @@ namespace PixelCrushers.DialogueSystem
 
         protected override void SetResponseButtons(Response[] responses, Transform target)
         {
+            responsesAssignedFrame = Time.frameCount;
             // 原生實作以 buttons != null 作為產生模板按鈕的前提。
             if (buttons == null) buttons = new StandardUIResponseButton[0];
             var previousTemplates = pendingTemplates;
@@ -69,6 +73,45 @@ namespace PixelCrushers.DialogueSystem
             {
                 pendingTemplates = previousTemplates;
             }
+        }
+
+        protected override void OnHidden()
+        {
+            responsesAssignedFrame = -1;
+            base.OnHidden();
+        }
+
+        protected override void Update()
+        {
+            base.Update();
+            // 略過建立選單的那一幀，避免一次右鍵連續選到下一組選項。
+            if (responsesAssignedFrame < 0 || responsesAssignedFrame == Time.frameCount ||
+                panelState != PanelState.Open || !hasFocus || topPanel != this || s_isInputDisabled ||
+                !InputDeviceManager.isInputAllowed || !UIButtonKeyTrigger.monitorInput ||
+                !InputDeviceManager.DefaultGetMouseButtonDown(1)) return;
+
+            // 只在右鍵按下時讀取當前按鈕，讓回收後重新指派的選項沿用最新節點設定。
+            foreach (var responseButton in buttons)
+            {
+                if (TrySelectByRightClick(responseButton)) return;
+            }
+            foreach (var instance in instantiatedButtons)
+            {
+                if (instance != null && TrySelectByRightClick(instance.GetComponent<StandardUIResponseButton>())) return;
+            }
+        }
+
+        private bool TrySelectByRightClick(StandardUIResponseButton responseButton)
+        {
+            if (responseButton == null || !responseButton.isVisible || !responseButton.isClickable) return false;
+            var response = responseButton.response;
+            if (response == null || !response.enabled || response.destinationEntry == null ||
+                !Field.LookupBool(response.destinationEntry.fields, RightClickSelectField)) return false;
+
+            var button = responseButton.button;
+            if (button == null || !button.isActiveAndEnabled || !button.IsInteractable()) return false;
+            button.OnSubmit(new UnityEngine.EventSystems.BaseEventData(eventSystem));
+            return true;
         }
 
         private StandardUIResponseButton ResolveTemplate(Response response)

@@ -20,7 +20,15 @@ public class Task_ExecuteSceneActionQueue : SceneReadyTaskBase
             yield break;
         }
 
-        queue.ExecuteAll();
+        var applyBatch = queue.TakePendingActions(out bool needsDayTransition);
+        if (applyBatch != null)
+        {
+            var controller = SceneController.Instance;
+            if (needsDayTransition && controller != null)
+                yield return controller.PlayQueuedDayTransition(applyBatch);
+            else
+                applyBatch();
+        }
         yield return null;
     }
 }

@@ -265,21 +265,22 @@ public class TimeSystemModel
     /// </summary>
     public void SkipToNextDay()
     {
-        if (BulletTimeActive) return;
-        Debug.Log("[TimeSystem] SkipToNextDay 被呼叫，準備請求隔天演出...");
+        SkipToNextDay(withTransition: true);
+    }
 
-        // 如果有訂閱者（SceneController），則發送事件並等待演出完成
-        if (OnDaySkipRequested != null)
+    // 場景佇列已在換日切幕內執行時，直接套用同一套睡覺結算。
+    internal void SkipToNextDay(bool withTransition)
+    {
+        if (BulletTimeActive) return;
+        if (withTransition && OnDaySkipRequested != null)
         {
-            // 傳入一個回呼，讓演出系統在完成後呼叫
+            Debug.Log("[TimeSystem] SkipToNextDay 被呼叫，準備請求隔天演出...");
             OnDaySkipRequested.Invoke(ExecuteActualDaySkip);
+            return;
         }
-        else
-        {
-            // 如果沒有訂閱者，直接執行（向下相容）
+        if (withTransition)
             Debug.LogWarning("[TimeSystem] 沒有系統監聽 OnDaySkipRequested，直接執行日期推進。");
-            ExecuteActualDaySkip();
-        }
+        ExecuteActualDaySkip();
     }
 
     /// <summary>

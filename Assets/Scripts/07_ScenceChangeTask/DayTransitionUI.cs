@@ -42,6 +42,7 @@ public class DayTransitionUI : MonoBehaviour
     }
 
     public static bool IsAvailable => _instance != null;
+    internal static DayTransitionUI Active => _instance != null && _instance.isActiveAndEnabled ? _instance : null;
 
     // ============================================================
     // Inspector 設定
@@ -168,15 +169,40 @@ public class DayTransitionUI : MonoBehaviour
         }
 
         _isTransitioning = true;
+        yield return ShowMorning(false);
+        onMidTransition?.Invoke();
+        PerformDayTransitionActions();
+        yield return RevealScene();
+        onComplete?.Invoke();
+    }
+
+    // Ready 任務可在換日圖蓋住場景時繼續初始化，最後由 SceneController 揭幕。
+    internal IEnumerator CoverForSceneChange()
+    {
+        while (_isTransitioning) yield return null;
+        _isTransitioning = true;
+        yield return ShowMorning(true);
+    }
+
+    private IEnumerator ShowMorning(bool takeSceneCover)
+    {
         Debug.Log("[DayTransitionUI] 開始隔天轉場演出");
 
         // --- 準備：設定白天圖 ---
         SetImageAsMorning();
         PrepareUI();
-        SetCanvasGroupState(0f, true);
-
-        // --- 1. 淡入 ---
-        yield return FadeCanvasGroup(0f, 1f, fadeInDuration);
+        var fader = takeSceneCover ? TransitionFader.Instance : null;
+        if (fader != null && fader.IsFullyCovered)
+        {
+            // 一般轉場的 Fader 在上層。先在下層鋪滿換日圖，再淡掉 Fader。
+            SetCanvasGroupState(1f, true);
+            yield return fader.FadeToClear(fadeInDuration);
+        }
+        else
+        {
+            SetCanvasGroupState(0f, true);
+            yield return FadeCanvasGroup(0f, 1f, fadeInDuration);
+        }
 
         // --- 1.5 播放換日音效（淡入完成後延遲播放）---
         if (!string.IsNullOrEmpty(dayTransitionSoundKey) && AudioManager.Instance != null)
@@ -193,17 +219,11 @@ public class DayTransitionUI : MonoBehaviour
 
         // --- 3. 停留 ---
         yield return new WaitForSecondsRealtime(holdDuration);
-
-        // --- 4. 日期推進 ---
-        Debug.Log("[DayTransitionUI] 執行日期推進回呼");
-        onMidTransition?.Invoke();
-
-        // --- 4.5 換日附加動作（日期推進後、淡出前）---
-        PerformDayTransitionActions();
-
-        // --- 5. 停止換句 ---
         _isShowingTips = false;
+    }
 
+    internal IEnumerator RevealScene()
+    {
         // --- 6. 淡出 ---
         yield return FadeCanvasGroup(1f, 0f, fadeOutDuration);
 
@@ -212,7 +232,6 @@ public class DayTransitionUI : MonoBehaviour
         _isTransitioning = false;
 
         Debug.Log("[DayTransitionUI] 隔天轉場演出完成");
-        onComplete?.Invoke();
     }
 
     // ============================================================
@@ -240,7 +259,7 @@ public class DayTransitionUI : MonoBehaviour
     /// <summary>
     /// 在日期推進完成後執行的附加動作（停止場景音樂、自動存檔）
     /// </summary>
-    private void PerformDayTransitionActions()
+    internal void PerformDayTransitionActions()
     {
         // 停止場景音樂
         if (stopSceneMusicOnTransition && SceneMusicController.Instance != null)

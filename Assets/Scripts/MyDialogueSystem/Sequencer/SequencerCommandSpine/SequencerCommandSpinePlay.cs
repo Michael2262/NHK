@@ -6,7 +6,7 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
 {
     /// <summary>
     /// SpinePlay(控制器ID, 軌道, 動畫名稱, 播放策略, 延遲秒數)
-    /// 策略 0～3 沿用 Controller；Line 播一次保留到句末，LineLoop 循環到句末。
+    /// 策略 0～3 沿用 Controller，Loop 等同 3（跨台詞持續循環）。Line 播一次保留到句末，LineLoop 循環到句末。
     /// Line / LineLoop 不使用延遲秒數，也不阻擋 Sequence 完成。
     /// </summary>
     public class SequencerCommandSpinePlay : SequencerCommand
@@ -79,9 +79,10 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
             }
             else
             {
-                // 舊數字模式與省略參數的行為保持不變。
-                int modeInt = GetParameterAsInt(3, 0);
-                controller.PlayAnimation(track, animationName, (SpineAnimationController.ClearMode)modeInt, delaySeconds);
+                var mode = string.Equals(strategy, "Loop", System.StringComparison.OrdinalIgnoreCase)
+                    ? SpineAnimationController.ClearMode.Loop
+                    : (SpineAnimationController.ClearMode)GetParameterAsInt(3, 0);
+                controller.PlayAnimation(track, animationName, mode, delaySeconds);
             }
 
             Stop();

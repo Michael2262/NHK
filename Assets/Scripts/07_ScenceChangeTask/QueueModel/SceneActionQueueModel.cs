@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -33,6 +34,7 @@ public class SceneActionQueueModel
         // TimeChange
         public TimeAdvanceType TimeType;
         public int Slots;
+        public bool SkipToNextDay;
 
         // HeroineMove / RiskMove（TargetID = heroineID / agentID，Detail = activity / inspectionTypeID）
         public string TargetID;
@@ -56,6 +58,7 @@ public class SceneActionQueueModel
 
     // 轉場世代計數：每次場景切換 +1，用於過期保險
     private int _generation;
+    private int _clearVersion;
     public bool HasAnyAction => _queue.Count > 0;
 
     public SceneActionQueueModel(TimeSystemModel time, TimeConfig timeConfig, ProgressFlagModel progressFlags)
@@ -79,6 +82,16 @@ public class SceneActionQueueModel
             Slots = slots
         });
         Debug.Log($"[SceneActionQueue] 佇列時間推進: {type}" + (type == TimeAdvanceType.Slot ? $" x{slots}" : ""));
+    }
+
+    public void EnqueueSkipToNextDay()
+    {
+        _queue.Add(new QueuedAction
+        {
+            Type = ActionType.TimeChange,
+            EnqueueGeneration = _generation,
+            SkipToNextDay = true
+        });
     }
 
     public void EnqueueHeroineMove(string heroineID, string locationID, string activity)
@@ -151,6 +164,7 @@ public class SceneActionQueueModel
     /// </summary>
     public void Clear()
     {
+        _clearVersion++;
         if (_queue.Count > 0)
             Debug.Log($"[SceneActionQueue] 清除 {_queue.Count} 筆待執行命令。");
         _queue.Clear();
@@ -185,38 +199,73 @@ public class SceneActionQueueModel
     }
 
     /// <summary>
-    /// 執行所有待執行命令。由 Task_ExecuteSceneActionQueue 在場景 Ready 階段呼叫。
+    /// 立即套用待執行命令。場景 Ready 任務透過 TakePendingActions 配合換日演出執行。
     /// </summary>
     public void ExecuteAll()
     {
-        if (_queue.Count == 0) return;
+        TakePendingActions(out _)?.Invoke();
+    }
 
-        Debug.Log($"[SceneActionQueue] 開始執行 {_queue.Count} 筆命令...");
+    // 在場景 Ready 時取走這一批，切幕期間新登記的命令留給下一次。
+    // 回呼只執行一次，回傳本批是否確實執行了睡覺換日，供演出決定是否自動存檔。
+    internal Func<bool> TakePendingActions(out bool needsDayTransition)
+    {
+        needsDayTransition = !_time.BulletTimeActive && _queue.Exists(action => action.SkipToNextDay);
+        if (_queue.Count == 0) return null;
 
-        // 固定類別順序執行（各類別內維持登記順序）
-        ExecuteCategory(ActionType.TimeChange);
-        ExecuteCategory(ActionType.HeroineMove);
-        ExecuteCategory(ActionType.RiskMove);
-        ExecuteCategory(ActionType.FlagChange);
-        ExecuteCategory(ActionType.SendEvent); // 最後發事件，讓 FSM 能依已套用的時間/Flag 狀態反應
-
+        var batch = _queue.ToArray();
         _queue.Clear();
+        int clearVersion = _clearVersion;
+        int generation = _generation;
+        bool consumed = false;
+        return () =>
+        {
+            if (consumed || clearVersion != _clearVersion || generation != _generation) return false;
+            consumed = true;
+            return ExecuteBatch(batch);
+        };
+    }
+
+    private bool ExecuteBatch(QueuedAction[] batch)
+    {
+        Debug.Log($"[SceneActionQueue] 開始執行 {batch.Length} 筆命令...");
+
+        bool skippedDay = false;
+        foreach (var action in batch)
+        {
+            if (action.Type != ActionType.TimeChange) continue;
+            if (action.SkipToNextDay)
+            {
+                int previousDay = _time.DayIndex;
+                _time.SkipToNextDay(withTransition: false);
+                skippedDay |= _time.DayIndex != previousDay;
+            }
+            else
+            {
+                ExecuteTimeChange(action);
+            }
+        }
+
+        ExecuteCategory(batch, ActionType.HeroineMove);
+        ExecuteCategory(batch, ActionType.RiskMove);
+        ExecuteCategory(batch, ActionType.FlagChange);
+        ExecuteCategory(batch, ActionType.SendEvent);
         Debug.Log("[SceneActionQueue] 全部命令執行完畢。");
+        return skippedDay;
     }
 
     // ==========================================================
     // 內部執行邏輯
     // ==========================================================
 
-    private void ExecuteCategory(ActionType type)
+    private void ExecuteCategory(QueuedAction[] batch, ActionType type)
     {
-        foreach (var action in _queue)
+        foreach (var action in batch)
         {
             if (action.Type != type) continue;
 
             switch (type)
             {
-                case ActionType.TimeChange: ExecuteTimeChange(action); break;
                 case ActionType.HeroineMove: ExecuteHeroineMove(action); break;
                 case ActionType.RiskMove: ExecuteRiskMove(action); break;
                 case ActionType.FlagChange: ExecuteFlagChange(action); break;
