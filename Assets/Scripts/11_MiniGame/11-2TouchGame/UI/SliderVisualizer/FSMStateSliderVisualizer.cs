@@ -12,8 +12,12 @@ using Tooltip = UnityEngine.TooltipAttribute;
 /// Slider 會用 DOTween 即時平滑追趕 FSM 數值。
 /// </summary>
 [RequireComponent(typeof(Slider))]
-public class BasicSliderVisualizer : MonoBehaviour
+public class FSMStateSliderVisualizer : MonoBehaviour
 {
+    [Tooltip("選填：指定這條數值條根物件上的 SliderVisibilityBehaviour。")]
+    [UnityEngine.Serialization.FormerlySerializedAs("visibilityController")]
+    [SerializeField] private SliderVisibilityBehaviour visibilityBehaviour;
+
     [Header("1. 數據來源 FSM")]
     [Tooltip("提供數值的 PlayMakerFSM (資料來源)")]
     public PlayMakerFSM sourceFSM;
@@ -39,6 +43,22 @@ public class BasicSliderVisualizer : MonoBehaviour
     private Tweener currentTweener;
     private float lastValue = float.NaN;
     private bool isInitialized = false;
+    private GameStatusService service;
+
+    void OnEnable()
+    {
+        if (visibilityBehaviour == null) return;
+        service = GameStatusService.Instance;
+        if (service != null) service.OnGameStatusLoaded += ResetForSynchronization;
+        ResetForSynchronization();
+    }
+
+    private void ResetForSynchronization()
+    {
+        if (currentTweener != null) currentTweener.Kill();
+        isInitialized = false;
+        if (visibilityBehaviour != null) visibilityBehaviour.ResetPresentation();
+    }
 
     void Awake()
     {
@@ -49,7 +69,7 @@ public class BasicSliderVisualizer : MonoBehaviour
     {
         if (sourceFSM == null)
         {
-            Debug.LogError($"[{nameof(BasicSliderVisualizer)}] 尚未指定 sourceFSM，已停用此元件。", this);
+            Debug.LogError($"[{nameof(FSMStateSliderVisualizer)}] 尚未指定 sourceFSM，已停用此元件。", this);
             enabled = false;
             return;
         }
@@ -59,10 +79,10 @@ public class BasicSliderVisualizer : MonoBehaviour
         currentValueRef = new FsmFloatOrInt(sourceFSM, currentValueVariableName);
 
         if (!maxValueRef.IsValid)
-            Debug.LogWarning($"[{nameof(BasicSliderVisualizer)}] 在 FSM 中找不到最大值變數: {maxValueVariableName}", this);
+            Debug.LogWarning($"[{nameof(FSMStateSliderVisualizer)}] 在 FSM 中找不到最大值變數: {maxValueVariableName}", this);
 
         if (!currentValueRef.IsValid)
-            Debug.LogWarning($"[{nameof(BasicSliderVisualizer)}] 在 FSM 中找不到當前值變數: {currentValueVariableName}", this);
+            Debug.LogWarning($"[{nameof(FSMStateSliderVisualizer)}] 在 FSM 中找不到當前值變數: {currentValueVariableName}", this);
     }
 
     void Update()
@@ -97,7 +117,7 @@ public class BasicSliderVisualizer : MonoBehaviour
 
         if (sourceFSM == null)
         {
-            Debug.LogWarning($"[{nameof(BasicSliderVisualizer)}] ForceRefresh 失敗：sourceFSM 為空。", this);
+            Debug.LogWarning($"[{nameof(FSMStateSliderVisualizer)}] ForceRefresh 失敗：sourceFSM 為空。", this);
             return;
         }
 
@@ -109,14 +129,13 @@ public class BasicSliderVisualizer : MonoBehaviour
         currentValueRef = new FsmFloatOrInt(sourceFSM, currentValueVariableName);
 
         if (!maxValueRef.IsValid)
-            Debug.LogWarning($"[{nameof(BasicSliderVisualizer)}] ForceRefresh：在 FSM 中找不到最大值變數: {maxValueVariableName}", this);
+            Debug.LogWarning($"[{nameof(FSMStateSliderVisualizer)}] ForceRefresh：在 FSM 中找不到最大值變數: {maxValueVariableName}", this);
 
         if (!currentValueRef.IsValid)
-            Debug.LogWarning($"[{nameof(BasicSliderVisualizer)}] ForceRefresh：在 FSM 中找不到當前值變數: {currentValueVariableName}", this);
+            Debug.LogWarning($"[{nameof(FSMStateSliderVisualizer)}] ForceRefresh：在 FSM 中找不到當前值變數: {currentValueVariableName}", this);
 
         // 重置狀態：殺掉進行中的 tween，強制重新初始化並瞬間定位
-        if (currentTweener != null) currentTweener.Kill();
-        isInitialized = false;
+        ResetForSynchronization();
         lastValue = float.NaN;
 
         CheckInitialization();
@@ -127,6 +146,11 @@ public class BasicSliderVisualizer : MonoBehaviour
     {
         if (currentTweener != null) currentTweener.Kill();
         currentTweener = slider.DOValue(target, tweenDuration).SetEase(tweenEase);
+        if (visibilityBehaviour != null)
+        {
+            visibilityBehaviour.NotifyChangeStarted();
+            currentTweener.OnComplete(visibilityBehaviour.NotifyChangeFinished);
+        }
     }
 
     /// <summary>等待 FSM 最大值就緒後才開始運作；首次定位採瞬間到位，不做漸變。</summary>
@@ -152,6 +176,8 @@ public class BasicSliderVisualizer : MonoBehaviour
 
     void OnDisable()
     {
+        if (service != null) service.OnGameStatusLoaded -= ResetForSynchronization;
+        if (visibilityBehaviour != null) visibilityBehaviour.ResetPresentation();
         if (currentTweener != null) currentTweener.Kill();
     }
 }

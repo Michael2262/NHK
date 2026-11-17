@@ -8,8 +8,12 @@ using UnityEngine.Events;
 /// </summary>
 [DisallowMultipleComponent]
 [RequireComponent(typeof(OrgasmWaveGraphic))]
-public class OrgasmSliderVisualizer2 : MonoBehaviour
+public class OrgasmSliderVisualizer : MonoBehaviour
 {
+    [Tooltip("選填：指定這條數值條根物件上的 SliderVisibilityBehaviour。")]
+    [UnityEngine.Serialization.FormerlySerializedAs("visibilityController")]
+    [SerializeField] private SliderVisibilityBehaviour visibilityBehaviour;
+
     [Header("連動角色")]
     [SerializeField] private string heroineID = "sister";
 
@@ -94,6 +98,7 @@ public class OrgasmSliderVisualizer2 : MonoBehaviour
 
     private void OnDisable()
     {
+        if (visibilityBehaviour != null) visibilityBehaviour.ResetPresentation();
         DetachModel();
         if (service != null) service.OnGameStatusLoaded -= HandleGameStatusLoaded;
         service = null;
@@ -143,7 +148,7 @@ public class OrgasmSliderVisualizer2 : MonoBehaviour
         if (orgasmCountRoot == null) return;
         if (transform.IsChildOf(orgasmCountRoot.transform))
         {
-            Debug.LogWarning("[OrgasmSliderVisualizer2] 次數顯示群組不可包含本腳本所在物件，請指定獨立的心形與數字群組。", this);
+            Debug.LogWarning("[OrgasmSliderVisualizer] 次數顯示群組不可包含本腳本所在物件，請指定獨立的心形與數字群組。", this);
             return;
         }
         orgasmCountRoot.SetActive(displayedOrgasmCount > 0);
@@ -154,7 +159,7 @@ public class OrgasmSliderVisualizer2 : MonoBehaviour
         if (!isActiveAndEnabled) return false;
         RefreshBinding();
         if (model != null) return true;
-        Debug.LogWarning($"[OrgasmSliderVisualizer2] 尚未找到女主角：{heroineID}", this);
+        Debug.LogWarning($"[OrgasmSliderVisualizer] 尚未找到女主角：{heroineID}", this);
         return false;
     }
 
@@ -194,6 +199,7 @@ public class OrgasmSliderVisualizer2 : MonoBehaviour
 
     private void SynchronizeImmediately()
     {
+        if (visibilityBehaviour != null) visibilityBehaviour.ResetPresentation();
         maximum = model != null ? Mathf.Max(1, model.OrgasmMax) : 100f;
         displayedValue = targetValue = model != null ? model.Orgasm : 0f;
         transitionStart = displayedValue;
@@ -209,6 +215,7 @@ public class OrgasmSliderVisualizer2 : MonoBehaviour
     private void HandleOrgasmChanged(int value)
     {
         float next = Mathf.Clamp(value, 0f, maximum);
+        if (next != targetValue && visibilityBehaviour != null) visibilityBehaviour.NotifyChangeStarted();
         if (flashing || decaying)
         {
             // 演出期間只保留最新實際值，不改變演出位置、節奏或波幅。
@@ -273,6 +280,9 @@ public class OrgasmSliderVisualizer2 : MonoBehaviour
                 onReachedMax.Invoke();
                 return;
             }
+            // 等閃白、衰退、接回實際值及最後的波浪消退都完成。
+            if (t >= 1f && waveEnergy == 0f && visibilityBehaviour != null)
+                visibilityBehaviour.NotifyChangeFinished();
         }
 
         RenderVisual();

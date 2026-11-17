@@ -57,6 +57,10 @@ public class SceneMusicController : MonoBehaviour
 
     private bool _isOverridden = false;
     private string _currentSceneBgmKey = "";
+    // null 表示沿用場景設定，空字串表示本時段預設靜音。
+    private string _temporaryPhaseKey;
+    private int _temporaryDay;
+    private int _temporaryPhase;
 
     private void Awake()
     {
@@ -147,16 +151,21 @@ public class SceneMusicController : MonoBehaviour
         string targetKey = defaultMusicKey;
 
         // --- 優先級 2: 時段音樂 (含時段 Flag 覆蓋 + 週末切換) ---
-        if (GameStatusService.Instance != null && GameStatusService.Instance.Time != null)
+        var time = GameStatusService.Instance?.Time;
+        if (time != null)
         {
-            int currentPhase = GameStatusService.Instance.Time.CurrentPhaseIndex;
+            int currentPhase = time.CurrentPhaseIndex;
+            // 跨日與換時段可能連續通知。以指定曲目當下的日期、時段判斷有效期。
+            if (_temporaryDay != time.DayIndex || _temporaryPhase != currentPhase)
+                _temporaryPhaseKey = null;
+            targetKey = _temporaryPhaseKey ?? defaultMusicKey;
 
             // 2a. 先算出平日基準音樂(時段預設 → 時段 Flag 覆蓋)
             string phaseKey = ResolvePhaseKey(phaseMusicKeys, phaseFlagMusic, currentPhase, targetKey);
 
             // 2b. 若啟用週末音樂且當天為週末,週末設定疊在平日基準之上;
             //     週末未填寫的時段會自動沿用平日結果。
-            if (enableWeekendMusic && GameStatusService.Instance.Time.IsWeekend)
+            if (enableWeekendMusic && time.IsWeekend)
             {
                 phaseKey = ResolvePhaseKey(weekendPhaseMusicKeys, weekendPhaseFlagMusic, currentPhase, phaseKey);
             }
@@ -201,8 +210,8 @@ public class SceneMusicController : MonoBehaviour
         string result = fallback;
         if (phase < 0) return result;
 
-        // 時段預設 Key
-        if (keys != null && phase < keys.Count && !string.IsNullOrEmpty(keys[phase]))
+        // 臨時曲目取代平日與週末的預設 Key，時段 Flag 仍可覆蓋。
+        if (_temporaryPhaseKey == null && keys != null && phase < keys.Count && !string.IsNullOrEmpty(keys[phase]))
         {
             result = keys[phase];
         }
@@ -232,6 +241,37 @@ public class SceneMusicController : MonoBehaviour
     // ==========================================================
     // 公開 API 供外部調用
     // ==========================================================
+
+    public void PlayMusicUntilPhase(string key, float fadeDuration = 1.0f,
+        MusicManager.FadeMode mode = MusicManager.FadeMode.Crossfade)
+    {
+        if (string.IsNullOrWhiteSpace(key))
+        {
+            Debug.LogWarning("[SceneMusicController] PlayMusicUntilPhase 需要音樂 Key。");
+            return;
+        }
+        SetTemporaryPhaseMusic(key, fadeDuration, mode);
+    }
+
+    public void StopMusicUntilPhase(float fadeDuration = 1.0f)
+    {
+        SetTemporaryPhaseMusic(string.Empty, fadeDuration, MusicManager.FadeMode.Crossfade);
+    }
+
+    private void SetTemporaryPhaseMusic(string key, float fadeDuration, MusicManager.FadeMode mode)
+    {
+        var time = GameStatusService.Instance?.Time;
+        if (time == null)
+        {
+            Debug.LogWarning("[SceneMusicController] 缺少時間系統，無法設定本時段的音樂。");
+            return;
+        }
+
+        _temporaryPhaseKey = key;
+        _temporaryDay = time.DayIndex;
+        _temporaryPhase = time.CurrentPhaseIndex;
+        RefreshSceneMusic(fadeDuration, mode);
+    }
 
     public void PlayOverride(string key, float fadeDuration = 1.0f,
         MusicManager.FadeMode mode = MusicManager.FadeMode.Crossfade)

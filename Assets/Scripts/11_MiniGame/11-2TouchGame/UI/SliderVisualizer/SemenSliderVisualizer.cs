@@ -11,6 +11,10 @@ using UnityEngine.UI;
 [RequireComponent(typeof(Image))]
 public class SemenSliderVisualizer : MonoBehaviour
 {
+    [Tooltip("選填：指定這條數值條根物件上的 SliderVisibilityBehaviour。")]
+    [UnityEngine.Serialization.FormerlySerializedAs("visibilityController")]
+    [SerializeField] private SliderVisibilityBehaviour visibilityBehaviour;
+
     [Header("填色與平滑過渡")]
     [SerializeField] private Color fillColor = new Color(156f / 255f, 253f / 255f, 1f, 1f);
     [Tooltip("每次目標改變後，從目前顯示位置過渡到新值所需秒數。")]
@@ -75,6 +79,7 @@ public class SemenSliderVisualizer : MonoBehaviour
 
     private void OnDisable()
     {
+        if (visibilityBehaviour != null) visibilityBehaviour.ResetPresentation();
         DetachModel();
         if (service != null) service.OnGameStatusLoaded -= HandleGameStatusLoaded;
         service = null;
@@ -110,6 +115,7 @@ public class SemenSliderVisualizer : MonoBehaviour
         if (state != VisualState.Waiting && state != VisualState.Holding) return;
         // 先切入衰退，避免歸零事件把顯示值直接拉走；重複呼叫也不會再次歸零。
         state = VisualState.Decaying;
+        if (visibilityBehaviour != null) visibilityBehaviour.NotifyChangeStarted();
         decayElapsed = 0f;
         model.SetSemen(0);
         // 訂閱者若關閉 UI 或讀檔，沿用其同步後的狀態，不再覆寫。
@@ -123,6 +129,7 @@ public class SemenSliderVisualizer : MonoBehaviour
         if (state == VisualState.Waiting || state == VisualState.Holding)
         {
             state = VisualState.ManualDecaying;
+            if (visibilityBehaviour != null) visibilityBehaviour.NotifyChangeStarted();
             decayElapsed = 0f;
             manualStepsTriggered = 0;
             manualTimeoutFinishing = false;
@@ -188,6 +195,7 @@ public class SemenSliderVisualizer : MonoBehaviour
 
     private void SynchronizeImmediately()
     {
+        if (visibilityBehaviour != null) visibilityBehaviour.ResetPresentation();
         maximum = model != null ? Mathf.Max(1, model.SemenMax) : 100f;
         displayedValue = targetValue = model != null ? model.Semen : 0f;
         transitionStart = displayedValue;
@@ -201,7 +209,15 @@ public class SemenSliderVisualizer : MonoBehaviour
 
     private void HandleSemenChanged(int value)
     {
+        float previousTarget = targetValue;
         targetValue = Mathf.Clamp(value, 0f, maximum);
+        if (targetValue != previousTarget && visibilityBehaviour != null)
+        {
+            visibilityBehaviour.NotifyChangeStarted();
+            // 等待操作時只有數值更新，畫面仍維持滿格。
+            if (state == VisualState.Waiting || state == VisualState.Holding)
+                visibilityBehaviour.NotifyChangeFinished();
+        }
         // 玩家操作與演出期間只記錄最新值，不改變滿格等待或衰退流程。
         if (state != VisualState.Tracking) return;
         transitionStart = displayedValue;
@@ -240,6 +256,7 @@ public class SemenSliderVisualizer : MonoBehaviour
             float t = Mathf.Clamp01(transitionElapsed / Mathf.Max(0.01f, transitionDuration));
             displayedValue = Mathf.Lerp(transitionStart, targetValue, t * t * (3f - 2f * t));
             if (targetValue < maximum) fullArmed = true;
+            if (t >= 1f && visibilityBehaviour != null) visibilityBehaviour.NotifyChangeFinished();
             if (fullArmed && targetValue >= maximum && t >= 1f)
             {
                 displayedValue = maximum;
@@ -303,6 +320,8 @@ public class SemenSliderVisualizer : MonoBehaviour
         displayedValue = 0f;
         state = VisualState.Tracking;
         targetValue = Mathf.Clamp(model.Semen, 0f, maximum);
+        if (targetValue == displayedValue && visibilityBehaviour != null)
+            visibilityBehaviour.NotifyChangeFinished();
         transitionStart = displayedValue;
         transitionElapsed = 0f;
         fullArmed = true;

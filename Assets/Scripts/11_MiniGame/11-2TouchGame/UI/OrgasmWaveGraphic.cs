@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// 從左向右填滿的液體網格。所有外觀參數由 OrgasmSliderVisualizer2 提供。
+/// 從左向右填滿的液體網格。所有外觀參數由 OrgasmSliderVisualizer 提供。
 /// 使用 UGUI 預設材質，可配合 Mask、RectMask2D 與 CanvasGroup。
 /// </summary>
 [DisallowMultipleComponent]

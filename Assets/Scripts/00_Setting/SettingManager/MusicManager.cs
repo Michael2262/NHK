@@ -60,6 +60,8 @@ public class MusicManager : MonoBehaviour
 
     private Dictionary<string, AudioClip> _musicDictionary;
     private Coroutine _activeFadeCoroutine;
+    private AudioClip _pendingSequentialClip;
+    private bool _fadingToSilence;
 
     // 公開的 Master Volume，UI 和淡化效果都將參考此值
     public float MasterVolume { get; private set; }
@@ -115,10 +117,31 @@ public class MusicManager : MonoBehaviour
             return;
         }
 
-        // 如果正在播放同一首音樂，則不執行任何操作
+        // Q 還在淡出舊曲時，Flag 或時段刷新可能再次要求同一首目標曲。
+        if (_pendingSequentialClip != null && _pendingSequentialClip == clipToPlay) return;
+
         AudioSource activeSource = _isSource1Active ? _audioSource1 : _audioSource2;
+        if (_fadingToSilence)
+        {
+            // 淡出期間換時段時，取消靜音；同曲保留播放進度。
+            StopCoroutine(_activeFadeCoroutine);
+            _activeFadeCoroutine = null;
+            _fadingToSilence = false;
+            AudioSource otherSource = _isSource1Active ? _audioSource2 : _audioSource1;
+            otherSource.Stop();
+            otherSource.clip = null;
+            if (activeSource.isPlaying && activeSource.clip == clipToPlay)
+                activeSource.volume = MasterVolume;
+        }
         if (activeSource.isPlaying && activeSource.clip == clipToPlay)
         {
+            // 時段已切回舊曲，取消尚未開始的下一首，讓舊曲接續播放。
+            if (_pendingSequentialClip != null)
+            {
+                StopCoroutine(_activeFadeCoroutine);
+                _pendingSequentialClip = null;
+                activeSource.volume = MasterVolume;
+            }
             return;
         }
 
@@ -127,10 +150,12 @@ public class MusicManager : MonoBehaviour
         {
             StopCoroutine(_activeFadeCoroutine);
         }
+        _pendingSequentialClip = null;
 
         // 依模式開始對應的淡化協程
         if (mode == FadeMode.Sequential)
         {
+            _pendingSequentialClip = clipToPlay;
             _activeFadeCoroutine = StartCoroutine(SequentialFadeCoroutine(clipToPlay, fadeDuration));
         }
         else
@@ -145,10 +170,19 @@ public class MusicManager : MonoBehaviour
     /// <param name="fadeDuration">淡出時間(秒)</param>
     public void StopMusic(float fadeDuration = 1.0f)
     {
+        // 無關 Flag 刷新時，讓原本的淡出按時完成。明確指定 0 秒仍可立即停止。
+        if (_fadingToSilence && fadeDuration > 0f) return;
+        _pendingSequentialClip = null;
         if (_activeFadeCoroutine != null)
         {
             StopCoroutine(_activeFadeCoroutine);
         }
+        if (!_audioSource1.isPlaying && !_audioSource2.isPlaying)
+        {
+            _fadingToSilence = false;
+            return;
+        }
+        _fadingToSilence = true;
         _activeFadeCoroutine = StartCoroutine(FadeOutCoroutine(fadeDuration));
     }
 
@@ -226,6 +260,7 @@ public class MusicManager : MonoBehaviour
         oldSource.clip = null;
 
         // --- 第二段:切換 Source,換上新曲並從靜音淡入 ---
+        _pendingSequentialClip = null;
         _isSource1Active = !_isSource1Active; // 切換作用中的 Source
         AudioSource newSource = _isSource1Active ? _audioSource1 : _audioSource2;
 
@@ -248,20 +283,26 @@ public class MusicManager : MonoBehaviour
     // 淡出至靜音的協程
     private IEnumerator FadeOutCoroutine(float duration)
     {
-        AudioSource activeSource = _isSource1Active ? _audioSource1 : _audioSource2;
-        float startVolume = activeSource.volume;
+        // 交叉淡化途中可能兩軌都有聲音，兩軌都要淡出。
+        float startVolume1 = _audioSource1.volume;
+        float startVolume2 = _audioSource2.volume;
 
         float timer = 0f;
         while (timer < duration)
         {
             timer += Time.deltaTime;
             float progress = timer / duration;
-            activeSource.volume = Mathf.Lerp(startVolume, 0, progress);
+            _audioSource1.volume = Mathf.Lerp(startVolume1, 0, progress);
+            _audioSource2.volume = Mathf.Lerp(startVolume2, 0, progress);
             yield return null;
         }
 
-        activeSource.Stop();
-        activeSource.clip = null;
-        activeSource.volume = 0;
+        _audioSource1.Stop();
+        _audioSource2.Stop();
+        _audioSource1.clip = null;
+        _audioSource2.clip = null;
+        _audioSource1.volume = 0;
+        _audioSource2.volume = 0;
+        _fadingToSilence = false;
     }
 }
