@@ -75,7 +75,7 @@ public class NhkDialogueFieldTemplates : EditorWindow
                     Undo.RecordObject(settings, "建立對話欄位分組");
                     groups = settings.Find(database, true);
                     var basic = ReadBasic(database);
-                    foreach (string name in new[] { "Button Style", "Option Image", "NG Conditions" })
+                    foreach (string name in new[] { "Button Style", "Option Image", "Option Conditions", "NG Conditions" })
                     {
                         var field = Field.Lookup(basic.dialogueEntryFields, name);
                         groups.buttons.Add(field != null ? new Field(field) : new Field(name, "", FieldType.Text));

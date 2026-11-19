@@ -6,7 +6,7 @@ using PixelCrushers.DialogueSystem;
 
 /// <summary>
 /// 女主角狀態面板 UI（NHK 重構版）。
-/// 兩個部位各依自己的進度 Flag 控制 CanvasGroup，外層沿用場景設定。
+/// 女主角面板依進度 Flag 控制 CanvasGroup，主角面板由 ProtagonistUI 獨立管理。
 ///
 /// 顯示 Trust、Interest、Libido 的目前值，以及依 Mood 區間查表的心情文字。
 /// 四項共用數值 preview 排序；Mood 主文字維持五段心情文字。
@@ -29,22 +29,22 @@ public class HeroineUI : MonoBehaviour
     [System.Serializable]
     private class PanelSection
     {
-        [Tooltip("拖入此部位的 CanvasGroup，並保持其 GameObject 啟用。")]
+        [Tooltip("拖入女主角面板的 CanvasGroup，並保持其 GameObject 啟用。")]
         public CanvasGroup canvasGroup;
         public ProgressFlagDefinition flag;
-
-        public bool Refresh(ProgressFlagModel flags)
-        {
-            if (canvasGroup == null) return false;
-            bool visible = flag != null && flags != null && flags.Contains(flag.FlagID);
-            SetCanvasGroupVisible(canvasGroup, visible);
-            return visible;
-        }
     }
 
-    [Header("依進度 Flag 自動顯示的部位")]
-    [SerializeField] private PanelSection firstSection = new PanelSection();
-    [SerializeField] private PanelSection secondSection = new PanelSection();
+    [Header("依進度 Flag 自動顯示的女主角面板")]
+    [FormerlySerializedAs("firstSection")]
+    [SerializeField] private PanelSection panel = new PanelSection();
+
+    [Header("變動時顯示")]
+    [Tooltip("顯示總開關成立時，此 Flag 成立才改為變動時顯示；留空則維持常駐。")]
+    [SerializeField] private ProgressFlagDefinition showOnChangeFlag;
+    [InspectorName("演完後停留秒數")]
+    [Min(0f)] [SerializeField] private float holdDuration = 1f;
+    [InspectorName("面板淡出秒數")]
+    [Min(0f)] [SerializeField] private float fadeDuration = 0.25f;
 
     [Header("=== 信賴數值 ===")]
     [SerializeField] private TextMeshProUGUI textTrust;
@@ -89,7 +89,7 @@ public class HeroineUI : MonoBehaviour
     // 沿用存檔鍵，順位從 1 起算，0 表示尚無有效角色編號。
     private const string HeroineNumberKey = "Value_System_HeroineUIVisible";
 
-    // 同一幀內，女主角數值接在大廳的貼紙總數之後播放。
+    // 同一幀內，女主角數值接在 ProtagonistUI 的貼紙總數之後播放。
     private const int MoodPreviewOrder = StatusPreviewSequencer.OrderStickerCount + 1;
     private const int LibidoPreviewOrder = MoodPreviewOrder + 1;
     private const int InterestPreviewOrder = LibidoPreviewOrder + 1;
@@ -100,6 +100,9 @@ public class HeroineUI : MonoBehaviour
     // ==========================================================
     private int _currentOrderIndex = 0;
     private HeroineStatusModel _currentModel;
+    private GameStatusService _service;
+    private ProgressFlagModel _flags;
+    private readonly StatusPanelVisibilityState _visibility = new StatusPanelVisibilityState();
 
     // 用於計算 Preview delta（數值事件傳入的是 newValue）
     private int _cachedTrust;
@@ -125,81 +128,113 @@ public class HeroineUI : MonoBehaviour
         if (nextButton != null) nextButton.onClick.AddListener(OnNextClicked);
     }
 
-    private void Start()
+    private void OnEnable()
     {
-        // 訂閱讀檔完成事件，讓 HeroineUI 在讀檔後自行還原顯示狀態
-        // 放在 Start 確保 GameStatusService.Instance 已在 Awake（-900）完成初始化
+        if (Instance != this) return;
+        BindAndRefresh();
+    }
+
+    private void Update()
+    {
+        if (Instance != this) return;
         var service = GameStatusService.Instance;
-        if (service == null) return;
-        service.OnGameStatusLoaded += OnGameStatusLoaded;
-        service.ProgressFlags.OnFlagChanged += OnSectionFlagChanged;
-        RefreshAutomaticDisplay();
+        if (!ReferenceEquals(_service, service) || !ReferenceEquals(_flags, service?.ProgressFlags))
+            BindAndRefresh();
+        UpdatePanelAlpha();
+    }
+
+    private void BindAndRefresh()
+    {
+        UnbindService();
+        _service = GameStatusService.Instance;
+        _flags = _service?.ProgressFlags;
+        if (_service != null) _service.OnGameStatusLoaded += OnGameStatusLoaded;
+        if (_flags != null) _flags.OnFlagChanged += OnVisibilityFlagChanged;
+        RefreshAutomaticDisplay(restoreHeroine: true, resetPresentation: true);
+    }
+
+    private void UnbindService()
+    {
+        if (!ReferenceEquals(_service, null)) _service.OnGameStatusLoaded -= OnGameStatusLoaded;
+        if (_flags != null) _flags.OnFlagChanged -= OnVisibilityFlagChanged;
+        _service = null;
+        _flags = null;
     }
 
     private void OnDestroy()
     {
-        if (GameStatusService.Instance != null)
-        {
-            GameStatusService.Instance.OnGameStatusLoaded -= OnGameStatusLoaded;
-            GameStatusService.Instance.ProgressFlags.OnFlagChanged -= OnSectionFlagChanged;
-        }
-        UnsubscribeFromModel();
-        StatusPreviewSequencer.CancelOwnerIfExists(this);
+        UnbindService();
+        ClearHeroineBinding();
         if (Instance == this) Instance = null;
     }
 
     private void OnDisable()
     {
-        StatusPreviewSequencer.CancelOwnerIfExists(this);
-        HideAllPreviewTexts();
-        RefreshAllUI();
+        if (Instance != this) return;
+        UnbindService();
+        ClearHeroineBinding();
+        _visibility.Configure(false, false);
+        SetCanvasGroupAlpha(panel.canvasGroup, 0f);
     }
 
     private void ClearHeroineBinding()
     {
         UnsubscribeFromModel();
-        StatusPreviewSequencer.CancelOwnerIfExists(this);
-        HideAllPreviewTexts();
+        CancelPreviews();
         _currentModel = null;
+    }
+
+    private void CancelPreviews()
+    {
+        StatusPreviewSequencer.CancelOwnerIfExists(this);
+        _visibility.ResetPresentation();
+        HideAllPreviewTexts();
     }
 
     /// <summary>
     /// 讀檔完成後由 GameStatusService.OnGameStatusLoaded 觸發。
-    /// 依存檔中的 Flag 顯示各部位，再綁定該存檔的女主角。
+    /// 依存檔中的 Flag 顯示女主角面板，再綁定該存檔的女主角。
     /// </summary>
     private void OnGameStatusLoaded()
     {
-        RefreshAutomaticDisplay(restoreHeroine: true);
+        BindAndRefresh();
     }
 
-    private void OnSectionFlagChanged(string key, bool _)
+    private void OnVisibilityFlagChanged(string key, bool _)
     {
-        if (key == firstSection.flag?.FlagID || key == secondSection.flag?.FlagID)
+        if (key == panel.flag?.FlagID || key == showOnChangeFlag?.FlagID)
             RefreshAutomaticDisplay();
     }
 
-    private bool RefreshSections(ProgressFlagModel flags)
+    private void RefreshAutomaticDisplay(bool restoreHeroine = false, bool resetPresentation = false)
     {
-        bool firstVisible = firstSection.Refresh(flags);
-        bool secondVisible = secondSection.Refresh(flags);
-        return firstVisible || secondVisible;
-    }
+        bool allowed = panel.canvasGroup != null && panel.flag != null
+            && _flags != null && _flags.Contains(panel.flag.FlagID);
+        bool onChange = showOnChangeFlag != null && _flags != null
+            && _flags.Contains(showOnChangeFlag.FlagID);
+        bool changed = _visibility.Configure(allowed, onChange);
+        if (changed || resetPresentation) CancelPreviews();
 
-    private void RefreshAutomaticDisplay(bool restoreHeroine = false)
-    {
-        var flags = GameStatusService.Instance.ProgressFlags;
-        if (!RefreshSections(flags) || heroineOrder.Count == 0)
+        // 變動模式雖然暫時透明，仍須綁定角色，才能收到下一次真正的數值變動。
+        if (!allowed || heroineOrder.Count == 0)
         {
             ClearHeroineBinding();
+            UpdatePanelAlpha();
             return;
         }
         if (restoreHeroine || _currentModel == null)
         {
-            int number = flags.GetValue(HeroineNumberKey);
+            int number = _flags.GetValue(HeroineNumberKey);
             _currentOrderIndex = number > 0 && number <= heroineOrder.Count ? number - 1 : 0;
             if (!ApplyHeroineData(heroineOrder[_currentOrderIndex]))
                 ClearHeroineBinding();
         }
+        else if (changed || resetPresentation)
+        {
+            CacheCurrentValues();
+            RefreshAllUI();
+        }
+        UpdatePanelAlpha();
     }
 
     // ==========================================================
@@ -235,18 +270,24 @@ public class HeroineUI : MonoBehaviour
         }
 
         UnsubscribeFromModel();
-        StatusPreviewSequencer.CancelOwnerIfExists(this);
-        HideAllPreviewTexts();
+        CancelPreviews();
         _currentModel = model;
 
         // 初始化快取值（避免第一次事件觸發時 delta 計算錯誤）
+        CacheCurrentValues();
+        SubscribeToModel();
+        RefreshAllUI();
+        UpdatePanelAlpha();
+        return true;
+    }
+
+    private void CacheCurrentValues()
+    {
+        if (_currentModel == null) return;
         _cachedTrust = _currentModel.Trust;
         _cachedLibido = _currentModel.Libido;
         _cachedInterest = _currentModel.Interest;
         _cachedMood = _currentModel.Mood;
-        SubscribeToModel();
-        RefreshAllUI();
-        return true;
     }
 
     // ==========================================================
@@ -377,14 +418,14 @@ public class HeroineUI : MonoBehaviour
     //  由 StatPackagePreviewPresenter 呼叫。
     // ==========================================================
 
-    /// <summary>目前面板顯示中的女主角 ID；面板未開啟時回 null。</summary>
+    /// <summary>目前綁定的女主角 ID；變動模式暫時隱藏時仍保留，總開關關閉時回 null。</summary>
     public string CurrentHeroineID => _currentModel?.HeroineID;
 
     /// <summary>顯示女主角數值的 hover 預覽（會先清掉上一輪）。</summary>
     public void ShowStatPreview(IReadOnlyList<StatPreviewItem> items)
     {
         ClearStatPreview();
-        if (items == null) return;
+        if (items == null || !_visibility.AllowsDisplay) return;
 
         foreach (var it in items)
         {
@@ -428,13 +469,18 @@ public class HeroineUI : MonoBehaviour
         TextMeshProUGUI preview, int delta, bool isMood = false)
     {
         if (delta == 0) return;
-        if (!isActiveAndEnabled)
+        if (!isActiveAndEnabled || !_visibility.AllowsDisplay)
         {
             applyValue?.Invoke();
             return;
         }
         StatusPreviewSequencer.Instance.EnqueueText(
-            order, preview, GetPreviewText(delta, isMood), applyValue, this);
+            order, preview, GetPreviewText(delta, isMood), () =>
+            {
+                _visibility.NotifyChangeStarted();
+                SetCanvasGroupAlpha(panel.canvasGroup, _visibility.AllowsDisplay ? 1f : 0f);
+                applyValue?.Invoke();
+            }, this);
     }
 
     private void HideAllPreviewTexts()
@@ -471,11 +517,18 @@ public class HeroineUI : MonoBehaviour
     //  CanvasGroup 開關
     // ==========================================================
 
-    private static void SetCanvasGroupVisible(CanvasGroup canvasGroup, bool visible)
+    private void UpdatePanelAlpha()
+    {
+        bool hasWork = _visibility.IsPresenting && StatusPreviewSequencer.HasOwnerWorkIfExists(this);
+        float alpha = _visibility.GetAlpha(Time.unscaledTime, hasWork, holdDuration, fadeDuration);
+        SetCanvasGroupAlpha(panel.canvasGroup, alpha);
+    }
+
+    private static void SetCanvasGroupAlpha(CanvasGroup canvasGroup, float alpha)
     {
         if (canvasGroup == null) return;
-        canvasGroup.alpha = visible ? 1f : 0f;
-        canvasGroup.interactable = visible;
-        canvasGroup.blocksRaycasts = visible;
+        canvasGroup.alpha = alpha;
+        canvasGroup.interactable = alpha > 0f;
+        canvasGroup.blocksRaycasts = alpha > 0f;
     }
 }

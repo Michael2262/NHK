@@ -191,6 +191,26 @@ public class StatusPreviewSequencer : MonoBehaviour
         if (_instance != null && owner != null) _instance.CancelOwner(owner);
     }
 
+    /// <summary>
+    /// 查詢指定面板是否仍有待播數值或有效的飄字 Tween，不建立播放器。
+    /// 供文字數值面板決定收起時機；純 EnqueueAction 的外部動畫不在此查詢範圍。
+    /// </summary>
+    public static bool HasOwnerWorkIfExists(object owner)
+    {
+        if (_instance == null || owner == null) return false;
+        foreach (var request in _instance._pending)
+            if (ReferenceEquals(request.owner, owner)) return true;
+        foreach (var request in _instance._queue)
+            if (ReferenceEquals(request.owner, owner)) return true;
+        foreach (var pair in _instance._tweenOwners)
+        {
+            if (ReferenceEquals(pair.Value, owner)
+                && _instance._tweens.TryGetValue(pair.Key, out var tween)
+                && tween != null && tween.IsActive()) return true;
+        }
+        return false;
+    }
+
     private void CancelOwner(object owner)
     {
         _pending.RemoveAll(r => ReferenceEquals(r.owner, owner));

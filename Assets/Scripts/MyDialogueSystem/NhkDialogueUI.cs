@@ -5,7 +5,7 @@
 //   | 欄位                        | 角色                                   |
 //   |-----------------------------|----------------------------------------|
 //   | 原生 Conditions             | 出現條件：不符 → 隱藏（預設行為）      |
-//   | Enable Conditions（自訂）   | 可用條件：不符 → 灰顯不可點（[em4]）   |
+//   | Enable Conditions（自訂）   | 可用條件：不符 → 淡灰色不可點（#A2A2A2） |
 //
 //   | 出現條件 | 可用條件           | 結果               |
 //   |----------|--------------------|--------------------|
@@ -198,9 +198,9 @@ namespace PixelCrushers.DialogueSystem
         }
 
         /// <summary>
-        /// 把一個「條件通過、可點」的 response 改成失能灰顯（幽靈狀態）。
-        /// 作法與 ConversationModel 處理 invalid response 完全一致：
-        /// 用 emTagForInvalidResponses 重新包 [em4]，並關閉 forceAuto / forceMenu，最後 enabled = false。
+        /// 把一個「條件通過、可點」的 response 改成失能淡灰色（幽靈狀態）。
+        /// 沿用失效選項的字型樣式，顏色改用 LightGray；僅套用於此 response，不修改資料庫色票。
+        /// 關閉 forceAuto / forceMenu，最後 enabled = false。
         /// </summary>
         private void MakeGhost(Response response)
         {
@@ -210,16 +210,20 @@ namespace PixelCrushers.DialogueSystem
                 emTag = DialogueManager.displaySettings.inputSettings.emTagForInvalidResponses;
             }
 
-            string text = response.destinationEntry.responseButtonText;
-            if (emTag != EmTag.None)
-            {
-                text = UITools.StripEmTags(text);
-                text = string.Format("[em{0}]{1}[/em{0}]", (int)emTag, text);
-            }
-
             var database = DialogueManager.masterDatabase;
             var emphasisSettings = (database != null) ? database.emphasisSettings : null;
-            var formattedText = FormattedText.Parse(text, emphasisSettings);
+            int emphasisIndex = (int)emTag - 1;
+            var originalStyle = (emphasisSettings != null && emphasisIndex >= 0 && emphasisIndex < emphasisSettings.Length)
+                ? emphasisSettings[emphasisIndex] : null;
+
+            // 使用區域樣式解析，讓一般 Emphasis 與 Rich Text 模式都套用相同的淡灰色。
+            var ghostStyle = new EmphasisSetting(
+                UIColorPalette.LightGray,
+                originalStyle != null && originalStyle.bold,
+                originalStyle != null && originalStyle.italic,
+                originalStyle != null && originalStyle.underline);
+            string text = UITools.StripEmTags(response.destinationEntry.responseButtonText);
+            var formattedText = FormattedText.Parse("[em1]" + text + "[/em1]", new[] { ghostStyle });
             formattedText.forceAuto = false;
             formattedText.forceMenu = false;
 

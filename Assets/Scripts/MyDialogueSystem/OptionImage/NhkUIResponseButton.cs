@@ -2,6 +2,7 @@
 // 繼承 StandardUIResponseButton，讓每顆選項按鈕可依對話節點的欄位顯示：
 //   (1) 一張圖片：自訂 Text 欄位（預設 "Option Image"）填圖片 ID，
 //       從 OptionImageDatabase 查對應 Sprite；空白 / 查不到 → 隱藏。
+//       Text 欄位 "Option Conditions" 可填 Lua 條件式；未填則照常顯示，有填則成立時才顯示圖片。
 //   (2) 一段額外敘述：自訂 Text 欄位（預設 "Narration"，與字幕面板敘述框共用）直接填字
 //       （如同對話文字，可用 "Narration ja" 等語言變體多語系）；空白 → 隱藏。
 //   (3) 按鈕樣式：自訂 Text 欄位（預設 "Button Skin"）填樣式 ID，同一個 ID 會套用兩種機制：
@@ -9,7 +10,7 @@
 //       - 背景圖：從對照表查 ID 對應 Sprite 換到指定 Image（輕量，只換底圖時用）
 //       ID 空白或查不到 → 還原成預設皮膚 / 原始背景圖。
 //   (4) NG 提示：Text 欄位 "NG Conditions" 填 Dialogue System 的 Lua 條件式；成立時圖片改用 "Ng"，回應文字改為紅色。
-//       "Option Image" 直接填 "Ng" 時，也會套用相同的 NG 提示。
+//       NG Conditions 優先，不受 Option Conditions 限制；"Option Image" 直接填 "Ng" 時，須通過 Option Conditions 才套用 NG 提示。
 //   NarrationFlag 支援 MyFlag、!MyFlag、not(MyFlag)；後兩者在旗標不成立時符合條件。
 // 以上都在按鈕被指派 response 時即時套用；Design-Time 按鈕會重複使用，
 // 因此在 Reset()（每次選單前由 StandardUIMenuPanel 呼叫）還原，避免樣式殘留。
@@ -20,6 +21,7 @@
 //      （換完記得重新拖 Button / Label 參照，以及 Menu Panel 上的按鈕參照）
 //   3. Inspector 拖入 Icon Image、OptionImageDatabase、Narration Text
 //   4. 需要圖片的選項節點：新增 Text 欄位 "Option Image"，填圖片 ID
+//      需要限制圖片顯示的選項節點：新增 Text 欄位 "Option Conditions"，例如 GetMoney() >= 100
 //      需要敘述的選項節點：新增 Text 欄位 "Narration"，直接填敘述文字（與字幕面板敘述框共用）
 //      需要換樣式的選項節點：新增 Text 欄位 "Button Skin"，填樣式 ID
 //      需要 NG 提示的選項節點：新增 Text 欄位 "NG Conditions"，例如 not Flag("MyFlag")
@@ -41,6 +43,11 @@ namespace PixelCrushers.DialogueSystem
 
         [Tooltip("Dialogue Entry 自訂欄位名稱，Text 類型，填圖片 ID。空白 = 不顯示圖片。填 Ng 時，回應文字也會改為 UIColorPalette.Red。")]
         [SerializeField] private string imageFieldName = "Option Image";
+
+        [Tooltip("Dialogue Entry 自訂欄位名稱，Text 類型，填與 Conditions 相同的 Lua 條件式，不需加 return。\n" +
+                 "留空 = 圖片照常顯示；有填 = 條件成立時才顯示 Option Image，只影響圖片。\n" +
+                 "NG Conditions 成立時，仍優先顯示 Ng 圖片與紅字。")]
+        [SerializeField] private string optionConditionsFieldName = "Option Conditions";
 
         [Header("NG Conditions Settings")]
         [Tooltip("Dialogue Entry 自訂欄位名稱，Text 類型，填與 Conditions 相同的 Lua 條件式，不需加 return。\n" +
@@ -104,14 +111,21 @@ namespace PixelCrushers.DialogueSystem
             {
                 RestoreColorBeforeNg();
                 base.response = value;
-                m_isNg = ShouldShowNg(value);
+                m_isNg = EvaluateConditions(value, ngConditionsFieldName, false);
+                // NG 條件成立時略過一般圖片條件，確保 NG 提示不會被擋住。
+                bool showOptionImage = m_isNg || EvaluateConditions(value, optionConditionsFieldName, true);
+                if (!m_isNg && showOptionImage && value != null && value.destinationEntry != null)
+                {
+                    string imageId = Field.LookupValue(value.destinationEntry.fields, imageFieldName);
+                    m_isNg = string.Equals(imageId, "Ng", System.StringComparison.Ordinal);
+                }
                 if (m_isNg && !UITextField.IsNull(label))
                 {
                     m_colorBeforeNg = label.color;
                     m_capturedColorBeforeNg = true;
                     label.color = UIColorPalette.Red;
                 }
-                UpdateIcon(value);
+                UpdateIcon(value, showOptionImage);
                 UpdateNarration(value);
                 UpdateStyle(value);
             }
@@ -131,16 +145,13 @@ namespace PixelCrushers.DialogueSystem
             }
         }
 
-        /// <summary>圖片 ID 為 Ng 或 NG Conditions 成立，任一條件符合就套用 NG 提示。</summary>
-        private bool ShouldShowNg(Response response)
+        /// <summary>判斷圖片用的 Lua 條件；空白沿用呼叫端預設值，判斷失敗視為不成立。</summary>
+        private bool EvaluateConditions(Response response, string fieldName, bool emptyResult)
         {
             if (response == null || response.destinationEntry == null) return false;
-            string imageId = Field.LookupValue(response.destinationEntry.fields, imageFieldName);
-            if (string.Equals(imageId, "Ng", System.StringComparison.Ordinal)) return true;
-
-            string conditions = Field.LookupValue(response.destinationEntry.fields, ngConditionsFieldName);
-            // Lua.IsTrue 將空白視為成立；NG 提示必須明確填入條件才啟用。
-            if (string.IsNullOrWhiteSpace(conditions)) return false;
+            string conditions = Field.LookupValue(response.destinationEntry.fields, fieldName);
+            // 一般圖片條件留空時允許顯示；NG 提示必須明確填入條件才啟用。
+            if (string.IsNullOrWhiteSpace(conditions)) return emptyResult;
             try
             {
                 return Lua.IsTrue(conditions, DialogueDebug.logInfo, true);
@@ -149,7 +160,7 @@ namespace PixelCrushers.DialogueSystem
             {
                 if (DialogueDebug.logWarnings)
                 {
-                    Debug.LogWarning($"NhkUIResponseButton：NG Conditions 判斷失敗（節點 {response.destinationEntry.id}）：{conditions}\n{exception.Message}", this);
+                    Debug.LogWarning($"NhkUIResponseButton：{fieldName} 判斷失敗（節點 {response.destinationEntry.id}）：{conditions}\n{exception.Message}", this);
                 }
                 return false;
             }
@@ -191,11 +202,16 @@ namespace PixelCrushers.DialogueSystem
         }
 
         /// <summary>
-        /// 依 response 目的節點的欄位查圖：有 ID 且查得到 → 顯示；否則隱藏。
+        /// 通過顯示條件後依 response 目的節點的欄位查圖；NG 優先，無圖或條件不符則隱藏。
         /// </summary>
-        private void UpdateIcon(Response response)
+        private void UpdateIcon(Response response, bool showOptionImage)
         {
             if (iconImage == null) return;
+            if (!showOptionImage)
+            {
+                HideIcon();
+                return;
+            }
 
             Sprite sprite = null;
             if (response != null && response.destinationEntry != null)

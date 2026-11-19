@@ -16,6 +16,7 @@ internal class NhkDialogueFieldTemplateSettings : ScriptableSingleton<NhkDialogu
         public List<Field> dialogue = new List<Field>();
         public bool dialogueDefaultsInitialized;
         public bool buttonSkinDefaultInitialized;
+        public bool optionConditionsDefaultInitialized;
     }
 
     [SerializeField] private List<Groups> databases = new List<Groups>();
@@ -25,10 +26,12 @@ internal class NhkDialogueFieldTemplateSettings : ScriptableSingleton<NhkDialogu
         string guid = AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(database));
         if (string.IsNullOrEmpty(guid)) return null;
         var result = databases.Find(item => item.databaseGuid == guid);
+        bool created = false;
         if (result == null && create)
         {
             result = new Groups { databaseGuid = guid };
             databases.Add(result);
+            created = true;
         }
         if (result != null && !result.dialogueDefaultsInitialized && !EditorApplication.isPlayingOrWillChangePlaymode)
         {
@@ -58,6 +61,22 @@ internal class NhkDialogueFieldTemplateSettings : ScriptableSingleton<NhkDialogu
                 result.buttons.Add(source != null ? new Field(source) : new Field("Button Skin", "", FieldType.Text));
             }
             result.buttonSkinDefaultInitialized = true;
+            Persist();
+        }
+        if (result != null && !created && !result.optionConditionsDefaultInitialized && !EditorApplication.isPlayingOrWillChangePlaymode)
+        {
+            // 新建分組由管理視窗填入預設欄位；下次讀取時再檢查，避免重複加入。
+            // 舊分組只補一次；保留既有定義，之後手動移除也不會反覆加回。
+            Undo.RecordObject(this, "補入按鈕組 Option Conditions 欄位");
+            if (Field.Lookup(result.buttons, "Option Conditions") == null)
+            {
+                var basic = !string.IsNullOrEmpty(database.templateJson)
+                    ? JsonUtility.FromJson<Template>(database.templateJson)
+                    : TemplateTools.LoadFromEditorPrefs();
+                var source = basic != null ? Field.Lookup(basic.dialogueEntryFields, "Option Conditions") : null;
+                result.buttons.Add(source != null ? new Field(source) : new Field("Option Conditions", "", FieldType.Text));
+            }
+            result.optionConditionsDefaultInitialized = true;
             Persist();
         }
         return result;
