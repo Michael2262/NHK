@@ -12,15 +12,15 @@ public class HeroineStatusModel
 
     // ───── Awake（獨立浮點數值；指定 Phase 每消耗一格扣除，換日重設）─────
     public const float AwakeMin = 0f;
-    public const float AwakeMax = 120f;
-    public const float InitialAwake = 120f;
+    public const float AwakeMax = 140f;
+    public const float InitialAwake = 140f;
     public const int AwakeDecayPhaseIndex = 2;
     public const float AwakeDecayPerSlot = 5f;
-    public const float AwakeDailyResetValue = 120f;
+    public const float AwakeDailyResetValue = 140f;
 
     // ───── 睡眠狀態（所有女主角共用）─────
     // 各區間含下限、不含下一狀態下限；最上層包含 AwakeMax。
-    // Wake：     [SleepStateWakeMin, AwakeMax]                     預設 100～120（含上限）
+    // Wake：     [SleepStateWakeMin, AwakeMax]                     預設 100～140（含上限）
     // Dazed：    [SleepStateDazedMin, SleepStateWakeMin)            預設 80～<100
     // HalfAwake：[SleepStateHalfAwakeMin, SleepStateDazedMin)       預設 60～<80
     // Sleep：    [SleepStateSleepMin, SleepStateHalfAwakeMin)       預設 40～<60

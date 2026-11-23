@@ -10,16 +10,21 @@ using DG.Tweening;
 /// </summary>
 public class DialogueVisibilityHandler : MonoBehaviour
 {
+    private class SpriteState
+    {
+        public SpriteRenderer sprite;
+        public float originalAlpha;
+    }
+
     // 保存簡化元件的執行期狀態，不在 Inspector 重複設定。
     private class InteractionTarget
     {
-        [Tooltip("對話期間隱藏，結束後淡入的 SpriteRenderer。")]
-        public SpriteRenderer sprite;
+        public List<SpriteState> sprites = new List<SpriteState>();
+        public bool hasSpriteReferences;
         [Tooltip("對話期間停用的點擊碰撞區域，請加入所有相關 Collider2D。")]
         public Collider2D[] colliders = new Collider2D[0];
 
         [System.NonSerialized] internal bool captured;
-        [System.NonSerialized] internal float originalAlpha;
         [System.NonSerialized] internal Collider2D[] savedColliders;
         [System.NonSerialized] internal bool[] colliderStates;
         [System.NonSerialized] internal Tween fadeTween;
@@ -78,15 +83,31 @@ public class DialogueVisibilityHandler : MonoBehaviour
 
         interactionTargets.Clear();
         var roots = new HashSet<GameObject>();
+        var sprites = new HashSet<SpriteRenderer>();
         foreach (var target in targetsToHide ?? new DialogueVisibilityTarget[0])
         {
             if (target == null || !roots.Add(target.gameObject)) continue;
-            interactionTargets.Add(new InteractionTarget
+            var interaction = new InteractionTarget
             {
-                sprite = target.sprite,
                 colliders = target.colliders
-            });
+            };
+            if (target.sprites != null)
+            {
+                foreach (var sprite in target.sprites)
+                    AddSprite(interaction, sprite, sprites);
+            }
+            interactionTargets.Add(interaction);
         }
+    }
+
+    private static void AddSprite(InteractionTarget target, SpriteRenderer sprite, HashSet<SpriteRenderer> collected)
+    {
+        // 不檢查物件是否啟用，避免對話中 Flag 開啟圖示時漏出圖片。
+        // 同一清單及不同目標之間的重複參照只處理一次。
+        if (sprite == null) return;
+        target.hasSpriteReferences = true;
+        if (collected.Add(sprite))
+            target.sprites.Add(new SpriteState { sprite = sprite });
     }
 
     [Header("淡入設定")]
@@ -118,11 +139,15 @@ public class DialogueVisibilityHandler : MonoBehaviour
         {
             if (target == null) continue;
             target.fadeTween?.Kill();
-            if (target.captured && target.sprite != null)
+            if (target.captured)
             {
-                Color color = target.sprite.color;
-                color.a = target.originalAlpha;
-                target.sprite.color = color;
+                foreach (var state in target.sprites)
+                {
+                    if (state.sprite == null) continue;
+                    Color color = state.sprite.color;
+                    color.a = state.originalAlpha;
+                    state.sprite.color = color;
+                }
             }
             target.RestoreColliders();
         }
@@ -195,7 +220,8 @@ public class DialogueVisibilityHandler : MonoBehaviour
             // 淡入尚未完成就開始下一段對話時，保留最初狀態，不記錄中途的透明度。
             if (!target.captured)
             {
-                target.originalAlpha = target.sprite != null ? target.sprite.color.a : 1f;
+                foreach (var state in target.sprites)
+                    if (state.sprite != null) state.originalAlpha = state.sprite.color.a;
                 target.savedColliders = target.colliders != null
                     ? (Collider2D[])target.colliders.Clone() : new Collider2D[0];
                 target.colliderStates = new bool[target.savedColliders.Length];
@@ -206,12 +232,13 @@ public class DialogueVisibilityHandler : MonoBehaviour
             foreach (var col in target.savedColliders)
                 if (col != null) col.enabled = false;
 
-            if (target.sprite != null)
+            foreach (var state in target.sprites)
             {
-                target.sprite.DOKill();
-                Color color = target.sprite.color;
+                if (state.sprite == null) continue;
+                state.sprite.DOKill();
+                Color color = state.sprite.color;
                 color.a = 0f;
-                target.sprite.color = color;
+                state.sprite.color = color;
             }
         }
     }
@@ -234,17 +261,24 @@ public class DialogueVisibilityHandler : MonoBehaviour
         {
             if (target == null || !target.captured) continue;
 
-            // Sprite 淡入
-            if (target.sprite != null)
+            // 同一目標的所有圖片各自恢復原透明度，全數淡入完成後才恢復碰撞。
+            float duration = Mathf.Max(0f, fadeInDuration);
+            // 共用圖片即使由其他目標負責淡入，這組碰撞也必須等待相同時間。
+            Sequence fade = target.hasSpriteReferences ? DOTween.Sequence().AppendInterval(duration) : null;
+            foreach (var state in target.sprites)
             {
-                target.fadeTween = target.sprite.DOFade(target.originalAlpha, Mathf.Max(0f, fadeInDuration))
-                    .SetEase(fadeInEase)
-                    .OnComplete(() =>
-                    {
-                        // 淡入完成才恢復原本的碰撞狀態，不誤開原本停用的區域。
-                        target.fadeTween = null;
-                        target.RestoreColliders();
-                    });
+                if (state.sprite == null) continue;
+                fade.Join(state.sprite.DOFade(state.originalAlpha, duration)
+                    .SetEase(fadeInEase));
+            }
+            if (fade != null)
+            {
+                target.fadeTween = fade.OnComplete(() =>
+                {
+                    // 淡入完成才恢復原本的碰撞狀態，不誤開原本停用的區域。
+                    target.fadeTween = null;
+                    target.RestoreColliders();
+                });
             }
             else
             {

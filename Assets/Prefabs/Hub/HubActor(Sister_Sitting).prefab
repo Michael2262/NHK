@@ -316,7 +316,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6cbf369a990d713478881623bbaca017, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DialogueVisibilityTarget
-  sprite: {fileID: 1530103560913736002}
+  sprites:
+  - {fileID: 1530103560913736002}
+  - {fileID: 6250003690336914712}
   colliders:
   - {fileID: 4499030255685308615}
 --- !u!114 &5404906749534476812
@@ -335,11 +337,10 @@ MonoBehaviour:
   CheckEveryFrame: 0
   Conditions:
   - FlagDef: {fileID: 11400000, guid: 181b07079b193c0409601e5d10fee4bc, type: 2}
-    RequiredState: 0
+    RequiredState: 1
   TargetsToActivate:
   - {fileID: 7566028323817541194}
-  TargetsToDeactivate:
-  - {fileID: 7566028323817541194}
+  TargetsToDeactivate: []
 --- !u!1 &5204478306995381437
 GameObject:
   m_ObjectHideFlags: 0
@@ -446,7 +447,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &4518692265580215576
 Transform:
   m_ObjectHideFlags: 0
