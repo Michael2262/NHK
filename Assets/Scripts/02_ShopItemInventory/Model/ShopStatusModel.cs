@@ -49,14 +49,14 @@ public class ShopStatusModel
     }
 
     /// <summary>
-    /// 重置所有具有「每日重置」標籤的商品的購買次數。
+    /// 從全域道具目錄重置每日購買次數，涵蓋所有商店的商品。
     /// </summary>
-    public void ResetDailyLimits(ItemDatabase itemDatabase)
+    public void ResetDailyLimits(ItemCatalog itemCatalog)
     {
-        if (itemDatabase == null) return;
+        if (itemCatalog == null) return;
         Debug.Log("[ShopStatusModel] 正在重置每日商品購買限制...");
 
-        foreach (var itemConfig in itemDatabase.AllItemsInAllTiers)
+        foreach (var itemConfig in itemCatalog.AllItems)
         {
             if (itemConfig.ResetFrequency == PurchaseFrequency.Daily)
             {

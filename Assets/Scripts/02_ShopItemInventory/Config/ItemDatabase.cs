@@ -78,8 +78,8 @@ public class ItemDatabase : ScriptableObject
     }
 
     /// <summary>
-    /// 獲取所有道具的可列舉集合。
-    /// (給 ShopStatusModel.ResetDailyLimits 等需要遍歷全部道具的地方用)
+    /// 取得這間商店的所有道具，包含尚未解鎖的商品。
+    /// 全域道具遍歷與每日限購重置使用 ItemCatalog.AllItems。
     /// </summary>
     public IEnumerable<ItemConfigData> AllItemsInAllTiers
         => ShopEntries

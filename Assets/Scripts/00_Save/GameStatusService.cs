@@ -537,8 +537,8 @@ public class GameStatusService : MonoBehaviour
         // 2. 正式主角跨日結算（體力、射精次數、射精感與房間髒亂）
         Protagonist.NextDay();
 
-        // 3. 商店限制重置
-        ShopStatus.ResetDailyLimits(itemDatabase);
+        // 3. 從全域道具目錄重置所有商店的每日限購
+        ShopStatus.ResetDailyLimits(ItemCatalog);
 
         // 4. 狀態效果每日處理
         StatusEffectModel.HandleDayPassed(Protagonist);

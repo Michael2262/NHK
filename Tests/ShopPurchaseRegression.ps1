@@ -62,10 +62,6 @@ public class ProgressFlagModel
     public void AddDailyFlag(string id) => Flags.Add(id);
     public void AddPhaseFlag(string id) => Flags.Add(id);
 }
-public class ItemDatabase
-{
-    public IEnumerable<ItemConfigData> AllItemsInAllTiers = Array.Empty<ItemConfigData>();
-}
 public struct ValueChangeRecord
 {
     public bool isHeroineResource;
@@ -216,6 +212,51 @@ public static class ShopPurchaseRegression
         f.Product.ShopDescriptionKey = "  ";
         Check(f.Product.EffectiveShopDescriptionKey == "Item.Description", "空白商店說明需回退");
         passed.Add("商店專用說明與空白回退");
+        f = new ShopPurchaseFixture();
+        f.Product.ResetFrequency = PurchaseFrequency.Daily;
+        f.Bonus.ResetFrequency = PurchaseFrequency.Daily;
+        f.Bonus.MaxPurchaseLimit = 1;
+        Check(f.Shop.TryPurchaseItem("condom") == PurchaseResult.Success &&
+              f.Shop.TryPurchaseItem("condom") == PurchaseResult.Success &&
+              f.Shop.TryPurchaseItem("bonus") == PurchaseResult.Success,
+            "每日限購測試的購買前置失敗");
+        var permanent = new ItemConfigData { name = "permanent", ResetFrequency = PurchaseFrequency.None };
+        var weekly = new ItemConfigData { name = "weekly", ResetFrequency = PurchaseFrequency.Weekly };
+        var unpurchased = new ItemConfigData { name = "unpurchased", ResetFrequency = PurchaseFrequency.Daily };
+        UnityEngine.Resources.Items = new object[] { f.Product, f.Bonus, permanent, weekly, unpurchased };
+        var catalog = new ItemCatalog();
+        f.Status.SetPurchasedCount("permanent", 4);
+        f.Status.SetPurchasedCount("weekly", 2);
+        f.Status.SetPurchasedCount("removed-from-catalog", 7);
+        int moneyBeforeReset = f.Player.Money;
+        int skillsBeforeReset = f.Player.SkillPoints;
+        int bonusBeforeReset = f.Inventory.GetItemCount("bonus");
+        var resetEvents = new List<string>();
+        f.Status.OnPurchasedCountChanged += (id, count) =>
+        {
+            Check(count == 0, "每日重置事件的數量應為 0");
+            resetEvents.Add(id);
+        };
+        f.Status.ResetDailyLimits(catalog);
+        Check(f.Status.GetPurchasedCount("condom") == 0 && f.Status.GetPurchasedCount("bonus") == 0,
+            "全域目錄的所有每日商品都必須重置，不可只處理預設商店");
+        Check(f.Status.GetPurchasedCount("permanent") == 4 && f.Status.GetPurchasedCount("weekly") == 2 &&
+              f.Status.GetPurchasedCount("removed-from-catalog") == 7,
+            "永久、每週及已移出目錄商品的記錄不應在每日重置時改變");
+        Check(resetEvents.Count == 2 && resetEvents.Contains("condom") && resetEvents.Contains("bonus"),
+            "已購每日商品需發出刷新事件，未購買商品不需建立記錄或通知");
+        Check(!f.Status.ToSaveData().PurchasedCounts.ContainsKey("unpurchased") &&
+              f.Inventory.GetItemCount("condom") == 6 && f.Inventory.GetItemCount("bonus") == bonusBeforeReset &&
+              f.Player.Money == moneyBeforeReset && f.Player.SkillPoints == skillsBeforeReset,
+            "重置不得更動庫存、資源或重新執行購得效果");
+        // 換日後可再買；使用新的服務共用已重置的 Model，避免測試刷新事件接收購買通知。
+        var resumedStatus = new ShopStatusModel();
+        resumedStatus.LoadFromSaveData(f.Status.ToSaveData());
+        var resumedShop = new ShopService(f.Player, f.Inventory, resumedStatus, f.Delivery, catalog, f.Flags, () => 2);
+        Check(resumedShop.TryPurchaseItem("condom") == PurchaseResult.Success &&
+              resumedShop.TryPurchaseItem("bonus") == PurchaseResult.Success,
+            "每日限購重置後應可再次購買所有商店的商品");
+        passed.Add("全目錄每日限購重置、UI 事件與再次購買；其他週期及庫存維持原狀");
         return passed.ToArray();
     }
 }

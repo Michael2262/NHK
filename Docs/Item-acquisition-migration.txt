@@ -6,6 +6,8 @@
 2. PurchaseQuantity 是每份商品的實際入庫個數，預設 1；Price 是一份的價格。
    例如保險套 PurchaseQuantity = 3：點一次購買，扣一次價格，背包增加 3 個。
 3. MaxPurchaseLimit 計算購買份數；限購 2 份、每份 3 個，最多買到 6 個。
+   換日遍歷 ItemCatalog 全域目錄重置 Daily 商品，不受預設商店貨架限制。
+   None 與 Weekly 記錄不會被每日重置。
 4. AcquireEffects 每份執行一次。現購立即入庫並執行；網購隔天 P0S1 才處理。
 5. 「額外獲得道具」（GrantItemEffect）指定 Item 與 Amount，可加入多筆。
    此效果額外給物，不取代商品本身的 PurchaseQuantity，也不觸發贈品的購得效果。
@@ -48,7 +50,7 @@ Unity Editor 設定與清理
 5. 找不到商品或購得效果設定無效時，配送保留訂單待修復，不先部分入庫。
 
 驗證
-1. 已執行 Tests/ShopPurchaseRegression.ps1，共 11 組純 C# 回歸檢查通過。
+1. 已執行 Tests/ShopPurchaseRegression.ps1，共 12 組純 C# 回歸檢查通過。
    使用實際購買／配送／庫存／購買計數程式；Unity、主角數值與旗標採最小替身。
    Newtonsoft JSON 驗證新舊配送欄位讀寫、讀檔不觸發效果與不重複配送。
 2. 尚未進行 Unity 專案編譯與 Play Mode，需使用者在 Editor 執行。
@@ -63,6 +65,7 @@ Unity Editor 設定與清理
 變更檔案（路徑相對於專案根目錄）
 Assets/Scripts/00_Save/GameStatusService.cs
 Assets/Scripts/02_ShopItemInventory/Config/ItemConfigData.cs
+Assets/Scripts/02_ShopItemInventory/Config/ItemDatabase.cs
 Assets/Scripts/02_ShopItemInventory/Config/HeroineGiftOverride.cs
 Assets/Scripts/02_ShopItemInventory/Effects/Editor/ItemConfigDataEditor.cs
 Assets/Scripts/02_ShopItemInventory/Effects/ItemEffect.cs
@@ -70,6 +73,7 @@ Assets/Scripts/02_ShopItemInventory/Effects/PassiveEffects.cs
 Assets/Scripts/02_ShopItemInventory/Effects/ProtagonistEffects.cs
 Assets/Scripts/02_ShopItemInventory/Effects/HeroineEffects.cs
 Assets/Scripts/02_ShopItemInventory/Model/EffectContext.cs
+Assets/Scripts/02_ShopItemInventory/Model/ShopStatusModel.cs
 Assets/Scripts/02_ShopItemInventory/Model/DeliveryOrder.cs
 Assets/Scripts/02_ShopItemInventory/Model/PendingDeliveryModel.cs
 Assets/Scripts/02_ShopItemInventory/Service/ShopService.cs
