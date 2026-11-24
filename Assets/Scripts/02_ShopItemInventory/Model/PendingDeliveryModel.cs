@@ -9,6 +9,7 @@ using UnityEngine;
 public class PendingDeliveryModel
 {
     private readonly List<DeliveryOrder> _pendingOrders = new List<DeliveryOrder>();
+    private bool _isProcessing;
 
     // ───── 事件 ─────
 
@@ -23,15 +24,16 @@ public class PendingDeliveryModel
     /// 新增一筆網購訂單。到貨日 = 當前天數 + 1。
     /// </summary>
     /// <param name="itemID">商品 ID</param>
-    /// <param name="amount">數量</param>
+    /// <param name="amount">實際入庫個數</param>
     /// <param name="currentDay">下單時的遊戲天數（Protagonist.Day）</param>
-    public void PlaceOrder(string itemID, int amount, int currentDay)
+    /// <param name="purchaseCount">購買份數，決定購得效果執行次數；省略時沿用舊版每份一個。</param>
+    public void PlaceOrder(string itemID, int amount, int currentDay, int purchaseCount = 0)
     {
         if (string.IsNullOrEmpty(itemID) || amount <= 0) return;
 
         int deliveryDay = currentDay + 1;
 
-        _pendingOrders.Add(new DeliveryOrder(itemID, amount, deliveryDay));
+        _pendingOrders.Add(new DeliveryOrder(itemID, amount, deliveryDay, purchaseCount));
 
         Debug.Log($"[PendingDeliveryModel] 下單：{itemID} x{amount}，預計第 {deliveryDay} 天到貨。");
     }
@@ -43,26 +45,26 @@ public class PendingDeliveryModel
     /// 預期呼叫時機：隔天的 P0S1（Phase 0, Slot 1）。
     /// </summary>
     /// <param name="currentDay">當前遊戲天數</param>
-    /// <param name="inventory">主角背包 Model，用於入庫</param>
-    public void ProcessDeliveries(int currentDay, ProtagonistInventoryModel inventory)
+    /// <param name="shopService">統一處理商品入庫與購得效果的服務</param>
+    public void ProcessDeliveries(int currentDay, ShopService shopService)
     {
+        if (_isProcessing || shopService == null) return;
         bool anyDelivered = false;
-
-        // 倒序遍歷，方便移除
-        for (int i = _pendingOrders.Count - 1; i >= 0; i--)
+        _isProcessing = true;
+        try
         {
-            var order = _pendingOrders[i];
-
-            if (currentDay >= order.DeliveryDay)
+            // 使用快照，避免入庫事件的回呼改變待配送清單。
+            var orders = _pendingOrders.ToArray();
+            foreach (var order in orders)
             {
-                // 入庫
-                inventory.AddItem(order.ItemID, order.Amount);
-                Debug.Log($"[PendingDeliveryModel] 到貨入庫：{order.ItemID} x{order.Amount}");
-
-                _pendingOrders.RemoveAt(i);
+                if (order == null || currentDay < order.DeliveryDay || !_pendingOrders.Contains(order)) continue;
+                if (!shopService.TryDeliverOrder(order)) continue;
+                _pendingOrders.Remove(order);
                 anyDelivered = true;
+                Debug.Log($"[PendingDeliveryModel] 到貨入庫：{order.ItemID} x{order.Amount}");
             }
         }
+        finally { _isProcessing = false; }
 
         // 只要這批有任何東西到貨，就觸發一次提示
         if (anyDelivered)

@@ -1,0 +1,85 @@
+道具購得效果與分類調整
+
+行為
+1. ItemCategory 只有 Use（消耗）、Claim（永久），僅作為商店與背包分類。
+   不決定道具是否消耗、能否重複購買或效果次數。
+2. PurchaseQuantity 是每份商品的實際入庫個數，預設 1；Price 是一份的價格。
+   例如保險套 PurchaseQuantity = 3：點一次購買，扣一次價格，背包增加 3 個。
+3. MaxPurchaseLimit 計算購買份數；限購 2 份、每份 3 個，最多買到 6 個。
+4. AcquireEffects 每份執行一次。現購立即入庫並執行；網購隔天 P0S1 才處理。
+5. 「額外獲得道具」（GrantItemEffect）指定 Item 與 Amount，可加入多筆。
+   此效果額外給物，不取代商品本身的 PurchaseQuantity，也不觸發贈品的購得效果。
+   普通劇情／工具呼叫 Inventory.AddItem 仍只增加庫存，不執行購得效果。
+6. 原本的使用、送禮、條件、角色目標與送禮反應不再是道具設定，也沒有執行入口。
+   舊使用效果不會自動變成購得效果，避免改變觸發時機後產生非預期行為。
+7. ShopDescriptionKey 有填時商店用此 Key，空白則用 DescriptionKey。
+   背包固定用 DescriptionKey；兩處均直接查 Text Table。
+
+Unity Editor 設定與清理
+1. 逐一開啟 Resources/SHOP/Item 的 ItemConfigData，設定 Category。
+   舊 Targeting 不自動推導新分類；新欄位預設 Use，永久類請改成 Claim。
+2. 保險套設定：Category = Use、Purchase Quantity = 3、Price = 每份價格。
+   Shop Description Key 填入「每份內含 3 個」的既有／新文字 Key。
+   Description Key 保留背包一般說明。只需要增加 3 個保險套時，AcquireEffects 可留空。
+3. 其他商品重新配置購得效果。可選增減金錢、增減技能點、進度旗標、資源調整、額外道具。
+   舊自用／送禮效果不搬移。已退役四維與女主角效果不出現在新增選單。
+4. ShopUI、BackpackUI 的場景／Prefab，移除 Gift 分類按鈕及其事件，調整剩餘按鈕布局。
+   保留 All / Use / Claim；程式仍使用原本的 Button 方式，不必改成 Unity Toggle 元件。
+   BackpackUI 的舊 Consumable / Permanent 欄位引用透過 FormerlySerializedAs 保留。
+   舊分類列舉編號 0（All）、1（Use）、3（Claim）保留，2（Gift）已無效。
+5. 移除背包使用按鈕與其事件；背包只顯示道具資訊。
+6. BackpackUI 確認 Item Name TMP、Item Description TMP、Item Quantity Text 引用正確。
+   移除名稱與說明文字上的 LocalizeUI，避免覆寫程式查表結果。
+   數量使用 Store.Quantity，商店價格使用 Store.Price，模板需包含 {0}。
+7. 清理舊 GiftUI、GiftUIOpener、HeroineReactionManager 元件及送禮面板、按鈕事件。
+   移除對話／FSM 裡的 GiftUIShow 舊呼叫；目前此命令只警告並立即結束。
+   舊元件只保留退役入口，不再執行送禮。舊資料型別僅供既有序列化資料辨識。
+8. 本次未手動修改任何場景、Prefab、SO、翻譯字串或 .meta。
+   售罄文字使用 Store.SoldOut。
+
+存檔與配送
+1. 背包數量與購買計數的既有存檔格式未更動。
+2. DeliveryOrder.Amount 仍是實際入庫個數，新增 PurchaseCount 保存購買份數。
+   新訂單保存下單時的數量；到貨時不重新乘上目前的 PurchaseQuantity。
+3. 舊訂單缺少 PurchaseCount 時，按舊版「每份一個」解讀，保留 Amount。
+   例如舊訂單 Amount = 1，即使商品現在設為每份 3 個，該筆舊訂單仍只入庫 1 個。
+4. 到貨使用商品當時的 AcquireEffects 設定，依訂單份數執行。
+   讀檔本身不執行效果；已完成訂單不會在下次配送重新給物。
+5. 找不到商品或購得效果設定無效時，配送保留訂單待修復，不先部分入庫。
+
+驗證
+1. 已執行 Tests/ShopPurchaseRegression.ps1，共 11 組純 C# 回歸檢查通過。
+   使用實際購買／配送／庫存／購買計數程式；Unity、主角數值與旗標採最小替身。
+   Newtonsoft JSON 驗證新舊配送欄位讀寫、讀檔不觸發效果與不重複配送。
+2. 尚未進行 Unity 專案編譯與 Play Mode，需使用者在 Editor 執行。
+3. Editor 驗收：
+   - 現購一份得到 3 個、限購 2 份得到 6 個，第三次不可購買。
+   - 網購下單只扣款，到隔天 P0S1 才入庫與執行一次效果。
+   - 以金錢／技能點／旗標及額外道具測試購得效果；額外道具不連鎖發效果。
+   - 網購等待途中存讀檔，再到貨，確認數量與效果不重複。
+   - All / Use / Claim 正確篩選，背包沒有使用或送禮操作。
+   - 商店專用說明、有／無 Key 回退、背包一般說明與切換語言。
+
+變更檔案（路徑相對於專案根目錄）
+Assets/Scripts/00_Save/GameStatusService.cs
+Assets/Scripts/02_ShopItemInventory/Config/ItemConfigData.cs
+Assets/Scripts/02_ShopItemInventory/Config/HeroineGiftOverride.cs
+Assets/Scripts/02_ShopItemInventory/Effects/Editor/ItemConfigDataEditor.cs
+Assets/Scripts/02_ShopItemInventory/Effects/ItemEffect.cs
+Assets/Scripts/02_ShopItemInventory/Effects/PassiveEffects.cs
+Assets/Scripts/02_ShopItemInventory/Effects/ProtagonistEffects.cs
+Assets/Scripts/02_ShopItemInventory/Effects/HeroineEffects.cs
+Assets/Scripts/02_ShopItemInventory/Model/EffectContext.cs
+Assets/Scripts/02_ShopItemInventory/Model/DeliveryOrder.cs
+Assets/Scripts/02_ShopItemInventory/Model/PendingDeliveryModel.cs
+Assets/Scripts/02_ShopItemInventory/Service/ShopService.cs
+Assets/Scripts/02_ShopItemInventory/Service/ItemUseService.cs
+Assets/Scripts/02_ShopItemInventory/UI/ShopUI.cs
+Assets/Scripts/02_ShopItemInventory/UI/ShopItemRowUI.cs
+Assets/Scripts/02_ShopItemInventory/UI/BackpackUI.cs
+Assets/Scripts/02_ShopItemInventory/UI/GiftUI.cs
+Assets/Scripts/02_ShopItemInventory/UI/GiftUIOpener.cs
+Assets/Scripts/02_ShopItemInventory/Manager/HeroineReactionManager.cs
+Assets/Scripts/MyDialogueSystem/Sequencer/SequencerCommandGiftUIShow.cs
+Tests/ShopPurchaseRegression.ps1
+Docs/Item-acquisition-migration.txt

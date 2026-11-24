@@ -107,7 +107,6 @@ public class GameStatusService : MonoBehaviour
     public BulletTimeBridge BulletTimeControls { get; internal set; }
     public SkillSystemManager SkillManager { get; private set; }
     public ShopService ShopService { get; private set; } // ShopService 的實例
-    public ItemUseService ItemUseService { get; private set; }
     public StatChangeService StatChangeService { get; private set; } // 數值變化套組執行核心
     public QuestRewardService QuestRewards { get; private set; } // 依資料庫順序領取固定任務獎勵
     public SaveGameManager SaveManager { get; private set; } // 存檔管理器
@@ -206,10 +205,9 @@ public class GameStatusService : MonoBehaviour
         // 全域道具目錄：自動掃 Resources/SHOP/Item，作為 ID → ItemConfigData 唯一來源。
         // 需在依賴它的 Service 之前建立。
         ItemCatalog = new ItemCatalog();
-        // 實例化 ItemUseService
-        ItemUseService = new ItemUseService(ItemCatalog, this);
         // 實例化 ShopService，將所有它需要的依賴項從上面已經創建好的實例中傳入
-        ShopService = new ShopService(Protagonist, Inventory, ShopStatus, PendingDelivery, ItemCatalog, () => Time.DayIndex);
+        ShopService = new ShopService(Protagonist, Inventory, ShopStatus, PendingDelivery,
+            ItemCatalog, ProgressFlags, () => Time.DayIndex);
         // 數值變化套組服務（套用時透過 Instance 取 Protagonist / Heroines）
         StatChangeService = new StatChangeService(statChangePackageDatabase);
         QuestRewards = new QuestRewardService(Quests, Protagonist,
@@ -304,7 +302,7 @@ public class GameStatusService : MonoBehaviour
             // ── 網購到貨檢查：P0 S1 ──
             if (Time.CurrentPhaseIndex == 0 && Time.CurrentSlotInPhase == 1)
             {
-                PendingDelivery.ProcessDeliveries(Time.DayIndex, Inventory);
+                PendingDelivery.ProcessDeliveries(Time.DayIndex, ShopService);
             }
         };
 

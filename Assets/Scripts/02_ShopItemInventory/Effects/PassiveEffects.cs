@@ -1,7 +1,7 @@
 using UnityEngine;
 
 // ==========================================================
-// 被動效果：永久數值提升（購買時自動套用）
+// 購得效果：實際收到商品時增加或扣除資源
 // 現役：Money / SkillPoints；舊四維列舉編號保留但不再執行。
 // 帶正負號增加或扣除資源。
 // ==========================================================
@@ -22,6 +22,8 @@ public class PermanentStatBoostEffect : ItemEffect
 
     public BoostStatType StatToBoost = BoostStatType.Money;
     public int Amount = 10;
+
+    public override bool IsRetired => StatToBoost != BoostStatType.Money && StatToBoost != BoostStatType.SkillPoints;
 
     public override void Apply(EffectContext ctx)
     {
@@ -72,7 +74,7 @@ public class ActivateFlagEffect : ItemEffect
             return;
         }
 
-        var progressFlags = GameStatusService.Instance.ProgressFlags;
+        var progressFlags = ctx.ProgressFlags;
 
         switch (Duration)
         {
@@ -97,4 +99,21 @@ public enum FlagDurationType
     Persistent,
     Day,
     Phase
+}
+
+/// <summary>每份商品額外給予指定數量的道具；不執行該道具的購得效果。</summary>
+[System.Serializable]
+public class GrantItemEffect : ItemEffect
+{
+    [Tooltip("額外給予的道具，必須位於 Resources/SHOP/Item。")]
+    public ItemConfigData Item;
+
+    [Tooltip("每份商品額外給予幾個此道具。商品本身的數量請設定 PurchaseQuantity。")]
+    [Min(1)] public int Amount = 1;
+
+    public override void Apply(EffectContext ctx)
+    {
+        if (Item == null || Amount <= 0 || ctx.Inventory == null) return;
+        ctx.Inventory.AddItem(Item.ItemID, Amount);
+    }
 }

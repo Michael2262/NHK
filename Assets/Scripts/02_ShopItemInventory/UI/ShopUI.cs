@@ -28,13 +28,13 @@ public class ShopUI : MonoBehaviour
     [Header("UI 引用")]
     [SerializeField] private Button _filterAllButton;
     [SerializeField] private Button _filterUseButton;
-    [SerializeField] private Button _filterGiftButton;
     [SerializeField] private Button _filterClaimButton;
     [SerializeField] private Transform _itemRowContainer;
     [SerializeField] private GameObject _itemRowPrefab;
 
     // --- 內部狀態 ---
-    public enum ShopFilterType { All, Use, Gift, Claim }
+    // 保留既有分類編號，避免場景事件原本的 Claim = 3 改變意義。
+    public enum ShopFilterType { All = 0, Use = 1, Claim = 3 }
     private ShopFilterType _currentFilter = ShopFilterType.All;
     private List<ShopItemRowUI> _spawnedItemRows = new List<ShopItemRowUI>();
 
@@ -48,7 +48,6 @@ public class ShopUI : MonoBehaviour
 
         _filterAllButton.onClick.AddListener(() => SetFilter(ShopFilterType.All));
         _filterUseButton.onClick.AddListener(() => SetFilter(ShopFilterType.Use));
-        _filterGiftButton.onClick.AddListener(() => SetFilter(ShopFilterType.Gift));
         _filterClaimButton.onClick.AddListener(() => SetFilter(ShopFilterType.Claim));
 
         // ★ 在 Awake 就設好按鈕狀態，避免打開時閃爍
@@ -69,6 +68,7 @@ public class ShopUI : MonoBehaviour
 
         GameStatusService.Instance.Inventory.OnItemCountChanged += OnInventoryOrPurchaseChanged;
         GameStatusService.Instance.ShopStatus.OnPurchasedCountChanged += OnInventoryOrPurchaseChanged;
+        GameStatusService.Instance.OnGameStatusLoaded += StartRefreshListCoroutine;
     }
 
     private void OnDisable()
@@ -77,6 +77,7 @@ public class ShopUI : MonoBehaviour
         {
             GameStatusService.Instance.Inventory.OnItemCountChanged -= OnInventoryOrPurchaseChanged;
             GameStatusService.Instance.ShopStatus.OnPurchasedCountChanged -= OnInventoryOrPurchaseChanged;
+            GameStatusService.Instance.OnGameStatusLoaded -= StartRefreshListCoroutine;
         }
         PixelCrushers.UILocalizationManager.languageChanged -= OnLanguageChanged;
         StopRefreshListCoroutine();
@@ -89,7 +90,7 @@ public class ShopUI : MonoBehaviour
         _canvasGroup.alpha = 1f;
         _canvasGroup.interactable = true;
         _canvasGroup.blocksRaycasts = true;
-        RefreshDynamicDataOnRows();
+        StartRefreshListCoroutine();
     }
 
     public void Hide()
@@ -144,7 +145,6 @@ public class ShopUI : MonoBehaviour
     {
         _filterAllButton.interactable = (_currentFilter != ShopFilterType.All);
         _filterUseButton.interactable = (_currentFilter != ShopFilterType.Use);
-        _filterGiftButton.interactable = (_currentFilter != ShopFilterType.Gift);
         _filterClaimButton.interactable = (_currentFilter != ShopFilterType.Claim);
     }
 
@@ -153,6 +153,7 @@ public class ShopUI : MonoBehaviour
     private void StartRefreshListCoroutine()
     {
         StopRefreshListCoroutine();
+        if (!isActiveAndEnabled) return;
         _refreshCoroutine = StartCoroutine(RefreshShopListRoutine());
     }
 
@@ -213,13 +214,11 @@ public class ShopUI : MonoBehaviour
 
     private bool ShouldDisplayInFilter(ItemConfigData item, ShopFilterType filter)
     {
-        var targetRule = item.TargetingRule;
         switch (filter)
         {
             case ShopFilterType.All: return true;
-            case ShopFilterType.Use: return (targetRule.Category == TargetCategory.ProtagonistOnly || targetRule.Category == TargetCategory.AnyCharacter);
-            case ShopFilterType.Gift: return (targetRule.Category == TargetCategory.HeroineOnly || targetRule.Category == TargetCategory.AnyCharacter);
-            case ShopFilterType.Claim: return (targetRule.Category == TargetCategory.NoBody);
+            case ShopFilterType.Use: return item.Category == ItemCategory.Use;
+            case ShopFilterType.Claim: return item.Category == ItemCategory.Claim;
             default: return false;
         }
     }

@@ -214,14 +214,14 @@ public class AddPersonalSuspicionMaxEffect : ItemEffect
 public class SetInHeatEffect : ItemEffect
 {
     public override EffectTarget Target => EffectTarget.Heroine;
+    public override bool IsRetired => true;
 
     [Tooltip("true = 開啟發情，false = 關閉發情")]
     public bool IsInHeat = true;
 
     public override void Apply(EffectContext ctx)
     {
-        if (ctx.Heroine == null) return;
-        ctx.Heroine.SetInHeat(IsInHeat);
+        Debug.LogWarning("[SetInHeatEffect] 道具送禮效果已退役，請清理舊設定。");
     }
 
     // 狀態開關類效果不需要數值報告，維持回傳 null
@@ -234,6 +234,7 @@ public class SetInHeatEffect : ItemEffect
 public class ActivateFlagOnGiftEffect : ItemEffect
 {
     public override EffectTarget Target => EffectTarget.Heroine;
+    public override bool IsRetired => true;
 
     [Tooltip("送禮成功時要啟動的 Flag 定義檔")]
     public ProgressFlagDefinition FlagToActivate;
@@ -243,30 +244,7 @@ public class ActivateFlagOnGiftEffect : ItemEffect
 
     public override void Apply(EffectContext ctx)
     {
-        if (ctx.Heroine == null) return;
-
-        if (FlagToActivate == null)
-        {
-            Debug.LogWarning("[ActivateFlagOnGiftEffect] FlagToActivate 未指定，跳過");
-            return;
-        }
-
-        var progressFlags = GameStatusService.Instance.ProgressFlags;
-
-        switch (Duration)
-        {
-            case FlagDurationType.Persistent:
-                progressFlags.AddPersistentFlag(FlagToActivate.FlagID);
-                break;
-            case FlagDurationType.Day:
-                progressFlags.AddDailyFlag(FlagToActivate.FlagID);
-                break;
-            case FlagDurationType.Phase:
-                progressFlags.AddPhaseFlag(FlagToActivate.FlagID);
-                break;
-        }
-
-        Debug.Log($"[ActivateFlagOnGiftEffect] 送禮給 {ctx.Heroine.HeroineID} 啟動 Flag '{FlagToActivate.FlagID}' ({Duration})");
+        Debug.LogWarning("[ActivateFlagOnGiftEffect] 道具送禮效果已退役，請重新配置購得效果。");
     }
 
     // Flag 開關類效果不需要數值報告，維持回傳 null

@@ -8,6 +8,7 @@ using UnityEngine;
 [System.Serializable]
 public class AddStressEffect : ItemEffect
 {
+    public override bool IsRetired => true;
     public override EffectTarget Target => EffectTarget.Protagonist;
     public int Amount = 10;
 
@@ -23,6 +24,7 @@ public class AddStressEffect : ItemEffect
 [System.Serializable]
 public class ReduceStressEffect : ItemEffect
 {
+    public override bool IsRetired => true;
     public override EffectTarget Target => EffectTarget.Protagonist;
     public int Amount = 10;
 
@@ -38,6 +40,7 @@ public class ReduceStressEffect : ItemEffect
 [System.Serializable]
 public class AddLifePowerEffect : ItemEffect
 {
+    public override bool IsRetired => true;
     public override EffectTarget Target => EffectTarget.Protagonist;
     public int Amount = 10;
 
@@ -53,6 +56,7 @@ public class AddLifePowerEffect : ItemEffect
 [System.Serializable]
 public class ReduceLifePowerEffect : ItemEffect
 {
+    public override bool IsRetired => true;
     public override EffectTarget Target => EffectTarget.Protagonist;
     public int Amount = 10;
 
@@ -68,6 +72,7 @@ public class ReduceLifePowerEffect : ItemEffect
 [System.Serializable]
 public class AddSocialityEffect : ItemEffect
 {
+    public override bool IsRetired => true;
     public override EffectTarget Target => EffectTarget.Protagonist;
     public int Amount = 10;
 
@@ -83,6 +88,7 @@ public class AddSocialityEffect : ItemEffect
 [System.Serializable]
 public class ReduceSocialityEffect : ItemEffect
 {
+    public override bool IsRetired => true;
     public override EffectTarget Target => EffectTarget.Protagonist;
     public int Amount = 10;
 
@@ -98,6 +104,7 @@ public class ReduceSocialityEffect : ItemEffect
 [System.Serializable]
 public class AddDependencyEffect : ItemEffect
 {
+    public override bool IsRetired => true;
     public override EffectTarget Target => EffectTarget.Protagonist;
     public int Amount = 10;
 
@@ -113,6 +120,7 @@ public class AddDependencyEffect : ItemEffect
 [System.Serializable]
 public class ReduceDependencyEffect : ItemEffect
 {
+    public override bool IsRetired => true;
     public override EffectTarget Target => EffectTarget.Protagonist;
     public int Amount = 10;
 
@@ -165,12 +173,13 @@ public class AddSkillPointsEffect : ItemEffect
 }
 
 // ==========================================================
-// Flag Effect：保留原本功能
+// 舊使用旗標效果只保留序列化型別，購得效果請選擇 ActivateFlagEffect。
 // ==========================================================
 [System.Serializable]
 public class ActivateFlagOnUseEffect : ItemEffect
 {
     public override EffectTarget Target => EffectTarget.Protagonist;
+    public override bool IsRetired => true;
 
     [Tooltip("使用道具時要啟動的 Flag 定義檔")]
     public ProgressFlagDefinition FlagToActivate;
@@ -180,27 +189,6 @@ public class ActivateFlagOnUseEffect : ItemEffect
 
     public override void Apply(EffectContext ctx)
     {
-        if (FlagToActivate == null)
-        {
-            Debug.LogWarning("[ActivateFlagOnUseEffect] FlagToActivate 未指定，跳過");
-            return;
-        }
-
-        var progressFlags = GameStatusService.Instance.ProgressFlags;
-
-        switch (Duration)
-        {
-            case FlagDurationType.Persistent:
-                progressFlags.AddPersistentFlag(FlagToActivate.FlagID);
-                break;
-            case FlagDurationType.Day:
-                progressFlags.AddDailyFlag(FlagToActivate.FlagID);
-                break;
-            case FlagDurationType.Phase:
-                progressFlags.AddPhaseFlag(FlagToActivate.FlagID);
-                break;
-        }
-
-        Debug.Log($"[ActivateFlagOnUseEffect] 使用道具啟動 Flag '{FlagToActivate.FlagID}' ({Duration})");
+        Debug.LogWarning("[ActivateFlagOnUseEffect] 使用效果已退役，請重新配置購得效果。");
     }
 }

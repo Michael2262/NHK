@@ -1,35 +1,13 @@
 using UnityEngine;
-using PixelCrushers.DialogueSystem;
 
 namespace PixelCrushers.DialogueSystem.SequencerCommands
 {
-    /// <summary>
-    /// ¥Îªk: GiftUIShow(heroineID)
-    /// ½d¨Ò: GiftUIShow(Heroine_A)
-    /// ¥H«ü©w ID ¶}±Ò°eÂ§­±ªO(¤£ªı¶ë¹ï¸Ü)¡C
-    /// heroineID ¬°¥²­n°Ñ¼Æ:¨S¦³¦X²z¹w³],¦]¬°°eÂ§¥²¶·©ú½T«ü©w¹ï¶H¡C
-    /// </summary>
+    /// <summary>èˆŠ GiftUIShow å‘½ä»¤å·²é€€å½¹ï¼›ç«‹å³çµæŸï¼Œé¿å…æ—¢æœ‰å°è©±æµç¨‹ç­‰å¾…é€ç¦®ã€‚</summary>
     public class SequencerCommandGiftUIShow : SequencerCommand
     {
         public void Awake()
         {
-            string heroineID = GetParameter(0);
-
-            if (GiftUI.Instance == null)
-            {
-                Debug.LogWarning("Dialogue System: GiftUIShow §ä¤£¨ì GiftUI.Instance¡C");
-                Stop();
-                return;
-            }
-
-            if (string.IsNullOrEmpty(heroineID))
-            {
-                Debug.LogWarning("Dialogue System: GiftUIShow ¯Ê¤Ö heroineID °Ñ¼Æ,µLªk¶}±Ò¡C");
-                Stop();
-                return;
-            }
-
-            GiftUI.Instance.ShowForHeroine(heroineID);
+            Debug.LogWarning("[GiftUIShow] é“å…·é€ç¦®åŠŸèƒ½å·²ç§»é™¤ï¼Œè«‹æ¸…ç†å°è©±ä¸­çš„ GiftUIShow å‘½ä»¤ã€‚");
             Stop();
         }
     }

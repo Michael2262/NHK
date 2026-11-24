@@ -1,13 +1,13 @@
 using UnityEngine;
 
 /// <summary>
-/// 標記這個效果適用於哪種目標，供 Editor 下拉選單篩選用。
+/// 舊效果的相容性標記；購得效果不接受需要女主角目標的舊效果。
 /// </summary>
 public enum EffectTarget
 {
-    Protagonist,  // 主角效果（顯示在 SelfEffects）
-    Heroine,      // 女主角效果（顯示在 GiftEffects）
-    Any           // 兩邊都顯示
+    Protagonist,
+    Heroine,
+    Any
 }
 
 /// <summary>
@@ -23,7 +23,7 @@ public abstract class ItemEffect
     /// </summary>
     public virtual EffectTarget Target => EffectTarget.Any;
 
-    /// <summary>已退役效果需先重新配置，禁止將空操作當成送禮成功。</summary>
+    /// <summary>已退役效果不提供新增，也不得放入購得效果執行。</summary>
     public virtual bool IsRetired => false;
 
     /// <summary>

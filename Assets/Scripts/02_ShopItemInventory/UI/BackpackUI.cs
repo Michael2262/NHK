@@ -1,4 +1,3 @@
-using PixelCrushers.Wrappers;
 using PixelCrushers.DialogueSystem;
 using System.Collections;
 using System.Collections.Generic;
@@ -24,9 +23,6 @@ public class BackpackUI : MonoBehaviour, IItemButtonHost
     [Header("左側詳細面板")]
     [SerializeField] private GameObject _detailPanelRoot;
     [SerializeField] private Image _itemIcon;
-    [SerializeField] private Button _useButton;
-    [SerializeField] private LocalizeUI _itemNameLocalizer;
-    [SerializeField] private LocalizeUI _itemDescriptionLocalizer;
     [SerializeField] private TextMeshProUGUI _itemQuantityText;
     [SerializeField] private TextMeshProUGUI _itemNameTMP;
     [SerializeField] private TextMeshProUGUI _itemDescriptionTMP;
@@ -37,16 +33,17 @@ public class BackpackUI : MonoBehaviour, IItemButtonHost
 
     [Header("篩選器按鈕")]
     [SerializeField] private Button _filterAllButton;
-    [SerializeField] private Button _filterConsumableButton;
-    [SerializeField] private Button _filterGiftButton;
-    [SerializeField] private Button _filterPermanentButton;
+    [UnityEngine.Serialization.FormerlySerializedAs("_filterConsumableButton")]
+    [SerializeField] private Button _filterUseButton;
+    [UnityEngine.Serialization.FormerlySerializedAs("_filterPermanentButton")]
+    [SerializeField] private Button _filterClaimButton;
 
     // --- 內部狀態 ---
-    public enum ItemFilterType { All, Consumable, Gift, Permanent }
+    // 沿用原分類編號，舊 Permanent = 3 對應新的 Claim。
+    public enum ItemFilterType { All = 0, Use = 1, Claim = 3 }
     private ItemFilterType _currentFilter = ItemFilterType.All;
     private ItemConfigData _selectedItem = null;
     private List<GameObject> _spawnedItemButtons = new List<GameObject>();
-    private string _quantityFormatString = "持有數量 : {0}";
     private Coroutine _refreshCoroutine = null;
 
     // ★ 追蹤目前被選中的 BackpackItemButton，用於高亮管理
@@ -63,10 +60,8 @@ public class BackpackUI : MonoBehaviour, IItemButtonHost
         _canvasGroup = GetComponent<CanvasGroup>();
 
         _filterAllButton.onClick.AddListener(() => SetFilter(ItemFilterType.All));
-        _filterConsumableButton.onClick.AddListener(() => SetFilter(ItemFilterType.Consumable));
-        _filterGiftButton.onClick.AddListener(() => SetFilter(ItemFilterType.Gift));
-        _filterPermanentButton.onClick.AddListener(() => SetFilter(ItemFilterType.Permanent));
-        _useButton.onClick.AddListener(OnUseItemButtonClicked);
+        _filterUseButton.onClick.AddListener(() => SetFilter(ItemFilterType.Use));
+        _filterClaimButton.onClick.AddListener(() => SetFilter(ItemFilterType.Claim));
 
         // ★ Awake 就設好篩選按鈕狀態，避免打開時閃爍
         UpdateFilterButtonStates();
@@ -77,15 +72,15 @@ public class BackpackUI : MonoBehaviour, IItemButtonHost
 
     private void Start()
     {
-        CheckLocalizationFormatString();
         _detailPanelRoot.SetActive(false);
     }
 
     private void OnEnable()
     {
+        PixelCrushers.UILocalizationManager.languageChanged += OnLanguageChanged;
         if (GameStatusService.Instance == null) return;
         GameStatusService.Instance.Inventory.OnItemCountChanged += OnInventoryChanged;
-        PixelCrushers.UILocalizationManager.languageChanged += OnLanguageChanged;
+        GameStatusService.Instance.OnGameStatusLoaded += StartRefreshListCoroutine;
     }
 
     private void OnDisable()
@@ -93,6 +88,7 @@ public class BackpackUI : MonoBehaviour, IItemButtonHost
         if (GameStatusService.Instance != null)
         {
             GameStatusService.Instance.Inventory.OnItemCountChanged -= OnInventoryChanged;
+            GameStatusService.Instance.OnGameStatusLoaded -= StartRefreshListCoroutine;
         }
         PixelCrushers.UILocalizationManager.languageChanged -= OnLanguageChanged;
         StopRefreshListCoroutine();
@@ -133,25 +129,19 @@ public class BackpackUI : MonoBehaviour, IItemButtonHost
 
     private void OnLanguageChanged(string language)
     {
-        CheckLocalizationFormatString();
         StartRefreshListCoroutine();
     }
 
-    private void CheckLocalizationFormatString()
+    private string Localize(string key)
     {
-        if (DialogueManager.instance == null || DialogueManager.displaySettings == null ||
-            DialogueManager.displaySettings.localizationSettings == null ||
-            DialogueManager.displaySettings.localizationSettings.textTable == null)
+        if (string.IsNullOrWhiteSpace(key)) return "";
+        string translated = DialogueManager.GetLocalizedText(key);
+        if (string.IsNullOrEmpty(translated) || translated == key)
         {
-            return;
+            Debug.LogWarning($"[BackpackUI] Text Table 找不到 Key：{key}", this);
+            return key;
         }
-
-        var textTable = DialogueManager.displaySettings.localizationSettings.textTable;
-        if (textTable != null && textTable.HasField("BACKPACK_QUANTITY"))
-        {
-            _quantityFormatString = textTable.GetFieldTextForLanguage("BACKPACK_QUANTITY", Localization.GetCurrentLanguageID(textTable));
-        }
-        else { _quantityFormatString = "持有數量 : {0}"; }
+        return translated;
     }
 
     // --- 核心方法 (Controller) ---
@@ -171,9 +161,8 @@ public class BackpackUI : MonoBehaviour, IItemButtonHost
     private void UpdateFilterButtonStates()
     {
         _filterAllButton.interactable = (_currentFilter != ItemFilterType.All);
-        _filterConsumableButton.interactable = (_currentFilter != ItemFilterType.Consumable);
-        _filterGiftButton.interactable = (_currentFilter != ItemFilterType.Gift);
-        _filterPermanentButton.interactable = (_currentFilter != ItemFilterType.Permanent);
+        _filterUseButton.interactable = (_currentFilter != ItemFilterType.Use);
+        _filterClaimButton.interactable = (_currentFilter != ItemFilterType.Claim);
     }
 
     /// <summary>
@@ -202,31 +191,12 @@ public class BackpackUI : MonoBehaviour, IItemButtonHost
         UpdateDetailPanel(item);
     }
 
-    private void OnUseItemButtonClicked()
-    {
-        if (_selectedItem == null) return;
-
-        var useService = GameStatusService.Instance.ItemUseService;
-        UseItemResult result = useService.UseItemOnSelf(_selectedItem.ItemID);
-
-        if (result.IsSuccess)
-        {
-            GameStatusService.Instance.Inventory.RemoveItem(_selectedItem.ItemID, 1);
-        }
-        else
-        {
-            if (!string.IsNullOrEmpty(result.FailMessageKey))
-            {
-                StoryManager.Instance.ShowLocalizedBadMessage(result.FailMessageKey);
-            }
-        }
-    }
-
     // --- 核心方法 (View) ---
 
     private void StartRefreshListCoroutine()
     {
         StopRefreshListCoroutine();
+        if (!isActiveAndEnabled) return;
         _refreshCoroutine = StartCoroutine(RefreshItemListRoutine());
     }
 
@@ -282,13 +252,11 @@ public class BackpackUI : MonoBehaviour, IItemButtonHost
 
     private bool ShouldDisplayInFilter(ItemConfigData item, ItemFilterType filter)
     {
-        var targetRule = item.TargetingRule;
         switch (filter)
         {
             case ItemFilterType.All: return true;
-            case ItemFilterType.Consumable: return (targetRule.Category == TargetCategory.ProtagonistOnly || targetRule.Category == TargetCategory.AnyCharacter);
-            case ItemFilterType.Gift: return (targetRule.Category == TargetCategory.HeroineOnly || targetRule.Category == TargetCategory.AnyCharacter);
-            case ItemFilterType.Permanent: return (targetRule.Category == TargetCategory.NoBody);
+            case ItemFilterType.Use: return item.Category == ItemCategory.Use;
+            case ItemFilterType.Claim: return item.Category == ItemCategory.Claim;
             default: return false;
         }
     }
@@ -305,28 +273,11 @@ public class BackpackUI : MonoBehaviour, IItemButtonHost
             _itemIcon.enabled = (item.Icon != null);
         }
 
-        if (_itemNameLocalizer != null) { _itemNameLocalizer.fieldName = item.DisplayNameKey; _itemNameLocalizer.UpdateText(); }
-        if (_itemDescriptionLocalizer != null) { _itemDescriptionLocalizer.fieldName = item.DescriptionKey; _itemDescriptionLocalizer.UpdateText(); }
-
-        CheckLocalizationFormatString();
+        if (_itemNameTMP != null) _itemNameTMP.text = Localize(item.DisplayNameKey);
+        if (_itemDescriptionTMP != null) _itemDescriptionTMP.text = Localize(item.DescriptionKey);
 
         int quantity = GameStatusService.Instance.Inventory.GetItemCount(item.ItemID);
-        _itemQuantityText.text = string.Format(_quantityFormatString, quantity);
-
-        var rule = item.TargetingRule;
-        bool canUseOnProtagonist = (rule.Category == TargetCategory.ProtagonistOnly || rule.Category == TargetCategory.AnyCharacter);
-        bool hasSelfEffect = item.CanUseSelf;
-
-        if (hasSelfEffect && canUseOnProtagonist && quantity > 0)
-        {
-            _useButton.gameObject.SetActive(true);
-            var preview = GameStatusService.Instance.ItemUseService.PreviewUseItemOnSelf(item.ItemID);
-            _useButton.interactable = preview.IsSuccess;
-        }
-        else
-        {
-            _useButton.gameObject.SetActive(false);
-        }
+        _itemQuantityText.text = string.Format(Localize("Store.Quantity"), quantity);
     }
 
     private void ClearDetailPanel()
@@ -340,9 +291,6 @@ public class BackpackUI : MonoBehaviour, IItemButtonHost
 
         _selectedItem = null;
         _detailPanelRoot.SetActive(false);
-        _useButton.gameObject.SetActive(false);
-        if (_itemNameLocalizer != null) { _itemNameLocalizer.fieldName = string.Empty; }
-        if (_itemDescriptionLocalizer != null) { _itemDescriptionLocalizer.fieldName = string.Empty; }
         if (_itemNameTMP != null) { _itemNameTMP.text = string.Empty; }
         if (_itemDescriptionTMP != null) { _itemDescriptionTMP.text = string.Empty; }
         _itemQuantityText.text = string.Empty;

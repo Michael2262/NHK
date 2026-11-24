@@ -1,149 +1,168 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
-// 職責：處理所有與「購買商品」相關的核心業務邏輯。
-// 它不關心 UI，只關心規則。
+/// <summary>購買、到貨入庫與購得效果的執行入口；一般 Inventory.AddItem 不觸發效果。</summary>
 public class ShopService
 {
-    // 依賴的數據模型 (從 GameStatusService 傳入)
-    private readonly ProtagonistStatusModel _protagonistStatusModel;
-    private readonly ProtagonistInventoryModel _inventoryModel;
-    private readonly ShopStatusModel _shopStatusModel;
-    private readonly PendingDeliveryModel _pendingDeliveryModel;
+    private readonly ProtagonistStatusModel _protagonist;
+    private readonly ProtagonistInventoryModel _inventory;
+    private readonly ShopStatusModel _shopStatus;
+    private readonly PendingDeliveryModel _pendingDelivery;
+    private readonly ItemCatalog _catalog;
+    private readonly EffectContext _effectContext;
+    private readonly Func<int> _getCurrentDay;
+    private bool _isProcessing;
 
-    // 道具設定來源 (從 GameStatusService 傳入)：查 ID → ItemConfigData
-    private readonly ItemCatalog _itemCatalog;
-
-    // 用於取得當前天數（下單時需要）
-    private readonly System.Func<int> _getCurrentDay;
-
-    /// <summary>
-    /// 建構函式，用來注入所有必要的依賴。
-    /// </summary>
-    public ShopService(
-        ProtagonistStatusModel protagonistStatus,
-        ProtagonistInventoryModel inventory,
-        ShopStatusModel shopStatus,
-        PendingDeliveryModel pendingDelivery,
-        ItemCatalog itemCatalog,
-        System.Func<int> getCurrentDay)
+    public ShopService(ProtagonistStatusModel protagonist, ProtagonistInventoryModel inventory,
+        ShopStatusModel shopStatus, PendingDeliveryModel pendingDelivery, ItemCatalog catalog,
+        ProgressFlagModel progressFlags, Func<int> getCurrentDay)
     {
-        _protagonistStatusModel = protagonistStatus;
-        _inventoryModel = inventory;
-        _shopStatusModel = shopStatus;
-        _pendingDeliveryModel = pendingDelivery;
-        _itemCatalog = itemCatalog;
+        _protagonist = protagonist;
+        _inventory = inventory;
+        _shopStatus = shopStatus;
+        _pendingDelivery = pendingDelivery;
+        _catalog = catalog;
         _getCurrentDay = getCurrentDay;
+        _effectContext = new EffectContext
+        {
+            Protagonist = protagonist,
+            Inventory = inventory,
+            ProgressFlags = progressFlags
+        };
     }
 
-    /// <summary>
-    /// 嘗試購買一個商品的核心方法。
-    /// </summary>
+    /// <summary>購買一份；扣一次價格、限購計一次，網購在付款時只建立訂單。</summary>
     public PurchaseResult TryPurchaseItem(string itemID)
     {
-        // 1. 驗證：商品是否存在？
-        ItemConfigData itemConfig = _itemCatalog.GetItemConfig(itemID);
-        if (itemConfig == null)
+        // 防止數量／金錢事件的同步回呼重入尚未完成的交易。
+        if (_isProcessing) return PurchaseResult.PurchaseInProgress;
+        var config = _catalog.GetItemConfig(itemID);
+        if (config == null) return PurchaseResult.ItemNotFound;
+        if (config.Price < 0 || config.PurchaseQuantity <= 0)
+            return InvalidConfiguration(config, "價格不得為負數，每份數量必須大於 0。");
+        if (_protagonist.Money < config.Price) return PurchaseResult.NotEnoughCoins;
+        if (config.MaxPurchaseLimit > 0 &&
+            _shopStatus.GetPurchasedCount(itemID) >= config.MaxPurchaseLimit)
+            return PurchaseResult.PurchaseLimitReached;
+
+        var effects = GetEffects(config);
+        if (!ValidateReceipt(config, config.PurchaseQuantity, 1, effects, !config.IsOnlineOrder))
+            return PurchaseResult.InvalidConfiguration;
+
+        _isProcessing = true;
+        try
         {
-            Debug.LogError($"[ShopService] 嘗試購買一個不存在的商品 ID: {itemID}");
-            return PurchaseResult.ItemNotFound;
+            if (!_protagonist.TryReduceMoney(config.Price)) return PurchaseResult.NotEnoughCoins;
+
+            // 先記錄購買份數，讓後續入庫／效果事件看到正確的限購狀態。
+            _shopStatus.IncreasePurchasedCount(itemID, 1);
+            if (config.IsOnlineOrder)
+                _pendingDelivery.PlaceOrder(itemID, config.PurchaseQuantity, _getCurrentDay(), 1);
+            else
+                Receive(config, config.PurchaseQuantity, 1, effects);
+
+            Debug.Log($"[ShopService] 購買 {config.DisplayName} 一份，共 {config.PurchaseQuantity} 個。" +
+                      (config.IsOnlineOrder ? "（隔天到貨）" : ""));
+            return PurchaseResult.Success;
         }
-
-        // 2. 規則檢查：金錢是否足夠？
-        if (_protagonistStatusModel.Money < itemConfig.Price)
-        {
-            Debug.Log($"[ShopService] 金錢不足，無法購買 {itemConfig.DisplayName}。");
-            return PurchaseResult.NotEnoughCoins;
-        }
-
-        // 3. 規則檢查：是否達到購買上限？
-        if (itemConfig.MaxPurchaseLimit > 0)
-        {
-            int purchasedCount = _shopStatusModel.GetPurchasedCount(itemID);
-            if (purchasedCount >= itemConfig.MaxPurchaseLimit)
-            {
-                Debug.Log($"[ShopService] 商品 {itemConfig.DisplayName} 已達購買上限。");
-                return PurchaseResult.PurchaseLimitReached;
-            }
-        }
-
-        // --- 執行購買流程 ---
-
-        // 4. 扣除金錢
-        if (!_protagonistStatusModel.TryReduceMoney(itemConfig.Price))
-        {
-            return PurchaseResult.NotEnoughCoins;
-        }
-
-        // 5. 入庫或下單
-        if (itemConfig.IsOnlineOrder)
-        {
-            // 網購模式：不直接入庫，改為下訂單，隔天 P0S1 到貨
-            _pendingDeliveryModel.PlaceOrder(itemID, 1, _getCurrentDay());
-        }
-        else
-        {
-            // 現買現拿：直接加入背包
-            _inventoryModel.AddItem(itemID, 1);
-        }
-
-        // 6. 檢查是否為「無人使用的道具」(NoBody)，如果是，則直接套用被動效果
-        //    ★ 注意：網購商品的 NoBody 被動效果在到貨入庫時「不會」自動觸發，
-        //       因為被動效果語義上屬於「獲取當下」。
-        //       如果未來需要到貨時也觸發，可在 PendingDeliveryModel.ProcessDeliveries 中擴充。
-        if (!itemConfig.IsOnlineOrder &&
-            itemConfig.TargetingRule != null &&
-            itemConfig.TargetingRule.Category == TargetCategory.NoBody)
-        {
-            ApplyPassiveEffectsOnAcquire(itemConfig);
-        }
-
-        // 7. 更新商店的已購買次數
-        _shopStatusModel.IncreasePurchasedCount(itemID, 1);
-
-        Debug.Log($"[ShopService] 成功購買 {itemConfig.DisplayName}！" +
-                  (itemConfig.IsOnlineOrder ? "（網購，隔天到貨）" : ""));
-        return PurchaseResult.Success;
+        finally { _isProcessing = false; }
     }
 
-    /// <summary>
-    /// 處理 NoBody 類型道具在獲取時觸發的被動效果。
-    /// 使用新的 ItemEffect + EffectContext 系統，
-    /// NoBody 道具的 SelfEffects 會在購買時自動對主角執行。
-    /// </summary>
-    private void ApplyPassiveEffectsOnAcquire(ItemConfigData itemConfig)
+    /// <summary>配送入口：依訂單保存的數量入庫，效果每份一次，不再扣款或增加限購次數。</summary>
+    public bool TryDeliverOrder(DeliveryOrder order)
     {
-        if (itemConfig.SelfEffects == null || itemConfig.SelfEffects.Count == 0)
+        if (_isProcessing || order == null) return false;
+        var config = _catalog.GetItemConfig(order.ItemID);
+        if (config == null)
         {
-            Debug.Log($"[ShopService] 道具 [{itemConfig.DisplayName}] 為 NoBody 類型但沒有 SelfEffects，跳過被動效果。");
-            return;
+            Debug.LogWarning($"[ShopService] 到貨商品不存在：{order.ItemID}，保留訂單待設定修復。");
+            return false;
         }
 
-        Debug.Log($"[ShopService] 套用道具 [{itemConfig.DisplayName}] 的被動效果...");
+        // 舊存檔未記錄份數：舊版每份一個，沿用原數量，不乘上新的 PurchaseQuantity。
+        int purchaseCount = order.PurchaseCount > 0 ? order.PurchaseCount : order.Amount;
+        var effects = GetEffects(config);
+        if (!ValidateReceipt(config, order.Amount, purchaseCount, effects, true)) return false;
 
-        // 建立 EffectContext（NoBody 道具只對主角生效，Heroine 為 null）
-        var ctx = new EffectContext
+        _isProcessing = true;
+        try
         {
-            Protagonist = _protagonistStatusModel,
-            Heroine = null
-        };
+            Receive(config, order.Amount, purchaseCount, effects);
+            return true;
+        }
+        finally { _isProcessing = false; }
+    }
 
-        foreach (var effect in itemConfig.SelfEffects)
+    private static ItemEffect[] GetEffects(ItemConfigData config) =>
+        config.AcquireEffects?.ToArray() ?? Array.Empty<ItemEffect>();
+
+    private bool ValidateReceipt(ItemConfigData config, int amount, int purchaseCount,
+        ItemEffect[] effects, bool checkInventoryCapacity)
+    {
+        if (amount <= 0 || purchaseCount <= 0)
         {
-            if (effect != null)
+            InvalidConfiguration(config, "入庫數量與購買份數必須大於 0。");
+            return false;
+        }
+
+        var additions = new Dictionary<string, long> { [config.ItemID] = amount };
+        foreach (var effect in effects)
+        {
+            if (effect == null) continue;
+            if (effect.IsRetired || effect.Target == EffectTarget.Heroine)
             {
-                effect.Apply(ctx);
+                InvalidConfiguration(config, $"購得效果含已退役或需要送禮目標的效果：{effect.GetType().Name}。");
+                return false;
+            }
+            if (effect is GrantItemEffect grant)
+            {
+                if (grant.Item == null || grant.Amount <= 0 ||
+                    _catalog.GetItemConfig(grant.Item.ItemID) != grant.Item)
+                {
+                    InvalidConfiguration(config, "額外道具需指定目錄內的道具，且數量必須大於 0。");
+                    return false;
+                }
+                additions.TryGetValue(grant.Item.ItemID, out long previous);
+                additions[grant.Item.ItemID] = previous + (long)grant.Amount * purchaseCount;
             }
         }
+
+        foreach (var pair in additions)
+        {
+            long current = checkInventoryCapacity ? _inventory.GetItemCount(pair.Key) : 0;
+            if (current + pair.Value > int.MaxValue)
+            {
+                InvalidConfiguration(config, $"道具 {pair.Key} 的入庫數量超出可儲存範圍。");
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private void Receive(ItemConfigData config, int amount, int purchaseCount, ItemEffect[] effects)
+    {
+        _inventory.AddItem(config.ItemID, amount);
+        for (int purchase = 0; purchase < purchaseCount; purchase++)
+        {
+            foreach (var effect in effects)
+                effect?.Apply(_effectContext);
+        }
+    }
+
+    private static PurchaseResult InvalidConfiguration(ItemConfigData config, string reason)
+    {
+        Debug.LogError($"[ShopService] 商品 {config.ItemID} 設定無效：{reason}");
+        return PurchaseResult.InvalidConfiguration;
     }
 }
 
-/// <summary>
-/// 定義購買操作可能的所有結果。
-/// </summary>
 public enum PurchaseResult
 {
     Success,
     ItemNotFound,
     NotEnoughCoins,
-    PurchaseLimitReached
+    PurchaseLimitReached,
+    InvalidConfiguration,
+    PurchaseInProgress
 }

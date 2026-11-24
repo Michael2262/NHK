@@ -55,7 +55,7 @@ public class ShopItemRowUI : MonoBehaviour
         if (_itemNameText != null)
             _itemNameText.text = Localize(_itemConfig.DisplayNameKey);
         if (_itemDescriptionText != null)
-            _itemDescriptionText.text = Localize(_itemConfig.DescriptionKey);
+            _itemDescriptionText.text = Localize(_itemConfig.EffectiveShopDescriptionKey);
 
         // 1. 更新持有數量
         int quantity = GameStatusService.Instance.Inventory.GetItemCount(_itemConfig.ItemID);
@@ -74,7 +74,7 @@ public class ShopItemRowUI : MonoBehaviour
 
         if (isSoldOut)
         {
-            _priceOrStatusText.text = Localize("SHOP_SOLD_OUT");
+            _priceOrStatusText.text = Localize("Store.SoldOut");
             _purchaseButton.interactable = false;
         }
         else
@@ -128,6 +128,12 @@ public class ShopItemRowUI : MonoBehaviour
             case PurchaseResult.ItemNotFound:
                 // 這個理論上不該發生
                 Debug.LogError("商品不存在？請檢查 ItemDatabase 設定！");
+                break;
+            case PurchaseResult.InvalidConfiguration:
+                Debug.LogError("[ShopItemRowUI] 商品數量或購得效果設定無效，購買未執行。請查看前一則錯誤。");
+                break;
+            case PurchaseResult.PurchaseInProgress:
+                Debug.LogWarning("[ShopItemRowUI] 上一筆購買或配送尚未完成，本次請求未執行。");
                 break;
         }
     }

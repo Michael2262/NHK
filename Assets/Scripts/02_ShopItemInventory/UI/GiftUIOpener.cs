@@ -1,42 +1,13 @@
 using UnityEngine;
 
-/// <summary>
-/// ©I¥s GiftUI ªºÂà±µ¸}¥»¡C
-/// ¥Î©ó¡u«ö¶s©Ò¦bªº Scene ¡Ú GiftUI ©Ò¦bªº Scene¡vªº±¡¹Ò:
-/// GiftUI ©ñ¦b¤£¨ø¸üªº Scene ¤W,¦¹¸}¥»±¾¦b¨ä¥L Scene ªº«ö¶s©Ò¦bª«¥ó¤W,
-/// «ö¶s OnClick ¸j©w¦¹¸}¥»ªº¤èªk§Y¥i©I¥s¡C
-/// </summary>
+/// <summary>å·²é€€å½¹ï¼›ä¿ç•™èˆŠ UnityEvent å…¥å£ä»¥æç¤ºå ´æ™¯æ¸…ç†ï¼Œä¸å†é–‹å•Ÿé€ç¦®é¢æ¿ã€‚</summary>
+[AddComponentMenu("")]
 public class GiftUIOpener : MonoBehaviour
 {
-    [Tooltip("¹w³]ªº¥Ø¼Ğ¤k¥D¨¤ ID¡C¨Ï¥Î Open() ®É·|¥Î³o­Ó;OpenFor(string) ¥iÂĞ»\¡C")]
-    [SerializeField] private string _defaultHeroineID;
-
-    /// <summary>
-    /// ¡iµ¹ Button OnClick ¥Î¡j¨Ï¥Î Inspector ³]©wªº _defaultHeroineID ¶}±Ò GiftUI¡C
-    /// </summary>
     public void Open()
     {
-        OpenFor(_defaultHeroineID);
+        Debug.LogWarning("[GiftUIOpener] é“å…·é€ç¦®åŠŸèƒ½å·²ç§»é™¤ï¼Œè«‹åœ¨ Editor ç§»é™¤æŒ‰éˆ•äº‹ä»¶èˆ‡æ­¤å…ƒä»¶ã€‚", this);
     }
 
-    /// <summary>
-    /// ¡iµ¹ Button OnClick(string) ¥Î¡j«ü©w HeroineID ¶}±Ò GiftUI¡C
-    /// Button OnClick ¸j©w®É¥iª½±µ¦b Inspector ¶ñ¤J ID ¦r¦ê¡C
-    /// </summary>
-    public void OpenFor(string heroineID)
-    {
-        if (string.IsNullOrEmpty(heroineID))
-        {
-            Debug.LogError($"[GiftUIOpener] '{name}' HeroineID ¬°ªÅ!", this);
-            return;
-        }
-
-        if (GiftUI.Instance == null)
-        {
-            Debug.LogError("[GiftUIOpener] GiftUI.Instance ¬° null,½Ğ½T»{ GiftUI ©Ò¦bªº Scene ¤w¸ü¤J¡C", this);
-            return;
-        }
-
-        GiftUI.Instance.ShowForHeroine(heroineID);
-    }
+    public void OpenFor(string heroineID) => Open();
 }
