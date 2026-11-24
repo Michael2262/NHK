@@ -82,6 +82,17 @@ public class ProtagonistBridgeAPI : MonoBehaviour
 
     public bool GetIsOverShoot() => P?.IsOverShoot ?? false;
 
+    // ───── 運勢 ─────
+    public int GetLuck() => P?.Luck ?? ProtagonistStatusModel.InitialLuck;
+    public void AddLuck(int amount) => P?.AddLuck(amount);
+    public void SetLuck(int value) => P?.SetLuck(value);
+    public void SetLuck(string code)
+    {
+        var model = P;
+        if (model != null && !model.SetLuck(code))
+            Debug.LogWarning($"[ProtagonistBridgeAPI] 無效的運勢代號：{code}。請使用 GreatLuck、GoodLuck、NormalLuck、BadLuck、TerribleLuck。", this);
+    }
+
     public void AdvanceTime(int slots)
     {
         var t = GameStatusService.Instance?.Time;

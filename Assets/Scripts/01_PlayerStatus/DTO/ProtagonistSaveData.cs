@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 /// <summary>主角存檔。欄位初始值供舊 JSON 缺欄位時使用；退役欄位由 Newtonsoft 忽略。</summary>
 [Serializable]
@@ -20,4 +21,7 @@ public class ProtagonistSaveData
     public int SkillPoints = ProtagonistStatusModel.InitialSkillPoints;
     public int Semen = ProtagonistStatusModel.InitialSemen;
     public int RoomMessLevel = ProtagonistStatusModel.InitialRoomMessLevel;
+    public int Luck = ProtagonistStatusModel.InitialLuck;
+    // 保留剩餘牌序，最後一張是下次抽牌；null 為舊存檔，空清單為本輪抽完。
+    public List<int> RemainingLuckCards;
 }

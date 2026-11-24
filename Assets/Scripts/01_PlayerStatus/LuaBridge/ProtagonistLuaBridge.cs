@@ -19,6 +19,9 @@ public class ProtagonistLuaBridge : MonoBehaviour
 
     void OnEnable()
     {
+        Lua.RegisterFunction("GetLuck", this, SymbolExtensions.GetMethodInfo(() => GetLuck()));
+        Lua.RegisterFunction("AddLuck", this, SymbolExtensions.GetMethodInfo(() => AddLuck((double)0)));
+        Lua.RegisterFunction("SetLuck", this, SymbolExtensions.GetMethodInfo(() => SetLuck((object)0)));
         Lua.RegisterFunction("ForceAddStamina", this, SymbolExtensions.GetMethodInfo(() => ForceAddStamina((double)0)));
         Lua.RegisterFunction("ForceAddShootTimes", this, SymbolExtensions.GetMethodInfo(() => ForceAddShootTimes((double)0)));
         Lua.RegisterFunction("SetShootTimes", this, SymbolExtensions.GetMethodInfo(() => SetShootTimes((double)0)));
@@ -74,6 +77,9 @@ public class ProtagonistLuaBridge : MonoBehaviour
 
     void OnDisable()
     {
+        Lua.UnregisterFunction("GetLuck");
+        Lua.UnregisterFunction("AddLuck");
+        Lua.UnregisterFunction("SetLuck");
         Lua.UnregisterFunction("ForceAddStamina");
         Lua.UnregisterFunction("ForceAddShootTimes");
         Lua.UnregisterFunction("SetShootTimes");
@@ -142,6 +148,42 @@ public class ProtagonistLuaBridge : MonoBehaviour
 
     public double GetMoney() => GetModel()?.Money ?? 0;
     public double GetSkillPoints() => GetModel()?.SkillPoints ?? 0;
+
+    // ───── 運勢：Set 同時接受 Lua 數字與英文代號 ─────
+    public double GetLuck() => GetModel()?.Luck ?? ProtagonistStatusModel.InitialLuck;
+    public void AddLuck(double amount)
+    {
+        if (double.IsNaN(amount) || double.IsInfinity(amount))
+        {
+            Debug.LogWarning("[ProtagonistLuaBridge] AddLuck 需要有限數字。", this);
+            return;
+        }
+        GetModel()?.AddLuck(ClampIntArgument(amount));
+    }
+
+    /// <summary>例如 SetLuck(2) 或 SetLuck("GreatLuck")；數字小數部分截去。</summary>
+    public void SetLuck(object value)
+    {
+        var model = GetModel();
+        if (model == null) return;
+        if (value is string code)
+        {
+            if (!model.SetLuck(code))
+                Debug.LogWarning($"[ProtagonistLuaBridge] 無效的運勢代號：{code}。請使用 GreatLuck、GoodLuck、NormalLuck、BadLuck、TerribleLuck。", this);
+            return;
+        }
+        // 內建 Lua Interpreter 傳 float，其他 Lua 後端可傳 double 或整數。
+        if (value is float || value is double || value is int || value is long)
+        {
+            double number = System.Convert.ToDouble(value, System.Globalization.CultureInfo.InvariantCulture);
+            if (!double.IsNaN(number) && !double.IsInfinity(number))
+            {
+                model.SetLuck(ClampIntArgument(number));
+                return;
+            }
+        }
+        Debug.LogWarning("[ProtagonistLuaBridge] SetLuck 需要有限數字或有效的英文運勢代號。", this);
+    }
 
     // ───── 射精感：Lua 數值轉成整數後交由 Model 處理 ─────
     public double GetSemen() => GetModel()?.GetSemen() ?? 0;

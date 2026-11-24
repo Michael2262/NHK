@@ -1,5 +1,3 @@
-using PixelCrushers.DialogueSystem;
-using PixelCrushers;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -39,9 +37,6 @@ public class ShopUI : MonoBehaviour
     public enum ShopFilterType { All, Use, Gift, Claim }
     private ShopFilterType _currentFilter = ShopFilterType.All;
     private List<ShopItemRowUI> _spawnedItemRows = new List<ShopItemRowUI>();
-    private string _quantityFormatString = "持有數量 : {0}";
-    private string _priceFormatString = "售價:{0}";
-    private string _soldOutString = "售罄";
 
     private Coroutine _refreshCoroutine = null;
 
@@ -64,17 +59,16 @@ public class ShopUI : MonoBehaviour
 
     private void Start()
     {
-        CheckLocalizationStrings();
         StartRefreshListCoroutine();
     }
 
     private void OnEnable()
     {
+        PixelCrushers.UILocalizationManager.languageChanged += OnLanguageChanged;
         if (GameStatusService.Instance == null) return;
 
         GameStatusService.Instance.Inventory.OnItemCountChanged += OnInventoryOrPurchaseChanged;
         GameStatusService.Instance.ShopStatus.OnPurchasedCountChanged += OnInventoryOrPurchaseChanged;
-        PixelCrushers.UILocalizationManager.languageChanged += OnLanguageChanged;
     }
 
     private void OnDisable()
@@ -129,35 +123,7 @@ public class ShopUI : MonoBehaviour
 
     private void OnLanguageChanged(string language)
     {
-        CheckLocalizationStrings();
         StartRefreshListCoroutine();
-    }
-
-    private void CheckLocalizationStrings()
-    {
-        if (DialogueManager.instance == null || DialogueManager.displaySettings == null ||
-            DialogueManager.displaySettings.localizationSettings == null ||
-            DialogueManager.displaySettings.localizationSettings.textTable == null)
-        {
-            Debug.LogWarning("ShopUI CheckLocalizationStrings 失敗：DialogueManager 或其 TextTable 尚未準備好。");
-            return;
-        }
-
-        var textTable = DialogueManager.displaySettings.localizationSettings.textTable;
-        if (textTable.HasField("BACKPACK_QUANTITY"))
-            _quantityFormatString = textTable.GetFieldTextForLanguage("BACKPACK_QUANTITY", Localization.GetCurrentLanguageID(textTable));
-        else
-            _quantityFormatString = "持有數量 : {0}";
-
-        if (textTable.HasField("SHOP_PRICE_FORMAT"))
-            _priceFormatString = textTable.GetFieldTextForLanguage("SHOP_PRICE_FORMAT", Localization.GetCurrentLanguageID(textTable));
-        else
-            _priceFormatString = "售價:{0}";
-
-        if (textTable.HasField("SHOP_SOLD_OUT"))
-            _soldOutString = textTable.GetFieldTextForLanguage("SHOP_SOLD_OUT", Localization.GetCurrentLanguageID(textTable));
-        else
-            _soldOutString = "售罄";
     }
 
     // --- 篩選器 ---
@@ -225,10 +191,7 @@ public class ShopUI : MonoBehaviour
 
                 if (rowScript != null)
                 {
-                    rowScript.Setup(itemConfig, this,
-                                    _quantityFormatString,
-                                    _priceFormatString,
-                                    _soldOutString);
+                    rowScript.Setup(itemConfig);
                     _spawnedItemRows.Add(rowScript);
                 }
             }

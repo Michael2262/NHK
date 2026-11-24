@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 /// <summary>正式主角數值；可調設定集中於頂部，存讀檔由 Service 統一管理。</summary>
 public class ProtagonistStatusModel
@@ -54,6 +55,13 @@ public class ProtagonistStatusModel
     public const int RoomMessDailyGain = 1;
     public const float RoomMessDailyGainChance = 0.5f;
 
+    // ───── 運勢 ─────
+    public const int LuckMin = -2;
+    public const int LuckMax = 2;
+    public const int InitialLuck = 0; // 第一天固定普通，不消耗卡片。
+    // 極好運 1、好運 2、普通 4、壞運 3、極壞運 0；由尾端依序抽取。
+    private static readonly int[] LuckDeckTemplate = { 2, 1, 1, 0, 0, 0, 0, -1, -1, -1 };
+
     // ==========================================================
     // 執行期間狀態：上面的設定決定初始值，下方方法負責變更。
     // ==========================================================
@@ -74,6 +82,8 @@ public class ProtagonistStatusModel
     public int Semen { get; private set; } = InitialSemen;
     public int SemenMax => SemenLimit;
     public int RoomMessLevel { get; private set; } = InitialRoomMessLevel;
+    public int Luck { get; private set; } = InitialLuck;
+    private readonly List<int> remainingLuckCards = new List<int>();
     public bool IsOverShoot => ShootTimes <= 0;
 
     /// <summary>狀態完成更新後通知；訂閱者讀取目前屬性。</summary>
@@ -85,6 +95,8 @@ public class ProtagonistStatusModel
     public event Action<int> OnShootTimesChanged;
     public event Action<int> OnRoomMessLevelChanged;
     public event Action<int> OnSemenChanged;
+    /// <summary>運勢實際改變時傳最新值；讀檔期間不發送。</summary>
+    public event Action<int> OnLuckChanged;
 
     public ProtagonistStatusModel() => NewGame(notify: false);
 
@@ -287,7 +299,81 @@ public class ProtagonistStatusModel
         => SetRoomMessLevel(Clamp((long)RoomMessLevel + amount, RoomMessLevelMin, RoomMessLevelMax));
     public void ReduceRoomMessLevel(int amount) { if (amount > 0) AddRoomMessLevel(-amount); }
 
-    /// <summary>日終保留房間隨機變髒；日初恢復體力、射精次數並清空射精感。</summary>
+    public int GetLuck() => Luck;
+
+    /// <summary>手動設定運勢，限制於 -2～2，不改變剩餘牌堆。</summary>
+    public void SetLuck(int value)
+    {
+        value = Clamp(value, LuckMin, LuckMax);
+        if (Luck == value) return;
+        Luck = value;
+        OnLuckChanged?.Invoke(Luck);
+        OnChanged?.Invoke();
+    }
+
+    public void AddLuck(int amount) => SetLuck(Clamp((long)Luck + amount, LuckMin, LuckMax));
+
+    /// <summary>用英文代號設定運勢（不分大小寫）；無效代號回傳 false 並保留原值。</summary>
+    public bool SetLuck(string code)
+    {
+        switch (code?.Trim().ToLowerInvariant())
+        {
+            case "greatluck": SetLuck(2); return true;
+            case "goodluck": SetLuck(1); return true;
+            case "normalluck": SetLuck(0); return true;
+            case "badluck": SetLuck(-1); return true;
+            case "terribleluck": SetLuck(-2); return true;
+            default: return false;
+        }
+    }
+
+    private void ResetLuckDeck()
+    {
+        remainingLuckCards.Clear();
+        remainingLuckCards.AddRange(LuckDeckTemplate);
+        // Fisher–Yates 洗牌；牌序會存檔，讀檔後接續抽取。
+        for (int i = remainingLuckCards.Count - 1; i > 0; i--)
+        {
+            int j = UnityEngine.Random.Range(0, i + 1);
+            int card = remainingLuckCards[i];
+            remainingLuckCards[i] = remainingLuckCards[j];
+            remainingLuckCards[j] = card;
+        }
+    }
+
+    private int DrawLuckCard()
+    {
+        // 第十張抽完維持空牌堆，下一次抽牌前才重建。
+        if (remainingLuckCards.Count == 0) ResetLuckDeck();
+        int index = remainingLuckCards.Count - 1;
+        int card = remainingLuckCards[index];
+        remainingLuckCards.RemoveAt(index);
+        return card;
+    }
+
+    private void RestoreLuckDeck(List<int> savedCards)
+    {
+        // null 代表舊存檔缺欄位；空清單則是合法的「本輪剛抽完」。
+        if (savedCards != null && savedCards.Count <= LuckDeckTemplate.Length)
+        {
+            var available = new List<int>(LuckDeckTemplate);
+            bool valid = true;
+            foreach (int card in savedCards)
+            {
+                if (!available.Remove(card)) { valid = false; break; }
+            }
+            if (valid)
+            {
+                remainingLuckCards.Clear();
+                remainingLuckCards.AddRange(savedCards);
+                return;
+            }
+        }
+        // 缺欄位或牌堆資料無效時補回完整牌堆，不抽牌、不通知 UI。
+        ResetLuckDeck();
+    }
+
+    /// <summary>日終保留房間隨機變髒；日初恢復體力、射精次數、清空射精感並抽取運勢。</summary>
     public void NextDay()
     {
         OnDayEnd();
@@ -307,6 +393,7 @@ public class ProtagonistStatusModel
         int previousStamina = Stamina;
         int previousShootTimes = ShootTimes;
         int previousSemen = Semen;
+        int previousLuck = Luck;
         Stamina = Stamina < 0
             ? Clamp(NegativeStaminaDailyReset, StaminaMin, StaminaMax)
             : Clamp((long)Stamina + StaminaDailyRecovery, StaminaMin, StaminaMax);
@@ -314,11 +401,13 @@ public class ProtagonistStatusModel
             ? Clamp(ExhaustedShootTimesDailyReset, ShootTimesMin, ShootTimesMax)
             : Clamp((long)ShootTimes + ShootTimesDailyRecovery, ShootTimesMin, ShootTimesMax);
         Semen = SemenMin;
+        Luck = DrawLuckCard();
         // 完成整批變更後才通知；避免讀到一半的日初狀態。
         if (previousShootTimes != ShootTimes)
             OnShootTimesChanged?.Invoke(Clamp((long)ShootTimes - previousShootTimes, int.MinValue, int.MaxValue));
         if (previousSemen != Semen) OnSemenChanged?.Invoke(Semen);
-        if (previousStamina != Stamina || previousShootTimes != ShootTimes || previousSemen != Semen)
+        if (previousLuck != Luck) OnLuckChanged?.Invoke(Luck);
+        if (previousStamina != Stamina || previousShootTimes != ShootTimes || previousSemen != Semen || previousLuck != Luck)
             OnChanged?.Invoke();
     }
 
@@ -338,6 +427,8 @@ public class ProtagonistStatusModel
         SkillPoints = Math.Max(0, InitialSkillPoints);
         Semen = Clamp(InitialSemen, SemenMin, SemenLimit);
         RoomMessLevel = Clamp(InitialRoomMessLevel, RoomMessLevelMin, RoomMessLevelMax);
+        Luck = InitialLuck;
+        ResetLuckDeck();
         if (notify)
         {
             OnMoneyChanged?.Invoke(0);
@@ -345,6 +436,7 @@ public class ProtagonistStatusModel
             OnShootTimesChanged?.Invoke(0);
             OnRoomMessLevelChanged?.Invoke(0);
             OnSemenChanged?.Invoke(Semen);
+            OnLuckChanged?.Invoke(Luck);
             OnChanged?.Invoke();
         }
     }
@@ -356,7 +448,8 @@ public class ProtagonistStatusModel
         Lust = Lust, StickerCount = StickerCount,
         RewardLevel = RewardLevel,
         Hardness = Hardness, HardnessIncreasedThisSlot = HardnessIncreasedThisSlot,
-        Money = Money, SkillPoints = SkillPoints, Semen = Semen, RoomMessLevel = RoomMessLevel
+        Money = Money, SkillPoints = SkillPoints, Semen = Semen, RoomMessLevel = RoomMessLevel,
+        Luck = Luck, RemainingLuckCards = new List<int>(remainingLuckCards)
     };
 
     /// <summary>靜默還原；完成所有 Model 載入後由 OnGameStatusLoaded 統一刷新。</summary>
@@ -377,5 +470,7 @@ public class ProtagonistStatusModel
         SkillPoints = Math.Max(0, data.SkillPoints);
         Semen = Clamp(data.Semen, SemenMin, SemenLimit);
         RoomMessLevel = Clamp(data.RoomMessLevel, RoomMessLevelMin, RoomMessLevelMax);
+        Luck = Clamp(data.Luck, LuckMin, LuckMax);
+        RestoreLuckDeck(data.RemainingLuckCards);
     }
 }

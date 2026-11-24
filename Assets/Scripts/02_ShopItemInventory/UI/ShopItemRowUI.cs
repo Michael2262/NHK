@@ -1,5 +1,4 @@
-using PixelCrushers.Wrappers; // for LocalizeUI
-//using PixelCrushers.DialogueSystem; // for DialogueManager
+using PixelCrushers.DialogueSystem;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -7,36 +6,26 @@ using UnityEngine.UI;
 /// <summary>
 /// 掛載在商店商品列表行 Prefab 上的腳本。
 /// 負責顯示單一商品的靜態與動態資訊，並處理購買按鈕。
-/// (移除 DialogueManager 依賴，由 ShopUI 傳入本地化字串)
+/// 文字以 Key 直接查詢 Text Table，每次刷新時套用目前語言。
 /// </summary>
 public class ShopItemRowUI : MonoBehaviour
 {
     [Header("UI 引用 (Prefab 內部拖曳)")]
     [SerializeField] private Image _itemIcon;
-    [SerializeField] private LocalizeUI _itemNameLocalizer;
-    [SerializeField] private LocalizeUI _itemDescriptionLocalizer;
+    [Tooltip("商品名稱的 TMP 元件；請移除同物件上的 LocalizeUI，避免覆寫文字。")]
+    [SerializeField] private TextMeshProUGUI _itemNameText;
+    [Tooltip("商品說明的 TMP 元件；請移除同物件上的 LocalizeUI，避免覆寫文字。")]
+    [SerializeField] private TextMeshProUGUI _itemDescriptionText;
     [SerializeField] private TextMeshProUGUI _quantityText; // 持有數量
-    [SerializeField] private TextMeshProUGUI _priceOrStatusText; // 顯示價格或 "售鑿"
+    [SerializeField] private TextMeshProUGUI _priceOrStatusText; // 顯示價格或「售罄」
     [SerializeField] private Button _purchaseButton;
 
     // 內部狀態
     private ItemConfigData _itemConfig;
-    private ShopUI _parentUI; // (可選) 如果需要回調 ShopUI
-    // 移除預設值，由 Setup 傳入
-    private string _quantityFormatString = "{0}";
-    private string _priceFormatString = "{0}";
-    private string _soldOutString = "Sold Out";
 
     private void Awake()
     {
         _purchaseButton.onClick.AddListener(OnPurchaseButtonClicked);
-
-    }
-
-    private void OnEnable()
-    {
-
-        //UpdateDynamicData();
     }
 
 
@@ -44,47 +33,35 @@ public class ShopItemRowUI : MonoBehaviour
     /// <summary>
     /// 由 ShopUI 在 Instantiate 後呼叫，進行初始化。
     /// </summary>
-    public void Setup(ItemConfigData itemConfig, ShopUI parentUI, string quantityFormat, string priceFormat, string soldOutText)
+    public void Setup(ItemConfigData itemConfig)
     {
         _itemConfig = itemConfig;
-        _parentUI = parentUI;
-
-        // 將傳入的格式字串儲存起來
-        _quantityFormatString = quantityFormat;
-        _priceFormatString = priceFormat;
-        _soldOutString = soldOutText;
 
         // --- 設定靜態資料 ---
         _itemIcon.sprite = _itemConfig.Icon;
 
-        if (_itemNameLocalizer != null)
-        {
-            _itemNameLocalizer.fieldName = _itemConfig.DisplayNameKey;
-            _itemNameLocalizer.UpdateText();
-        }
-        if (_itemDescriptionLocalizer != null)
-        {
-            _itemDescriptionLocalizer.fieldName = _itemConfig.DescriptionKey;
-            _itemDescriptionLocalizer.UpdateText();
-        }
-
-        // --- 設定動態資料 ---
+        // --- 設定文字與動態資料 ---
         UpdateDynamicData();
     }
 
     /// <summary>
-    /// 【核心】更新需要即時反應的動態數據（持有數量、售鑿狀態）。
-    /// 這個方法會被 Setup() 和 OnEnable() 呼叫，也會被 ShopUI 主動呼叫。
+    /// 更新目前語言的文字、持有數量與售罄狀態。
+    /// 由 Setup() 與 ShopUI 呼叫，重開商店時也會重新查表。
     /// </summary>
     public void UpdateDynamicData()
     {
         if (_itemConfig == null) return;
 
+        if (_itemNameText != null)
+            _itemNameText.text = Localize(_itemConfig.DisplayNameKey);
+        if (_itemDescriptionText != null)
+            _itemDescriptionText.text = Localize(_itemConfig.DescriptionKey);
+
         // 1. 更新持有數量
         int quantity = GameStatusService.Instance.Inventory.GetItemCount(_itemConfig.ItemID);
-        _quantityText.text = string.Format(_quantityFormatString, quantity);
+        _quantityText.text = string.Format(Localize("Store.Quantity"), quantity);
 
-        // 2. 更新購買按鈕狀態 (售價 vs 售鑿)
+        // 2. 更新購買按鈕狀態（售價或售罄）
         int purchasedCount = 0;
         bool isSoldOut = false;
 
@@ -97,17 +74,30 @@ public class ShopItemRowUI : MonoBehaviour
 
         if (isSoldOut)
         {
-            _priceOrStatusText.text = _soldOutString;
+            _priceOrStatusText.text = Localize("SHOP_SOLD_OUT");
             _purchaseButton.interactable = false;
         }
         else
         {
-            _priceOrStatusText.text = string.Format(_priceFormatString, _itemConfig.Price);
+            _priceOrStatusText.text = string.Format(Localize("Store.Price"), _itemConfig.Price);
             // ★ (可選) 在這裡可以再加一層檢查：玩家金錢是否足夠
             // bool hasEnoughMoney = GameStatusService.Instance.Protagonist.Money >= _itemConfig.Price;
             // _purchaseButton.interactable = hasEnoughMoney;
             _purchaseButton.interactable = true; // 暫時先都設為可互動
         }
+    }
+
+    private string Localize(string key)
+    {
+        if (string.IsNullOrWhiteSpace(key)) return "";
+
+        string translated = DialogueManager.GetLocalizedText(key);
+        if (string.IsNullOrEmpty(translated) || translated == key)
+        {
+            Debug.LogWarning($"[ShopItemRowUI] Text Table 找不到 Key：{key}", this);
+            return key;
+        }
+        return translated;
     }
 
     /// <summary>
