@@ -17,13 +17,15 @@ namespace MyGame.Actions
     // ╚════════════════════════════════════════════════════════════════════╝
     [ActionCategory("Time")]
     [Tooltip("佇列時間推進，於下一個場景載入後、淡入前執行。登記後請馬上切場景。" +
-             "Day 為直接跳日（無隔天演出）。")]
+             "Day 為直接跳日（無隔天演出）。" +
+             "ShortTime / MediumTime / LongTime 依 TimeConfig 推進 Mini，允許跨日並停在隔天起點。")]
     public class QueueTimeChange : FsmStateAction
     {
-        [Tooltip("推進類型：Slot = 推進 N 格 / Phase = 跳到下一階段 / Day = 直接跳日")]
+        [Tooltip("推進類型：Slot = 推進 N 格 / Phase = 跳到下一階段 / Day = 直接跳日 / " +
+                 "ShortTime、MediumTime、LongTime = 使用 TimeConfig 對應的 Mini 數量")]
         public SceneActionQueueModel.TimeAdvanceType advanceType;
 
-        [Tooltip("推進格數（僅 Slot 類型有效，預設 1）")]
+        [Tooltip("推進格數（僅 Slot 類型有效，預設 1；ShortTime / MediumTime / LongTime 忽略此欄位）")]
         public FsmInt slots;
 
         public override void Reset()

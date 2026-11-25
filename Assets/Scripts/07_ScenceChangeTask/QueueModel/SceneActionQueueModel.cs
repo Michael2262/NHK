@@ -22,7 +22,8 @@ using UnityEngine;
 /// </summary>
 public class SceneActionQueueModel
 {
-    public enum TimeAdvanceType { Slot, Phase, Day }
+    // 保留既有數值，避免已序列化的 FSM 選項改變意義。
+    public enum TimeAdvanceType { Slot = 0, Phase = 1, Day = 2, ShortTime = 3, MediumTime = 4, LongTime = 5 }
 
     private enum ActionType { TimeChange, HeroineMove, RiskMove, FlagChange, SendEvent }
 
@@ -311,6 +312,19 @@ public class SceneActionQueueModel
                 int remaining = _time.GetRemainingSlotsInDay();
                 _time.AdvanceTime(remaining + 1);
                 Debug.Log("[SceneActionQueue] 已直接跳到隔天。");
+                break;
+
+            // 執行時由時間 Model 讀取 Config；允許跨日，跨日後停在隔天起點。
+            case TimeAdvanceType.ShortTime:
+                _time.AdvanceShortTime();
+                break;
+
+            case TimeAdvanceType.MediumTime:
+                _time.AdvanceMediumTime();
+                break;
+
+            case TimeAdvanceType.LongTime:
+                _time.AdvanceLongTime();
                 break;
         }
     }
